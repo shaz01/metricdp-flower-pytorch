@@ -18,6 +18,12 @@ dependencies = [
 [dependency-groups]
 dev = ["pytest>=8.0"]
 
+[tool.pytest.ini_options]
+addopts = "-m 'not reproducibility'"
+markers = [
+    "reproducibility: cross-version experiment requiring an isolated legacy environment",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["."]
 

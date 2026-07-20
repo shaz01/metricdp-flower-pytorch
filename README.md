@@ -61,10 +61,12 @@ uv run pytest
 A controlled synthetic experiment runs a byte-identical snapshot of the authors' Flower 1.16 source and this Flower 1.32 port with identical client models, clipping/noise settings, and five NumPy seeds. It does not depend on the separate Flower fork:
 
 ```bash
-uv run python experiments/compare.py
+uv run pytest -m reproducibility experiments/port_equivalence/test_equivalence.py
 ```
 
-The legacy worker is isolated with Flower 1.16.0, NumPy 1.26.4, and Python 3.12. The comparison checks distance, noise standard deviation, and every aggregated model value to an absolute tolerance of `1e-15`. See [`experiments/CONTROLLED_COMPARISON.md`](experiments/CONTROLLED_COMPARISON.md) for the concise protocol, results, limitations, and source fingerprints.
+The equivalent human-readable report remains available through `uv run python experiments/port_equivalence/compare.py`. Reproducibility tests are marked and excluded from ordinary `uv run pytest` runs because they create an isolated legacy environment.
+
+The legacy worker is isolated with Flower 1.16.0, NumPy 1.26.4, and Python 3.12. The comparison checks distance, noise standard deviation, and every aggregated model value to an absolute tolerance of `1e-15`. See [`experiments/port_equivalence/README.md`](experiments/port_equivalence/README.md) for the concise protocol, results, limitations, and source fingerprints.
 
 ## Run
 
