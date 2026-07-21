@@ -9,6 +9,7 @@ description = "Metric-aware server-side differential privacy with Flower and PyT
 license = {file = "LICENSE"}
 requires-python = ">=3.11,<3.14"
 dependencies = [
+    "datasets>=3.0,<5.0",
     "flwr[simulation]>=1.32.1,<2.0",
     "numpy>=2.0",
     "torch==2.10.0",
@@ -33,19 +34,32 @@ fab-format-version = 1
 flwr-version-target = "1.32.1"
 
 [tool.flwr.app.components]
-serverapp = "metricdp_pytorch.server_app:app"
-clientapp = "metricdp_pytorch.client_app:app"
+serverapp = "experiments.reproduce.server:app"
+clientapp = "experiments.reproduce.client:app"
 
 [tool.flwr.app.config]
-num-server-rounds = 3
-num-clients = 10
+# Defaults reproduce the paper with four Alzheimer MRI clients.
+partition-mode = "homogeneous"
+partition-profile = "auto"
+client-weights = ""
+data-module = "experiments.reproduce.dataset.alzheimer:create_data_module"
+data-cache-dir = ""
+privacy = "metric-privacy"
+aggregation = "fedavg"
+seed = 42
+num-server-rounds = 20
+num-clients = 4
 fraction-evaluate = 1.0
-local-epochs = 1
-learning-rate = 0.1
+local-epochs = 5
+learning-rate = 0.001
 batch-size = 32
-noise-multiplier = 1.0
+initialization-batch-size = 32
+initialization-epochs = 20
+initialization-learning-rate = 0.001
+max-client-samples = 0
+max-test-samples = 0
+noise-multiplier = 0.01
 clipping-norm = 5.0
+output-dir = "results/manual"
+run-name = "manual"
 save-model = false
-
-[tool.flwr.federations.local-simulation.options]
-num-supernodes = 10

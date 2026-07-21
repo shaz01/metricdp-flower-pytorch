@@ -1,96 +1,87 @@
 # Metric-aware DP with Flower and PyTorch
 
-A Flower 1.32 app that ports the paper's server-side metric-aware noise calibration to Flower's modern, message-based `ServerApp` strategy API.
+A Flower 1.32/PyTorch reproduction of the paper's server-side metric-aware noise calibration on the Alzheimer MRI dataset.
 
-The app trains a small PyTorch CNN on federated CIFAR-10 partitions. Each round, the server:
+Each metric-private round:
 
-1. Computes the maximum pairwise client-model distance, defined as the maximum over client pairs of the mean layer-wise Euclidean/Frobenius distance.
-2. Clips each client update with Flower's server-side fixed-clipping mechanism.
-3. Aggregates the clipped updates with `FedAvg`.
+1. Computes the maximum pairwise client-model distance (maximum over client pairs of the mean layer-wise Euclidean/Frobenius distance).
+2. Clips every client update with Flower's server-side fixed-clipping mechanism.
+3. Aggregates the updates.
 4. Adds Gaussian noise using `noise_multiplier / distance` for that round.
 
-> **Privacy note:** As stated in the source paper, using model distance to calibrate noise is empirical and does not by itself provide a formal metric-DP guarantee. Formal privacy claims require an appropriate accountant and threat-model analysis.
+> **Privacy note:** As stated in the paper, distance-calibrated noise is empirical and does not by itself provide a formal metric-DP guarantee. Formal privacy claims require an appropriate accountant and threat-model analysis.
 
-## Structure
+## Dataset
 
-```text
-metricdp-pytorch/
-├── metricdp_pytorch/
-│   ├── client_app.py
-│   ├── metricdp_strategy.py
-│   ├── server_app.py
-│   └── task.py
-├── tests/
-├── pyproject.toml
-└── README.md
-```
+The default data module uses `Falah/Alzheimer_MRI`, the paper CNN, and the published four-client distributions. Every local client partition uses a deterministic stratified 80/20 train/test split. Scalable balanced and quantity-skewed partitions are available for custom client counts.
 
-## Requirements
+## Install and test
 
-- Python 3.11–3.13
-- Flower 1.32.1 or newer within the 1.x series
-- PyTorch 2.10
-
-The Flower CLI is already installed at `~/.local/bin/flwr` on this machine.
-
-## Install
-
-Using `uv`:
+The package supports Python 3.11–3.13.
 
 ```bash
-cd metricdp-pytorch
 uv sync
-```
-
-Or with pip in a virtual environment:
-
-```bash
-python3.13 -m venv .venv
-source .venv/bin/activate
-pip install -e .
-```
-
-## Test
-
-```bash
 uv run pytest
 ```
 
-## Compare with the original implementation
+## Alzheimer MRI paper reproduction
 
-A controlled synthetic experiment runs a byte-identical snapshot of the authors' Flower 1.16 source and this Flower 1.32 port with identical client models, clipping/noise settings, and five NumPy seeds. It does not depend on the separate Flower fork:
+The reproduction runner connects the paper-specific ServerApp and ClientApp and works both locally and on a Lightning.ai pod. Start with the tested smoke run:
 
 ```bash
-uv run pytest -m reproducibility experiments/port_equivalence/test_equivalence.py
+uv run python -m experiments.reproduce.runner --smoke
 ```
 
-The equivalent human-readable report remains available through `uv run python experiments/port_equivalence/compare.py`. Reproducibility tests are marked and excluded from ordinary `uv run pytest` runs because they create an isolated legacy environment.
+Run one full paper configuration with:
 
-The legacy worker is isolated with Flower 1.16.0, NumPy 1.26.4, and Python 3.12. The comparison checks distance, noise standard deviation, and every aggregated model value to an absolute tolerance of `1e-15`. See [`experiments/port_equivalence/README.md`](experiments/port_equivalence/README.md) for the concise protocol, results, limitations, and source fingerprints.
+```bash
+uv run python -m experiments.reproduce.runner \
+  --partition homogeneous \
+  --privacy metric-privacy \
+  --aggregation fedavg \
+  --rounds 20 --local-epochs 5
+```
 
-## Run
+Use `--dry-run` to inspect the resolved configuration. The four-client `auto` profile reproduces the exact published client tables; other client counts automatically use scalable partitions. Results are written under `results/reproduce/` by default.
 
-The local simulation is explicitly configured for ten SuperNodes, matching `num-clients`:
+The data layer is pluggable. Supply a factory implementing `FederatedDataModule` with:
+
+```bash
+uv run python -m experiments.reproduce.runner \
+  --data-module my_package.my_dataset:create_data_module
+```
+
+The factory receives the run configuration and returns an object with `client_loaders(...)` and `server_loaders(...)`. Generic record-image adapters, indexed loaders, stratified splits, exact class-count profiles, balanced partitions, and quantity-skewed partitions are available under `metricdp_pytorch.utils`.
+
+## Aggregator mapping
+
+The strategy factory uses the paper's listed settings:
+
+- FedAvg
+- FedAvgM: server learning rate 0.1, momentum 0.5
+- FedMedian
+- FedProx: proximal μ = 0.5 (including the client-side proximal loss)
+- FedOpt: Flower FedAdam with β₁ = 0, β₂ = 0, τ = 1e-9
+- FedYogi: β₁ = 0.9, β₂ = 0.99, τ = 1e-3
+
+All can be used directly, wrapped in Flower's global server-side fixed-clipping DP, or wrapped in the metric-aware variant.
+
+## Manual Flower run
+
+The app remains directly runnable with its `pyproject.toml` defaults:
 
 ```bash
 uv run flwr run . --stream
 ```
 
-For a shorter run:
+The defaults use four clients, 20 rounds, noise multiplier `0.01`, and clipping norm `5.0`.
+
+## Port-equivalence test
+
+A separate reproducibility test compares a byte-identical snapshot of the authors' Flower 1.16 mechanism with this Flower 1.32 strategy port under controlled synthetic inputs:
 
 ```bash
-uv run flwr run . --run-config "num-server-rounds=1" --stream
+uv run pytest -m reproducibility experiments/port_equivalence/test_equivalence.py
 ```
 
-Relevant configuration in `pyproject.toml`:
-
-```toml
-[tool.flwr.app.config]
-num-clients = 10
-noise-multiplier = 1.0
-clipping-norm = 5.0
-```
-
-`noise-multiplier` is the base multiplier. The effective multiplier in each round is `noise-multiplier / metric-dp-distance`. The distance and resulting standard deviation are included in the aggregated training metrics.
-
-The strategy raises an error when fewer than two models are received or when the distance is zero/non-finite, because distance-based calibration is undefined in those cases.
+See [`experiments/port_equivalence/README.md`](experiments/port_equivalence/README.md) for protocol details and limitations.
