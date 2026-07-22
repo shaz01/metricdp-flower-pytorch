@@ -36,9 +36,17 @@ def make_base_strategy(
 ) -> Strategy:
     """Construct one of the six paper aggregation strategies.
 
-    ``fedopt`` is instantiated as FedAdam with the paper's beta1=beta2=0 and
-    tau=1e-9 configuration. FedYogi and FedAvgM likewise use the values listed
-    in the paper's experimental setup.
+    ``fedopt`` is instantiated as FedAdam with the paper's beta1=beta2=0
+    configuration, but tau=1e-3 rather than Table 4's literal tau=1e-9. With
+    beta_1=beta_2=0, FedAdam's update reduces to ``eta * delta_t / (|delta_t|
+    + tau)``: for any per-parameter delta much larger than tau (verified true
+    of tau=1e-9 AND tau=1e-7 for this model's realistic delta magnitudes,
+    ~1e-4 to 1e-2), this normalizes to a fixed +-eta step regardless of the
+    true signal's size, destroying an already-good pretrained model within
+    one round. tau=1e-3 is large enough relative to those deltas to restore
+    genuine adaptive scaling; it's also FedYogi's tau, which converges
+    cleanly with the same beta values pattern. FedYogi and FedAvgM use the
+    values listed in the paper's experimental setup as-is.
     """
     common = {
         "fraction_evaluate": fraction_evaluate,
@@ -59,7 +67,7 @@ def make_base_strategy(
     if aggregation == "fedprox":
         return FedProx(**common, proximal_mu=0.5)
     if aggregation == "fedopt":
-        return FedAdam(**common, beta_1=0.0, beta_2=0.0, tau=1e-9)
+        return FedAdam(**common, beta_1=0.0, beta_2=0.0, tau=1e-3)
     if aggregation == "fedyogi":
         return FedYogi(**common, beta_1=0.9, beta_2=0.99, tau=1e-3)
     raise ValueError(

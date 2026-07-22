@@ -9,6 +9,16 @@ The stateful strategies (FedAvgM, FedOpt, FedYogi) need initial global
 parameters: 20 epochs, batch 32, on the stratified validation half. DP
 parameters: clipping norm $C=5$, noise multiplier $n_\epsilon=0.01$, and for
 metric-private runs the per-round distance divides the noise multiplier.
+
+Two deliberate deviations from the literal Table 4 values, made after
+reproducing catastrophic training collapse and confirming the mechanism
+(see ``metricdp_pytorch.strategy_factory.make_base_strategy`` and
+``experiments.reproduce.paper_training.proximal_term`` docstrings for the
+detailed reasoning): FedOpt's $\tau$ is $10^{-3}$ rather than $10^{-9}$, and
+FedProx's proximal term is Flower's own unsquared per-tensor L2 norm
+convention rather than a squared norm over the full parameter vector. Both
+of the literal Table 4 formulas/values are mathematically faithful to the
+paper but numerically destructive for this model's ~6.5M parameters.
 """
 
 from __future__ import annotations

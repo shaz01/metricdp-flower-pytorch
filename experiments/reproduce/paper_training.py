@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import random
+from collections.abc import Iterable, Sequence
 
 import numpy as np
 import torch
@@ -29,6 +30,26 @@ def seed_training(seed: int) -> None:
 def requires_validation_initialization(aggregation: str) -> bool:
     """Return whether the paper pretrains this aggregation's initial model."""
     return aggregation.lower() in STATEFUL_AGGREGATIONS
+
+
+def proximal_term(
+    parameters: Iterable[torch.nn.Parameter],
+    initial_parameters: Sequence[torch.Tensor],
+) -> torch.Tensor:
+    """Sum of per-tensor L2 norms ``||p - p_init||_2`` (not squared).
+
+    Matches flwr.serverapp.strategy.FedProx's own docstring example, which
+    differs from the squared-norm formula stated in both that docstring and
+    the paper (``(mu/2) * ||w - w^t||^2``, a single squared L2 norm over the
+    full parameter vector). Squaring and summing over this model's ~6.5M
+    parameters (98.6% of which sit in one 100352->64 FC layer) grows large
+    enough with real per-parameter drift to trap training in a trivial
+    majority-class solution under the paper's real class imbalance.
+    """
+    return sum(
+        (parameter - initial).norm(2)
+        for parameter, initial in zip(parameters, initial_parameters, strict=True)
+    )
 
 
 def train_with_adam(
@@ -68,13 +89,9 @@ def train_with_adam(
             probabilities = model(images)
             loss = sparse_categorical_cross_entropy(probabilities, labels)
             if proximal_mu > 0:
-                proximal_penalty = sum(
-                    torch.sum((parameter - initial) ** 2)
-                    for parameter, initial in zip(
-                        model.parameters(), initial_parameters, strict=True
-                    )
+                loss = loss + 0.5 * proximal_mu * proximal_term(
+                    model.parameters(), initial_parameters
                 )
-                loss = loss + 0.5 * proximal_mu * proximal_penalty
             loss.backward()
             optimizer.step()
             batch_size = len(labels)
