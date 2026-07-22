@@ -1,0 +1,194 @@
+START_UTC=2026-07-22T12:33:00Z
+COMMAND=uv run python -m experiments.reproduce.runner --partition homogeneous --privacy metric-privacy --aggregation fedopt --seed 42 --rounds 20 --local-epochs 5 --batch-size 32 --learning-rate 0.001 --noise-multiplier 0.01 --clipping-norm 5 --num-clients 4 --initialization-epochs 20 --initialization-batch-size 32 --initialization-learning-rate 0.001 --output-dir /teamspace/studios/this_studio/results/paper_reproduction_runs --run-name main__homogeneous__metric-privacy__fedopt__noise-0.01__seed-42 --max-parallel-clients 4 --client-cpus 2 --client-gpus 0.25 
+NVIDIA L4, 23034 MiB, 3737 MiB
+{
+  "partition-mode": "homogeneous",
+  "partition-profile": "auto",
+  "client-weights": "",
+  "data-module": "experiments.reproduce.dataset.alzheimer:create_data_module",
+  "data-cache-dir": "",
+  "privacy": "metric-privacy",
+  "aggregation": "fedopt",
+  "seed": 42,
+  "num-server-rounds": 20,
+  "num-clients": 4,
+  "fraction-evaluate": 1.0,
+  "local-epochs": 5,
+  "learning-rate": 0.001,
+  "batch-size": 32,
+  "initialization-batch-size": 32,
+  "initialization-epochs": 20,
+  "initialization-learning-rate": 0.001,
+  "max-client-samples": 0,
+  "max-test-samples": 0,
+  "noise-multiplier": 0.01,
+  "clipping-norm": 5.0,
+  "output-dir": "/teamspace/studios/this_studio/results/paper_reproduction_runs",
+  "run-name": "main__homogeneous__metric-privacy__fedopt__noise-0.01__seed-42",
+  "save-model": false
+}
+[93mWARNING [0m:   DEPRECATED FEATURE: The `run_simulation` function is deprecated and will be removed in a future version of Flower. Please use `flwr run` in the CLI instead to run your simulation. Refer to the Flower Tutorials for more details: https://flower.ai/docs/framework/tutorial-quickstart-pytorch.html
+
+            This is a deprecated feature. It will be removed
+            entirely in future versions of Flower.
+        
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/tmp/paper-reproduction-qmpw9i0z/venv/lib/python3.13/site-packages/ray/_private/worker.py:2051: FutureWarning: Tip: In future versions of Ray, Ray will no longer override accelerator visible devices env var if num_gpus=0 or num_gpus=None (default). To enable this behavior and turn off this error message, set RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO=0
+  warnings.warn(
+[92mINFO [0m:      Starting MetricPrivacyServerSideFixedClipping strategy:
+[92mINFO [0m:      	├── Number of rounds: 20
+[92mINFO [0m:      	├── ArrayRecord (24.86 MB)
+[92mINFO [0m:      	├── ConfigRecord (train): {'lr': 0.001}
+[92mINFO [0m:      	├── ConfigRecord (evaluate): (empty!)
+[92mINFO [0m:      	├──> Metric-aware DP settings:
+[92mINFO [0m:      	│	├── Base noise multiplier: 0.01
+[92mINFO [0m:      	│	└── Clipping norm: 5.0
+[92mINFO [0m:      	├──> FedOpt settings:
+[92mINFO [0m:      	│	├── eta (0.1) | eta_l (0.1)
+[92mINFO [0m:      	│	├── beta_1 (0) | beta_2 (0)
+[92mINFO [0m:      	│	└── tau (1e-09)
+[92mINFO [0m:      	├──> Sampling:
+[92mINFO [0m:      	│	├──Fraction: train (1.00) | evaluate ( 1.00)
+[92mINFO [0m:      	│	├──Minimum nodes: train (4) | evaluate (4)
+[92mINFO [0m:      	│	└──Minimum available nodes: 4
+[92mINFO [0m:      	└──> Keys in records:
+[92mINFO [0m:      		├── Weighted by: 'num-examples'
+[92mINFO [0m:      		├── ArrayRecord key: 'arrays'
+[92mINFO [0m:      		└── ConfigRecord key: 'config'
+[92mINFO [0m:      
+[92mINFO [0m:      Initial global evaluation results: {'loss': 0.8624926507472992, 'accuracy': 0.625}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 1/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[36m(ClientAppActor pid=45599)[0m Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.707084
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.007322 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.5534309912472963, 'train_loss_mean': 0.7051246874965728, 'metric-dp-distance': 1.7070842569228262, 'metric-dp-noise-stdv': 0.007322427085428332}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 49.845327734947205, 'eval_acc': 0.369140625}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 48.31414222717285, 'accuracy': 0.3890625}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 2/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 0.443514
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.028184 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 43.54033952951431, 'train_loss_mean': 43.38261075913906, 'metric-dp-distance': 0.4435141511494294, 'metric-dp-noise-stdv': 0.028183993605625637}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 43.66827392578125, 'eval_acc': 0.5}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 44.07766399383545, 'accuracy': 0.4953125}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 3/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[36m(ClientAppActor pid=45598)[0m Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.[32m [repeated 3x across cluster] (Ray deduplicates logs by default. Set RAY_DEDUP_LOGS=0 to disable log deduplication, or see https://docs.ray.io/en/master/ray-observability/user-guides/configure-logging.html#log-deduplication for more options.)[0m
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/teamspace/studios/this_studio/experiments/reproduce/runner.py", line 282, in <module>
+    main()
+    ~~~~^^
+  File "/teamspace/studios/this_studio/experiments/reproduce/runner.py", line 258, in main
+    _run_worker(
+    ~~~~~~~~~~~^
+        config,
+        ^^^^^^^
+    ...<4 lines>...
+        verbose=args.verbose,
+        ^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/teamspace/studios/this_studio/experiments/reproduce/runner.py", line 199, in _run_worker
+    run_simulation(
+    ~~~~~~~~~~~~~~^
+        server_app=server_app,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<9 lines>...
+        verbose_logging=verbose,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/tmp/paper-reproduction-qmpw9i0z/venv/lib/python3.13/site-packages/flwr/simulation/run_simulation.py", line 171, in run_simulation
+    _ = _run_simulation(
+        num_supernodes=num_supernodes,
+    ...<6 lines>...
+        exit_event=EventType.PYTHON_API_RUN_SIMULATION_LEAVE,
+    )
+  File "/tmp/paper-reproduction-qmpw9i0z/venv/lib/python3.13/site-packages/flwr/simulation/run_simulation.py", line 491, in _run_simulation
+    simulation_result = _main_loop(*args)
+  File "/tmp/paper-reproduction-qmpw9i0z/venv/lib/python3.13/site-packages/flwr/simulation/run_simulation.py", line 368, in _main_loop
+    raise thread_ex.with_traceback(thread_ex.__traceback__)
+  File "/tmp/paper-reproduction-qmpw9i0z/venv/lib/python3.13/site-packages/flwr/simulation/run_simulation.py", line 217, in server_th_with_start_checks
+    updated_context = _run(
+        grid=_grid,
+    ...<3 lines>...
+        loaded_server_app=_server_app,
+    )
+  File "/tmp/paper-reproduction-qmpw9i0z/venv/lib/python3.13/site-packages/flwr/server/run_serverapp.py", line 60, in run
+    server_app(grid=grid, context=context)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/paper-reproduction-qmpw9i0z/venv/lib/python3.13/site-packages/flwr/serverapp/server_app.py", line 176, in __call__
+    self._main(grid, context)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/teamspace/studios/this_studio/experiments/reproduce/server.py", line 111, in main
+    result = run(
+        grid,
+    ...<2 lines>...
+        initial_arrays=ArrayRecord(initial_model.state_dict()),
+    )
+  File "/teamspace/studios/this_studio/experiments/reproduce/server.py", line 80, in run
+    return strategy.start(
+           ~~~~~~~~~~~~~~^
+        grid=grid,
+        ^^^^^^^^^^
+    ...<7 lines>...
+        evaluate_fn=evaluate_fn,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/tmp/paper-reproduction-qmpw9i0z/venv/lib/python3.13/site-packages/flwr/serverapp/strategy/strategy.py", line 222, in start
+    agg_arrays, agg_train_metrics = self.aggregate_train(
+                                    ~~~~~~~~~~~~~~~~~~~~^
+        current_round,
+        ^^^^^^^^^^^^^^
+        train_replies,
+        ^^^^^^^^^^^^^^
+    )
+    ^
+  File "/teamspace/studios/this_studio/metricdp_pytorch/metricdp_strategy.py", line 106, in aggregate_train
+    raise ValueError(
+    ...<2 lines>...
+    )
+ValueError: The client-model distance must be finite and greater than zero; noise_multiplier / distance is undefined otherwise.
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/teamspace/studios/this_studio/experiments/reproduce/runner.py", line 282, in <module>
+    main()
+    ~~~~^^
+  File "/teamspace/studios/this_studio/experiments/reproduce/runner.py", line 277, in main
+    _launch_isolated(args, config)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/teamspace/studios/this_studio/experiments/reproduce/runner.py", line 239, in _launch_isolated
+    subprocess.run(command, cwd=PROJECT_ROOT, check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/system/conda/miniconda3/uv/python/cpython-3.13.13-linux-x86_64-gnu/lib/python3.13/subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['/tmp/paper-reproduction-qmpw9i0z/venv/bin/python', '-m', 'experiments.reproduce.runner', '--worker-config', '/tmp/paper-reproduction-qmpw9i0z/config.json', '--num-clients', '4', '--max-parallel-clients', '4', '--client-cpus', '2.0', '--client-gpus', '0.25']' returned non-zero exit status 1.
+EXIT_CODE=1
+END_UTC=2026-07-22T12:34:30Z

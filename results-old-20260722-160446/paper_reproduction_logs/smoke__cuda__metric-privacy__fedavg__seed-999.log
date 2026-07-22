@@ -1,0 +1,95 @@
+{
+  "partition-mode": "homogeneous",
+  "partition-profile": "auto",
+  "client-weights": "",
+  "data-module": "experiments.reproduce.dataset.alzheimer:create_data_module",
+  "data-cache-dir": "",
+  "privacy": "metric-privacy",
+  "aggregation": "fedavg",
+  "seed": 999,
+  "num-server-rounds": 1,
+  "num-clients": 4,
+  "fraction-evaluate": 1.0,
+  "local-epochs": 1,
+  "learning-rate": 0.001,
+  "batch-size": 32,
+  "initialization-batch-size": 32,
+  "initialization-epochs": 1,
+  "initialization-learning-rate": 0.001,
+  "max-client-samples": 32,
+  "max-test-samples": 64,
+  "noise-multiplier": 0.01,
+  "clipping-norm": 5.0,
+  "output-dir": "/teamspace/studios/this_studio/results/paper_reproduction_runs",
+  "run-name": "smoke__cuda__metric-privacy__fedavg__seed-999",
+  "save-model": true
+}
+[93mWARNING [0m:   DEPRECATED FEATURE: The `run_simulation` function is deprecated and will be removed in a future version of Flower. Please use `flwr run` in the CLI instead to run your simulation. Refer to the Flower Tutorials for more details: https://flower.ai/docs/framework/tutorial-quickstart-pytorch.html
+
+            This is a deprecated feature. It will be removed
+            entirely in future versions of Flower.
+        
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/tmp/paper-reproduction-a9r4becd/venv/lib/python3.13/site-packages/ray/_private/worker.py:2051: FutureWarning: Tip: In future versions of Ray, Ray will no longer override accelerator visible devices env var if num_gpus=0 or num_gpus=None (default). To enable this behavior and turn off this error message, set RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO=0
+  warnings.warn(
+[92mINFO [0m:      Starting MetricPrivacyServerSideFixedClipping strategy:
+[92mINFO [0m:      	├── Number of rounds: 1
+[92mINFO [0m:      	├── ArrayRecord (24.86 MB)
+[92mINFO [0m:      	├── ConfigRecord (train): {'lr': 0.001}
+[92mINFO [0m:      	├── ConfigRecord (evaluate): (empty!)
+[92mINFO [0m:      	├──> Metric-aware DP settings:
+[92mINFO [0m:      	│	├── Base noise multiplier: 0.01
+[92mINFO [0m:      	│	└── Clipping norm: 5.0
+[92mINFO [0m:      	├──> Sampling:
+[92mINFO [0m:      	│	├──Fraction: train (1.00) | evaluate ( 1.00)
+[92mINFO [0m:      	│	├──Minimum nodes: train (4) | evaluate (4)
+[92mINFO [0m:      	│	└──Minimum available nodes: 4
+[92mINFO [0m:      	└──> Keys in records:
+[92mINFO [0m:      		├── Weighted by: 'num-examples'
+[92mINFO [0m:      		├── ArrayRecord key: 'arrays'
+[92mINFO [0m:      		└── ConfigRecord key: 'config'
+[92mINFO [0m:      
+[92mINFO [0m:      Initial global evaluation results: {'loss': 1.4268012046813965, 'accuracy': 0.125}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 1/1]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[36m(ClientAppActor pid=7343)[0m Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 0.235543
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.053069 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 1.4118031561374664, 'train_loss_mean': 1.4118031561374664, 'metric-dp-distance': 0.235542785434518, 'metric-dp-noise-stdv': 0.05306891474914251}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.930762188775199, 'eval_acc': 0.42857142857142855}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.65556001663208, 'accuracy': 0.5}
+[92mINFO [0m:      
+[92mINFO [0m:      Strategy execution finished in 10.11s
+[92mINFO [0m:      
+[92mINFO [0m:      Final results:
+[92mINFO [0m:      
+[92mINFO [0m:      	Global Arrays:
+[92mINFO [0m:      		ArrayRecord (24.864 MB)
+[92mINFO [0m:      	
+[92mINFO [0m:      	Aggregated ClientApp-side Train Metrics:
+[92mINFO [0m:      	{ 1: { 'metric-dp-distance': '2.3554e-01',
+[92mINFO [0m:      	       'metric-dp-noise-stdv': '5.3069e-02',
+[92mINFO [0m:      	       'train_loss': '1.4118e+00',
+[92mINFO [0m:      	       'train_loss_mean': '1.4118e+00'}}
+[92mINFO [0m:      	
+[92mINFO [0m:      	Aggregated ClientApp-side Evaluate Metrics:
+[92mINFO [0m:      	{1: {'eval_acc': '4.2857e-01', 'eval_loss': '1.9308e+00'}}
+[92mINFO [0m:      	
+[92mINFO [0m:      	ServerApp-side Evaluate Metrics:
+[92mINFO [0m:      	{ 0: {'accuracy': '1.2500e-01', 'loss': '1.4268e+00'},
+[92mINFO [0m:      	  1: {'accuracy': '5.0000e-01', 'loss': '1.6556e+00'}}
+[92mINFO [0m:      
+Experiment result written to /teamspace/studios/this_studio/results/paper_reproduction_runs/smoke__cuda__metric-privacy__fedavg__seed-999.json
+[36m(ClientAppActor pid=7342)[0m Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Result: /teamspace/studios/this_studio/results/paper_reproduction_runs/smoke__cuda__metric-privacy__fedavg__seed-999.json
+Final server metrics: {'loss': 1.65556001663208, 'accuracy': 0.5}
