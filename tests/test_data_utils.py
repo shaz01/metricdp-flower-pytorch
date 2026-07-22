@@ -4,7 +4,24 @@ import pytest
 import torch
 from torch.utils.data import TensorDataset
 
-from metricdp_pytorch.utils.data import NoisyDataset
+from metricdp_pytorch.utils.data import NoisyDataset, make_indexed_loader
+
+
+def test_indexed_loader_uses_parallel_prefetching() -> None:
+    dataset = TensorDataset(torch.ones(4, 3), torch.tensor([0, 1, 0, 1]))
+
+    loader = make_indexed_loader(
+        dataset,
+        range(4),
+        batch_size=2,
+        shuffle=True,
+        seed=9,
+    )
+
+    assert loader.num_workers == 2
+    assert loader.persistent_workers is True
+    assert loader.prefetch_factor == 2
+    assert loader.pin_memory is torch.cuda.is_available()
 
 
 def test_noisy_dataset_is_seeded_and_preserves_labels() -> None:

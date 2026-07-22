@@ -42,7 +42,8 @@ def evaluate_model(
     examples = 0
     with torch.no_grad():
         for images, labels in testloader:
-            images, labels = images.to(device), labels.to(device)
+            images = images.to(device, non_blocking=True)
+            labels = labels.to(device, non_blocking=True)
             probabilities = model(images)
             total_loss += sparse_categorical_cross_entropy(
                 probabilities, labels, reduction="sum"

@@ -50,10 +50,13 @@ def make_indexed_loader(
     batch_size: int,
     shuffle: bool,
     seed: int,
+    num_workers: int = 2,
 ) -> DataLoader:
-    """Create a deterministic DataLoader over a dataset index subset."""
+    """Create a deterministic, accelerator-friendly indexed DataLoader."""
     if batch_size < 1:
         raise ValueError("batch_size must be positive.")
+    if num_workers < 0:
+        raise ValueError("num_workers must be non-negative.")
     selected = list(indices)
     if not selected:
         raise ValueError("Cannot create a loader for an empty index subset.")
@@ -63,6 +66,10 @@ def make_indexed_loader(
         batch_size=batch_size,
         shuffle=shuffle,
         generator=generator if shuffle else None,
+        num_workers=num_workers,
+        pin_memory=torch.cuda.is_available(),
+        persistent_workers=num_workers > 0,
+        prefetch_factor=2 if num_workers > 0 else None,
     )
 
 

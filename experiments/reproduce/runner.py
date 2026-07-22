@@ -19,7 +19,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from metricdp_pytorch.runtime import RUN_CONFIG_ENV
+from metricdp_pytorch.utils.runtime import RUN_CONFIG_ENV
 from metricdp_pytorch.strategy_factory import AGGREGATION_METHODS, PRIVACY_MODES
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
