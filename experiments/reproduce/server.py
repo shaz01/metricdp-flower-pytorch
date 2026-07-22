@@ -17,6 +17,7 @@ from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
 from flwr.serverapp import Grid, ServerApp
 from flwr.serverapp.strategy import Result
 
+from experiments.reproduce.detailed_evaluation import evaluate_state_dict
 from experiments.reproduce.paper_cnn import PaperCNN
 from experiments.reproduce.paper_loss import make_evaluate_fn
 from experiments.reproduce.paper_strategies import create_paper_strategy
@@ -133,6 +134,13 @@ def main(grid: Grid, context: Context) -> None:
             "num_clients": int(config["num-clients"]),
             "rounds": int(config["num-server-rounds"]),
             "local_epochs": int(config.get("local-epochs", 5)),
+            "batch_size": int(config.get("batch-size", 32)),
+            "initialization_batch_size": int(
+                config.get("initialization-batch-size", 32)
+            ),
+            "max_client_samples": int(config.get("max-client-samples", 0)),
+            "max_test_samples": int(config.get("max-test-samples", 0)),
+            "client_weights": str(config.get("client-weights", "")),
             "noise_multiplier": float(config.get("noise-multiplier", 0.01)),
             "clipping_norm": float(config.get("clipping-norm", 5.0)),
             "initialization_pretrained": bool(initialization_losses),
@@ -142,12 +150,27 @@ def main(grid: Grid, context: Context) -> None:
             ),
         }
         path = destination / f"{run_name}.json"
+        serialized_result = result_to_dict(result, metadata)
         path.write_text(
-            json.dumps(result_to_dict(result, metadata), indent=2, allow_nan=False)
-            + "\n",
+            json.dumps(serialized_result, indent=2, allow_nan=False) + "\n",
             encoding="utf-8",
         )
         print(f"Experiment result written to {path}")
+
+        evaluation_path = destination / f"{run_name}.evaluation.json"
+        predictions_path = destination / f"{run_name}.predictions.npz"
+        evaluate_state_dict(
+            state_dict=result.arrays.to_torch_state_dict(),
+            run=serialized_result,
+            run_json_path=path,
+            evaluation_json_path=evaluation_path,
+            predictions_path=predictions_path,
+            data_module=data_module,
+        )
+        print(
+            "Detailed evaluation written to "
+            f"{evaluation_path} and {predictions_path}"
+        )
 
         if save_model:
             torch.save(

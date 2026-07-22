@@ -44,6 +44,21 @@ uv run python -m experiments.reproduce.runner \
 
 Use `--dry-run` to inspect the resolved configuration. The four-client `auto` profile reproduces the exact published client tables; other client counts automatically use scalable partitions. Results are written under `results/reproduce/` by default.
 
+Every run evaluates the final global model directly from memory. It writes `<run-name>.evaluation.json` and `<run-name>.predictions.npz` without creating a checkpoint. The artifacts contain raw labels/probabilities/predictions, confusion matrices, per-class and macro/micro/weighted precision, recall and F1, and one-vs-rest ROC/AUC for the server final-test split and every client's held-out split.
+
+Run the default 36-configuration partition × privacy × aggregation matrix with:
+
+```bash
+uv run python -m experiments.reproduce.matrix_runner \
+  --output-dir results/matrix \
+  --client-gpus 0.25 \
+  --max-parallel-clients 4
+```
+
+The matrix runner validates artifacts, skips completed configurations, retries failures once, and writes `matrix-manifest.json`. Its default is sequential experiment execution; use `--parallel-experiments` only when the machine has enough independent resources for multiple Flower simulations.
+
+A previously saved checkpoint can still be postprocessed with `python -m experiments.reproduce.detailed_evaluation`; pass `--help` for its artifact paths and optional deletion flag.
+
 The data layer is pluggable. Supply a factory implementing `FederatedDataModule` with:
 
 ```bash
