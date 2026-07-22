@@ -70,7 +70,7 @@ def _parser() -> argparse.ArgumentParser:
         default="",
         help="optional cache directory passed to the data-module factory",
     )
-    parser.add_argument("--output-dir", type=Path, default=Path("results/reproduce"))
+    parser.add_argument("--output-dir", type=Path, default=Path("results-reproduce-step1/reproduce"))
     parser.add_argument("--run-name")
     parser.add_argument("--save-model", action="store_true")
     parser.add_argument(

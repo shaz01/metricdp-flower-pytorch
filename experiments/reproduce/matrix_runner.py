@@ -80,7 +80,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--noise-multiplier", type=float, default=0.01)
     parser.add_argument("--clipping-norm", type=float, default=5.0)
     parser.add_argument("--initialization-epochs", type=int, default=20)
-    parser.add_argument("--output-dir", type=Path, default=Path("results/matrix"))
+    parser.add_argument("--output-dir", type=Path, default=Path("results-reproduce-step1/matrix"))
     parser.add_argument("--parallel-experiments", type=int, default=1)
     parser.add_argument("--retries", type=int, default=1)
     parser.add_argument("--max-parallel-clients", type=int, default=2)
