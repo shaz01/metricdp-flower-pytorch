@@ -1,0 +1,541 @@
+START_UTC=2026-07-22T14:18:13Z
+COMMAND=uv run python -m experiments.reproduce.runner --partition homogeneous --privacy metric-privacy --aggregation fedyogi --seed 44 --rounds 20 --local-epochs 5 --batch-size 32 --learning-rate 0.001 --noise-multiplier 0.01 --clipping-norm 5 --num-clients 4 --initialization-epochs 20 --initialization-batch-size 32 --initialization-learning-rate 0.001 --output-dir /teamspace/studios/this_studio/results/paper_reproduction_runs --run-name main__homogeneous__metric-privacy__fedyogi__noise-0.01__seed-44 --max-parallel-clients 4 --client-cpus 2 --client-gpus 0.25 
+NVIDIA L4, 23034 MiB, 0 MiB
+{
+  "partition-mode": "homogeneous",
+  "partition-profile": "auto",
+  "client-weights": "",
+  "data-module": "experiments.reproduce.dataset.alzheimer:create_data_module",
+  "data-cache-dir": "",
+  "privacy": "metric-privacy",
+  "aggregation": "fedyogi",
+  "seed": 44,
+  "num-server-rounds": 20,
+  "num-clients": 4,
+  "fraction-evaluate": 1.0,
+  "local-epochs": 5,
+  "learning-rate": 0.001,
+  "batch-size": 32,
+  "initialization-batch-size": 32,
+  "initialization-epochs": 20,
+  "initialization-learning-rate": 0.001,
+  "max-client-samples": 0,
+  "max-test-samples": 0,
+  "noise-multiplier": 0.01,
+  "clipping-norm": 5.0,
+  "output-dir": "/teamspace/studios/this_studio/results/paper_reproduction_runs",
+  "run-name": "main__homogeneous__metric-privacy__fedyogi__noise-0.01__seed-44",
+  "save-model": false
+}
+[93mWARNING [0m:   DEPRECATED FEATURE: The `run_simulation` function is deprecated and will be removed in a future version of Flower. Please use `flwr run` in the CLI instead to run your simulation. Refer to the Flower Tutorials for more details: https://flower.ai/docs/framework/tutorial-quickstart-pytorch.html
+
+            This is a deprecated feature. It will be removed
+            entirely in future versions of Flower.
+        
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/tmp/paper-reproduction-ued_wbnl/venv/lib/python3.13/site-packages/ray/_private/worker.py:2051: FutureWarning: Tip: In future versions of Ray, Ray will no longer override accelerator visible devices env var if num_gpus=0 or num_gpus=None (default). To enable this behavior and turn off this error message, set RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO=0
+  warnings.warn(
+[92mINFO [0m:      Starting MetricPrivacyServerSideFixedClipping strategy:
+[92mINFO [0m:      	├── Number of rounds: 20
+[92mINFO [0m:      	├── ArrayRecord (24.86 MB)
+[92mINFO [0m:      	├── ConfigRecord (train): {'lr': 0.001}
+[92mINFO [0m:      	├── ConfigRecord (evaluate): (empty!)
+[92mINFO [0m:      	├──> Metric-aware DP settings:
+[92mINFO [0m:      	│	├── Base noise multiplier: 0.01
+[92mINFO [0m:      	│	└── Clipping norm: 5.0
+[92mINFO [0m:      	├──> FedOpt settings:
+[92mINFO [0m:      	│	├── eta (0.01) | eta_l (0.0316)
+[92mINFO [0m:      	│	├── beta_1 (0.9) | beta_2 (0.99)
+[92mINFO [0m:      	│	└── tau (0.001)
+[92mINFO [0m:      	├──> Sampling:
+[92mINFO [0m:      	│	├──Fraction: train (1.00) | evaluate ( 1.00)
+[92mINFO [0m:      	│	├──Minimum nodes: train (4) | evaluate (4)
+[92mINFO [0m:      	│	└──Minimum available nodes: 4
+[92mINFO [0m:      	└──> Keys in records:
+[92mINFO [0m:      		├── Weighted by: 'num-examples'
+[92mINFO [0m:      		├── ArrayRecord key: 'arrays'
+[92mINFO [0m:      		└── ConfigRecord key: 'config'
+[92mINFO [0m:      
+[92mINFO [0m:      Initial global evaluation results: {'loss': 0.9331970423460006, 'accuracy': 0.6203125}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 1/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[36m(ClientAppActor pid=175960)[0m Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.874045
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.006670 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.5183871135814115, 'train_loss_mean': 0.6785792524227873, 'metric-dp-distance': 1.8740448222961277, 'metric-dp-noise-stdv': 0.006670064585053349}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.8458994720131159, 'eval_acc': 0.6298828125}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.8549344807863235, 'accuracy': 0.640625}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 2/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.920344
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.006509 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.44301458075642586, 'train_loss_mean': 0.6154979760758579, 'metric-dp-distance': 1.9203444595138233, 'metric-dp-noise-stdv': 0.0065092488683851256}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.7040026970207691, 'eval_acc': 0.689453125}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.7318198293447494, 'accuracy': 0.684375}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 3/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.879826
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.006650 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.31847741710953414, 'train_loss_mean': 0.5068527791183441, 'metric-dp-distance': 1.8798264170375962, 'metric-dp-noise-stdv': 0.006649550132239684}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.6184100620448589, 'eval_acc': 0.7314453125}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.6651825219392776, 'accuracy': 0.7078125}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 4/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.798555
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.006950 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.2244273464602884, 'train_loss_mean': 0.38037621419061907, 'metric-dp-distance': 1.7985548669627558, 'metric-dp-noise-stdv': 0.006950024283167364}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.5281392866745591, 'eval_acc': 0.7802734375}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.577592222392559, 'accuracy': 0.7578125}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 5/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.679210
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.007444 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.13596417318331078, 'train_loss_mean': 0.2734424751601182, 'metric-dp-distance': 1.679209564443833, 'metric-dp-noise-stdv': 0.007443978562699585}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.5079137668944895, 'eval_acc': 0.7978515625}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.5643291726708413, 'accuracy': 0.79375}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 6/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.546432
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.008083 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.10143119857821148, 'train_loss_mean': 0.20202375835215206, 'metric-dp-distance': 1.5464324664790183, 'metric-dp-noise-stdv': 0.008083120518324683}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.5771589051000774, 'eval_acc': 0.8134765625}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.6718555599451065, 'accuracy': 0.8109375}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 7/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.460858
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.008557 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.08776915640919469, 'train_loss_mean': 0.15547462086688027, 'metric-dp-distance': 1.4608581482898444, 'metric-dp-noise-stdv': 0.008556614490348117}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.6664923848584294, 'eval_acc': 0.8505859375}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.8095327727496624, 'accuracy': 0.84375}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 8/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.374643
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.009093 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.07134020245212014, 'train_loss_mean': 0.13889455203207035, 'metric-dp-distance': 1.3746432017845411, 'metric-dp-noise-stdv': 0.009093268699668894}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.8361424044705927, 'eval_acc': 0.8798828125}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.0361320827156306, 'accuracy': 0.865625}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 9/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.381504
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.009048 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.062052322457475384, 'train_loss_mean': 0.11824325292232062, 'metric-dp-distance': 1.3815040684615572, 'metric-dp-noise-stdv': 0.009048109437650805}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.9541751425713301, 'eval_acc': 0.89453125}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.2262107140384615, 'accuracy': 0.8828125}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 10/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.266523
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.009870 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.05511546204434126, 'train_loss_mean': 0.10022801403047196, 'metric-dp-distance': 1.266522809319819, 'metric-dp-noise-stdv': 0.009869541952199877}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.7960409596562386, 'eval_acc': 0.921875}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.116054620570503, 'accuracy': 0.8953125}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 11/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.358213
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.009203 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.06716343498828792, 'train_loss_mean': 0.08332487569542764, 'metric-dp-distance': 1.358213011175394, 'metric-dp-noise-stdv': 0.009203269220033854}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.7338943983777426, 'eval_acc': 0.9228515625}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.9902401883620768, 'accuracy': 0.909375}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 12/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.336942
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.009350 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.05519642888782528, 'train_loss_mean': 0.06723810951973236, 'metric-dp-distance': 1.336941540435267, 'metric-dp-noise-stdv': 0.009349698264241521}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.6598731246776879, 'eval_acc': 0.94140625}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.7924368956126273, 'accuracy': 0.925}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 13/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.393530
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.008970 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.05007209880403707, 'train_loss_mean': 0.052751949141968166, 'metric-dp-distance': 1.3935302065995832, 'metric-dp-noise-stdv': 0.008970024432051475}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.47294378354854416, 'eval_acc': 0.951171875}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.5433308788924478, 'accuracy': 0.946875}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 14/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.352923
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.009239 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.03994379838320228, 'train_loss_mean': 0.04877398018555468, 'metric-dp-distance': 1.3529228180026014, 'metric-dp-noise-stdv': 0.00923925580503881}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.41095800504263025, 'eval_acc': 0.9462890625}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.4350396755617112, 'accuracy': 0.9515625}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 15/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.311450
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.009531 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.023052102174679234, 'train_loss_mean': 0.040851204014977195, 'metric-dp-distance': 1.3114500879310071, 'metric-dp-noise-stdv': 0.009531434032476577}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.36833178765664343, 'eval_acc': 0.95703125}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.406139311613515, 'accuracy': 0.9484375}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 16/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.364790
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.009159 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.020464413646939475, 'train_loss_mean': 0.034439539160089454, 'metric-dp-distance': 1.364789737155661, 'metric-dp-noise-stdv': 0.009158919985763575}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.340923382434994, 'eval_acc': 0.9560546875}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.3779679425060749, 'accuracy': 0.946875}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 17/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.381513
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.009048 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.022853892751341087, 'train_loss_mean': 0.030738025153203452, 'metric-dp-distance': 1.3815133882453665, 'metric-dp-noise-stdv': 0.009048048398485671}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.3504247831006069, 'eval_acc': 0.9541015625}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.4355437634512782, 'accuracy': 0.9515625}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 18/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.281985
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.009751 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.015219386074838456, 'train_loss_mean': 0.0251383358422845, 'metric-dp-distance': 1.2819852983423818, 'metric-dp-noise-stdv': 0.009750501831934117}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.4039887441904284, 'eval_acc': 0.95703125}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.4898216690868139, 'accuracy': 0.953125}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 19/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.330662
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.009394 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.02319544218493963, 'train_loss_mean': 0.026468713330798626, 'metric-dp-distance': 1.3306621449689071, 'metric-dp-noise-stdv': 0.00939381949600143}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.4824624456523452, 'eval_acc': 0.94921875}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.5445438541355543, 'accuracy': 0.95625}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 20/20]
+[92mINFO [0m:      configure_train: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_train: maximum pairwise model distance: 1.357223
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 4 results and 0 failures
+[92mINFO [0m:      aggregate_train: metric-aware noise with 0.009210 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.028965727409401065, 'train_loss_mean': 0.024302903478017723, 'metric-dp-distance': 1.3572228701474767, 'metric-dp-noise-stdv': 0.009209983323256071}
+[92mINFO [0m:      configure_evaluate: Sampled 4 nodes (out of 4)
+[92mINFO [0m:      aggregate_evaluate: Received 4 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.4718228977289982, 'eval_acc': 0.95703125}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.5916550347930751, 'accuracy': 0.9546875}
+[92mINFO [0m:      
+[92mINFO [0m:      Strategy execution finished in 209.05s
+[92mINFO [0m:      
+[92mINFO [0m:      Final results:
+[92mINFO [0m:      
+[92mINFO [0m:      	Global Arrays:
+[92mINFO [0m:      		ArrayRecord (24.864 MB)
+[92mINFO [0m:      	
+[92mINFO [0m:      	Aggregated ClientApp-side Train Metrics:
+[92mINFO [0m:      	{ 1: { 'metric-dp-distance': '1.8740e+00',
+[92mINFO [0m:      	       'metric-dp-noise-stdv': '6.6701e-03',
+[92mINFO [0m:      	       'train_loss': '5.1839e-01',
+[92mINFO [0m:      	       'train_loss_mean': '6.7858e-01'},
+[92mINFO [0m:      	  2: { 'metric-dp-distance': '1.9203e+00',
+[92mINFO [0m:      	       'metric-dp-noise-stdv': '6.5092e-03',
+[92mINFO [0m:      	       'train_loss': '4.4301e-01',
+[92mINFO [0m:      	       'train_loss_mean': '6.1550e-01'},
+[92mINFO [0m:      	  3: { 'metric-dp-distance': '1.8798e+00',
+[92mINFO [0m:      	       'metric-dp-noise-stdv': '6.6496e-03',
+[92mINFO [0m:      	       'train_loss': '3.1848e-01',
+[92mINFO [0m:      	       'train_loss_mean': '5.0685e-01'},
+[92mINFO [0m:      	  4: { 'metric-dp-distance': '1.7986e+00',
+[92mINFO [0m:      	       'metric-dp-noise-stdv': '6.9500e-03',
+[92mINFO [0m:      	       'train_loss': '2.2443e-01',
+[92mINFO [0m:      	       'train_loss_mean': '3.8038e-01'},
+[92mINFO [0m:      	  5: { 'metric-dp-distance': '1.6792e+00',
+[92mINFO [0m:      	       'metric-dp-noise-stdv': '7.4440e-03',
+[92mINFO [0m:      	       'train_loss': '1.3596e-01',
+[92mINFO [0m:      	       'train_loss_mean': '2.7344e-01'},
+[92mINFO [0m:      	  6: { 'metric-dp-distance': '1.5464e+00',
+[92mINFO [0m:      	       'metric-dp-noise-stdv': '8.0831e-03',
+[92mINFO [0m:      	       'train_loss': '1.0143e-01',
+[92mINFO [0m:      	       'train_loss_mean': '2.0202e-01'},
+[92mINFO [0m:      	  7: { 'metric-dp-distance': '1.4609e+00',
+[92mINFO [0m:      	       'metric-dp-noise-stdv': '8.5566e-03',
+[92mINFO [0m:      	       'train_loss': '8.7769e-02',
+[92mINFO [0m:      	       'train_loss_mean': '1.5547e-01'},
+[92mINFO [0m:      	  8: { 'metric-dp-distance': '1.3746e+00',
+[92mINFO [0m:      	       'metric-dp-noise-stdv': '9.0933e-03',
+[92mINFO [0m:      	       'train_loss': '7.1340e-02',
+[92mINFO [0m:      	       'train_loss_mean': '1.3889e-01'},
+[92mINFO [0m:      	  9: { 'metric-dp-distance': '1.3815e+00',
+[92mINFO [0m:      	       'metric-dp-noise-stdv': '9.0481e-03',
+[92mINFO [0m:      	       'train_loss': '6.2052e-02',
+[92mINFO [0m:      	       'train_loss_mean': '1.1824e-01'},
+[92mINFO [0m:      	  10: { 'metric-dp-distance': '1.2665e+00',
+[92mINFO [0m:      	        'metric-dp-noise-stdv': '9.8695e-03',
+[92mINFO [0m:      	        'train_loss': '5.5115e-02',
+[92mINFO [0m:      	        'train_loss_mean': '1.0023e-01'},
+[92mINFO [0m:      	  11: { 'metric-dp-distance': '1.3582e+00',
+[92mINFO [0m:      	        'metric-dp-noise-stdv': '9.2033e-03',
+[92mINFO [0m:      	        'train_loss': '6.7163e-02',
+[92mINFO [0m:      	        'train_loss_mean': '8.3325e-02'},
+[92mINFO [0m:      	  12: { 'metric-dp-distance': '1.3369e+00',
+[92mINFO [0m:      	        'metric-dp-noise-stdv': '9.3497e-03',
+[92mINFO [0m:      	        'train_loss': '5.5196e-02',
+[92mINFO [0m:      	        'train_loss_mean': '6.7238e-02'},
+[92mINFO [0m:      	  13: { 'metric-dp-distance': '1.3935e+00',
+[92mINFO [0m:      	        'metric-dp-noise-stdv': '8.9700e-03',
+[92mINFO [0m:      	        'train_loss': '5.0072e-02',
+[92mINFO [0m:      	        'train_loss_mean': '5.2752e-02'},
+[92mINFO [0m:      	  14: { 'metric-dp-distance': '1.3529e+00',
+[92mINFO [0m:      	        'metric-dp-noise-stdv': '9.2393e-03',
+[92mINFO [0m:      	        'train_loss': '3.9944e-02',
+[92mINFO [0m:      	        'train_loss_mean': '4.8774e-02'},
+[92mINFO [0m:      	  15: { 'metric-dp-distance': '1.3115e+00',
+[92mINFO [0m:      	        'metric-dp-noise-stdv': '9.5314e-03',
+[92mINFO [0m:      	        'train_loss': '2.3052e-02',
+[92mINFO [0m:      	        'train_loss_mean': '4.0851e-02'},
+[92mINFO [0m:      	  16: { 'metric-dp-distance': '1.3648e+00',
+[92mINFO [0m:      	        'metric-dp-noise-stdv': '9.1589e-03',
+[92mINFO [0m:      	        'train_loss': '2.0464e-02',
+[92mINFO [0m:      	        'train_loss_mean': '3.4440e-02'},
+[92mINFO [0m:      	  17: { 'metric-dp-distance': '1.3815e+00',
+[92mINFO [0m:      	        'metric-dp-noise-stdv': '9.0480e-03',
+[92mINFO [0m:      	        'train_loss': '2.2854e-02',
+[92mINFO [0m:      	        'train_loss_mean': '3.0738e-02'},
+[92mINFO [0m:      	  18: { 'metric-dp-distance': '1.2820e+00',
+[92mINFO [0m:      	        'metric-dp-noise-stdv': '9.7505e-03',
+[92mINFO [0m:      	        'train_loss': '1.5219e-02',
+[92mINFO [0m:      	        'train_loss_mean': '2.5138e-02'},
+[92mINFO [0m:      	  19: { 'metric-dp-distance': '1.3307e+00',
+[92mINFO [0m:      	        'metric-dp-noise-stdv': '9.3938e-03',
+[92mINFO [0m:      	        'train_loss': '2.3195e-02',
+[92mINFO [0m:      	        'train_loss_mean': '2.6469e-02'},
+[92mINFO [0m:      	  20: { 'metric-dp-distance': '1.3572e+00',
+[92mINFO [0m:      	        'metric-dp-noise-stdv': '9.2100e-03',
+[92mINFO [0m:      	        'train_loss': '2.8966e-02',
+[92mINFO [0m:      	        'train_loss_mean': '2.4303e-02'}}
+[92mINFO [0m:      	
+[92mINFO [0m:      	Aggregated ClientApp-side Evaluate Metrics:
+[92mINFO [0m:      	{ 1: {'eval_acc': '6.2988e-01', 'eval_loss': '8.4590e-01'},
+[92mINFO [0m:      	  2: {'eval_acc': '6.8945e-01', 'eval_loss': '7.0400e-01'},
+[92mINFO [0m:      	  3: {'eval_acc': '7.3145e-01', 'eval_loss': '6.1841e-01'},
+[92mINFO [0m:      	  4: {'eval_acc': '7.8027e-01', 'eval_loss': '5.2814e-01'},
+[92mINFO [0m:      	  5: {'eval_acc': '7.9785e-01', 'eval_loss': '5.0791e-01'},
+[92mINFO [0m:      	  6: {'eval_acc': '8.1348e-01', 'eval_loss': '5.7716e-01'},
+[92mINFO [0m:      	  7: {'eval_acc': '8.5059e-01', 'eval_loss': '6.6649e-01'},
+[92mINFO [0m:      	  8: {'eval_acc': '8.7988e-01', 'eval_loss': '8.3614e-01'},
+[92mINFO [0m:      	  9: {'eval_acc': '8.9453e-01', 'eval_loss': '9.5418e-01'},
+[92mINFO [0m:      	  10: {'eval_acc': '9.2188e-01', 'eval_loss': '7.9604e-01'},
+[92mINFO [0m:      	  11: {'eval_acc': '9.2285e-01', 'eval_loss': '7.3389e-01'},
+[92mINFO [0m:      	  12: {'eval_acc': '9.4141e-01', 'eval_loss': '6.5987e-01'},
+[92mINFO [0m:      	  13: {'eval_acc': '9.5117e-01', 'eval_loss': '4.7294e-01'},
+[92mINFO [0m:      	  14: {'eval_acc': '9.4629e-01', 'eval_loss': '4.1096e-01'},
+[92mINFO [0m:      	  15: {'eval_acc': '9.5703e-01', 'eval_loss': '3.6833e-01'},
+[92mINFO [0m:      	  16: {'eval_acc': '9.5605e-01', 'eval_loss': '3.4092e-01'},
+[92mINFO [0m:      	  17: {'eval_acc': '9.5410e-01', 'eval_loss': '3.5042e-01'},
+[92mINFO [0m:      	  18: {'eval_acc': '9.5703e-01', 'eval_loss': '4.0399e-01'},
+[92mINFO [0m:      	  19: {'eval_acc': '9.4922e-01', 'eval_loss': '4.8246e-01'},
+[92mINFO [0m:      	  20: {'eval_acc': '9.5703e-01', 'eval_loss': '4.7182e-01'}}
+[92mINFO [0m:      	
+[92mINFO [0m:      	ServerApp-side Evaluate Metrics:
+[92mINFO [0m:      	{ 0: {'accuracy': '6.2031e-01', 'loss': '9.3320e-01'},
+[92mINFO [0m:      	  1: {'accuracy': '6.4062e-01', 'loss': '8.5493e-01'},
+[92mINFO [0m:      	  2: {'accuracy': '6.8437e-01', 'loss': '7.3182e-01'},
+[92mINFO [0m:      	  3: {'accuracy': '7.0781e-01', 'loss': '6.6518e-01'},
+[92mINFO [0m:      	  4: {'accuracy': '7.5781e-01', 'loss': '5.7759e-01'},
+[92mINFO [0m:      	  5: {'accuracy': '7.9375e-01', 'loss': '5.6433e-01'},
+[92mINFO [0m:      	  6: {'accuracy': '8.1094e-01', 'loss': '6.7186e-01'},
+[92mINFO [0m:      	  7: {'accuracy': '8.4375e-01', 'loss': '8.0953e-01'},
+[92mINFO [0m:      	  8: {'accuracy': '8.6562e-01', 'loss': '1.0361e+00'},
+[92mINFO [0m:      	  9: {'accuracy': '8.8281e-01', 'loss': '1.2262e+00'},
+[92mINFO [0m:      	  10: {'accuracy': '8.9531e-01', 'loss': '1.1161e+00'},
+[92mINFO [0m:      	  11: {'accuracy': '9.0938e-01', 'loss': '9.9024e-01'},
+[92mINFO [0m:      	  12: {'accuracy': '9.2500e-01', 'loss': '7.9244e-01'},
+[92mINFO [0m:      	  13: {'accuracy': '9.4688e-01', 'loss': '5.4333e-01'},
+[92mINFO [0m:      	  14: {'accuracy': '9.5156e-01', 'loss': '4.3504e-01'},
+[92mINFO [0m:      	  15: {'accuracy': '9.4844e-01', 'loss': '4.0614e-01'},
+[92mINFO [0m:      	  16: {'accuracy': '9.4688e-01', 'loss': '3.7797e-01'},
+[92mINFO [0m:      	  17: {'accuracy': '9.5156e-01', 'loss': '4.3554e-01'},
+[92mINFO [0m:      	  18: {'accuracy': '9.5312e-01', 'loss': '4.8982e-01'},
+[92mINFO [0m:      	  19: {'accuracy': '9.5625e-01', 'loss': '5.4454e-01'},
+[92mINFO [0m:      	  20: {'accuracy': '9.5469e-01', 'loss': '5.9166e-01'}}
+[92mINFO [0m:      
+Experiment result written to /teamspace/studios/this_studio/results/paper_reproduction_runs/main__homogeneous__metric-privacy__fedyogi__noise-0.01__seed-44.json
+[36m(ClientAppActor pid=175961)[0m Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.[32m [repeated 3x across cluster] (Ray deduplicates logs by default. Set RAY_DEDUP_LOGS=0 to disable log deduplication, or see https://docs.ray.io/en/master/ray-observability/user-guides/configure-logging.html#log-deduplication for more options.)[0m
+Result: /teamspace/studios/this_studio/results/paper_reproduction_runs/main__homogeneous__metric-privacy__fedyogi__noise-0.01__seed-44.json
+Final server metrics: {'loss': 0.5916550347930751, 'accuracy': 0.9546875}
+EXIT_CODE=0
+END_UTC=2026-07-22T14:22:04Z

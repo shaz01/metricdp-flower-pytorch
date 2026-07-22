@@ -84,7 +84,8 @@ def train_with_adam(
         total_loss = 0.0
         examples = 0
         for images, labels in trainloader:
-            images, labels = images.to(device), labels.to(device)
+            images = images.to(device, non_blocking=True)
+            labels = labels.to(device, non_blocking=True)
             optimizer.zero_grad()
             probabilities = model(images)
             loss = sparse_categorical_cross_entropy(probabilities, labels)
