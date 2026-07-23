@@ -79,15 +79,17 @@ def test_create_initial_model_leaves_fedavg_random(
     assert losses == []
 
 
-def test_proximal_term_uses_flowers_unsquared_per_tensor_norm_convention() -> None:
-    """Matches flwr.serverapp.strategy.FedProx's own docstring example
-    (``(local - global).norm(2)``, summed per tensor, NOT squared) rather
-    than a squared-sum-over-all-parameters norm. The squared-sum convention
-    is mathematically what the paper's formula literally states, but it
-    grows large enough over this model's ~6.5M parameters (dominated by one
+def test_proximal_term_uses_mean_squared_difference_over_all_parameters() -> None:
+    """Matches the ``tf.reduce_mean`` convention idiomatic in TensorFlow/Keras
+    (the paper's actual framework, per Appendix F) rather than PyTorch's
+    ``.norm(2)``/sum convention. Both an unnormalized sum-of-squares and an
+    unsquared sum of per-tensor L2 norms are mathematically defensible
+    readings of the paper's ``(mu/2) * ||w - w^t||^2`` formula, but both grow
+    large enough over this model's ~6.5M parameters (dominated by one
     100352->64 FC layer) to trap real, imbalanced-class training in a
-    trivial majority-class solution -- see the design discussion for the
-    empirical evidence.
+    trivial majority-class solution at mu=0.5 -- see the design discussion
+    for the empirical evidence. Normalizing by total parameter count avoids
+    this and matches the paper's own reported FedProx-equals-FedAvg result.
     """
     model = nn.Linear(2, 2, bias=False)
     with torch.no_grad():
@@ -99,5 +101,5 @@ def test_proximal_term_uses_flowers_unsquared_per_tensor_norm_convention() -> No
 
     term = paper_training.proximal_term(model.parameters(), initial_parameters)
 
-    # ||[[3, 0], [0, 0]]||_2 (per-tensor L2 norm, i.e. sqrt(sum of squares)) = 3.0
-    assert term.item() == pytest.approx(3.0, abs=1e-6)
+    # sum of squares = 3^2 = 9, over 4 total parameters -> mean = 2.25
+    assert term.item() == pytest.approx(2.25, abs=1e-6)

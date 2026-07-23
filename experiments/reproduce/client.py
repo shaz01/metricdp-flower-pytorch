@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-import torch
 from flwr.app import ArrayRecord, Context, Message, MetricRecord, RecordDict
 from flwr.clientapp import ClientApp
 
@@ -13,6 +12,7 @@ from experiments.reproduce.paper_cnn import PaperCNN
 from experiments.reproduce.paper_loss import evaluate_model
 from experiments.reproduce.paper_training import seed_training, train_with_adam
 from metricdp_pytorch.data_module import load_data_module
+from metricdp_pytorch.utils.device import resolve_device
 from metricdp_pytorch.utils.runtime import runtime_config
 
 app = ClientApp()
@@ -65,7 +65,7 @@ def train(msg: Message, context: Context) -> Message:
     model.load_state_dict(msg.content["arrays"].to_torch_state_dict())
     trainloader, _ = _client_data(context)
     train_config = msg.content["config"]
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = resolve_device()
     epoch_losses = train_with_adam(
         model,
         trainloader,
@@ -99,7 +99,7 @@ def evaluate(msg: Message, context: Context) -> Message:
     model = PaperCNN()
     model.load_state_dict(msg.content["arrays"].to_torch_state_dict())
     _, testloader = _client_data(context)
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = resolve_device()
     metrics = evaluate_model(model, testloader, device)
 
     return Message(
