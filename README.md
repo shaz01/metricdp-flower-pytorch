@@ -50,7 +50,7 @@ Run the default 36-configuration partition × privacy × aggregation matrix with
 
 ```bash
 uv run python -m experiments.reproduce.matrix_runner \
-  --output-dir results-reproduce-step1/matrix \
+  --output-dir results-reproduce-paper/matrix \
   --client-gpus 0.25 \
   --max-parallel-clients 4
 ```
