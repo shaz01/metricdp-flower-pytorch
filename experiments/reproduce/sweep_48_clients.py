@@ -12,9 +12,11 @@ noise and produced a real accuracy advantage (+6.9pp homogeneous, +12.2pp
 non-iid) at 8 clients, without collapsing training. This sweep checks
 whether that advantage holds (or grows/shrinks) at 48 clients.
 
-Scoped to fedavg, fedavgm, and fedyogi (matching the reduced aggregation
-list used in the 8-client scaling sweep; fedmedian/fedprox/fedopt dropped
-by request there). Reuses ``experiments.reproduce.runner`` unmodified via
+Scoped to fedavg and fedyogi (matching the reduced aggregation list used
+in the 8-client scaling sweep; fedmedian/fedprox/fedopt dropped by request
+there, and fedavgm further deferred to keep active sweeps small -- it
+returns for the full 6-method paper run). Reuses
+``experiments.reproduce.runner`` unmodified via
 subprocess, exactly like ``sweep_8_clients.py`` and
 ``sweep_noise_multiplier.py``: resumable (skips combinations whose result
 JSON already reports the paper-default number of completed rounds),
@@ -42,7 +44,7 @@ from metricdp_pytorch.strategy_factory import PRIVACY_MODES
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PARTITION_MODES = ("homogeneous", "non-iid")
-AGGREGATION_METHODS_SWEPT = ("fedavg", "fedavgm", "fedyogi")
+AGGREGATION_METHODS_SWEPT = ("fedavg", "fedyogi")
 NUM_CLIENTS = 48
 NOISE_MULTIPLIER = 0.05  # chosen from sweep_noise_multiplier.py's 8-client results
 EXPECTED_ROUNDS = 20  # paper default (pyproject.toml num-server-rounds)

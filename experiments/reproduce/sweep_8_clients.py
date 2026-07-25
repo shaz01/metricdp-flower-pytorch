@@ -32,7 +32,9 @@ from metricdp_pytorch.strategy_factory import PRIVACY_MODES
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PARTITION_MODES = ("homogeneous", "non-iid")
 # fedmedian, fedprox, and fedopt were dropped from this sweep by request.
-SWEEP_AGGREGATION_METHODS = ("fedavg", "fedavgm", "fedyogi")
+# fedavgm is further deferred (not permanently dropped) to keep the active
+# diagnosis/redesign sweeps small; it returns for the full 6-method paper run.
+SWEEP_AGGREGATION_METHODS = ("fedavg", "fedyogi")
 NUM_CLIENTS = 8
 EXPECTED_ROUNDS = 20  # paper default (pyproject.toml num-server-rounds); sweep doesn't override --rounds
 OUTPUT_DIR = PROJECT_ROOT / "results" / "8client_scaling"
