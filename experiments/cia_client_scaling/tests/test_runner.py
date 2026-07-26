@@ -6,6 +6,7 @@ import json
 import subprocess
 from pathlib import Path
 
+from experiments.cia_client_scaling import runner as runner_module
 from experiments.cia_client_scaling.runner import (
     SEED,
     TIMING_CONFIGS,
@@ -186,3 +187,45 @@ def test_run_one_combo_reports_failure_on_nonzero_returncode(
         force=False,
     )
     assert success is False
+
+
+def test_run_cia_client_scaling_continues_past_failed_combo_and_writes_report(
+    tmp_path: Path, monkeypatch
+) -> None:
+    class FakeCompletedProcess:
+        returncode = 0
+
+    monkeypatch.setattr(
+        subprocess, "run", lambda command, cwd=None: FakeCompletedProcess()
+    )
+
+    def fake_evaluate_combo(model_path, *, partition_mode, device):
+        if "fedyogi" in model_path.name:
+            raise RuntimeError("boom")
+        return 0.5, 0.6
+
+    monkeypatch.setattr(runner_module, "evaluate_combo", fake_evaluate_combo)
+
+    results = runner_module.run_cia_client_scaling(
+        output_dir=tmp_path,
+        partition_modes=("homogeneous",),
+        privacy_modes=("vanilla",),
+        aggregations=("fedavg", "fedyogi"),
+        timings=("first-round",),
+        max_parallel_clients=4,
+        force=False,
+    )
+
+    assert len(results) == 1
+    assert results[0].aggregation == "fedavg"
+
+    failed_name = run_name("homogeneous", "first-round", "vanilla", "fedyogi")
+    log_content = (tmp_path / "sweep_progress.log").read_text()
+    assert failed_name in log_content
+    assert "evaluation error" in log_content
+
+    report_path = tmp_path / "cia_client_scaling.json"
+    assert report_path.exists()
+    report_data = json.loads(report_path.read_text())
+    assert len(report_data) == 1
+    assert report_data[0]["aggregation"] == "fedavg"

@@ -235,19 +235,26 @@ def run_cia_client_scaling(
                         _log(log_path, f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
                         continue
 
-                    aggregated_loss, target_loss = evaluate_combo(
-                        model_path, partition_mode=partition_mode, device=device
-                    )
-                    results.append(
-                        make_cia_scaling_result(
-                            partition_mode=partition_mode,
-                            timing=timing,
-                            privacy=privacy,
-                            aggregation=aggregation,
-                            aggregated_test_loss=aggregated_loss,
-                            target_shadow_loss=target_loss,
+                    try:
+                        aggregated_loss, target_loss = evaluate_combo(
+                            model_path, partition_mode=partition_mode, device=device
                         )
-                    )
+                        results.append(
+                            make_cia_scaling_result(
+                                partition_mode=partition_mode,
+                                timing=timing,
+                                privacy=privacy,
+                                aggregation=aggregation,
+                                aggregated_test_loss=aggregated_loss,
+                                target_shadow_loss=target_loss,
+                            )
+                        )
+                    except Exception as error:  # noqa: BLE001 - log and continue the sweep
+                        _log(log_path, f"FAILED {name} (evaluation error: {error})")
+                        failed.append(name)
+                        _log(log_path, f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
+                        continue
+
                     _log(log_path, f"DONE {name}")
                     _log(log_path, f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
 
