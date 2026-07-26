@@ -18,9 +18,21 @@ score for each combination.
 
 from __future__ import annotations
 
+import argparse
 import json
+import subprocess
 import sys
+import time
 from pathlib import Path
+
+import torch
+
+from experiments.cia_client_scaling.attack import CiaScalingResult, make_cia_scaling_result
+from experiments.cia_client_scaling.shadow import target_shadow_loader
+from experiments.reproduce.dataset.alzheimer import AlzheimerDataModule
+from experiments.reproduce.paper_cnn import PaperCNN
+from experiments.reproduce.paper_loss import evaluate_model
+from metricdp_pytorch.strategy_factory import PRIVACY_MODES
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -115,3 +127,177 @@ def is_training_complete(path: Path, *, expected_rounds: int) -> bool:
         int(round_number) for round_number in history if int(round_number) > 0
     ]
     return len(completed_rounds) >= expected_rounds
+
+
+def _log(log_path: Path, message: str) -> None:
+    line = f"{time.strftime('%Y-%m-%d %H:%M:%S')} {message}"
+    print(line, flush=True)
+    with log_path.open("a", encoding="utf-8") as handle:
+        handle.write(line + "\n")
+
+
+def run_one_combo(
+    *,
+    partition_mode: str,
+    timing: str,
+    privacy: str,
+    aggregation: str,
+    output_dir: Path,
+    max_parallel_clients: int,
+    force: bool,
+) -> tuple[Path, bool]:
+    """Run one training combo unless already complete; return (model_path, success)."""
+    name = run_name(partition_mode, timing, privacy, aggregation)
+    result_path = output_dir / f"{name}.json"
+    model_path = output_dir / f"{name}.pt"
+    expected_rounds = int(TIMING_CONFIGS[timing]["rounds"])
+
+    if not force and is_training_complete(result_path, expected_rounds=expected_rounds):
+        return model_path, True
+
+    command = build_reproduce_command(
+        partition_mode=partition_mode,
+        timing=timing,
+        privacy=privacy,
+        aggregation=aggregation,
+        output_dir=output_dir,
+        max_parallel_clients=max_parallel_clients,
+    )
+    result = subprocess.run(command, cwd=PROJECT_ROOT)
+    return model_path, result.returncode == 0
+
+
+def evaluate_combo(
+    model_path: Path,
+    *,
+    partition_mode: str,
+    device: torch.device,
+) -> tuple[float, float]:
+    """Return ``(aggregated_test_loss, target_shadow_loss)`` for one saved model."""
+    model = PaperCNN()
+    model.load_state_dict(torch.load(model_path, map_location="cpu"))
+
+    data_module = AlzheimerDataModule()
+    _validation_loader, test_loader = data_module.server_loaders(
+        batch_size=BATCH_SIZE, seed=SEED
+    )
+    shadow_loader = target_shadow_loader(
+        target_partition_id=TARGET_PARTITION_ID,
+        num_partitions=NUM_CLIENTS,
+        partition_mode=partition_mode,
+        batch_size=BATCH_SIZE,
+        seed=SEED,
+    )
+
+    aggregated_metrics = evaluate_model(model, test_loader, device)
+    target_metrics = evaluate_model(model, shadow_loader, device)
+    return aggregated_metrics["loss"], target_metrics["loss"]
+
+
+def run_cia_client_scaling(
+    *,
+    output_dir: Path,
+    partition_modes: tuple[str, ...] = PARTITION_MODES,
+    privacy_modes: tuple[str, ...] = PRIVACY_MODES,
+    aggregations: tuple[str, ...] = AGGREGATIONS,
+    timings: tuple[str, ...] = TIMINGS,
+    max_parallel_clients: int = 4,
+    force: bool = False,
+) -> list[CiaScalingResult]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    log_path = output_dir / "sweep_progress.log"
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    results: list[CiaScalingResult] = []
+    failed: list[str] = []
+    total = len(partition_modes) * len(privacy_modes) * len(aggregations) * len(timings)
+    completed = 0
+
+    for timing in timings:
+        for partition_mode in partition_modes:
+            for privacy in privacy_modes:
+                for aggregation in aggregations:
+                    name = run_name(partition_mode, timing, privacy, aggregation)
+                    _log(log_path, f"START {name}")
+                    model_path, success = run_one_combo(
+                        partition_mode=partition_mode,
+                        timing=timing,
+                        privacy=privacy,
+                        aggregation=aggregation,
+                        output_dir=output_dir,
+                        max_parallel_clients=max_parallel_clients,
+                        force=force,
+                    )
+                    completed += 1
+                    if not success:
+                        _log(log_path, f"FAILED {name}")
+                        failed.append(name)
+                        _log(log_path, f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
+                        continue
+
+                    aggregated_loss, target_loss = evaluate_combo(
+                        model_path, partition_mode=partition_mode, device=device
+                    )
+                    results.append(
+                        make_cia_scaling_result(
+                            partition_mode=partition_mode,
+                            timing=timing,
+                            privacy=privacy,
+                            aggregation=aggregation,
+                            aggregated_test_loss=aggregated_loss,
+                            target_shadow_loss=target_loss,
+                        )
+                    )
+                    _log(log_path, f"DONE {name}")
+                    _log(log_path, f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
+
+    report_path = output_dir / "cia_client_scaling.json"
+    report_path.write_text(
+        json.dumps([result.__dict__ for result in results], indent=2) + "\n",
+        encoding="utf-8",
+    )
+    if failed:
+        _log(log_path, "Failed combinations: " + ", ".join(failed))
+    return results
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=PROJECT_ROOT / "results" / "cia_client_scaling",
+    )
+    parser.add_argument("--max-parallel-clients", type=int, default=4)
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="rerun every combination even if a complete result already exists",
+    )
+    parser.add_argument(
+        "--timings",
+        default=",".join(TIMINGS),
+        help="comma-separated subset of timings to run",
+    )
+    return parser
+
+
+def main() -> None:
+    args = _parser().parse_args()
+    timings = tuple(part.strip() for part in args.timings.split(",") if part.strip())
+    results = run_cia_client_scaling(
+        output_dir=args.output_dir,
+        timings=timings,
+        max_parallel_clients=args.max_parallel_clients,
+        force=args.force,
+    )
+    for result in results:
+        print(
+            f"{result.timing:16s} {result.partition_mode:12s} {result.privacy:15s} "
+            f"{result.aggregation:8s} agg={result.aggregated_test_loss:.3f} "
+            f"target={result.target_shadow_loss:.3f} diff={result.difference_pct:.3f}%"
+        )
+
+
+if __name__ == "__main__":
+    main()

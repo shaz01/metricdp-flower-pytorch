@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 from experiments.cia_client_scaling.runner import (
@@ -11,6 +12,7 @@ from experiments.cia_client_scaling.runner import (
     build_reproduce_command,
     is_training_complete,
     run_name,
+    run_one_combo,
 )
 
 
@@ -111,3 +113,76 @@ def test_is_training_complete_false_on_unparseable_json(tmp_path: Path) -> None:
     path = tmp_path / "result.json"
     path.write_text("not json")
     assert not is_training_complete(path, expected_rounds=1)
+
+
+def test_run_one_combo_skips_subprocess_when_already_complete(
+    tmp_path: Path, monkeypatch
+) -> None:
+    name = run_name("homogeneous", "first-round", "vanilla", "fedavg")
+    result_path = tmp_path / f"{name}.json"
+    result_path.write_text(json.dumps({"server_evaluate_metrics": {"0": {}, "1": {}}}))
+
+    def fail_if_called(*_args, **_kwargs):
+        raise AssertionError("subprocess.run should not be called when already complete")
+
+    monkeypatch.setattr(subprocess, "run", fail_if_called)
+
+    model_path, success = run_one_combo(
+        partition_mode="homogeneous",
+        timing="first-round",
+        privacy="vanilla",
+        aggregation="fedavg",
+        output_dir=tmp_path,
+        max_parallel_clients=4,
+        force=False,
+    )
+    assert success is True
+    assert model_path == tmp_path / f"{name}.pt"
+
+
+def test_run_one_combo_runs_subprocess_when_incomplete(
+    tmp_path: Path, monkeypatch
+) -> None:
+    calls: list[list[str]] = []
+
+    class FakeCompletedProcess:
+        returncode = 0
+
+    def fake_run(command, cwd=None):
+        calls.append(command)
+        return FakeCompletedProcess()
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    _model_path, success = run_one_combo(
+        partition_mode="non-iid",
+        timing="post-convergence",
+        privacy="metric-privacy",
+        aggregation="fedyogi",
+        output_dir=tmp_path,
+        max_parallel_clients=4,
+        force=False,
+    )
+    assert success is True
+    assert len(calls) == 1
+    assert "--rounds 20" in " ".join(calls[0])
+
+
+def test_run_one_combo_reports_failure_on_nonzero_returncode(
+    tmp_path: Path, monkeypatch
+) -> None:
+    class FakeFailedProcess:
+        returncode = 1
+
+    monkeypatch.setattr(subprocess, "run", lambda command, cwd=None: FakeFailedProcess())
+
+    _model_path, success = run_one_combo(
+        partition_mode="homogeneous",
+        timing="first-round",
+        privacy="vanilla",
+        aggregation="fedavg",
+        output_dir=tmp_path,
+        max_parallel_clients=4,
+        force=False,
+    )
+    assert success is False
