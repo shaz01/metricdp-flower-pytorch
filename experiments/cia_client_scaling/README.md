@@ -31,6 +31,17 @@ paper's "strong adversarial assumption". Reports
 `(target_loss - aggregated_loss) / target_loss * 100` per combination,
 mirroring `experiments/cia/`'s Table 12 structure.
 
+**Caveat on shadow-sample size at this scale:** at 48 clients, 10% of the
+target client's own (already much smaller) per-client partition works out
+to roughly 8-15 images, versus ~150 in the original 3-client
+`experiments/cia/` experiment. The 10% fraction is kept as-is to stay
+faithful to the paper's methodology, but `difference_pct` computed from a
+handful of images is noisier than the 3-client numbers it's tempting to
+compare it against. Every result row includes `shadow_size` for exactly
+this reason — read `difference_pct` alongside it, and don't compare
+`difference_pct` directly against `experiments/cia/`'s numbers without
+accounting for the sample-size gap.
+
 ## Running it
 
 ```bash
@@ -38,16 +49,30 @@ uv run python -m experiments.cia_client_scaling.runner --output-dir results/cia_
 ```
 
 This is resumable: rerunning skips any combo/timing whose training result
-JSON already shows the expected number of completed rounds. Pass `--force`
-to ignore existing results and rerun everything, or `--timings first-round`
-(or `--timings post-convergence`) to run only one variant — useful given
-the post-convergence variant is a full 20-round, 48-client training per
-combo and the more expensive half of this sweep.
+JSON already shows the expected number of completed rounds *and* whose
+`.pt` checkpoint is actually present on disk. Pass `--force` to ignore
+existing results and rerun everything, or `--timings first-round` (or
+`--timings post-convergence`) to run only one variant — useful given the
+post-convergence variant is a full 20-round, 48-client training per combo
+and the more expensive half of this sweep.
 
-Results are written to
-`results/cia_client_scaling/cia_client_scaling.json` (one record per
-combo/timing) and printed to stdout. Per-combo raw training JSONs and saved
-model checkpoints (`*.pt`) live alongside it in the same directory.
+At 48 clients, per-round work (and Ray actor memory) is substantially
+higher than the smaller-scale experiments this one builds on. `--max-parallel-clients`
+(default 4) controls how many client processes run concurrently; lower it
+if you hit memory pressure on your machine, at the cost of slower rounds.
+
+Results are written to `results/cia_client_scaling/cia_client_scaling.json`
+and printed to stdout. The report file is a `{"results": [...], "failed":
+[...]}` object, not a flat list: `results` holds one record per
+combo/timing (each including `shadow_size` — see the caveat above), and
+`failed` lists the run names that errored out. Because the report is keyed
+by `(timing, partition_mode, privacy, aggregation)` and rewritten after
+every combo, running `--timings first-round` and `--timings
+post-convergence` as two separate invocations merges both sets of results
+into the same file instead of the second invocation overwriting the
+first, and a crash mid-sweep loses at most the one combo in flight. Per-combo
+raw training JSONs and saved model checkpoints (`*.pt`) live alongside the
+report in the same directory.
 
 ## Comparing results
 

@@ -6,12 +6,15 @@ import json
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from experiments.cia_client_scaling import runner as runner_module
 from experiments.cia_client_scaling.runner import (
     SEED,
     TIMING_CONFIGS,
     build_reproduce_command,
     is_training_complete,
+    main,
     run_name,
     run_one_combo,
 )
@@ -122,6 +125,7 @@ def test_run_one_combo_skips_subprocess_when_already_complete(
     name = run_name("homogeneous", "first-round", "vanilla", "fedavg")
     result_path = tmp_path / f"{name}.json"
     result_path.write_text(json.dumps({"server_evaluate_metrics": {"0": {}, "1": {}}}))
+    (tmp_path / f"{name}.pt").write_bytes(b"fake-checkpoint")
 
     def fail_if_called(*_args, **_kwargs):
         raise AssertionError("subprocess.run should not be called when already complete")
@@ -202,7 +206,7 @@ def test_run_cia_client_scaling_continues_past_failed_combo_and_writes_report(
     def fake_evaluate_combo(model_path, *, partition_mode, device):
         if "fedyogi" in model_path.name:
             raise RuntimeError("boom")
-        return 0.5, 0.6
+        return 0.5, 0.6, 9
 
     monkeypatch.setattr(runner_module, "evaluate_combo", fake_evaluate_combo)
 
@@ -227,5 +231,136 @@ def test_run_cia_client_scaling_continues_past_failed_combo_and_writes_report(
     report_path = tmp_path / "cia_client_scaling.json"
     assert report_path.exists()
     report_data = json.loads(report_path.read_text())
-    assert len(report_data) == 1
-    assert report_data[0]["aggregation"] == "fedavg"
+    assert len(report_data["results"]) == 1
+    assert report_data["results"][0]["aggregation"] == "fedavg"
+    assert report_data["results"][0]["shadow_size"] == 9
+    assert report_data["failed"] == [failed_name]
+
+
+def test_run_one_combo_retrains_when_result_json_complete_but_checkpoint_missing(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """A crash between server.py writing the JSON and saving the .pt file must
+    not be mistaken for a complete, resumable combo (Fix 2)."""
+    name = run_name("homogeneous", "first-round", "vanilla", "fedavg")
+    result_path = tmp_path / f"{name}.json"
+    result_path.write_text(json.dumps({"server_evaluate_metrics": {"0": {}, "1": {}}}))
+    # Deliberately no {name}.pt written alongside it.
+
+    calls: list[list[str]] = []
+
+    class FakeCompletedProcess:
+        returncode = 0
+
+    def fake_run(command, cwd=None):
+        calls.append(command)
+        return FakeCompletedProcess()
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    model_path, success = run_one_combo(
+        partition_mode="homogeneous",
+        timing="first-round",
+        privacy="vanilla",
+        aggregation="fedavg",
+        output_dir=tmp_path,
+        max_parallel_clients=4,
+        force=False,
+    )
+    assert success is True
+    assert model_path == tmp_path / f"{name}.pt"
+    assert len(calls) == 1, "training should be retried when the checkpoint is missing"
+
+
+def test_run_cia_client_scaling_merges_across_separate_invocations(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Running first-round then post-convergence separately must not clobber
+    the first invocation's results (Fix 1)."""
+    monkeypatch.setattr(
+        subprocess, "run", lambda command, cwd=None: type("P", (), {"returncode": 0})()
+    )
+    monkeypatch.setattr(
+        runner_module, "evaluate_combo", lambda model_path, *, partition_mode, device: (0.5, 0.6, 10)
+    )
+
+    runner_module.run_cia_client_scaling(
+        output_dir=tmp_path,
+        partition_modes=("homogeneous",),
+        privacy_modes=("vanilla",),
+        aggregations=("fedavg",),
+        timings=("first-round",),
+        max_parallel_clients=4,
+        force=False,
+    )
+    runner_module.run_cia_client_scaling(
+        output_dir=tmp_path,
+        partition_modes=("homogeneous",),
+        privacy_modes=("vanilla",),
+        aggregations=("fedavg",),
+        timings=("post-convergence",),
+        max_parallel_clients=4,
+        force=False,
+    )
+
+    report_data = json.loads((tmp_path / "cia_client_scaling.json").read_text())
+    timings_present = {row["timing"] for row in report_data["results"]}
+    assert timings_present == {"first-round", "post-convergence"}
+    assert len(report_data["results"]) == 2
+
+
+def test_run_cia_client_scaling_replaces_stale_entry_for_same_combo(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Re-running a combo (e.g. with --force) should replace its old report
+    row rather than duplicating it (Fix 1)."""
+    monkeypatch.setattr(
+        subprocess, "run", lambda command, cwd=None: type("P", (), {"returncode": 0})()
+    )
+
+    monkeypatch.setattr(
+        runner_module, "evaluate_combo", lambda model_path, *, partition_mode, device: (1.0, 1.0, 10)
+    )
+    runner_module.run_cia_client_scaling(
+        output_dir=tmp_path,
+        partition_modes=("homogeneous",),
+        privacy_modes=("vanilla",),
+        aggregations=("fedavg",),
+        timings=("first-round",),
+        max_parallel_clients=4,
+        force=False,
+    )
+
+    monkeypatch.setattr(
+        runner_module, "evaluate_combo", lambda model_path, *, partition_mode, device: (0.2, 0.4, 12)
+    )
+    runner_module.run_cia_client_scaling(
+        output_dir=tmp_path,
+        partition_modes=("homogeneous",),
+        privacy_modes=("vanilla",),
+        aggregations=("fedavg",),
+        timings=("first-round",),
+        max_parallel_clients=4,
+        force=True,
+    )
+
+    report_data = json.loads((tmp_path / "cia_client_scaling.json").read_text())
+    assert len(report_data["results"]) == 1
+    assert report_data["results"][0]["shadow_size"] == 12
+    assert report_data["results"][0]["aggregated_test_loss"] == pytest.approx(0.2)
+
+
+def test_main_rejects_invalid_timings_before_running_sweep(monkeypatch) -> None:
+    """A typo in --timings must be caught instantly, before any subprocess
+    call, instead of failing hours into a sweep (Fix 3)."""
+
+    def fail_if_called(*_args, **_kwargs):
+        raise AssertionError("run_cia_client_scaling should not be called")
+
+    monkeypatch.setattr(runner_module, "run_cia_client_scaling", fail_if_called)
+    monkeypatch.setattr(
+        "sys.argv", ["prog", "--timings", "post-convergence,frist-round"]
+    )
+
+    with pytest.raises(SystemExit):
+        main()

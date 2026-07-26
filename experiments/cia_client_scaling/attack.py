@@ -19,6 +19,7 @@ class CiaScalingResult:
     aggregation: str
     aggregated_test_loss: float
     target_shadow_loss: float
+    shadow_size: int
     difference_pct: float
 
 
@@ -30,6 +31,7 @@ def make_cia_scaling_result(
     aggregation: str,
     aggregated_test_loss: float,
     target_shadow_loss: float,
+    shadow_size: int,
 ) -> CiaScalingResult:
     return CiaScalingResult(
         partition_mode=partition_mode,
@@ -38,5 +40,6 @@ def make_cia_scaling_result(
         aggregation=aggregation,
         aggregated_test_loss=aggregated_test_loss,
         target_shadow_loss=target_shadow_loss,
+        shadow_size=shadow_size,
         difference_pct=relative_difference(aggregated_test_loss, target_shadow_loss),
     )

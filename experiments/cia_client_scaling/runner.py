@@ -152,7 +152,11 @@ def run_one_combo(
     model_path = output_dir / f"{name}.pt"
     expected_rounds = int(TIMING_CONFIGS[timing]["rounds"])
 
-    if not force and is_training_complete(result_path, expected_rounds=expected_rounds):
+    if (
+        not force
+        and is_training_complete(result_path, expected_rounds=expected_rounds)
+        and model_path.exists()
+    ):
         return model_path, True
 
     command = build_reproduce_command(
@@ -172,8 +176,9 @@ def evaluate_combo(
     *,
     partition_mode: str,
     device: torch.device,
-) -> tuple[float, float]:
-    """Return ``(aggregated_test_loss, target_shadow_loss)`` for one saved model."""
+) -> tuple[float, float, int]:
+    """Return ``(aggregated_test_loss, target_shadow_loss, shadow_size)`` for
+    one saved model."""
     model = PaperCNN()
     model.load_state_dict(torch.load(model_path, map_location="cpu"))
 
@@ -191,7 +196,26 @@ def evaluate_combo(
 
     aggregated_metrics = evaluate_model(model, test_loader, device)
     target_metrics = evaluate_model(model, shadow_loader, device)
-    return aggregated_metrics["loss"], target_metrics["loss"]
+    shadow_size = len(shadow_loader.dataset)
+    return aggregated_metrics["loss"], target_metrics["loss"], shadow_size
+
+
+def _load_existing_report(
+    report_path: Path,
+) -> tuple[dict[tuple[str, str, str, str], dict], list[str]]:
+    """Load a prior run's report (if any) so a new invocation merges into it
+    instead of clobbering it. Returns (results_by_key, failed)."""
+    if not report_path.exists():
+        return {}, []
+    try:
+        data = json.loads(report_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}, []
+    results_by_key = {
+        (row["timing"], row["partition_mode"], row["privacy"], row["aggregation"]): row
+        for row in data.get("results", [])
+    }
+    return results_by_key, list(data.get("failed", []))
 
 
 def run_cia_client_scaling(
@@ -206,10 +230,20 @@ def run_cia_client_scaling(
 ) -> list[CiaScalingResult]:
     output_dir.mkdir(parents=True, exist_ok=True)
     log_path = output_dir / "sweep_progress.log"
+    report_path = output_dir / "cia_client_scaling.json"
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    results: list[CiaScalingResult] = []
-    failed: list[str] = []
+    results_by_key, failed = _load_existing_report(report_path)
+
+    def _write_report() -> None:
+        report_path.write_text(
+            json.dumps(
+                {"results": list(results_by_key.values()), "failed": failed}, indent=2
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
     total = len(partition_modes) * len(privacy_modes) * len(aggregations) * len(timings)
     completed = 0
 
@@ -218,6 +252,7 @@ def run_cia_client_scaling(
             for privacy in privacy_modes:
                 for aggregation in aggregations:
                     name = run_name(partition_mode, timing, privacy, aggregation)
+                    key = (timing, partition_mode, privacy, aggregation)
                     _log(log_path, f"START {name}")
                     model_path, success = run_one_combo(
                         partition_mode=partition_mode,
@@ -231,41 +266,43 @@ def run_cia_client_scaling(
                     completed += 1
                     if not success:
                         _log(log_path, f"FAILED {name}")
-                        failed.append(name)
+                        if name not in failed:
+                            failed.append(name)
                         _log(log_path, f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
+                        _write_report()
                         continue
 
                     try:
-                        aggregated_loss, target_loss = evaluate_combo(
+                        aggregated_loss, target_loss, shadow_size = evaluate_combo(
                             model_path, partition_mode=partition_mode, device=device
                         )
-                        results.append(
-                            make_cia_scaling_result(
-                                partition_mode=partition_mode,
-                                timing=timing,
-                                privacy=privacy,
-                                aggregation=aggregation,
-                                aggregated_test_loss=aggregated_loss,
-                                target_shadow_loss=target_loss,
-                            )
+                        result = make_cia_scaling_result(
+                            partition_mode=partition_mode,
+                            timing=timing,
+                            privacy=privacy,
+                            aggregation=aggregation,
+                            aggregated_test_loss=aggregated_loss,
+                            target_shadow_loss=target_loss,
+                            shadow_size=shadow_size,
                         )
                     except Exception as error:  # noqa: BLE001 - log and continue the sweep
                         _log(log_path, f"FAILED {name} (evaluation error: {error})")
-                        failed.append(name)
+                        if name not in failed:
+                            failed.append(name)
                         _log(log_path, f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
+                        _write_report()
                         continue
 
+                    results_by_key[key] = result.__dict__
+                    if name in failed:
+                        failed.remove(name)
                     _log(log_path, f"DONE {name}")
                     _log(log_path, f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
+                    _write_report()
 
-    report_path = output_dir / "cia_client_scaling.json"
-    report_path.write_text(
-        json.dumps([result.__dict__ for result in results], indent=2) + "\n",
-        encoding="utf-8",
-    )
     if failed:
         _log(log_path, "Failed combinations: " + ", ".join(failed))
-    return results
+    return [CiaScalingResult(**row) for row in results_by_key.values()]
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -290,8 +327,14 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
-    args = _parser().parse_args()
+    parser = _parser()
+    args = parser.parse_args()
     timings = tuple(part.strip() for part in args.timings.split(",") if part.strip())
+    invalid = [timing for timing in timings if timing not in TIMINGS]
+    if invalid:
+        parser.error(
+            f"invalid --timings value(s) {invalid!r}; must be a subset of {list(TIMINGS)}"
+        )
     results = run_cia_client_scaling(
         output_dir=args.output_dir,
         timings=timings,
@@ -302,7 +345,8 @@ def main() -> None:
         print(
             f"{result.timing:16s} {result.partition_mode:12s} {result.privacy:15s} "
             f"{result.aggregation:8s} agg={result.aggregated_test_loss:.3f} "
-            f"target={result.target_shadow_loss:.3f} diff={result.difference_pct:.3f}%"
+            f"target={result.target_shadow_loss:.3f} shadow_n={result.shadow_size} "
+            f"diff={result.difference_pct:.3f}%"
         )
 
 
