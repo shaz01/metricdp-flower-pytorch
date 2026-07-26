@@ -1,0 +1,113 @@
+"""Fast config-plumbing tests for the 48-client CIA runner (no real training)."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from experiments.cia_client_scaling.runner import (
+    SEED,
+    TIMING_CONFIGS,
+    build_reproduce_command,
+    is_training_complete,
+    run_name,
+)
+
+
+def test_timing_configs_match_design_spec() -> None:
+    assert TIMING_CONFIGS["first-round"] == {
+        "rounds": 1,
+        "local_epochs": 20,
+        "noise_multiplier": 0.01,
+        "clipping_norm": 5.0,
+    }
+    assert TIMING_CONFIGS["post-convergence"] == {
+        "rounds": 20,
+        "local_epochs": 5,
+        "noise_multiplier": 0.05,
+        "clipping_norm": 5.0,
+    }
+
+
+def test_run_name_is_stable_and_readable() -> None:
+    assert (
+        run_name("homogeneous", "first-round", "vanilla", "fedavg")
+        == "cia_scaling__first-round__homogeneous__vanilla__fedavg"
+    )
+    assert (
+        run_name("non-iid", "post-convergence", "metric-privacy", "fedyogi")
+        == "cia_scaling__post-convergence__non-iid__metric-privacy__fedyogi"
+    )
+
+
+def test_build_reproduce_command_first_round(tmp_path: Path) -> None:
+    command = build_reproduce_command(
+        partition_mode="homogeneous",
+        timing="first-round",
+        privacy="global-dp",
+        aggregation="fedyogi",
+        output_dir=tmp_path,
+        max_parallel_clients=4,
+    )
+    joined = " ".join(str(part) for part in command)
+    assert "experiments.reproduce.runner" in joined
+    assert "--num-clients 48" in joined
+    assert "--partition homogeneous" in joined
+    assert "--privacy global-dp" in joined
+    assert "--aggregation fedyogi" in joined
+    assert "--rounds 1" in joined
+    assert "--local-epochs 20" in joined
+    assert "--noise-multiplier 0.01" in joined
+    assert "--clipping-norm 5.0" in joined
+    assert f"--seed {SEED}" in joined
+    assert (
+        "--run-name cia_scaling__first-round__homogeneous__global-dp__fedyogi"
+        in joined
+    )
+    assert "--save-model" in joined
+    assert "--max-parallel-clients 4" in joined
+
+
+def test_build_reproduce_command_post_convergence(tmp_path: Path) -> None:
+    command = build_reproduce_command(
+        partition_mode="non-iid",
+        timing="post-convergence",
+        privacy="vanilla",
+        aggregation="fedavg",
+        output_dir=tmp_path,
+        max_parallel_clients=4,
+    )
+    joined = " ".join(str(part) for part in command)
+    assert "--rounds 20" in joined
+    assert "--local-epochs 5" in joined
+    assert "--noise-multiplier 0.05" in joined
+    assert (
+        "--run-name cia_scaling__post-convergence__non-iid__vanilla__fedavg"
+        in joined
+    )
+
+
+def test_is_training_complete_true_when_expected_rounds_present(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "result.json"
+    path.write_text(
+        json.dumps({"server_evaluate_metrics": {"0": {}, "1": {}, "2": {}}})
+    )
+    assert is_training_complete(path, expected_rounds=2)
+
+
+def test_is_training_complete_false_when_missing(tmp_path: Path) -> None:
+    assert not is_training_complete(tmp_path / "missing.json", expected_rounds=1)
+
+
+def test_is_training_complete_false_when_short_of_rounds(tmp_path: Path) -> None:
+    path = tmp_path / "result.json"
+    path.write_text(json.dumps({"server_evaluate_metrics": {"0": {}, "1": {}}}))
+    assert not is_training_complete(path, expected_rounds=5)
+
+
+def test_is_training_complete_false_on_unparseable_json(tmp_path: Path) -> None:
+    path = tmp_path / "result.json"
+    path.write_text("not json")
+    assert not is_training_complete(path, expected_rounds=1)
