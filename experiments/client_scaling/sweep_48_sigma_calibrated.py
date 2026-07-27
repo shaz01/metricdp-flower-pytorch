@@ -23,6 +23,14 @@ unconverged baseline. FedYogi reaches 0.9109 vanilla at the same budget.
 ``vanilla`` ignores ``noise_multiplier`` and ``clipping_norm`` entirely, so it
 is run once per partition as the reference rather than once per sigma.
 
+Runs are forced offline against the local HuggingFace cache. ``client.py``
+rebuilds the data module per client per round, so a 48-client 20-round run makes
+~960 ``load_dataset`` calls; each one revalidates against the Hub, and 12
+concurrent unauthenticated actors get rate-limited into multi-minute backoff.
+Measured cold load: 155.94s online vs 0.10s offline. ``--allow-hf-network``
+opts out, and a preflight check fails fast if the cache cannot serve the
+dataset offline.
+
 Client actors need an explicit ``--client-gpus`` share: the runner defaults it
 to 0.0, and Ray then overrides ``CUDA_VISIBLE_DEVICES`` inside each actor so
 clients silently train on CPU. Measured at 48 clients / 12 parallel actors,
@@ -42,6 +50,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -65,6 +74,9 @@ NOISE_MULTIPLIERS = (0.12, 0.30, 0.60)
 MAX_PARALLEL_CLIENTS = 12
 CLIENT_GPUS = 0.08
 EXPECTED_ROUNDS = 20  # paper default (pyproject.toml num-server-rounds)
+
+# Pin every subprocess to the local HF cache; see module docstring.
+HF_OFFLINE_ENV = {"HF_HUB_OFFLINE": "1", "HF_DATASETS_OFFLINE": "1"}
 OUTPUT_DIR = PROJECT_ROOT / "results" / "sigma_calibration"
 LOG_PATH = OUTPUT_DIR / "sweep_progress.log"
 
@@ -78,6 +90,45 @@ def effective_sigma(noise_multiplier: float) -> float:
     with the logged ``metric-dp-distance``.
     """
     return noise_multiplier * CLIPPING_NORM / NUM_CLIENTS
+
+
+def subprocess_env(*, offline: bool) -> dict[str, str]:
+    """Return the child environment, optionally pinned to the local HF cache."""
+    env = os.environ.copy()
+    if offline:
+        env.update(HF_OFFLINE_ENV)
+    return env
+
+
+def preflight_dataset_cache(*, offline: bool) -> None:
+    """Fail fast if the dataset cannot be materialised under the chosen mode.
+
+    Running offline against a cold cache would otherwise fail 14 times in a row,
+    once per combination, after paying Ray startup each time.
+    """
+    probe = [
+        sys.executable,
+        "-c",
+        "from experiments.reproduce.dataset.alzheimer import load_alzheimer_dataset;"
+        " d = load_alzheimer_dataset();"
+        " print({k: len(v) for k, v in d.items()})",
+    ]
+    result = subprocess.run(
+        probe,
+        cwd=PROJECT_ROOT,
+        env=subprocess_env(offline=offline),
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        mode = "offline" if offline else "online"
+        raise SystemExit(
+            f"Preflight dataset load failed ({mode}). Warm the cache once with\n"
+            f"  uv run python -m experiments.client_scaling.sweep_48_sigma_calibrated "
+            f"--allow-hf-network\n"
+            f"or pre-download the dataset, then rerun.\n\n{result.stderr.strip()[-2000:]}"
+        )
+    _log(f"Preflight dataset load OK (offline={offline}): {result.stdout.strip()}")
 
 
 def _log(message: str) -> None:
@@ -130,6 +181,7 @@ def run_one_combo(
     force: bool,
     max_parallel_clients: int,
     client_gpus: float,
+    offline: bool,
 ) -> bool:
     """Run one combination; return True on success (or already-complete)."""
     name = run_name(partition, privacy, noise_multiplier)
@@ -175,7 +227,7 @@ def run_one_combo(
     else:
         _log(f"START {name} (nm={noise_multiplier}, sigma={effective_sigma(noise_multiplier):.3e})")
     started = time.monotonic()
-    result = subprocess.run(command, cwd=PROJECT_ROOT)
+    result = subprocess.run(command, cwd=PROJECT_ROOT, env=subprocess_env(offline=offline))
     elapsed = time.monotonic() - started
     if result.returncode == 0:
         _log(f"DONE  {name} ({elapsed:.1f}s)")
@@ -218,12 +270,19 @@ def _parser() -> argparse.ArgumentParser:
         default=CLIENT_GPUS,
         help="logical GPU share per client actor; 0.0 forces CPU-only clients",
     )
+    parser.add_argument(
+        "--allow-hf-network",
+        action="store_true",
+        help="permit HuggingFace Hub access instead of pinning to the local cache",
+    )
     return parser
 
 
 def main() -> None:
     args = _parser().parse_args()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    offline = not args.allow_hf_network
+    preflight_dataset_cache(offline=offline)
     combos = iter_combos()
     sigma_grid = ", ".join(
         f"nm={nm:g}->sigma={effective_sigma(nm):.3e}" for nm in NOISE_MULTIPLIERS
@@ -232,7 +291,7 @@ def main() -> None:
         f"Sweep starting: {len(combos)} combinations, num_clients={NUM_CLIENTS}, "
         f"aggregation={AGGREGATION}, clipping_norm={CLIPPING_NORM}, seed={SEED}, "
         f"grid=[{sigma_grid}], max_parallel_clients={args.max_parallel_clients}, "
-        f"client_gpus={args.client_gpus}, force={args.force}"
+        f"client_gpus={args.client_gpus}, hf_offline={offline}, force={args.force}"
     )
 
     completed = 0
@@ -245,6 +304,7 @@ def main() -> None:
             force=args.force,
             max_parallel_clients=args.max_parallel_clients,
             client_gpus=args.client_gpus,
+            offline=offline,
         )
         completed += 1
         if not ok:
