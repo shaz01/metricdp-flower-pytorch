@@ -23,6 +23,14 @@ unconverged baseline. FedYogi reaches 0.9109 vanilla at the same budget.
 ``vanilla`` ignores ``noise_multiplier`` and ``clipping_norm`` entirely, so it
 is run once per partition as the reference rather than once per sigma.
 
+Client actors need an explicit ``--client-gpus`` share: the runner defaults it
+to 0.0, and Ray then overrides ``CUDA_VISIBLE_DEVICES`` inside each actor so
+clients silently train on CPU. Measured at 48 clients / 12 parallel actors,
+3 rounds x 5 epochs: 231s with ``client_gpus=0.0`` vs 75s with ``0.08``.
+Because client training moves to the GPU, results are not bit-comparable with
+the earlier CPU-only sweeps, which is why this sweep carries its own vanilla
+reference rather than reusing ``results/48client_scaling``.
+
 Reuses ``experiments.reproduce.runner`` unmodified via subprocess, exactly like
 ``sweep_48_clients.py``: resumable (skips combinations whose result JSON already
 reports the expected number of completed rounds), continues past a failing
@@ -53,7 +61,9 @@ LOCAL_EPOCHS = 5
 # nm = sigma * N / C, chosen to reproduce the three regimes found at 8 clients.
 NOISE_MULTIPLIERS = (0.12, 0.30, 0.60)
 
-MAX_PARALLEL_CLIENTS = 4
+# 12 actors x 0.08 logical GPUs = 0.96, so all 12 stay co-resident on one GPU.
+MAX_PARALLEL_CLIENTS = 12
+CLIENT_GPUS = 0.08
 EXPECTED_ROUNDS = 20  # paper default (pyproject.toml num-server-rounds)
 OUTPUT_DIR = PROJECT_ROOT / "results" / "sigma_calibration"
 LOG_PATH = OUTPUT_DIR / "sweep_progress.log"
@@ -119,6 +129,7 @@ def run_one_combo(
     *,
     force: bool,
     max_parallel_clients: int,
+    client_gpus: float,
 ) -> bool:
     """Run one combination; return True on success (or already-complete)."""
     name = run_name(partition, privacy, noise_multiplier)
@@ -149,6 +160,8 @@ def run_one_combo(
         str(SEED),
         "--max-parallel-clients",
         str(max_parallel_clients),
+        "--client-gpus",
+        str(client_gpus),
         "--output-dir",
         str(OUTPUT_DIR),
         "--run-name",
@@ -199,6 +212,12 @@ def _parser() -> argparse.ArgumentParser:
         default=MAX_PARALLEL_CLIENTS,
         help="cap simultaneous Ray actors to control memory use",
     )
+    parser.add_argument(
+        "--client-gpus",
+        type=float,
+        default=CLIENT_GPUS,
+        help="logical GPU share per client actor; 0.0 forces CPU-only clients",
+    )
     return parser
 
 
@@ -213,7 +232,7 @@ def main() -> None:
         f"Sweep starting: {len(combos)} combinations, num_clients={NUM_CLIENTS}, "
         f"aggregation={AGGREGATION}, clipping_norm={CLIPPING_NORM}, seed={SEED}, "
         f"grid=[{sigma_grid}], max_parallel_clients={args.max_parallel_clients}, "
-        f"force={args.force}"
+        f"client_gpus={args.client_gpus}, force={args.force}"
     )
 
     completed = 0
@@ -225,6 +244,7 @@ def main() -> None:
             noise_multiplier,
             force=args.force,
             max_parallel_clients=args.max_parallel_clients,
+            client_gpus=args.client_gpus,
         )
         completed += 1
         if not ok:
