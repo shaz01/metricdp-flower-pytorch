@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import os
+
 import numpy as np
 import pytest
 import torch
 from datasets import DatasetDict
 
+from experiments.reproduce.dataset import alzheimer
 from experiments.reproduce.dataset.alzheimer import (
     CLASS_NAMES,
     PAPER_HOMOGENEOUS_CLIENT_COUNTS,
@@ -186,3 +189,51 @@ def test_mri_adapter_returns_paper_model_input(
     assert image.dtype == torch.float32
     assert 0.0 <= float(image.min()) <= float(image.max()) <= 1.0
     assert label in range(4)
+
+
+def test_hf_offline_context_restores_previous_environment(monkeypatch) -> None:
+    """The offline pin must not leak into the caller's environment."""
+    monkeypatch.delenv("HF_HUB_OFFLINE", raising=False)
+    monkeypatch.setenv("HF_DATASETS_OFFLINE", "0")
+
+    with alzheimer._hf_offline():
+        assert os.environ["HF_HUB_OFFLINE"] == "1"
+        assert os.environ["HF_DATASETS_OFFLINE"] == "1"
+
+    assert "HF_HUB_OFFLINE" not in os.environ
+    assert os.environ["HF_DATASETS_OFFLINE"] == "0"
+
+
+def test_load_alzheimer_dataset_prefers_cache_then_falls_back(monkeypatch) -> None:
+    """A cold cache must still load, by retrying over the network."""
+    for name in alzheimer._HF_OFFLINE_VARS:
+        monkeypatch.delenv(name, raising=False)
+    seen: list[bool] = []
+
+    def fake_load_dataset(_dataset_id, cache_dir=None):
+        offline = os.environ.get("HF_HUB_OFFLINE") == "1"
+        seen.append(offline)
+        if offline:
+            raise OSError("cache miss")
+        return "networked"
+
+    monkeypatch.setattr(alzheimer, "load_dataset", fake_load_dataset)
+
+    assert alzheimer.load_alzheimer_dataset() == "networked"
+    assert seen == [True, False]  # offline attempted first, then network
+
+
+def test_load_alzheimer_dataset_defers_to_explicit_offline_setting(monkeypatch) -> None:
+    """An explicit HF_HUB_OFFLINE must not be second-guessed by a network retry."""
+    monkeypatch.setenv("HF_HUB_OFFLINE", "1")
+    calls: list[str] = []
+
+    def fake_load_dataset(_dataset_id, cache_dir=None):
+        calls.append("called")
+        raise OSError("cache miss")
+
+    monkeypatch.setattr(alzheimer, "load_dataset", fake_load_dataset)
+
+    with pytest.raises(OSError):
+        alzheimer.load_alzheimer_dataset()
+    assert len(calls) == 1  # no network fallback attempted

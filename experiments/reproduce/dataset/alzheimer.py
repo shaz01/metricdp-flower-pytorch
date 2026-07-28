@@ -7,7 +7,9 @@ DataLoader construction live under ``metricdp_pytorch.utils``.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+import os
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Literal
 
@@ -61,12 +63,42 @@ PAPER_NON_IID_CLIENT_COUNTS = (
 _TO_TENSOR = ToTensor()
 
 
+_HF_OFFLINE_VARS = ("HF_HUB_OFFLINE", "HF_DATASETS_OFFLINE")
+
+
+@contextmanager
+def _hf_offline() -> Iterator[None]:
+    """Temporarily pin HuggingFace lookups to the local cache."""
+    previous = {name: os.environ.get(name) for name in _HF_OFFLINE_VARS}
+    os.environ.update({name: "1" for name in _HF_OFFLINE_VARS})
+    try:
+        yield
+    finally:
+        for name, value in previous.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
+
+
 def load_alzheimer_dataset(cache_dir: str | Path | None = None) -> DatasetDict:
-    """Download once or load the public Alzheimer MRI dataset from HF cache."""
-    return load_dataset(
-        DATASET_ID,
-        cache_dir=None if cache_dir is None else str(cache_dir),
-    )
+    """Download once or load the public Alzheimer MRI dataset from HF cache.
+
+    Tries the local cache first. Callers rebuild the data module once per client
+    per round, so a 48-client 20-round run issues ~960 of these calls; letting
+    each one revalidate against the Hub gets concurrent unauthenticated workers
+    rate-limited into multi-minute backoff (measured cold load: 155.94s online
+    vs 0.10s offline). Falls back to a networked load so a cold cache still
+    works, and defers entirely to an explicit ``HF_*_OFFLINE`` setting.
+    """
+    resolved_cache_dir = None if cache_dir is None else str(cache_dir)
+    if any(os.environ.get(name) is not None for name in _HF_OFFLINE_VARS):
+        return load_dataset(DATASET_ID, cache_dir=resolved_cache_dir)
+    try:
+        with _hf_offline():
+            return load_dataset(DATASET_ID, cache_dir=resolved_cache_dir)
+    except Exception:  # noqa: BLE001 - any cache miss should retry over network
+        return load_dataset(DATASET_ID, cache_dir=resolved_cache_dir)
 
 
 def _alzheimer_image_transform(image: Any) -> torch.Tensor:
