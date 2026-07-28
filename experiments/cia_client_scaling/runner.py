@@ -27,7 +27,7 @@ from pathlib import Path
 
 import torch
 
-from experiments.cia_client_scaling.attack import CiaScalingResult, make_cia_scaling_result
+from experiments.cia_client_scaling.result import CiaScalingResult, make_cia_scaling_result
 from experiments.cia_client_scaling.shadow import target_shadow_loader
 from experiments.reproduce.dataset.alzheimer import AlzheimerDataModule
 from experiments.reproduce.paper_cnn import PaperCNN
