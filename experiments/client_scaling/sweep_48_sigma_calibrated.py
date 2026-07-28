@@ -1,9 +1,16 @@
 """Sweep 48-client FedYogi at noise multipliers calibrated to a target noise sigma.
 
-Flower applies ``sigma = noise_multiplier * clipping_norm / num_sampled_clients``
-(``flwr.supercore.differential_privacy.compute_stdv``), so ``noise_multiplier``
-is not comparable across client counts. This sweep targets sigma directly by
-inverting that formula, ``nm = sigma * N / C``:
+Averaging more clients lowers each client's sensitivity, so the standard
+DP-FedAvg Gaussian calibration injects noise of
+``sigma = noise_multiplier * clipping_norm / num_sampled_clients`` (McMahan et
+al. 2018, arXiv:1710.06963; implemented in
+``flwr.supercore.differential_privacy.compute_stdv``). The multiplier is the
+privacy parameter, so a fixed value carries the same guarantee at any cohort
+size -- but the perturbation it actually applies shrinks as the cohort grows,
+and with it the measurable utility gap between the privacy arms. Comparing runs
+across client counts therefore has to hold sigma fixed rather than the
+multiplier. This sweep targets sigma directly by inverting that relation,
+``nm = sigma * N / C``:
 
 =========  ==========================  ====================
 sigma      regime seen at 8 clients    nm at N=48, C=5.0
@@ -12,6 +19,10 @@ sigma      regime seen at 8 clients    nm at N=48, C=5.0
 3.12e-02   the gap window              0.30
 6.25e-02   collapse                    0.60
 =========  ==========================  ====================
+
+Note that these multipliers are far above the paper's 0.01, so these runs sit
+at a strictly stronger guarantee than the paper's operating point. They are
+chosen for measurability at 48 clients, not to reproduce the paper's setting.
 
 Design notes
 ------------
@@ -82,12 +93,14 @@ LOG_PATH = OUTPUT_DIR / "sweep_progress.log"
 
 
 def effective_sigma(noise_multiplier: float) -> float:
-    """Return the per-element noise stdev Flower will actually apply.
+    """Return the per-element noise stdev actually injected for a multiplier.
 
-    Mirrors ``flwr.supercore.differential_privacy.compute_stdv``. For
-    ``metric-privacy`` this is the *base* sigma before the strategy's
-    ``noise_multiplier / distance`` recalibration, so the realised value drifts
-    with the logged ``metric-dp-distance``.
+    The standard DP-FedAvg calibration, ``noise_multiplier * clipping_norm /
+    num_sampled_clients``, as implemented by
+    ``flwr.supercore.differential_privacy.compute_stdv``. For ``metric-privacy``
+    this is the *base* sigma before the strategy's ``noise_multiplier /
+    distance`` recalibration, so the realised value drifts with the logged
+    ``metric-dp-distance``.
     """
     return noise_multiplier * CLIPPING_NORM / NUM_CLIENTS
 
