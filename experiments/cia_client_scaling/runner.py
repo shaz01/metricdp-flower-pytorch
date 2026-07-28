@@ -60,8 +60,41 @@ TIMING_CONFIGS: dict[str, dict[str, int | float]] = {
 TIMINGS = tuple(TIMING_CONFIGS)
 
 
-def run_name(partition_mode: str, timing: str, privacy: str, aggregation: str) -> str:
-    return f"cia_scaling__{timing}__{partition_mode}__{privacy}__{aggregation}"
+def resolve_noise_multiplier(timing: str, noise_multiplier: float | None) -> float:
+    """Return the noise multiplier to train with for ``timing``.
+
+    ``None`` keeps the timing's published default, so the paper-faithful
+    hyperparameters stay the default behaviour.
+    """
+    if noise_multiplier is not None:
+        return noise_multiplier
+    return float(TIMING_CONFIGS[timing]["noise_multiplier"])
+
+
+def format_noise(noise_multiplier: float) -> str:
+    """Render a noise multiplier as a filename-safe token, e.g. 0.12 -> '0p12'."""
+    return f"{noise_multiplier:g}".replace(".", "p")
+
+
+def run_name(
+    partition_mode: str,
+    timing: str,
+    privacy: str,
+    aggregation: str,
+    *,
+    noise_multiplier: float | None = None,
+) -> str:
+    """Build a deterministic run name.
+
+    A non-default noise multiplier is encoded in the name so sweeps at several
+    noise levels neither collide on disk nor skip each other via resumability.
+    The timing's default value keeps the original unsuffixed name.
+    """
+    base = f"cia_scaling__{timing}__{partition_mode}__{privacy}__{aggregation}"
+    resolved = resolve_noise_multiplier(timing, noise_multiplier)
+    if resolved == float(TIMING_CONFIGS[timing]["noise_multiplier"]):
+        return base
+    return f"{base}__nm{format_noise(resolved)}"
 
 
 def build_reproduce_command(
@@ -72,10 +105,14 @@ def build_reproduce_command(
     aggregation: str,
     output_dir: Path,
     max_parallel_clients: int,
+    noise_multiplier: float | None = None,
 ) -> list[str]:
     """Build the argv for one real 48-client CIA training run."""
     timing_config = TIMING_CONFIGS[timing]
-    name = run_name(partition_mode, timing, privacy, aggregation)
+    resolved_noise = resolve_noise_multiplier(timing, noise_multiplier)
+    name = run_name(
+        partition_mode, timing, privacy, aggregation, noise_multiplier=noise_multiplier
+    )
     return [
         sys.executable,
         "-m",
@@ -93,7 +130,7 @@ def build_reproduce_command(
         "--local-epochs",
         str(timing_config["local_epochs"]),
         "--noise-multiplier",
-        str(timing_config["noise_multiplier"]),
+        str(resolved_noise),
         "--clipping-norm",
         str(timing_config["clipping_norm"]),
         "--seed",
@@ -145,9 +182,12 @@ def run_one_combo(
     output_dir: Path,
     max_parallel_clients: int,
     force: bool,
+    noise_multiplier: float | None = None,
 ) -> tuple[Path, bool]:
     """Run one training combo unless already complete; return (model_path, success)."""
-    name = run_name(partition_mode, timing, privacy, aggregation)
+    name = run_name(
+        partition_mode, timing, privacy, aggregation, noise_multiplier=noise_multiplier
+    )
     result_path = output_dir / f"{name}.json"
     model_path = output_dir / f"{name}.pt"
     expected_rounds = int(TIMING_CONFIGS[timing]["rounds"])
@@ -166,6 +206,7 @@ def run_one_combo(
         aggregation=aggregation,
         output_dir=output_dir,
         max_parallel_clients=max_parallel_clients,
+        noise_multiplier=noise_multiplier,
     )
     result = subprocess.run(command, cwd=PROJECT_ROOT)
     return model_path, result.returncode == 0
@@ -212,7 +253,13 @@ def _load_existing_report(
     except (json.JSONDecodeError, OSError):
         return {}, []
     results_by_key = {
-        (row["timing"], row["partition_mode"], row["privacy"], row["aggregation"]): row
+        (
+            row["timing"],
+            row["partition_mode"],
+            row["privacy"],
+            row["aggregation"],
+            row.get("noise_multiplier"),
+        ): row
         for row in data.get("results", [])
     }
     return results_by_key, list(data.get("failed", []))
@@ -227,6 +274,7 @@ def run_cia_client_scaling(
     timings: tuple[str, ...] = TIMINGS,
     max_parallel_clients: int = 4,
     force: bool = False,
+    noise_multiplier: float | None = None,
 ) -> list[CiaScalingResult]:
     output_dir.mkdir(parents=True, exist_ok=True)
     log_path = output_dir / "sweep_progress.log"
@@ -251,8 +299,21 @@ def run_cia_client_scaling(
         for partition_mode in partition_modes:
             for privacy in privacy_modes:
                 for aggregation in aggregations:
-                    name = run_name(partition_mode, timing, privacy, aggregation)
-                    key = (timing, partition_mode, privacy, aggregation)
+                    resolved_noise = resolve_noise_multiplier(timing, noise_multiplier)
+                    name = run_name(
+                        partition_mode,
+                        timing,
+                        privacy,
+                        aggregation,
+                        noise_multiplier=noise_multiplier,
+                    )
+                    key = (
+                        timing,
+                        partition_mode,
+                        privacy,
+                        aggregation,
+                        resolved_noise,
+                    )
                     _log(log_path, f"START {name}")
                     model_path, success = run_one_combo(
                         partition_mode=partition_mode,
@@ -262,6 +323,7 @@ def run_cia_client_scaling(
                         output_dir=output_dir,
                         max_parallel_clients=max_parallel_clients,
                         force=force,
+                        noise_multiplier=noise_multiplier,
                     )
                     completed += 1
                     if not success:
@@ -281,6 +343,7 @@ def run_cia_client_scaling(
                             timing=timing,
                             privacy=privacy,
                             aggregation=aggregation,
+                            noise_multiplier=resolved_noise,
                             aggregated_test_loss=aggregated_loss,
                             target_shadow_loss=target_loss,
                             shadow_size=shadow_size,
@@ -314,6 +377,20 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--max-parallel-clients", type=int, default=4)
     parser.add_argument(
+        "--noise-multiplier",
+        type=float,
+        default=None,
+        help=(
+            "override the timing's noise multiplier; default keeps the published "
+            "per-timing value (first-round 0.01, post-convergence 0.05). Averaging "
+            "more clients lowers each client's sensitivity, so DP injects less "
+            "noise per parameter as the cohort grows: at 48 clients the published "
+            "3-client defaults leave global-dp and metric-privacy converging to "
+            "essentially vanilla. Raise this to push the arms apart far enough to "
+            "measure a difference"
+        ),
+    )
+    parser.add_argument(
         "--force",
         action="store_true",
         help="rerun every combination even if a complete result already exists",
@@ -340,6 +417,7 @@ def main() -> None:
         timings=timings,
         max_parallel_clients=args.max_parallel_clients,
         force=args.force,
+        noise_multiplier=args.noise_multiplier,
     )
     for result in results:
         print(

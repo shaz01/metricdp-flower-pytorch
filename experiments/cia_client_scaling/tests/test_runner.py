@@ -15,6 +15,7 @@ from experiments.cia_client_scaling.runner import (
     build_reproduce_command,
     is_training_complete,
     main,
+    resolve_noise_multiplier,
     run_name,
     run_one_combo,
 )
@@ -364,3 +365,45 @@ def test_main_rejects_invalid_timings_before_running_sweep(monkeypatch) -> None:
 
     with pytest.raises(SystemExit):
         main()
+
+
+def test_resolve_noise_multiplier_defaults_to_timing_value() -> None:
+    """Omitting the override must preserve the published per-timing defaults."""
+    assert resolve_noise_multiplier("first-round", None) == 0.01
+    assert resolve_noise_multiplier("post-convergence", None) == 0.05
+    assert resolve_noise_multiplier("first-round", 0.12) == 0.12
+
+
+def test_run_name_is_unsuffixed_at_the_timing_default() -> None:
+    """Default runs keep their original names, so existing results still resolve."""
+    base = run_name("homogeneous", "first-round", "vanilla", "fedavg")
+    assert base == run_name(
+        "homogeneous", "first-round", "vanilla", "fedavg", noise_multiplier=0.01
+    )
+    assert not base.endswith("__nm0p01")
+
+
+def test_run_name_encodes_an_overridden_noise_multiplier() -> None:
+    """Distinct noise levels must not collide on disk or skip each other."""
+    name = run_name(
+        "homogeneous", "first-round", "vanilla", "fedavg", noise_multiplier=0.12
+    )
+    assert name.endswith("__nm0p12")
+    assert name != run_name("homogeneous", "first-round", "vanilla", "fedavg")
+
+
+def test_build_reproduce_command_passes_overridden_noise(tmp_path) -> None:
+    """The override must reach the underlying reproduce runner."""
+    joined = " ".join(
+        build_reproduce_command(
+            partition_mode="homogeneous",
+            timing="first-round",
+            privacy="metric-privacy",
+            aggregation="fedyogi",
+            output_dir=tmp_path,
+            max_parallel_clients=4,
+            noise_multiplier=0.12,
+        )
+    )
+    assert "--noise-multiplier 0.12" in joined
+    assert "--run-name cia_scaling__first-round__homogeneous__metric-privacy__fedyogi__nm0p12" in joined

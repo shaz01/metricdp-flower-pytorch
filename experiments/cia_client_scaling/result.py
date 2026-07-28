@@ -1,7 +1,8 @@
 """Attack-score record for the 48-client CIA experiment.
 
 Reuses ``experiments.cia.attack.relative_difference`` unmodified; only adds
-``partition_mode``/``timing`` fields the 3-client CIA experiment didn't need.
+the ``partition_mode``/``timing``/``noise_multiplier`` fields the 3-client CIA
+experiment didn't need.
 """
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ class CiaScalingResult:
     timing: str
     privacy: str
     aggregation: str
+    noise_multiplier: float
     aggregated_test_loss: float
     target_shadow_loss: float
     shadow_size: int
@@ -29,6 +31,7 @@ def make_cia_scaling_result(
     timing: str,
     privacy: str,
     aggregation: str,
+    noise_multiplier: float,
     aggregated_test_loss: float,
     target_shadow_loss: float,
     shadow_size: int,
@@ -38,6 +41,7 @@ def make_cia_scaling_result(
         timing=timing,
         privacy=privacy,
         aggregation=aggregation,
+        noise_multiplier=noise_multiplier,
         aggregated_test_loss=aggregated_test_loss,
         target_shadow_loss=target_shadow_loss,
         shadow_size=shadow_size,
