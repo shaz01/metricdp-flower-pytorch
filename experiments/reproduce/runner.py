@@ -24,6 +24,26 @@ from metricdp_pytorch.strategy_factory import AGGREGATION_METHODS, PRIVACY_MODES
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
+# Keep the summed per-actor GPU share just under 1.0 so float rounding cannot
+# make Ray refuse to schedule the last concurrent client.
+_GPU_SHARE_SAFETY = 0.99
+
+
+def _auto_client_gpus(*, num_clients: int, max_parallel_clients: int) -> float:
+    """Split one CUDA device across the concurrently-running client actors.
+
+    Ray overrides ``CUDA_VISIBLE_DEVICES`` inside any actor whose ``num_gpus``
+    is 0, so leaving this at zero silently pins client training to the CPU even
+    on a GPU host. Returns 0.0 when there is no CUDA device, which keeps CPU and
+    Apple-MPS hosts on their previous behaviour.
+    """
+    import torch
+
+    if not torch.cuda.is_available():
+        return 0.0
+    parallel = max(1, min(num_clients, max_parallel_clients))
+    return _GPU_SHARE_SAFETY / parallel
+
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -90,8 +110,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--client-gpus",
         type=float,
-        default=0.0,
-        help="Ray GPUs per client actor, e.g. 0.25; default clients run on CPU",
+        default=None,
+        help=(
+            "Ray GPUs per client actor, e.g. 0.25; default auto-shares one CUDA "
+            "device across --max-parallel-clients actors, or 0.0 without CUDA"
+        ),
     )
     parser.add_argument("--worker-config", type=Path, help=argparse.SUPPRESS)
     return parser
@@ -115,8 +138,10 @@ def _validate(args: argparse.Namespace) -> None:
         raise ValueError("initialization-epochs must be positive.")
     if args.max_parallel_clients < 1:
         raise ValueError("max-parallel-clients must be positive.")
-    if args.client_cpus <= 0 or args.client_gpus < 0:
-        raise ValueError("client-cpus must be positive and client-gpus non-negative.")
+    if args.client_cpus <= 0:
+        raise ValueError("client-cpus must be positive.")
+    if args.client_gpus is not None and args.client_gpus < 0:
+        raise ValueError("client-gpus must be non-negative.")
     if args.client_weights:
         weights = [part.strip() for part in args.client_weights.split(",") if part.strip()]
         if len(weights) != args.num_clients:
@@ -253,6 +278,11 @@ def _print_result(config: dict[str, Any]) -> None:
 def main() -> None:
     parser = _parser()
     args = parser.parse_args()
+    if args.client_gpus is None:
+        args.client_gpus = _auto_client_gpus(
+            num_clients=args.num_clients,
+            max_parallel_clients=args.max_parallel_clients,
+        )
     if args.worker_config is not None:
         config = json.loads(args.worker_config.read_text(encoding="utf-8"))
         _run_worker(

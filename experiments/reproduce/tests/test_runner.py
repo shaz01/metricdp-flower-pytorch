@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from experiments.reproduce.runner import _parser, build_run_config
+import pytest
+import torch
+from unittest.mock import patch
+
+from experiments.reproduce.runner import _auto_client_gpus, _parser, build_run_config
 
 
 def _args(*arguments: str):
@@ -68,3 +72,34 @@ def test_runner_passes_plugin_specific_partition_values_through(tmp_path) -> Non
     assert config["partition-mode"] == "custom-label-skew"
     assert config["partition-profile"] == "dataset-profile-a"
     assert config["data-module"] == "my_package.data:create_data_module"
+
+
+def test_auto_client_gpus_is_zero_without_cuda() -> None:
+    """CPU and Apple-MPS hosts keep the historical CPU-only client behaviour."""
+    with patch.object(torch.cuda, "is_available", return_value=False):
+        assert _auto_client_gpus(num_clients=48, max_parallel_clients=12) == 0.0
+
+
+@pytest.mark.parametrize(
+    ("num_clients", "max_parallel_clients"),
+    [(48, 12), (48, 4), (48, 16), (4, 4), (48, 48), (2, 100)],
+)
+def test_auto_client_gpus_never_oversubscribes_the_device(
+    num_clients: int, max_parallel_clients: int
+) -> None:
+    """Concurrent actors must always fit on a single GPU, despite float rounding."""
+    with patch.object(torch.cuda, "is_available", return_value=True):
+        share = _auto_client_gpus(
+            num_clients=num_clients, max_parallel_clients=max_parallel_clients
+        )
+
+    concurrent = max(1, min(num_clients, max_parallel_clients))
+    assert share > 0.0
+    assert share * concurrent <= 1.0
+
+
+def test_explicit_client_gpus_overrides_auto_detection() -> None:
+    """An explicit --client-gpus must survive; 0.0 still forces CPU clients."""
+    assert _args("--client-gpus", "0.0").client_gpus == 0.0
+    assert _args("--client-gpus", "0.25").client_gpus == 0.25
+    assert _args().client_gpus is None  # resolved later, in main()
