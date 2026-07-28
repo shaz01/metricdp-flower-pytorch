@@ -10,11 +10,16 @@ import pytest
 
 from experiments.cia_client_scaling import runner as runner_module
 from experiments.cia_client_scaling.runner import (
+    AGGREGATIONS,
+    PARTITION_MODES,
+    PRIVACY_MODES,
     SEED,
     TIMING_CONFIGS,
+    _parser,
     build_reproduce_command,
     is_training_complete,
     main,
+    parse_subset,
     resolve_noise_multiplier,
     run_name,
     run_one_combo,
@@ -407,3 +412,40 @@ def test_build_reproduce_command_passes_overridden_noise(tmp_path) -> None:
     )
     assert "--noise-multiplier 0.12" in joined
     assert "--run-name cia_scaling__first-round__homogeneous__metric-privacy__fedyogi__nm0p12" in joined
+
+
+def test_parse_subset_accepts_a_valid_subset() -> None:
+    parser = _parser()
+    assert parse_subset(parser, "fedyogi", AGGREGATIONS, "--aggregations") == ("fedyogi",)
+    assert parse_subset(parser, "fedyogi,fedavg", AGGREGATIONS, "--aggregations") == (
+        "fedyogi",
+        "fedavg",
+    )
+
+
+def test_parse_subset_tolerates_whitespace_and_trailing_commas() -> None:
+    parser = _parser()
+    assert parse_subset(parser, " homogeneous , ", PARTITION_MODES, "--partitions") == (
+        "homogeneous",
+    )
+
+
+def test_parse_subset_rejects_unknown_values() -> None:
+    parser = _parser()
+    with pytest.raises(SystemExit):
+        parse_subset(parser, "fedsgd", AGGREGATIONS, "--aggregations")
+
+
+def test_parse_subset_rejects_an_empty_selection() -> None:
+    """An empty value must fail loudly rather than silently sweeping nothing."""
+    parser = _parser()
+    with pytest.raises(SystemExit):
+        parse_subset(parser, " , ", PARTITION_MODES, "--partitions")
+
+
+def test_cli_defaults_select_the_full_matrix() -> None:
+    args = _parser().parse_args([])
+    parser = _parser()
+    assert parse_subset(parser, args.partitions, PARTITION_MODES, "-p") == PARTITION_MODES
+    assert parse_subset(parser, args.aggregations, AGGREGATIONS, "-a") == AGGREGATIONS
+    assert parse_subset(parser, args.privacy, PRIVACY_MODES, "-v") == PRIVACY_MODES

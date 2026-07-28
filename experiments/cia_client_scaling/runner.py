@@ -400,21 +400,59 @@ def _parser() -> argparse.ArgumentParser:
         default=",".join(TIMINGS),
         help="comma-separated subset of timings to run",
     )
+    parser.add_argument(
+        "--partitions",
+        default=",".join(PARTITION_MODES),
+        help="comma-separated subset of partition modes to run",
+    )
+    parser.add_argument(
+        "--aggregations",
+        default=",".join(AGGREGATIONS),
+        help="comma-separated subset of aggregation methods to run",
+    )
+    parser.add_argument(
+        "--privacy",
+        default=",".join(PRIVACY_MODES),
+        help="comma-separated subset of privacy modes to run",
+    )
     return parser
+
+
+def parse_subset(
+    parser: argparse.ArgumentParser,
+    raw: str,
+    valid: tuple[str, ...],
+    flag: str,
+) -> tuple[str, ...]:
+    """Parse one comma-separated CLI subset, erroring on empty or unknown values.
+
+    Order follows the caller's list, so the sweep runs in the order requested
+    rather than in declaration order.
+    """
+    values = tuple(part.strip() for part in raw.split(",") if part.strip())
+    if not values:
+        parser.error(f"{flag} must name at least one value; choose from {list(valid)}")
+    invalid = [value for value in values if value not in valid]
+    if invalid:
+        parser.error(
+            f"invalid {flag} value(s) {invalid!r}; must be a subset of {list(valid)}"
+        )
+    return values
 
 
 def main() -> None:
     parser = _parser()
     args = parser.parse_args()
-    timings = tuple(part.strip() for part in args.timings.split(",") if part.strip())
-    invalid = [timing for timing in timings if timing not in TIMINGS]
-    if invalid:
-        parser.error(
-            f"invalid --timings value(s) {invalid!r}; must be a subset of {list(TIMINGS)}"
-        )
+    timings = parse_subset(parser, args.timings, TIMINGS, "--timings")
+    partition_modes = parse_subset(parser, args.partitions, PARTITION_MODES, "--partitions")
+    aggregations = parse_subset(parser, args.aggregations, AGGREGATIONS, "--aggregations")
+    privacy_modes = parse_subset(parser, args.privacy, PRIVACY_MODES, "--privacy")
     results = run_cia_client_scaling(
         output_dir=args.output_dir,
         timings=timings,
+        partition_modes=partition_modes,
+        aggregations=aggregations,
+        privacy_modes=privacy_modes,
         max_parallel_clients=args.max_parallel_clients,
         force=args.force,
         noise_multiplier=args.noise_multiplier,
