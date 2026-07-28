@@ -104,7 +104,14 @@ def _parser() -> argparse.ArgumentParser:
         "--max-parallel-clients",
         type=int,
         default=2,
-        help="cap simultaneous Ray actors to control memory use",
+        help=(
+            "cap simultaneous Ray actors to control memory use. Also sets each "
+            "actor's auto-detected GPU share (see --client-gpus), and Ray's "
+            "num_gpus is only bookkeeping -- it never reserves or limits VRAM, so "
+            "raising this past what the device holds will OOM rather than queue. "
+            "Each actor cost ~1.06 GiB of VRAM on PaperCNN, i.e. roughly 42 actors "
+            "on a 46 GiB card; a larger model lowers that ceiling"
+        ),
     )
     parser.add_argument("--client-cpus", type=float, default=1.0)
     parser.add_argument(
