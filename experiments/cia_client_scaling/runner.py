@@ -375,7 +375,17 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         default=PROJECT_ROOT / "results" / "cia_client_scaling",
     )
-    parser.add_argument("--max-parallel-clients", type=int, default=4)
+    parser.add_argument(
+        "--max-parallel-clients",
+        type=int,
+        default=4,
+        help=(
+            "cap simultaneous Ray actors. Passed straight to the reproduce "
+            "runner, where it also sets each actor's auto-detected GPU share; "
+            "Ray's num_gpus never reserves VRAM, so setting this near "
+            f"--num-clients ({NUM_CLIENTS}) can exhaust the device and OOM"
+        ),
+    )
     parser.add_argument(
         "--noise-multiplier",
         type=float,
