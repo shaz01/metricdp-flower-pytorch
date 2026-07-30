@@ -1,5 +1,7 @@
 # Non-CIA Paper Reproduction — H100 Detailed Evaluation
 
+Source data: `results/reproduce_paper/` (`paper_reproduction_summary.json`, per-run `runs/` and `evaluations/`).
+
 ## Protocol
 
 - 122 final global models: 90 homogeneous main, 18 non-IID main, 12 Appendix-B noise=0.003, and 2 Appendix-B FedAvg global-DP high-noise checks.
@@ -245,90 +247,10 @@ Six requested Metric-Privacy + FedOpt configurations were attempted in all three
 
 For each, the maximum pairwise client-model distance decreased to exactly zero after round 3. The implemented calibration requires `noise_multiplier / distance`, so `MetricPrivacyServerSideFixedClipping` intentionally raises rather than divide by zero or invent an undocumented epsilon/cap. These failures are retained in the manifest and per-run logs; no metric values were fabricated. The other 116 configurations completed with validated detailed evaluations and raw predictions.
 
-## Final status
-
-- Expected: 122
-- Complete and validated: 116
-- Missing/failed: 6
-- Retained final `.pt` files (failure recovery only): 0
-
-### Missing or failed
-
-- `main__homogeneous__metric-privacy__fedopt__noise-0.01__seed-42` — FileNotFoundError(2, 'No such file or directory')
-- `main__homogeneous__metric-privacy__fedopt__noise-0.01__seed-43` — FileNotFoundError(2, 'No such file or directory')
-- `main__homogeneous__metric-privacy__fedopt__noise-0.01__seed-44` — FileNotFoundError(2, 'No such file or directory')
-- `main__homogeneous__metric-privacy__fedopt__noise-0.01__seed-45` — FileNotFoundError(2, 'No such file or directory')
-- `main__homogeneous__metric-privacy__fedopt__noise-0.01__seed-46` — FileNotFoundError(2, 'No such file or directory')
-- `appendix-b__homogeneous__metric-privacy__fedopt__noise-0.003__seed-42` — FileNotFoundError(2, 'No such file or directory')
-
-## Homogeneous five-seed server final-test summary
-
-| Privacy | Aggregator | Accuracy mean ± SD | Macro F1 mean ± SD | Macro precision mean ± SD | Macro AUC mean ± SD | n |
-|---|---|---:|---:|---:|---:|---:|
-| global-dp | fedavg | 0.942188 ± 0.011951 | 0.935792 ± 0.021815 | 0.946706 ± 0.026395 | 0.986962 ± 0.002758 | 5 |
-| global-dp | fedavgm | 0.777187 ± 0.027457 | 0.603442 ± 0.096615 | 0.621023 ± 0.133728 | 0.931849 ± 0.017410 | 5 |
-| global-dp | fedmedian | 0.943750 ± 0.005741 | 0.939949 ± 0.014257 | 0.953803 ± 0.006312 | 0.985796 ± 0.001815 | 5 |
-| global-dp | fedopt | 0.495312 ± 0.000000 | 0.165622 ± 0.000000 | 0.123828 ± 0.000000 | 0.496240 ± 0.008407 | 5 |
-| global-dp | fedprox | 0.548750 ± 0.018033 | 0.288920 ± 0.019409 | 0.318055 ± 0.118557 | 0.737503 ± 0.010593 | 5 |
-| global-dp | fedyogi | 0.947187 ± 0.012273 | 0.926867 ± 0.028021 | 0.948482 ± 0.018649 | 0.987126 ± 0.003426 | 5 |
-| metric-privacy | fedavg | 0.945312 ± 0.009111 | 0.940734 ± 0.024607 | 0.957288 ± 0.011037 | 0.986952 ± 0.001591 | 5 |
-| metric-privacy | fedavgm | 0.791875 ± 0.019900 | 0.660772 ± 0.124105 | 0.684211 ± 0.150984 | 0.940026 ± 0.015108 | 5 |
-| metric-privacy | fedmedian | 0.944375 ± 0.007542 | 0.941541 ± 0.010210 | 0.946735 ± 0.020041 | 0.984960 ± 0.003333 | 5 |
-| metric-privacy | fedprox | 0.495625 ± 0.000699 | 0.166089 ± 0.001045 | 0.173867 ± 0.111890 | 0.532383 ± 0.064050 | 5 |
-| metric-privacy | fedyogi | 0.952187 ± 0.009733 | 0.952287 ± 0.013885 | 0.961341 ± 0.015413 | 0.987413 ± 0.002417 | 5 |
-| vanilla | fedavg | 0.957812 ± 0.012451 | 0.939364 ± 0.040211 | 0.932570 ± 0.059256 | 0.988565 ± 0.003404 | 5 |
-| vanilla | fedavgm | 0.919375 ± 0.016632 | 0.863413 ± 0.078431 | 0.936887 ± 0.014962 | 0.986090 ± 0.004358 | 5 |
-| vanilla | fedmedian | 0.946875 ± 0.007574 | 0.944816 ± 0.011733 | 0.946881 ± 0.011556 | 0.987466 ± 0.003031 | 5 |
-| vanilla | fedopt | 0.411250 ± 0.076812 | 0.156519 ± 0.024355 | 0.120230 ± 0.034741 | 0.505742 ± 0.013413 | 5 |
-| vanilla | fedprox | 0.550312 ± 0.014036 | 0.289163 ± 0.009428 | 0.269401 ± 0.009248 | 0.723985 ± 0.007045 | 5 |
-| vanilla | fedyogi | 0.950937 ± 0.016410 | 0.910671 ± 0.076452 | 0.907331 ± 0.079051 | 0.986577 ± 0.006177 | 5 |
-
-## Non-IID fixed-seed server final-test results
-
-| Privacy | Aggregator | Accuracy | Macro F1 | Macro precision | Macro AUC |
-|---|---|---:|---:|---:|---:|
-| global-dp | fedavg | 0.950000 | 0.955808 | 0.963400 | 0.989659 |
-| global-dp | fedavgm | 0.746875 | 0.537459 | 0.546703 | 0.920700 |
-| global-dp | fedmedian | 0.945312 | 0.932451 | 0.948965 | 0.989049 |
-| global-dp | fedopt | 0.359375 | 0.132184 | 0.089844 | 0.524981 |
-| global-dp | fedprox | 0.568750 | 0.350107 | 0.392492 | 0.755395 |
-| global-dp | fedyogi | 0.943750 | 0.700681 | 0.699899 | 0.990448 |
-| metric-privacy | fedavg | 0.962500 | 0.965236 | 0.966937 | 0.988630 |
-| metric-privacy | fedavgm | 0.787500 | 0.568038 | 0.577491 | 0.939379 |
-| metric-privacy | fedmedian | 0.950000 | 0.938199 | 0.958034 | 0.986440 |
-| metric-privacy | fedopt | 0.495312 | 0.165622 | 0.123828 | 0.500000 |
-| metric-privacy | fedprox | 0.495312 | 0.189747 | 0.333769 | 0.484323 |
-| metric-privacy | fedyogi | 0.954688 | 0.924810 | 0.906442 | 0.988294 |
-| vanilla | fedavg | 0.967187 | 0.968398 | 0.977126 | 0.991655 |
-| vanilla | fedavgm | 0.937500 | 0.903448 | 0.943803 | 0.985056 |
-| vanilla | fedmedian | 0.964063 | 0.964598 | 0.966157 | 0.992333 |
-| vanilla | fedopt | 0.495312 | 0.165622 | 0.123828 | 0.500000 |
-| vanilla | fedprox | 0.545312 | 0.285055 | 0.264380 | 0.730229 |
-| vanilla | fedyogi | 0.950000 | 0.933339 | 0.968076 | 0.988279 |
-
-## Appendix B server final-test results
-
-| Noise | Privacy | Aggregator | Accuracy | Macro F1 | Macro precision | Macro AUC |
-|---:|---|---|---:|---:|---:|---:|
-| 0.003 | global-dp | fedavg | 0.950000 | 0.953348 | 0.959436 | 0.988504 |
-| 0.003 | global-dp | fedavgm | 0.768750 | 0.550001 | 0.547629 | 0.935485 |
-| 0.003 | global-dp | fedmedian | 0.940625 | 0.931691 | 0.922826 | 0.988767 |
-| 0.003 | global-dp | fedopt | 0.495312 | 0.165622 | 0.123828 | 0.500000 |
-| 0.003 | global-dp | fedprox | 0.553125 | 0.292432 | 0.272234 | 0.725710 |
-| 0.003 | global-dp | fedyogi | 0.948438 | 0.917912 | 0.924306 | 0.984537 |
-| 0.003 | metric-privacy | fedavg | 0.943750 | 0.948457 | 0.951530 | 0.987696 |
-| 0.003 | metric-privacy | fedavgm | 0.767188 | 0.551542 | 0.551476 | 0.935664 |
-| 0.003 | metric-privacy | fedmedian | 0.945312 | 0.947950 | 0.948878 | 0.988958 |
-| 0.003 | metric-privacy | fedprox | 0.567187 | 0.321609 | 0.530257 | 0.755887 |
-| 0.003 | metric-privacy | fedyogi | 0.960938 | 0.949232 | 0.942587 | 0.990592 |
-| 0.05 | global-dp | fedavg | 0.495312 | 0.165622 | 0.123828 | 0.500000 |
-| 0.1 | global-dp | fedavg | 0.495312 | 0.165622 | 0.123828 | 0.499493 |
-
 ## Validation notes
 
 - Unit tests after restoring the committed DataLoader worker setting: **27 passed, 5 deselected**.
 - H100 CUDA health check passed after the Studio restart.
 - Execution: 2026-07-22 16:30:55–18:48:15 UTC using two concurrent experiment lanes.
 - Final artifact validation: **116/122 complete**; the six missing configurations are exactly the repeatedly failing Metric-Privacy + FedOpt cases documented above.
-- Successful transient model files were deleted only after evaluation JSON/NPZ validation; zero final  files remain.
-- Correction: zero final model checkpoint files remain.
+- Successful transient model files were deleted only after evaluation JSON/NPZ validation; zero final model checkpoint files remain.
