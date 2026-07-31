@@ -16,8 +16,13 @@ from flwr.supercore.differential_privacy import (
 )
 
 
-def maximum_pairwise_model_distance(models: Sequence[ArrayRecord]) -> float:
-    """Return the maximum mean layer-wise Euclidean distance between models."""
+def pairwise_model_distances(models: Sequence[ArrayRecord]) -> list[float]:
+    """Return every pairwise mean layer-wise Euclidean distance between models.
+
+    Order is unspecified (insertion order of the ``i < j`` pairs); callers
+    that need a single summary statistic should reduce this list themselves
+    (see ``maximum_pairwise_model_distance``) rather than assume an order.
+    """
     if len(models) < 2:
         raise ValueError("Metric-aware calibration requires at least two client models.")
 
@@ -36,7 +41,12 @@ def maximum_pairwise_model_distance(models: Sequence[ArrayRecord]) -> float:
             ]
             distances.append(float(np.mean(layer_distances)))
 
-    return max(distances)
+    return distances
+
+
+def maximum_pairwise_model_distance(models: Sequence[ArrayRecord]) -> float:
+    """Return the maximum mean layer-wise Euclidean distance between models."""
+    return max(pairwise_model_distances(models))
 
 
 class MetricPrivacyServerSideFixedClipping(
@@ -101,7 +111,8 @@ class MetricPrivacyServerSideFixedClipping(
                 raise ValueError(f"Client reply is missing ArrayRecord {self.arrayrecord_key!r}.")
             models.append(record)
 
-        distance = maximum_pairwise_model_distance(models)
+        distances = pairwise_model_distances(models)
+        distance = max(distances)
         if not np.isfinite(distance) or distance <= 0.0:
             raise ValueError(
                 "The client-model distance must be finite and greater than zero; "
@@ -109,7 +120,15 @@ class MetricPrivacyServerSideFixedClipping(
             )
 
         self.current_distance = distance
-        log(INFO, "aggregate_train: maximum pairwise model distance: %.6f", distance)
+        log(
+            INFO,
+            "aggregate_train: pairwise model distance -- max=%.6f mean=%.6f "
+            "median=%.6f count=%d",
+            distance,
+            float(np.mean(distances)),
+            float(np.median(distances)),
+            len(distances),
+        )
 
         aggregated_arrays, aggregated_metrics = super().aggregate_train(
             server_round, reply_list
@@ -117,6 +136,9 @@ class MetricPrivacyServerSideFixedClipping(
         if aggregated_metrics is None:
             aggregated_metrics = MetricRecord()
         aggregated_metrics["metric-dp-distance"] = distance
+        aggregated_metrics["metric-dp-distance-mean"] = float(np.mean(distances))
+        aggregated_metrics["metric-dp-distance-median"] = float(np.median(distances))
+        aggregated_metrics["metric-dp-distance-count"] = len(distances)
         if self.current_noise_stdv is not None:
             aggregated_metrics["metric-dp-noise-stdv"] = self.current_noise_stdv
         return aggregated_arrays, aggregated_metrics

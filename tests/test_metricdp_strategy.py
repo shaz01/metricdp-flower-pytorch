@@ -8,6 +8,7 @@ from flwr.serverapp.strategy import FedAvg
 from metricdp_pytorch.metricdp_strategy import (
     MetricPrivacyServerSideFixedClipping,
     maximum_pairwise_model_distance,
+    pairwise_model_distances,
 )
 
 
@@ -28,6 +29,20 @@ def test_maximum_pairwise_model_distance() -> None:
 
     # Pair distances are 3.0, 2.0, and 4.0 respectively.
     assert maximum_pairwise_model_distance(models) == pytest.approx(4.0)
+
+
+def test_pairwise_model_distances_returns_full_distribution() -> None:
+    """Return every pairwise distance, not just the max."""
+    models = [
+        model(np.array([0.0, 0.0]), np.array([0.0])),
+        model(np.array([3.0, 4.0]), np.array([1.0])),
+        model(np.array([0.0, 0.0]), np.array([4.0])),
+    ]
+
+    distances = pairwise_model_distances(models)
+
+    assert sorted(distances) == pytest.approx([2.0, 3.0, 4.0])
+    assert max(distances) == maximum_pairwise_model_distance(models)
 
 
 def test_distance_requires_two_models() -> None:
@@ -71,4 +86,8 @@ def test_modern_strategy_aggregates_message_replies() -> None:
     assert metrics is not None
     assert arrays.to_numpy_ndarrays()[0] == pytest.approx(np.array([2.0, 2.0]))
     assert metrics["metric-dp-distance"] == pytest.approx(np.sqrt(20.0))
+    # Only one pair of client models, so mean/median collapse to the max.
+    assert metrics["metric-dp-distance-mean"] == pytest.approx(np.sqrt(20.0))
+    assert metrics["metric-dp-distance-median"] == pytest.approx(np.sqrt(20.0))
+    assert metrics["metric-dp-distance-count"] == 1
     assert metrics["metric-dp-noise-stdv"] == 0.0
