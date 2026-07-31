@@ -26,7 +26,7 @@ Six result sets feed this report:
 | `probe_fedopt_fedyogi` | 4 | fedopt, fedyogi | vanilla, global-dp, metric-privacy | 0.01 | 4 (design probe, not a matrix) |
 
 FedProx and FedMedian, which are part of the paper-reproduction matrix (see
-`experiments/reproduce/reports/paper_reproduction.md`), are not part of these scaling sweeps.
+`reports/paper_reproduction.md`), are not part of these scaling sweeps.
 FedOpt is deliberately excluded from the scaling matrices — see the FedOpt/FedYogi probe below.
 
 ## Why sigma, not noise_multiplier, is the cross-scale unit
@@ -157,7 +157,7 @@ reproduce the paper's setting.
 that added this sweep, the maximum pairwise client-model distance went non-finite at
 sigma=3.125e-2, so the strategy's `noise_multiplier / distance` calibration is undefined and the
 run aborts by design (same fail-fast policy documented for FedOpt in
-`experiments/reproduce/reports/paper_reproduction.md`). 13/14 configurations completed.
+`reports/paper_reproduction.md`). 13/14 configurations completed.
 
 ## Baselines feeding this comparison
 
@@ -171,7 +171,7 @@ run aborts by design (same fail-fast policy documented for FedOpt in
   0.4953 for vanilla, oscillating down to 0.4409 for global-dp) regardless of privacy mode, and the
   metric-privacy/FedOpt combination hits the same
   non-finite-distance failure as above (there at round 11 with `tau=1e-3`, vs. round 4 with the
-  default `tau=1e-9` reported in `experiments/reproduce/reports/paper_reproduction.md`). FedYogi
+  default `tau=1e-9` reported in `reports/paper_reproduction.md`). FedYogi
   converges cleanly under the same probe (0.9641 final, 0.9563 last-5 mean), which is why it was
   chosen as the aggregator for `sigma_calibration`. Full detail in
   `results/probe_fedopt_fedyogi/README.md`.
