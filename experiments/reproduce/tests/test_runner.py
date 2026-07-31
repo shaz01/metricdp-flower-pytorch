@@ -10,7 +10,21 @@ from experiments.reproduce.runner import _auto_client_gpus, _parser, build_run_c
 
 
 def _args(*arguments: str):
-    return _parser().parse_args(list(arguments))
+    return _parser().parse_args(
+        [
+            "--seed",
+            "42",
+            "--noise-multiplier",
+            "0.01",
+            "--clipping-norm",
+            "5.0",
+            "--rounds",
+            "20",
+            "--local-epochs",
+            "5",
+            *arguments,
+        ]
+    )
 
 
 def test_default_runner_config_uses_paper_settings(tmp_path) -> None:
@@ -96,10 +110,3 @@ def test_auto_client_gpus_never_oversubscribes_the_device(
     concurrent = max(1, min(num_clients, max_parallel_clients))
     assert share > 0.0
     assert share * concurrent <= 1.0
-
-
-def test_explicit_client_gpus_overrides_auto_detection() -> None:
-    """An explicit --client-gpus must survive; 0.0 still forces CPU clients."""
-    assert _args("--client-gpus", "0.0").client_gpus == 0.0
-    assert _args("--client-gpus", "0.25").client_gpus == 0.25
-    assert _args().client_gpus is None  # resolved later, in main()

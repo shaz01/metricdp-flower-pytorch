@@ -21,12 +21,11 @@ everything.
 from __future__ import annotations
 
 import argparse
-import json
-import subprocess
-import sys
 import time
 from pathlib import Path
 
+from experiments.reproduce.matrix import Combo, Hyperparams
+from experiments.reproduce.matrix.run_combo import run_one_combo
 from metricdp_pytorch.strategy_factory import PRIVACY_MODES
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -36,7 +35,15 @@ PARTITION_MODES = ("homogeneous", "non-iid")
 # diagnosis/redesign sweeps small; it returns for the full 6-method paper run.
 SWEEP_AGGREGATION_METHODS = ("fedavg", "fedyogi")
 NUM_CLIENTS = 8
-EXPECTED_ROUNDS = 20  # paper default (pyproject.toml num-server-rounds); sweep doesn't override --rounds
+SEED = 42
+NOISE_MULTIPLIER = 0.01
+CLIPPING_NORM = 5.0
+ROUNDS = 20
+LOCAL_EPOCHS = 5
+BATCH_SIZE = 32
+LEARNING_RATE = 0.001
+INITIALIZATION_EPOCHS = 20
+MAX_PARALLEL_CLIENTS = 2
 OUTPUT_DIR = PROJECT_ROOT / "results" / "8client_scaling"
 LOG_PATH = OUTPUT_DIR / "sweep_progress.log"
 
@@ -46,68 +53,6 @@ def _log(message: str) -> None:
     print(line, flush=True)
     with LOG_PATH.open("a", encoding="utf-8") as handle:
         handle.write(line + "\n")
-
-
-def run_name(partition: str, privacy: str, aggregation: str) -> str:
-    return f"scaling8__{partition}__{privacy}__{aggregation}"
-
-
-def result_path(partition: str, privacy: str, aggregation: str) -> Path:
-    return OUTPUT_DIR / f"{run_name(partition, privacy, aggregation)}.json"
-
-
-def is_complete(path: Path, *, expected_rounds: int = EXPECTED_ROUNDS) -> bool:
-    """Return whether ``path`` holds a valid, fully-completed result.
-
-    Treats a missing, unparseable, or short-of-rounds file as incomplete, so
-    a prior run that was killed mid-write (or mid-sweep) is rerun rather than
-    silently accepted.
-    """
-    if not path.exists():
-        return False
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return False
-    history = data.get("server_evaluate_metrics", {})
-    completed_rounds = [int(round_number) for round_number in history if int(round_number) > 0]
-    return len(completed_rounds) >= expected_rounds
-
-
-def run_one_combo(partition: str, privacy: str, aggregation: str, *, force: bool) -> bool:
-    """Run one combination; return True on success (or already-complete)."""
-    name = run_name(partition, privacy, aggregation)
-    path = result_path(partition, privacy, aggregation)
-    if not force and is_complete(path):
-        _log(f"SKIP  {name} (already complete)")
-        return True
-
-    command = [
-        sys.executable,
-        "-m",
-        "experiments.reproduce.runner",
-        "--num-clients",
-        str(NUM_CLIENTS),
-        "--partition",
-        partition,
-        "--privacy",
-        privacy,
-        "--aggregation",
-        aggregation,
-        "--output-dir",
-        str(OUTPUT_DIR),
-        "--run-name",
-        name,
-    ]
-    _log(f"START {name}")
-    started = time.monotonic()
-    result = subprocess.run(command, cwd=PROJECT_ROOT)
-    elapsed = time.monotonic() - started
-    if result.returncode == 0:
-        _log(f"DONE  {name} ({elapsed:.1f}s)")
-        return True
-    _log(f"FAILED {name} (exit={result.returncode}, {elapsed:.1f}s)")
-    return False
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -131,10 +76,33 @@ def main() -> None:
     for partition in PARTITION_MODES:
         for privacy in PRIVACY_MODES:
             for aggregation in SWEEP_AGGREGATION_METHODS:
-                ok = run_one_combo(partition, privacy, aggregation, force=args.force)
+                combo = Combo(
+                    name_prefix="scaling8",
+                    num_clients=NUM_CLIENTS,
+                    partition=partition,
+                    privacy=privacy,
+                    aggregation=aggregation,
+                    seed=SEED,
+                    hyperparams=Hyperparams(
+                        noise_multiplier=NOISE_MULTIPLIER,
+                        clipping_norm=CLIPPING_NORM,
+                        rounds=ROUNDS,
+                        local_epochs=LOCAL_EPOCHS,
+                        batch_size=BATCH_SIZE,
+                        learning_rate=LEARNING_RATE,
+                        initialization_epochs=INITIALIZATION_EPOCHS,
+                    ),
+                )
+                ok = run_one_combo(
+                    combo,
+                    output_dir=OUTPUT_DIR,
+                    max_parallel_clients=MAX_PARALLEL_CLIENTS,
+                    force=args.force,
+                    log=_log,
+                )
                 completed += 1
                 if not ok:
-                    failed.append(run_name(partition, privacy, aggregation))
+                    failed.append(combo.run_name())
                 _log(f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
 
     _log(f"Sweep finished: {completed}/{total} attempted, {len(failed)} failed")

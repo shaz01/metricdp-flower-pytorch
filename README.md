@@ -29,7 +29,9 @@ uv run pytest
 The reproduction runner connects the paper-specific ServerApp and ClientApp and works both locally and on a Lightning.ai pod. Start with the tested smoke run:
 
 ```bash
-uv run python -m experiments.reproduce.runner --smoke
+uv run python -m experiments.reproduce.runner --smoke \
+  --seed 42 --noise-multiplier 0.01 --clipping-norm 5.0 \
+  --rounds 20 --local-epochs 5
 ```
 
 Run one full paper configuration with:
@@ -39,7 +41,8 @@ uv run python -m experiments.reproduce.runner \
   --partition homogeneous \
   --privacy metric-privacy \
   --aggregation fedavg \
-  --rounds 20 --local-epochs 5
+  --rounds 20 --local-epochs 5 \
+  --seed 42 --noise-multiplier 0.01 --clipping-norm 5.0
 ```
 
 Use `--dry-run` to inspect the resolved configuration. The four-client `auto` profile reproduces the exact published client tables; other client counts automatically use scalable partitions. Results are written under `results/reproduce/` by default.
@@ -49,13 +52,12 @@ Every run evaluates the final global model directly from memory. It writes `<run
 Run the default 36-configuration partition × privacy × aggregation matrix with:
 
 ```bash
-uv run python -m experiments.reproduce.matrix_runner \
+uv run python -m experiments.reproduce.matrix \
   --output-dir results-reproduce-paper/matrix \
-  --client-gpus 0.25 \
   --max-parallel-clients 4
 ```
 
-The matrix runner validates artifacts, skips completed configurations, retries failures once, and writes `matrix-manifest.json`. Its default is sequential experiment execution; use `--parallel-experiments` only when the machine has enough independent resources for multiple Flower simulations.
+The matrix runner skips configurations whose result JSON contains all expected rounds and retries failures once. Its default is sequential experiment execution; use `--parallel-experiments` only when the machine has enough independent resources for multiple Flower simulations.
 
 A previously saved checkpoint can still be postprocessed with `python -m experiments.reproduce.detailed_evaluation`; pass `--help` for its artifact paths and optional deletion flag.
 
@@ -63,7 +65,9 @@ The data layer is pluggable. Supply a factory implementing `FederatedDataModule`
 
 ```bash
 uv run python -m experiments.reproduce.runner \
-  --data-module my_package.my_dataset:create_data_module
+  --data-module my_package.my_dataset:create_data_module \
+  --seed 42 --noise-multiplier 0.01 --clipping-norm 5.0 \
+  --rounds 20 --local-epochs 5
 ```
 
 The factory receives the run configuration and returns an object with `client_loaders(...)` and `server_loaders(...)`. Generic record-image adapters, indexed loaders, stratified splits, exact class-count profiles, balanced partitions, and quantity-skewed partitions are available under `metricdp_pytorch.utils`.

@@ -58,13 +58,13 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--num-clients", type=int, default=4)
     parser.add_argument("--fraction-evaluate", type=float, default=1.0)
-    parser.add_argument("--rounds", type=int, default=20)
-    parser.add_argument("--local-epochs", type=int, default=5)
+    parser.add_argument("--rounds", type=int, required=True)
+    parser.add_argument("--local-epochs", type=int, required=True)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=0.001)
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--noise-multiplier", type=float, default=0.01)
-    parser.add_argument("--clipping-norm", type=float, default=5.0)
+    parser.add_argument("--seed", type=int, required=True)
+    parser.add_argument("--noise-multiplier", type=float, required=True)
+    parser.add_argument("--clipping-norm", type=float, required=True)
     parser.add_argument(
         "--partition-profile",
         default="auto",
@@ -106,23 +106,14 @@ def _parser() -> argparse.ArgumentParser:
         default=2,
         help=(
             "cap simultaneous Ray actors to control memory use. Also sets each "
-            "actor's auto-detected GPU share (see --client-gpus), and Ray's "
-            "num_gpus is only bookkeeping -- it never reserves or limits VRAM, so "
+            "actor's automatically calculated GPU share. Ray's num_gpus is only "
+            "bookkeeping -- it never reserves or limits VRAM, so "
             "raising this past what the device holds will OOM rather than queue. "
             "Each actor cost ~1.06 GiB of VRAM on PaperCNN, i.e. roughly 42 actors "
             "on a 46 GiB card; a larger model lowers that ceiling"
         ),
     )
     parser.add_argument("--client-cpus", type=float, default=1.0)
-    parser.add_argument(
-        "--client-gpus",
-        type=float,
-        default=None,
-        help=(
-            "Ray GPUs per client actor, e.g. 0.25; default auto-shares one CUDA "
-            "device across --max-parallel-clients actors, or 0.0 without CUDA"
-        ),
-    )
     parser.add_argument("--worker-config", type=Path, help=argparse.SUPPRESS)
     return parser
 
@@ -147,8 +138,6 @@ def _validate(args: argparse.Namespace) -> None:
         raise ValueError("max-parallel-clients must be positive.")
     if args.client_cpus <= 0:
         raise ValueError("client-cpus must be positive.")
-    if args.client_gpus is not None and args.client_gpus < 0:
-        raise ValueError("client-gpus must be non-negative.")
     if args.client_weights:
         weights = [part.strip() for part in args.client_weights.split(",") if part.strip()]
         if len(weights) != args.num_clients:
@@ -263,8 +252,16 @@ def _launch_isolated(args: argparse.Namespace, config: dict[str, Any]) -> None:
             str(args.max_parallel_clients),
             "--client-cpus",
             str(args.client_cpus),
-            "--client-gpus",
-            str(args.client_gpus),
+            "--seed",
+            str(args.seed),
+            "--noise-multiplier",
+            str(args.noise_multiplier),
+            "--clipping-norm",
+            str(args.clipping_norm),
+            "--rounds",
+            str(args.rounds),
+            "--local-epochs",
+            str(args.local_epochs),
         ]
         if args.verbose:
             command.append("--verbose")
@@ -285,11 +282,6 @@ def _print_result(config: dict[str, Any]) -> None:
 def main() -> None:
     parser = _parser()
     args = parser.parse_args()
-    if args.client_gpus is None:
-        args.client_gpus = _auto_client_gpus(
-            num_clients=args.num_clients,
-            max_parallel_clients=args.max_parallel_clients,
-        )
     if args.worker_config is not None:
         config = json.loads(args.worker_config.read_text(encoding="utf-8"))
         _run_worker(
@@ -297,7 +289,10 @@ def main() -> None:
             num_supernodes=args.num_clients,
             max_parallel_clients=args.max_parallel_clients,
             client_cpus=args.client_cpus,
-            client_gpus=args.client_gpus,
+            client_gpus=_auto_client_gpus(
+                num_clients=args.num_clients,
+                max_parallel_clients=args.max_parallel_clients,
+            ),
             verbose=args.verbose,
         )
         return
