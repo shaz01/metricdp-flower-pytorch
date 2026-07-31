@@ -42,6 +42,12 @@ See `README.md` and each experiment's own `README.md` (where present) for full f
 - `papers/` — reference PDFs, not experiment code.
 - `docs/` — gitignored, local-only notes. Don't expect it to exist on a fresh clone, and don't treat its absence as a problem.
 
+## Experiment reports
+
+- Once an experiment is finished, write a detailed Markdown report under `experiments/<name>/reports/`. Raw run data (JSONs, evaluation summaries, predictions, checkpoints) still lives in `results/<name>/`; `experiments/<name>/reports/` holds the narrative writeup that interprets that data — protocol, per-run/aggregate tables, anomalies, and conclusions.
+- Reports must be built from real numbers pulled from the committed result artifacts, never fabricated or estimated.
+- **Don't decide unilaterally that an experiment is finished.** Only the project owner makes that call. When it looks like an experiment has wrapped up, ask before writing its report (or before treating it as done in any other way) — don't just go write one.
+
 ## Git workflow
 
 - Each experiment gets its own branch: `feature/<experiment-name>`, branched from `master`.
