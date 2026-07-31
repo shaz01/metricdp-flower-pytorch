@@ -194,8 +194,13 @@ def classification_metrics(
 def _atomic_json(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
+    # allow_nan=True (json's default): a final model from a diverged
+    # high-noise run can carry NaN/Inf metrics here (e.g. log_loss on a
+    # near-zero probability); refusing to write would lose the whole
+    # detailed-evaluation artifact instead of just the affected fields.
+    # json.load/json.loads parse NaN/Infinity back in fine.
     temporary.write_text(
-        json.dumps(value, indent=2, allow_nan=False) + "\n",
+        json.dumps(value, indent=2) + "\n",
         encoding="utf-8",
     )
     os.replace(temporary, path)

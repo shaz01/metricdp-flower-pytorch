@@ -151,8 +151,13 @@ def main(grid: Grid, context: Context) -> None:
         }
         path = destination / f"{run_name}.json"
         serialized_result = result_to_dict(result, metadata)
+        # allow_nan=True (json's default): a diverged high-noise run can still
+        # carry a stray NaN/Inf metric even with the evaluate_model/
+        # aggregate_train divergence guards, and json.load/json.loads parse
+        # NaN/Infinity back in fine. Refusing to write here would discard the
+        # full round-by-round history over one bad value.
         path.write_text(
-            json.dumps(serialized_result, indent=2, allow_nan=False) + "\n",
+            json.dumps(serialized_result, indent=2) + "\n",
             encoding="utf-8",
         )
         print(f"Experiment result written to {path}")

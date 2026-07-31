@@ -1,7 +1,7 @@
 """Message-based metric-aware server-side DP strategy for Flower."""
 
 from collections.abc import Iterable, Sequence
-from logging import INFO
+from logging import INFO, WARNING
 
 import numpy as np
 from flwr.app import Array, ArrayRecord, Message, MetricRecord
@@ -112,19 +112,44 @@ class MetricPrivacyServerSideFixedClipping(
             models.append(record)
 
         distances = pairwise_model_distances(models)
-        distance = max(distances)
-        if not np.isfinite(distance) or distance <= 0.0:
-            raise ValueError(
-                "The client-model distance must be finite and greater than zero; "
-                "noise_multiplier / distance is undefined otherwise."
+        raw_distance = max(distances)
+        distance_invalid = not np.isfinite(raw_distance) or raw_distance <= 0.0
+        if distance_invalid:
+            # A non-finite/non-positive distance means client models have
+            # already diverged (typically from too much accumulated DP
+            # noise at a high noise_multiplier) -- noise_multiplier / distance
+            # is undefined in that case. Rather than raising and aborting the
+            # whole run (which previously discarded every prior round's
+            # history, since Strategy.start()'s Result accumulator lives
+            # entirely inside the base-class call stack), fall back to the
+            # last valid distance so training keeps running and a full
+            # round-by-round history -- including the divergence itself --
+            # survives to the result JSON for post-mortem analysis.
+            fallback = (
+                self.current_distance
+                if self.current_distance is not None
+                and np.isfinite(self.current_distance)
+                and self.current_distance > 0.0
+                else 1.0
             )
+            log(
+                WARNING,
+                "aggregate_train: round %d client-model distance is "
+                "non-finite/non-positive (%.6f) -- likely model divergence; "
+                "falling back to %.6f for this round's noise calibration",
+                server_round,
+                raw_distance,
+                fallback,
+            )
+            self.current_distance = fallback
+        else:
+            self.current_distance = raw_distance
 
-        self.current_distance = distance
         log(
             INFO,
             "aggregate_train: pairwise model distance -- max=%.6f mean=%.6f "
             "median=%.6f count=%d",
-            distance,
+            raw_distance,
             float(np.mean(distances)),
             float(np.median(distances)),
             len(distances),
@@ -135,10 +160,11 @@ class MetricPrivacyServerSideFixedClipping(
         )
         if aggregated_metrics is None:
             aggregated_metrics = MetricRecord()
-        aggregated_metrics["metric-dp-distance"] = distance
+        aggregated_metrics["metric-dp-distance"] = raw_distance
         aggregated_metrics["metric-dp-distance-mean"] = float(np.mean(distances))
         aggregated_metrics["metric-dp-distance-median"] = float(np.median(distances))
         aggregated_metrics["metric-dp-distance-count"] = len(distances)
+        aggregated_metrics["metric-dp-distance-invalid"] = 1.0 if distance_invalid else 0.0
         if self.current_noise_stdv is not None:
             aggregated_metrics["metric-dp-noise-stdv"] = self.current_noise_stdv
         return aggregated_arrays, aggregated_metrics

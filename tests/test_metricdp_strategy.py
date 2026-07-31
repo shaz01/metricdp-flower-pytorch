@@ -90,4 +90,47 @@ def test_modern_strategy_aggregates_message_replies() -> None:
     assert metrics["metric-dp-distance-mean"] == pytest.approx(np.sqrt(20.0))
     assert metrics["metric-dp-distance-median"] == pytest.approx(np.sqrt(20.0))
     assert metrics["metric-dp-distance-count"] == 1
+    assert metrics["metric-dp-distance-invalid"] == 0.0
     assert metrics["metric-dp-noise-stdv"] == 0.0
+
+
+def test_diverged_models_fall_back_instead_of_raising() -> None:
+    """A non-finite pairwise distance (diverged models) must not abort the round.
+
+    Previously this raised, and since Strategy.start()'s Result accumulator
+    lives inside the base-class call stack, an uncaught exception here
+    silently discarded every prior round's history (see Phase 1 of
+    docs/RESEARCH_ROADMAP.md -- 11/24 high-noise-multiplier runs failed this
+    way with zero artifacts saved). It must instead fall back to a valid
+    distance and flag the round as invalid so the run keeps producing a full
+    history.
+    """
+    strategy = MetricPrivacyServerSideFixedClipping(
+        strategy=FedAvg(),
+        noise_multiplier=0.0,
+        clipping_norm=10.0,
+        num_sampled_clients=2,
+    )
+    strategy.current_arrays = model(np.array([0.0, 0.0]))
+
+    replies = []
+    for node_id, values in enumerate(([float("nan"), 0.0], [3.0, 4.0]), start=1):
+        request = Message(
+            content=RecordDict(), message_type="train", dst_node_id=node_id
+        )
+        content = RecordDict(
+            {
+                "arrays": model(np.asarray(values)),
+                "metrics": MetricRecord({"num-examples": 1}),
+            }
+        )
+        replies.append(Message(content=content, reply_to=request))
+
+    arrays, metrics = strategy.aggregate_train(1, replies)
+
+    assert arrays is not None
+    assert metrics is not None
+    assert np.isnan(metrics["metric-dp-distance"])
+    assert metrics["metric-dp-distance-invalid"] == 1.0
+    # No prior valid distance exists yet, so the fallback is 1.0.
+    assert strategy.current_distance == pytest.approx(1.0)
