@@ -16,14 +16,57 @@ from experiments.cia_client_scaling.runner import (
     SEED,
     TIMING_CONFIGS,
     _parser,
-    build_reproduce_command,
-    is_training_complete,
+    build_combo,
     main,
     parse_subset,
     resolve_noise_multiplier,
-    run_name,
-    run_one_combo,
 )
+from experiments.reproduce.matrix import is_complete, run_one_combo
+
+
+def _combo_name(
+    partition_mode: str,
+    timing: str,
+    privacy: str,
+    aggregation: str,
+    *,
+    noise_multiplier: float | None = None,
+) -> str:
+    return build_combo(
+        partition_mode=partition_mode,
+        timing=timing,
+        privacy=privacy,
+        aggregation=aggregation,
+        noise_multiplier=noise_multiplier,
+    ).run_name()
+
+
+def _run_training_combo(
+    *,
+    partition_mode: str,
+    timing: str,
+    privacy: str,
+    aggregation: str,
+    output_dir: Path,
+    max_parallel_clients: int,
+    force: bool,
+) -> tuple[Path, bool]:
+    combo = build_combo(
+        partition_mode=partition_mode,
+        timing=timing,
+        privacy=privacy,
+        aggregation=aggregation,
+    )
+    model_path = output_dir / f"{combo.run_name()}.pt"
+    success = run_one_combo(
+        combo,
+        output_dir=output_dir,
+        max_parallel_clients=max_parallel_clients,
+        force=force,
+        log=lambda _message: None,
+        save_model=True,
+    )
+    return model_path, success
 
 
 def test_timing_configs_match_design_spec() -> None:
@@ -41,28 +84,28 @@ def test_timing_configs_match_design_spec() -> None:
     }
 
 
-def test_run_name_is_stable_and_readable() -> None:
-    assert (
-        run_name("homogeneous", "first-round", "vanilla", "fedavg")
-        == "cia_scaling__first-round__homogeneous__vanilla__fedavg"
-    )
-    assert (
-        run_name("non-iid", "post-convergence", "metric-privacy", "fedyogi")
-        == "cia_scaling__post-convergence__non-iid__metric-privacy__fedyogi"
+def test_combo_uses_default_matrix_run_name() -> None:
+    assert _combo_name("homogeneous", "first-round", "vanilla", "fedavg") == (
+        "cia_scaling__first-round__homogeneous__vanilla__fedavg__clients-48__"
+        "seed-42__nm0p01__clip5__rounds-1__epochs-20"
     )
 
 
-def test_build_reproduce_command_first_round(tmp_path: Path) -> None:
-    command = build_reproduce_command(
+def test_build_combo_first_round(tmp_path: Path) -> None:
+    combo = build_combo(
         partition_mode="homogeneous",
         timing="first-round",
         privacy="global-dp",
         aggregation="fedyogi",
-        output_dir=tmp_path,
-        max_parallel_clients=4,
     )
-    joined = " ".join(str(part) for part in command)
-    assert "experiments.reproduce.runner" in joined
+    joined = " ".join(
+        combo.runner_args(
+            output_dir=tmp_path,
+            max_parallel_clients=4,
+            client_cpus=1.0,
+            save_model=True,
+        )
+    )
     assert "--num-clients 48" in joined
     assert "--partition homogeneous" in joined
     assert "--privacy global-dp" in joined
@@ -73,29 +116,29 @@ def test_build_reproduce_command_first_round(tmp_path: Path) -> None:
     assert "--clipping-norm 5.0" in joined
     assert f"--seed {SEED}" in joined
     assert (
-        "--run-name cia_scaling__first-round__homogeneous__global-dp__fedyogi"
-        in joined
+        "--run-name cia_scaling__first-round__homogeneous__global-dp__fedyogi__"
+        "clients-48__seed-42__nm0p01__clip5__rounds-1__epochs-20" in joined
     )
     assert "--save-model" in joined
     assert "--max-parallel-clients 4" in joined
 
 
-def test_build_reproduce_command_post_convergence(tmp_path: Path) -> None:
-    command = build_reproduce_command(
+def test_build_combo_post_convergence(tmp_path: Path) -> None:
+    combo = build_combo(
         partition_mode="non-iid",
         timing="post-convergence",
         privacy="vanilla",
         aggregation="fedavg",
-        output_dir=tmp_path,
-        max_parallel_clients=4,
     )
-    joined = " ".join(str(part) for part in command)
+    joined = " ".join(
+        combo.runner_args(output_dir=tmp_path, max_parallel_clients=4, client_cpus=1.0)
+    )
     assert "--rounds 20" in joined
     assert "--local-epochs 5" in joined
     assert "--noise-multiplier 0.05" in joined
     assert (
-        "--run-name cia_scaling__post-convergence__non-iid__vanilla__fedavg"
-        in joined
+        "--run-name cia_scaling__post-convergence__non-iid__vanilla__fedavg__"
+        "clients-48__seed-42__nm0p05__clip5__rounds-20__epochs-5" in joined
     )
 
 
@@ -106,29 +149,29 @@ def test_is_training_complete_true_when_expected_rounds_present(
     path.write_text(
         json.dumps({"server_evaluate_metrics": {"0": {}, "1": {}, "2": {}}})
     )
-    assert is_training_complete(path, expected_rounds=2)
+    assert is_complete(path, expected_rounds=2)
 
 
 def test_is_training_complete_false_when_missing(tmp_path: Path) -> None:
-    assert not is_training_complete(tmp_path / "missing.json", expected_rounds=1)
+    assert not is_complete(tmp_path / "missing.json", expected_rounds=1)
 
 
 def test_is_training_complete_false_when_short_of_rounds(tmp_path: Path) -> None:
     path = tmp_path / "result.json"
     path.write_text(json.dumps({"server_evaluate_metrics": {"0": {}, "1": {}}}))
-    assert not is_training_complete(path, expected_rounds=5)
+    assert not is_complete(path, expected_rounds=5)
 
 
 def test_is_training_complete_false_on_unparseable_json(tmp_path: Path) -> None:
     path = tmp_path / "result.json"
     path.write_text("not json")
-    assert not is_training_complete(path, expected_rounds=1)
+    assert not is_complete(path, expected_rounds=1)
 
 
 def test_run_one_combo_skips_subprocess_when_already_complete(
     tmp_path: Path, monkeypatch
 ) -> None:
-    name = run_name("homogeneous", "first-round", "vanilla", "fedavg")
+    name = _combo_name("homogeneous", "first-round", "vanilla", "fedavg")
     result_path = tmp_path / f"{name}.json"
     result_path.write_text(json.dumps({"server_evaluate_metrics": {"0": {}, "1": {}}}))
     (tmp_path / f"{name}.pt").write_bytes(b"fake-checkpoint")
@@ -138,7 +181,7 @@ def test_run_one_combo_skips_subprocess_when_already_complete(
 
     monkeypatch.setattr(subprocess, "run", fail_if_called)
 
-    model_path, success = run_one_combo(
+    model_path, success = _run_training_combo(
         partition_mode="homogeneous",
         timing="first-round",
         privacy="vanilla",
@@ -165,7 +208,7 @@ def test_run_one_combo_runs_subprocess_when_incomplete(
 
     monkeypatch.setattr(subprocess, "run", fake_run)
 
-    _model_path, success = run_one_combo(
+    _model_path, success = _run_training_combo(
         partition_mode="non-iid",
         timing="post-convergence",
         privacy="metric-privacy",
@@ -187,7 +230,7 @@ def test_run_one_combo_reports_failure_on_nonzero_returncode(
 
     monkeypatch.setattr(subprocess, "run", lambda command, cwd=None: FakeFailedProcess())
 
-    _model_path, success = run_one_combo(
+    _model_path, success = _run_training_combo(
         partition_mode="homogeneous",
         timing="first-round",
         privacy="vanilla",
@@ -229,7 +272,7 @@ def test_run_cia_client_scaling_continues_past_failed_combo_and_writes_report(
     assert len(results) == 1
     assert results[0].aggregation == "fedavg"
 
-    failed_name = run_name("homogeneous", "first-round", "vanilla", "fedyogi")
+    failed_name = _combo_name("homogeneous", "first-round", "vanilla", "fedyogi")
     log_content = (tmp_path / "sweep_progress.log").read_text()
     assert failed_name in log_content
     assert "evaluation error" in log_content
@@ -248,7 +291,7 @@ def test_run_one_combo_retrains_when_result_json_complete_but_checkpoint_missing
 ) -> None:
     """A crash between server.py writing the JSON and saving the .pt file must
     not be mistaken for a complete, resumable combo (Fix 2)."""
-    name = run_name("homogeneous", "first-round", "vanilla", "fedavg")
+    name = _combo_name("homogeneous", "first-round", "vanilla", "fedavg")
     result_path = tmp_path / f"{name}.json"
     result_path.write_text(json.dumps({"server_evaluate_metrics": {"0": {}, "1": {}}}))
     # Deliberately no {name}.pt written alongside it.
@@ -264,7 +307,7 @@ def test_run_one_combo_retrains_when_result_json_complete_but_checkpoint_missing
 
     monkeypatch.setattr(subprocess, "run", fake_run)
 
-    model_path, success = run_one_combo(
+    model_path, success = _run_training_combo(
         partition_mode="homogeneous",
         timing="first-round",
         privacy="vanilla",
@@ -379,39 +422,32 @@ def test_resolve_noise_multiplier_defaults_to_timing_value() -> None:
     assert resolve_noise_multiplier("first-round", 0.12) == 0.12
 
 
-def test_run_name_is_unsuffixed_at_the_timing_default() -> None:
-    """Default runs keep their original names, so existing results still resolve."""
-    base = run_name("homogeneous", "first-round", "vanilla", "fedavg")
-    assert base == run_name(
-        "homogeneous", "first-round", "vanilla", "fedavg", noise_multiplier=0.01
-    )
-    assert not base.endswith("__nm0p01")
-
-
-def test_run_name_encodes_an_overridden_noise_multiplier() -> None:
+def test_default_matrix_run_name_encodes_an_overridden_noise_multiplier() -> None:
     """Distinct noise levels must not collide on disk or skip each other."""
-    name = run_name(
+    name = _combo_name(
         "homogeneous", "first-round", "vanilla", "fedavg", noise_multiplier=0.12
     )
-    assert name.endswith("__nm0p12")
-    assert name != run_name("homogeneous", "first-round", "vanilla", "fedavg")
+    assert "__nm0p12__" in name
+    assert name != _combo_name("homogeneous", "first-round", "vanilla", "fedavg")
 
 
-def test_build_reproduce_command_passes_overridden_noise(tmp_path) -> None:
+def test_build_combo_passes_overridden_noise(tmp_path) -> None:
     """The override must reach the underlying reproduce runner."""
+    combo = build_combo(
+        partition_mode="homogeneous",
+        timing="first-round",
+        privacy="metric-privacy",
+        aggregation="fedyogi",
+        noise_multiplier=0.12,
+    )
     joined = " ".join(
-        build_reproduce_command(
-            partition_mode="homogeneous",
-            timing="first-round",
-            privacy="metric-privacy",
-            aggregation="fedyogi",
-            output_dir=tmp_path,
-            max_parallel_clients=4,
-            noise_multiplier=0.12,
-        )
+        combo.runner_args(output_dir=tmp_path, max_parallel_clients=4, client_cpus=1.0)
     )
     assert "--noise-multiplier 0.12" in joined
-    assert "--run-name cia_scaling__first-round__homogeneous__metric-privacy__fedyogi__nm0p12" in joined
+    assert (
+        "--run-name cia_scaling__first-round__homogeneous__metric-privacy__fedyogi__"
+        "clients-48__seed-42__nm0p12__clip5__rounds-1__epochs-20" in joined
+    )
 
 
 def test_parse_subset_accepts_a_valid_subset() -> None:

@@ -43,9 +43,10 @@ class Combo:
         output_dir: Path,
         max_parallel_clients: int,
         client_cpus: float,
+        save_model: bool = False,
     ) -> tuple[str, ...]:
         """Return command-line arguments for the reproduction runner."""
-        return (
+        args = (
             "--num-clients",
             str(self.num_clients),
             "--partition",
@@ -79,6 +80,9 @@ class Combo:
             "--run-name",
             self.run_name(),
         )
+        if save_model:
+            return (*args, "--save-model")
+        return args
 
 
 def format_noise(noise_multiplier: float) -> str:

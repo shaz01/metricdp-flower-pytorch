@@ -20,8 +20,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import subprocess
-import sys
 import time
 from pathlib import Path
 
@@ -30,6 +28,8 @@ import torch
 from experiments.cia_client_scaling.result import CiaScalingResult, make_cia_scaling_result
 from experiments.cia_client_scaling.shadow import target_shadow_loader
 from experiments.reproduce.dataset.alzheimer import AlzheimerDataModule
+from experiments.reproduce.matrix import Combo, Hyperparams
+from experiments.reproduce.matrix.run_combo import run_one_combo
 from experiments.reproduce.paper_cnn import PaperCNN
 from experiments.reproduce.paper_loss import evaluate_model
 from metricdp_pytorch.strategy_factory import PRIVACY_MODES
@@ -71,99 +71,33 @@ def resolve_noise_multiplier(timing: str, noise_multiplier: float | None) -> flo
     return float(TIMING_CONFIGS[timing]["noise_multiplier"])
 
 
-def format_noise(noise_multiplier: float) -> str:
-    """Render a noise multiplier as a filename-safe token, e.g. 0.12 -> '0p12'."""
-    return f"{noise_multiplier:g}".replace(".", "p")
-
-
-def run_name(
-    partition_mode: str,
-    timing: str,
-    privacy: str,
-    aggregation: str,
-    *,
-    noise_multiplier: float | None = None,
-) -> str:
-    """Build a deterministic run name.
-
-    A non-default noise multiplier is encoded in the name so sweeps at several
-    noise levels neither collide on disk nor skip each other via resumability.
-    The timing's default value keeps the original unsuffixed name.
-    """
-    base = f"cia_scaling__{timing}__{partition_mode}__{privacy}__{aggregation}"
-    resolved = resolve_noise_multiplier(timing, noise_multiplier)
-    if resolved == float(TIMING_CONFIGS[timing]["noise_multiplier"]):
-        return base
-    return f"{base}__nm{format_noise(resolved)}"
-
-
-def build_reproduce_command(
-    *,
-    partition_mode: str,
-    timing: str,
-    privacy: str,
-    aggregation: str,
-    output_dir: Path,
-    max_parallel_clients: int,
-    noise_multiplier: float | None = None,
-) -> list[str]:
-    """Build the argv for one real 48-client CIA training run."""
+def build_combo(
+        *,
+        partition_mode: str,
+        timing: str,
+        privacy: str,
+        aggregation: str,
+        noise_multiplier: float | None = None,
+) -> Combo:
+    """Represent one CIA training run using the shared reproduction matrix."""
     timing_config = TIMING_CONFIGS[timing]
-    resolved_noise = resolve_noise_multiplier(timing, noise_multiplier)
-    name = run_name(
-        partition_mode, timing, privacy, aggregation, noise_multiplier=noise_multiplier
+    return Combo(
+        name_prefix=f"cia_scaling__{timing}",
+        num_clients=NUM_CLIENTS,
+        partition=partition_mode,
+        privacy=privacy,
+        aggregation=aggregation,
+        seed=SEED,
+        noise_multiplier=resolve_noise_multiplier(timing, noise_multiplier),
+        hyperparams=Hyperparams(
+            clipping_norm=float(timing_config["clipping_norm"]),
+            rounds=int(timing_config["rounds"]),
+            local_epochs=int(timing_config["local_epochs"]),
+            batch_size=BATCH_SIZE,
+            learning_rate=0.001,
+            initialization_epochs=20,
+        ),
     )
-    return [
-        sys.executable,
-        "-m",
-        "experiments.reproduce.runner",
-        "--num-clients",
-        str(NUM_CLIENTS),
-        "--partition",
-        partition_mode,
-        "--privacy",
-        privacy,
-        "--aggregation",
-        aggregation,
-        "--rounds",
-        str(timing_config["rounds"]),
-        "--local-epochs",
-        str(timing_config["local_epochs"]),
-        "--noise-multiplier",
-        str(resolved_noise),
-        "--clipping-norm",
-        str(timing_config["clipping_norm"]),
-        "--seed",
-        str(SEED),
-        "--output-dir",
-        str(output_dir),
-        "--run-name",
-        name,
-        "--save-model",
-        "--max-parallel-clients",
-        str(max_parallel_clients),
-    ]
-
-
-def is_training_complete(path: Path, *, expected_rounds: int) -> bool:
-    """Return whether ``path`` holds a valid, fully-completed training result.
-
-    Treats a missing, unparseable, or short-of-rounds file as incomplete, so
-    a prior run that was killed mid-write (or mid-sweep) is rerun rather than
-    silently accepted. Mirrors
-    ``experiments/client_scaling/sweep_48_clients.py``'s ``is_complete``.
-    """
-    if not path.exists():
-        return False
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return False
-    history = data.get("server_evaluate_metrics", {})
-    completed_rounds = [
-        int(round_number) for round_number in history if int(round_number) > 0
-    ]
-    return len(completed_rounds) >= expected_rounds
 
 
 def _log(log_path: Path, message: str) -> None:
@@ -173,50 +107,11 @@ def _log(log_path: Path, message: str) -> None:
         handle.write(line + "\n")
 
 
-def run_one_combo(
-    *,
-    partition_mode: str,
-    timing: str,
-    privacy: str,
-    aggregation: str,
-    output_dir: Path,
-    max_parallel_clients: int,
-    force: bool,
-    noise_multiplier: float | None = None,
-) -> tuple[Path, bool]:
-    """Run one training combo unless already complete; return (model_path, success)."""
-    name = run_name(
-        partition_mode, timing, privacy, aggregation, noise_multiplier=noise_multiplier
-    )
-    result_path = output_dir / f"{name}.json"
-    model_path = output_dir / f"{name}.pt"
-    expected_rounds = int(TIMING_CONFIGS[timing]["rounds"])
-
-    if (
-        not force
-        and is_training_complete(result_path, expected_rounds=expected_rounds)
-        and model_path.exists()
-    ):
-        return model_path, True
-
-    command = build_reproduce_command(
-        partition_mode=partition_mode,
-        timing=timing,
-        privacy=privacy,
-        aggregation=aggregation,
-        output_dir=output_dir,
-        max_parallel_clients=max_parallel_clients,
-        noise_multiplier=noise_multiplier,
-    )
-    result = subprocess.run(command, cwd=PROJECT_ROOT)
-    return model_path, result.returncode == 0
-
-
 def evaluate_combo(
-    model_path: Path,
-    *,
-    partition_mode: str,
-    device: torch.device,
+        model_path: Path,
+        *,
+        partition_mode: str,
+        device: torch.device,
 ) -> tuple[float, float, int]:
     """Return ``(aggregated_test_loss, target_shadow_loss, shadow_size)`` for
     one saved model."""
@@ -242,7 +137,7 @@ def evaluate_combo(
 
 
 def _load_existing_report(
-    report_path: Path,
+        report_path: Path,
 ) -> tuple[dict[tuple[str, str, str, str], dict], list[str]]:
     """Load a prior run's report (if any) so a new invocation merges into it
     instead of clobbering it. Returns (results_by_key, failed)."""
@@ -266,15 +161,15 @@ def _load_existing_report(
 
 
 def run_cia_client_scaling(
-    *,
-    output_dir: Path,
-    partition_modes: tuple[str, ...] = PARTITION_MODES,
-    privacy_modes: tuple[str, ...] = PRIVACY_MODES,
-    aggregations: tuple[str, ...] = AGGREGATIONS,
-    timings: tuple[str, ...] = TIMINGS,
-    max_parallel_clients: int = 4,
-    force: bool = False,
-    noise_multiplier: float | None = None,
+        *,
+        output_dir: Path,
+        partition_modes: tuple[str, ...] = PARTITION_MODES,
+        privacy_modes: tuple[str, ...] = PRIVACY_MODES,
+        aggregations: tuple[str, ...] = AGGREGATIONS,
+        timings: tuple[str, ...] = TIMINGS,
+        max_parallel_clients: int = 4,
+        force: bool = False,
+        noise_multiplier: float | None = None,
 ) -> list[CiaScalingResult]:
     output_dir.mkdir(parents=True, exist_ok=True)
     log_path = output_dir / "sweep_progress.log"
@@ -300,13 +195,15 @@ def run_cia_client_scaling(
             for privacy in privacy_modes:
                 for aggregation in aggregations:
                     resolved_noise = resolve_noise_multiplier(timing, noise_multiplier)
-                    name = run_name(
-                        partition_mode,
-                        timing,
-                        privacy,
-                        aggregation,
+                    combo = build_combo(
+                        partition_mode=partition_mode,
+                        timing=timing,
+                        privacy=privacy,
+                        aggregation=aggregation,
                         noise_multiplier=noise_multiplier,
                     )
+                    name = combo.run_name()
+                    model_path = output_dir / f"{name}.pt"
                     key = (
                         timing,
                         partition_mode,
@@ -314,20 +211,16 @@ def run_cia_client_scaling(
                         aggregation,
                         resolved_noise,
                     )
-                    _log(log_path, f"START {name}")
-                    model_path, success = run_one_combo(
-                        partition_mode=partition_mode,
-                        timing=timing,
-                        privacy=privacy,
-                        aggregation=aggregation,
+                    success = run_one_combo(
+                        combo,
                         output_dir=output_dir,
                         max_parallel_clients=max_parallel_clients,
                         force=force,
-                        noise_multiplier=noise_multiplier,
+                        log=lambda message: _log(log_path, message),
+                        save_model=True,
                     )
                     completed += 1
                     if not success:
-                        _log(log_path, f"FAILED {name}")
                         if name not in failed:
                             failed.append(name)
                         _log(log_path, f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
@@ -359,7 +252,7 @@ def run_cia_client_scaling(
                     results_by_key[key] = result.__dict__
                     if name in failed:
                         failed.remove(name)
-                    _log(log_path, f"DONE {name}")
+                    _log(log_path, f"EVALUATED {name}")
                     _log(log_path, f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
                     _write_report()
 
@@ -429,10 +322,10 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def parse_subset(
-    parser: argparse.ArgumentParser,
-    raw: str,
-    valid: tuple[str, ...],
-    flag: str,
+        parser: argparse.ArgumentParser,
+        raw: str,
+        valid: tuple[str, ...],
+        flag: str,
 ) -> tuple[str, ...]:
     """Parse one comma-separated CLI subset, erroring on empty or unknown values.
 

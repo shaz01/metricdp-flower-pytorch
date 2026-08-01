@@ -44,13 +44,17 @@ def run_one_combo(
     env: Mapping[str, str] | None = None,
     start_detail: str = "",
     stdout: TextIO | None = None,
+    save_model: bool = False,
 ) -> bool:
     """Run one combo through the reproduction runner, or skip it when complete."""
     name = combo.run_name()
     result_path = combo.result_path(output_dir)
 
-    if not force and is_complete(
-        result_path, expected_rounds=combo.hyperparams.rounds
+    model_path = output_dir / f"{name}.pt"
+    if (
+        not force
+        and is_complete(result_path, expected_rounds=combo.hyperparams.rounds)
+        and (not save_model or model_path.exists())
     ):
         log(f"SKIP  {name} (already complete)")
         return True
@@ -63,6 +67,7 @@ def run_one_combo(
             output_dir=output_dir,
             max_parallel_clients=max_parallel_clients,
             client_cpus=client_cpus,
+            save_model=save_model,
         ),
     ]
     log(f"START {name} {start_detail}")
@@ -72,12 +77,9 @@ def run_one_combo(
     if stdout is not None:
         subprocess_options["stdout"] = stdout
         subprocess_options["stderr"] = subprocess.STDOUT
-    result = subprocess.run(
-        command,
-        cwd=PROJECT_ROOT,
-        env=dict(env) if env is not None else None,
-        **subprocess_options,
-    )
+    if env is not None:
+        subprocess_options["env"] = dict(env)
+    result = subprocess.run(command, cwd=PROJECT_ROOT, **subprocess_options)
     elapsed = time.monotonic() - started
 
     if result.returncode == 0:
