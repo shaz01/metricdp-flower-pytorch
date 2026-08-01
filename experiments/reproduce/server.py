@@ -37,6 +37,30 @@ def _plain_metrics(metrics: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def checkpoint_model_path(output_dir: Path, run_name: str, round_number: int) -> Path:
+    """Return the model-checkpoint path for one aggregated server round."""
+    return output_dir / f"{run_name}.round-{round_number}.pt"
+
+
+def _checkpointing_evaluate_fn(
+    evaluate_fn: Callable[[int, ArrayRecord], MetricRecord],
+    *,
+    output_dir: Path,
+    run_name: str,
+    checkpoint_rounds: set[int],
+) -> Callable[[int, ArrayRecord], MetricRecord]:
+    """Decorate server evaluation to persist selected round models."""
+
+    def evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
+        if server_round in checkpoint_rounds:
+            path = checkpoint_model_path(output_dir, run_name, server_round)
+            torch.save(arrays.to_torch_state_dict(), path)
+            print(f"Round {server_round} checkpoint written to {path}")
+        return evaluate_fn(server_round, arrays)
+
+    return evaluate
+
+
 def result_to_dict(result: Result, metadata: Mapping[str, Any]) -> dict[str, Any]:
     """Serialize ordinary FL train/evaluation histories; no CIA fields."""
 
@@ -109,16 +133,31 @@ def main(grid: Grid, context: Context) -> None:
         epochs=int(config.get("initialization-epochs", 20)),
         learning_rate=float(config.get("initialization-learning-rate", 1e-3)),
     )
-    result = run(
-        grid,
-        config,
-        evaluate_fn=make_evaluate_fn(final_testloader),
-        initial_arrays=ArrayRecord(initial_model.state_dict()),
-    )
 
     output_dir = config.get("output-dir")
     run_name = config.get("run-name")
-    save_model = bool(config.get("save-model", False))
+    evaluate_fn = make_evaluate_fn(final_testloader)
+    checkpoint_rounds = {
+        int(round_number) for round_number in config.get("checkpoint-rounds", [])
+    }
+    if checkpoint_rounds:
+        if not output_dir or not run_name:
+            raise ValueError("Checkpoint rounds require output-dir and run-name.")
+        destination = Path(str(output_dir))
+        destination.mkdir(parents=True, exist_ok=True)
+        evaluate_fn = _checkpointing_evaluate_fn(
+            evaluate_fn,
+            output_dir=destination,
+            run_name=str(run_name),
+            checkpoint_rounds=checkpoint_rounds,
+        )
+
+    result = run(
+        grid,
+        config,
+        evaluate_fn=evaluate_fn,
+        initial_arrays=ArrayRecord(initial_model.state_dict()),
+    )
 
     if output_dir and run_name:
         destination = Path(str(output_dir))
@@ -171,9 +210,3 @@ def main(grid: Grid, context: Context) -> None:
             "Detailed evaluation written to "
             f"{evaluation_path} and {predictions_path}"
         )
-
-        if save_model:
-            torch.save(
-                result.arrays.to_torch_state_dict(),
-                Path(str(output_dir)) / f"{run_name}.pt",
-            )

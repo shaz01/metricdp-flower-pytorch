@@ -12,20 +12,14 @@ the relative-difference attack score for each combination.
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
 import torch
 
-from experiments.cia.result import CiaResult, make_cia_result
-from experiments.cia.datasets.paper import (
-    PAPER_CIA_NUM_CLIENTS,
-    PaperShadowDataModule,
-)
-from experiments.cia.iter_combos import iter_combos
+from experiments.cia.attack_runner import run_attack
+from experiments.cia.datasets.paper import PAPER_CIA_NUM_CLIENTS, PaperShadowDataModule
+from experiments.cia.result import CiaResult
 from experiments.reproduce.matrix import Combo, Hyperparams, Matrix
-from experiments.reproduce.paper_cnn import PaperCNN
-from experiments.reproduce.paper_loss import evaluate_model
 from metricdp_pytorch.strategy_factory import AGGREGATION_METHODS, PRIVACY_MODES
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -73,28 +67,6 @@ def build_cia_combos(
     )
 
 
-def evaluate_combo(
-    model_path: Path,
-    *,
-    data_module: PaperShadowDataModule,
-    device: torch.device,
-) -> tuple[float, float]:
-    """Return ``(aggregated_test_loss, target_shadow_loss)`` for one saved model."""
-    model = PaperCNN()
-    model.load_state_dict(torch.load(model_path, map_location="cpu"))
-
-    _validation_loader, test_loader = data_module.server_loaders(
-        batch_size=CIA_BATCH_SIZE, seed=CIA_SEED
-    )
-    shadow_loader = data_module.target_shadow_loader(
-        batch_size=CIA_BATCH_SIZE, seed=CIA_SEED
-    )
-
-    aggregated_metrics = evaluate_model(model, test_loader, device)
-    target_metrics = evaluate_model(model, shadow_loader, device)
-    return aggregated_metrics["loss"], target_metrics["loss"]
-
-
 def run_first_round_cia(
     *,
     output_dir: Path,
@@ -103,41 +75,26 @@ def run_first_round_cia(
     max_parallel_clients: int = 2,
     force: bool = False,
 ) -> list[CiaResult]:
-    output_dir.mkdir(parents=True, exist_ok=True)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    data_module = PaperShadowDataModule()
-
-    results: list[CiaResult] = []
     combos = build_cia_combos(
         privacy_modes=privacy_modes, aggregations=aggregations
     )
-    for combo, success, model_path in iter_combos(
+    return run_attack(
         combos,
         output_dir=output_dir,
+        log_path=output_dir / "attack_progress.log",
         max_parallel_clients=max_parallel_clients,
         force=force,
-        log=lambda message: print(message, flush=True),
-    ):
-        if not success:
-            continue
-        aggregated_loss, target_loss = evaluate_combo(
-            model_path, data_module=data_module, device=device
-        )
-        results.append(
-            make_cia_result(
-                privacy=combo.privacy,
-                aggregation=combo.aggregation,
-                aggregated_test_loss=aggregated_loss,
-                target_shadow_loss=target_loss,
-            )
-        )
-
-    report_path = output_dir / "first_round_cia.json"
-    report_path.write_text(
-        json.dumps([result.__dict__ for result in results], indent=2) + "\n",
-        encoding="utf-8",
+        start_message=(
+            f"CIA attack starting: {len(combos)} combinations, "
+            f"num_clients={PAPER_CIA_NUM_CLIENTS}, force={force}"
+        ),
+        data_module=PaperShadowDataModule(),
+        device=device,
+        batch_size=CIA_BATCH_SIZE,
+        seed=CIA_SEED,
+        checkpoint_rounds=(1,),
     )
-    return results
 
 
 def _parser() -> argparse.ArgumentParser:

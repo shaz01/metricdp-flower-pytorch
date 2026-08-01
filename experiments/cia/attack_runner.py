@@ -64,6 +64,8 @@ def run_attack(
     checkpoint_rounds: tuple[int, ...] = (),
 ) -> list[CiaResult]:
     """Run and evaluate every CIA combo, continuing past failures."""
+    if not checkpoint_rounds:
+        raise ValueError("CIA attacks require at least one checkpoint round.")
     output_dir.mkdir(parents=True, exist_ok=True)
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log = _logger(log_path)
@@ -73,7 +75,7 @@ def run_attack(
     failed: list[str] = []
     results: list[CiaResult] = []
 
-    for completed, (combo, success, model_path) in enumerate(
+    for completed, (combo, success, checkpoint_paths) in enumerate(
         iter_combos(
             combos,
             output_dir=output_dir,
@@ -91,17 +93,9 @@ def run_attack(
             continue
 
         try:
-            round_models = (
-                tuple(
-                    (
-                        round_number,
-                        output_dir / f"{name}.round-{round_number}.pt",
-                    )
-                    for round_number in checkpoint_rounds
-                )
-                or ((combo.hyperparams.rounds, model_path),)
-            )
-            for round_number, round_model_path in round_models:
+            for round_number, round_model_path in zip(
+                checkpoint_rounds, checkpoint_paths, strict=True
+            ):
                 aggregated_loss, target_loss = _evaluate_combo(
                     round_model_path,
                     data_module=data_module,

@@ -27,10 +27,12 @@ def test_make_cia_result_computes_difference_pct() -> None:
     result = make_cia_result(
         privacy="vanilla",
         aggregation="fedavg",
+        server_round=1,
         aggregated_test_loss=1.032,
         target_shadow_loss=1.182,
     )
     assert isinstance(result, CiaResult)
     assert result.privacy == "vanilla"
     assert result.aggregation == "fedavg"
+    assert result.server_round == 1
     assert result.difference_pct == pytest.approx(12.719, abs=0.1)

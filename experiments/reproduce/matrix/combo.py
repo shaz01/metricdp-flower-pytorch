@@ -47,7 +47,7 @@ class Combo:
         output_dir: Path,
         max_parallel_clients: int,
         client_cpus: float,
-        save_model: bool = False,
+        checkpoint_rounds: tuple[int, ...] = (),
     ) -> tuple[str, ...]:
         """Return command-line arguments for the reproduction runner."""
         args = (
@@ -86,8 +86,12 @@ class Combo:
             "--run-name",
             self.run_name(),
         )
-        if save_model:
-            return (*args, "--save-model")
+        if checkpoint_rounds:
+            return (
+                *args,
+                "--checkpoint-rounds",
+                *(str(value) for value in checkpoint_rounds),
+            )
         return args
 
 

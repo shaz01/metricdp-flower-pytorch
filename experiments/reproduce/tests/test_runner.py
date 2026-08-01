@@ -88,6 +88,32 @@ def test_runner_passes_plugin_specific_partition_values_through(tmp_path) -> Non
     assert config["data-module"] == "my_package.data:create_data_module"
 
 
+def test_runner_passes_checkpoint_rounds_through(tmp_path) -> None:
+    config = build_run_config(
+        _args(
+            "--checkpoint-rounds",
+            "1",
+            "20",
+            "--output-dir",
+            str(tmp_path),
+        )
+    )
+
+    assert config["checkpoint-rounds"] == [1, 20]
+
+
+def test_runner_rejects_checkpoint_after_final_round(tmp_path) -> None:
+    with pytest.raises(ValueError, match="checkpoint-rounds"):
+        build_run_config(
+            _args(
+                "--checkpoint-rounds",
+                "21",
+                "--output-dir",
+                str(tmp_path),
+            )
+        )
+
+
 def test_runner_passes_cia_data_module_options_through(tmp_path) -> None:
     config = build_run_config(
         _args(

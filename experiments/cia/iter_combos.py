@@ -18,11 +18,12 @@ def iter_combos(
     max_parallel_clients: int,
     log: LogFunction,
     force: bool = False,
-) -> Iterator[tuple[bool, Path]]:
-    """Run combos sequentially and yield ``(combo, success, model_path)``.
+    checkpoint_rounds: tuple[int, ...] = (),
+) -> Iterator[tuple[Combo, bool, tuple[Path, ...]]]:
+    """Run combos and yield ``(combo, success, checkpoint_paths)``.
 
-    A model path is yielded even when training fails, allowing callers to
-    associate a failure with its combo without reconstructing the filename.
+    Checkpoint paths follow the requested round order. The tuple is empty when
+    no checkpoint rounds were requested.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
     for combo in combos:
@@ -32,6 +33,10 @@ def iter_combos(
             max_parallel_clients=max_parallel_clients,
             force=force,
             log=log,
-            save_model=True,
+            checkpoint_rounds=checkpoint_rounds,
         )
-        yield combo, success, output_dir / f"{combo.run_name()}.pt"
+        checkpoint_paths = tuple(
+            output_dir / f"{combo.run_name()}.round-{round_number}.pt"
+            for round_number in checkpoint_rounds
+        )
+        yield combo, success, checkpoint_paths

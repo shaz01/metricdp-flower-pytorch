@@ -7,7 +7,7 @@ two timing variants:
   methodology (1 round, local-epochs=20), scaled from 3 to 48 clients.
 - ``post-convergence``: mirrors ``experiments/client_scaling/
   sweep_48_clients.py``'s actual training regime (20 rounds,
-  local-epochs=5, noise-multiplier=0.05), with ``--save-model`` added.
+  local-epochs=5, noise-multiplier=0.05), retaining its final-round checkpoint.
 
 Both shell out to the existing, unmodified ``experiments.reproduce.runner``
 CLI with the default Alzheimer data module, then evaluate the resulting
@@ -204,7 +204,8 @@ def run_cia_client_scaling(
                         noise_multiplier=noise_multiplier,
                     )
                     name = combo.run_name()
-                    model_path = output_dir / f"{name}.pt"
+                    checkpoint_round = combo.hyperparams.rounds
+                    model_path = output_dir / f"{name}.round-{checkpoint_round}.pt"
                     key = (
                         timing,
                         partition_mode,
@@ -218,7 +219,7 @@ def run_cia_client_scaling(
                         max_parallel_clients=max_parallel_clients,
                         force=force,
                         log=lambda message: _log(log_path, message),
-                        save_model=True,
+                        checkpoint_rounds=(checkpoint_round,),
                     )
                     completed += 1
                     if not success:

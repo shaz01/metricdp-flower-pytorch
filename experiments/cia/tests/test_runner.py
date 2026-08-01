@@ -49,7 +49,7 @@ def test_cia_combo_runner_args_are_matrix_api_compatible(tmp_path) -> None:
             output_dir=tmp_path,
             max_parallel_clients=2,
             client_cpus=1.0,
-            save_model=True,
+            checkpoint_rounds=(1,),
         )
     )
 
@@ -59,4 +59,5 @@ def test_cia_combo_runner_args_are_matrix_api_compatible(tmp_path) -> None:
     assert "--local-epochs 20" in joined
     assert "--privacy vanilla" in joined
     assert "--aggregation fedavg" in joined
-    assert "--save-model" in joined
+    assert "--checkpoint-rounds 1" in joined
+    assert "--save-model" not in joined

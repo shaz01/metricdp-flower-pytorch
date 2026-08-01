@@ -44,17 +44,22 @@ def run_one_combo(
     env: Mapping[str, str] | None = None,
     start_detail: str = "",
     stdout: TextIO | None = None,
-    save_model: bool = False,
+    checkpoint_rounds: tuple[int, ...] = (),
 ) -> bool:
     """Run one combo through the reproduction runner, or skip it when complete."""
+    if any(value < 1 or value > combo.hyperparams.rounds for value in checkpoint_rounds):
+        raise ValueError("checkpoint_rounds must be between 1 and combo rounds.")
     name = combo.run_name()
     result_path = combo.result_path(output_dir)
 
-    model_path = output_dir / f"{name}.pt"
+    required_model_paths = [
+        output_dir / f"{name}.round-{round_number}.pt"
+        for round_number in checkpoint_rounds
+    ]
     if (
         not force
         and is_complete(result_path, expected_rounds=combo.hyperparams.rounds)
-        and (not save_model or model_path.exists())
+        and all(path.exists() for path in required_model_paths)
     ):
         log(f"SKIP  {name} (already complete)")
         return True
@@ -67,7 +72,7 @@ def run_one_combo(
             output_dir=output_dir,
             max_parallel_clients=max_parallel_clients,
             client_cpus=client_cpus,
-            save_model=save_model,
+            checkpoint_rounds=checkpoint_rounds,
         ),
     ]
     log(f"START {name} {start_detail}")

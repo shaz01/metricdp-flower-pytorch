@@ -19,7 +19,7 @@ fedyogi}` — runs two timing variants via the existing, unmodified
    `experiments/cia/results/first_round_cia.json`.
 2. **post-convergence**: 20 rounds, local-epochs=5, noise-multiplier=0.05,
    clipping-norm=5.0 — the exact hyperparameters
-   `experiments/client_scaling/sweep_48_clients.py` used, with `--save-model`
+   `experiments/client_scaling/sweep_48_clients.py` used, retaining the final-round checkpoint
    added (the original sweep never saved checkpoints). Directly comparable
    to `results/48client_scaling/`.
 

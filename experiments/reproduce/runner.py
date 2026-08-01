@@ -107,7 +107,13 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--output-dir", type=Path, default=Path("results-reproduce-paper/reproduce"))
     parser.add_argument("--run-name")
-    parser.add_argument("--save-model", action="store_true")
+    parser.add_argument(
+        "--checkpoint-rounds",
+        nargs="+",
+        type=int,
+        default=(),
+        help="server rounds whose aggregated models should be saved",
+    )
     parser.add_argument(
         "--smoke",
         action="store_true",
@@ -145,6 +151,10 @@ def _validate(args: argparse.Namespace) -> None:
         raise ValueError("fraction-evaluate must be in (0, 1].")
     if args.rounds < 1 or args.local_epochs < 1:
         raise ValueError("rounds and local-epochs must be positive.")
+    if len(set(args.checkpoint_rounds)) != len(args.checkpoint_rounds):
+        raise ValueError("checkpoint-rounds must not contain duplicates.")
+    if any(round_number < 1 or round_number > args.rounds for round_number in args.checkpoint_rounds):
+        raise ValueError("checkpoint-rounds must be between 1 and rounds.")
     if args.batch_size < 1 or args.initialization_batch_size < 1:
         raise ValueError("batch sizes must be positive.")
     if args.initialization_epochs < 1:
@@ -218,7 +228,7 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
             "data-cache-dir": cache_dir,
             "output-dir": str(output_dir),
             "run-name": run_name,
-            "save-model": args.save_model,
+            "checkpoint-rounds": sorted(args.checkpoint_rounds),
         }
     )
     if args.target_partition_id is not None:

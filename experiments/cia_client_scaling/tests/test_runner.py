@@ -57,14 +57,15 @@ def _run_training_combo(
         privacy=privacy,
         aggregation=aggregation,
     )
-    model_path = output_dir / f"{combo.run_name()}.pt"
+    checkpoint_round = combo.hyperparams.rounds
+    model_path = output_dir / f"{combo.run_name()}.round-{checkpoint_round}.pt"
     success = run_one_combo(
         combo,
         output_dir=output_dir,
         max_parallel_clients=max_parallel_clients,
         force=force,
         log=lambda _message: None,
-        save_model=True,
+        checkpoint_rounds=(checkpoint_round,),
     )
     return model_path, success
 
@@ -103,7 +104,6 @@ def test_build_combo_first_round(tmp_path: Path) -> None:
             output_dir=tmp_path,
             max_parallel_clients=4,
             client_cpus=1.0,
-            save_model=True,
         )
     )
     assert "--num-clients 48" in joined
@@ -119,7 +119,7 @@ def test_build_combo_first_round(tmp_path: Path) -> None:
         "--run-name cia_scaling__first-round__homogeneous__global-dp__fedyogi__"
         "clients-48__seed-42__nm0p01__clip5__rounds-1__epochs-20" in joined
     )
-    assert "--save-model" in joined
+    assert "--save-model" not in joined
     assert "--max-parallel-clients 4" in joined
 
 
@@ -174,7 +174,7 @@ def test_run_one_combo_skips_subprocess_when_already_complete(
     name = _combo_name("homogeneous", "first-round", "vanilla", "fedavg")
     result_path = tmp_path / f"{name}.json"
     result_path.write_text(json.dumps({"server_evaluate_metrics": {"0": {}, "1": {}}}))
-    (tmp_path / f"{name}.pt").write_bytes(b"fake-checkpoint")
+    (tmp_path / f"{name}.round-1.pt").write_bytes(b"fake-checkpoint")
 
     def fail_if_called(*_args, **_kwargs):
         raise AssertionError("subprocess.run should not be called when already complete")
@@ -191,7 +191,7 @@ def test_run_one_combo_skips_subprocess_when_already_complete(
         force=False,
     )
     assert success is True
-    assert model_path == tmp_path / f"{name}.pt"
+    assert model_path == tmp_path / f"{name}.round-1.pt"
 
 
 def test_run_one_combo_runs_subprocess_when_incomplete(
@@ -289,12 +289,11 @@ def test_run_cia_client_scaling_continues_past_failed_combo_and_writes_report(
 def test_run_one_combo_retrains_when_result_json_complete_but_checkpoint_missing(
     tmp_path: Path, monkeypatch
 ) -> None:
-    """A crash between server.py writing the JSON and saving the .pt file must
-    not be mistaken for a complete, resumable combo (Fix 2)."""
+    """A complete JSON without its requested checkpoint must be retrained."""
     name = _combo_name("homogeneous", "first-round", "vanilla", "fedavg")
     result_path = tmp_path / f"{name}.json"
     result_path.write_text(json.dumps({"server_evaluate_metrics": {"0": {}, "1": {}}}))
-    # Deliberately no {name}.pt written alongside it.
+    # Deliberately no round-1 checkpoint written alongside it.
 
     calls: list[list[str]] = []
 
@@ -317,7 +316,7 @@ def test_run_one_combo_retrains_when_result_json_complete_but_checkpoint_missing
         force=False,
     )
     assert success is True
-    assert model_path == tmp_path / f"{name}.pt"
+    assert model_path == tmp_path / f"{name}.round-1.pt"
     assert len(calls) == 1, "training should be retried when the checkpoint is missing"
 
 

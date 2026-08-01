@@ -9,6 +9,7 @@ from dataclasses import dataclass
 class CiaResult:
     privacy: str
     aggregation: str
+    server_round: int
     aggregated_test_loss: float
     target_shadow_loss: float
     difference_pct: float
@@ -30,12 +31,14 @@ def make_cia_result(
     *,
     privacy: str,
     aggregation: str,
+    server_round: int,
     aggregated_test_loss: float,
     target_shadow_loss: float,
 ) -> CiaResult:
     return CiaResult(
         privacy=privacy,
         aggregation=aggregation,
+        server_round=server_round,
         aggregated_test_loss=aggregated_test_loss,
         target_shadow_loss=target_shadow_loss,
         difference_pct=relative_difference(aggregated_test_loss, target_shadow_loss),
