@@ -7,7 +7,7 @@ from torch.utils.data import TensorDataset
 from metricdp_pytorch.utils.data import NoisyDataset, make_indexed_loader
 
 
-def test_indexed_loader_uses_parallel_prefetching() -> None:
+def test_indexed_loader_defaults_to_no_subprocess_workers() -> None:
     dataset = TensorDataset(torch.ones(4, 3), torch.tensor([0, 1, 0, 1]))
 
     loader = make_indexed_loader(
@@ -18,10 +18,30 @@ def test_indexed_loader_uses_parallel_prefetching() -> None:
         seed=9,
     )
 
+    # num_workers=0 means no worker subprocess and no torch_shm_manager
+    # daemon -- see make_indexed_loader's docstring for the measured leak
+    # this avoids.
+    assert loader.num_workers == 0
+    assert loader.persistent_workers is False
+    assert loader.prefetch_factor is None
+    assert loader.pin_memory is torch.cuda.is_available()
+
+
+def test_indexed_loader_supports_explicit_worker_count() -> None:
+    dataset = TensorDataset(torch.ones(4, 3), torch.tensor([0, 1, 0, 1]))
+
+    loader = make_indexed_loader(
+        dataset,
+        range(4),
+        batch_size=2,
+        shuffle=True,
+        seed=9,
+        num_workers=2,
+    )
+
     assert loader.num_workers == 2
     assert loader.persistent_workers is True
     assert loader.prefetch_factor == 2
-    assert loader.pin_memory is torch.cuda.is_available()
 
 
 def test_noisy_dataset_is_seeded_and_preserves_labels() -> None:

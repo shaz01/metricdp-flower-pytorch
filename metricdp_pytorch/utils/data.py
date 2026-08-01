@@ -50,9 +50,24 @@ def make_indexed_loader(
     batch_size: int,
     shuffle: bool,
     seed: int,
-    num_workers: int = 2,
+    num_workers: int = 0,
 ) -> DataLoader:
-    """Create a deterministic, accelerator-friendly indexed DataLoader."""
+    """Create a deterministic, accelerator-friendly indexed DataLoader.
+
+    ``num_workers`` defaults to 0 (no subprocess workers). Measured live on
+    this project's Ray simulation runs: every DataLoader-with-workers
+    instantiation leaked its ``torch_shm_manager`` shared-memory daemon --
+    reparented to init, never cleanly torn down -- at a robust 1:1 ratio (16
+    orphans per round with 8 clients x 2 loaders, exactly once per round,
+    regardless of ``persistent_workers``). A fresh loader is built once per
+    round per client anyway (see ``experiments/reproduce/client.py``'s
+    per-round ``_client_data()``), so that's one guaranteed leak per loader
+    per round for the whole run. With num_workers=0 there is no worker
+    process and no shared-memory manager to leak in the first place; data
+    loading runs synchronously in the caller, which is not the bottleneck
+    against an accelerator-bound CNN forward/backward pass on this dataset's
+    modest per-client shard sizes and 128x128 grayscale images.
+    """
     if batch_size < 1:
         raise ValueError("batch_size must be positive.")
     if num_workers < 0:
@@ -68,15 +83,6 @@ def make_indexed_loader(
         generator=generator if shuffle else None,
         num_workers=num_workers,
         pin_memory=torch.cuda.is_available(),
-        # train_with_adam iterates this same loader object once per local
-        # epoch, so persistent_workers=True keeps one pair of workers alive
-        # across those epochs instead of respawning them every epoch --
-        # setting this False previously caused a 5x (epochs=5) increase in
-        # worker-process churn per round, which showed up as CPU spikes and,
-        # worse, leaked orphaned torch_shm_manager daemons even faster than
-        # before. Leak protection belongs to release_device_cache() (called
-        # every task) and cleanup_orphaned_shm_managers() (run at sweep
-        # start and after every combo), not to disabling persistence here.
         persistent_workers=num_workers > 0,
         prefetch_factor=2 if num_workers > 0 else None,
     )
