@@ -42,13 +42,12 @@ Measured cold load: 155.94s online vs 0.10s offline. ``--allow-hf-network``
 opts out, and a preflight check fails fast if the cache cannot serve the
 dataset offline.
 
-Client actors need an explicit ``--client-gpus`` share: the runner defaults it
-to 0.0, and Ray then overrides ``CUDA_VISIBLE_DEVICES`` inside each actor so
-clients silently train on CPU. Measured at 48 clients / 12 parallel actors,
-3 rounds x 5 epochs: 231s with ``client_gpus=0.0`` vs 75s with ``0.08``.
-Because client training moves to the GPU, results are not bit-comparable with
-the earlier CPU-only sweeps, which is why this sweep carries its own vanilla
-reference rather than reusing ``results/48client_scaling``.
+The runner automatically shares one CUDA device across the concurrently
+scheduled client actors (and uses 0.0 GPU resources when CUDA is unavailable).
+At 48 clients / 12 parallel actors, this assigns each actor a logical share of
+0.0825. GPU-trained results are not bit-comparable with the earlier CPU-only
+sweeps, which is why this sweep carries its own vanilla reference rather than
+reusing ``results/48client_scaling``.
 
 Reuses ``experiments.reproduce.runner`` unmodified via subprocess, exactly like
 ``sweep_48_clients.py``: resumable (skips combinations whose result JSON already
@@ -60,12 +59,14 @@ combination rather than aborting the whole multi-hour sweep, and supports
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import subprocess
 import sys
 import time
 from pathlib import Path
+
+from experiments.reproduce.matrix import Combo, Hyperparams, Matrix
+from experiments.reproduce.matrix.run_combo import run_one_combo
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -77,14 +78,15 @@ DP_PRIVACY_MODES = ("global-dp", "metric-privacy")
 SEED = 42
 ROUNDS = 20
 LOCAL_EPOCHS = 5
+BATCH_SIZE = 32
+LEARNING_RATE = 0.001
+INITIALIZATION_EPOCHS = 20
 
 # nm = sigma * N / C, chosen to reproduce the three regimes found at 8 clients.
 NOISE_MULTIPLIERS = (0.12, 0.30, 0.60)
 
-# 12 actors x 0.08 logical GPUs = 0.96, so all 12 stay co-resident on one GPU.
 MAX_PARALLEL_CLIENTS = 12
-CLIENT_GPUS = 0.08
-EXPECTED_ROUNDS = 20  # paper default (pyproject.toml num-server-rounds)
+DEFAULT_NOISE_MULTIPLIER = 0.01
 
 # Pin every subprocess to the local HF cache; see module docstring.
 HF_OFFLINE_ENV = {"HF_HUB_OFFLINE": "1", "HF_DATASETS_OFFLINE": "1"}
@@ -151,117 +153,60 @@ def _log(message: str) -> None:
         handle.write(line + "\n")
 
 
-def format_noise(noise_multiplier: float) -> str:
-    """Render a noise multiplier as a filename-safe token, e.g. 0.3 -> '0p3'."""
-    return f"{noise_multiplier:g}".replace(".", "p")
+def _hyperparams(noise_multiplier: float) -> Hyperparams:
+    """Return the shared hyperparameters at one noise multiplier."""
+    return Hyperparams(
+        noise_multiplier=noise_multiplier,
+        clipping_norm=CLIPPING_NORM,
+        rounds=ROUNDS,
+        local_epochs=LOCAL_EPOCHS,
+        batch_size=BATCH_SIZE,
+        learning_rate=LEARNING_RATE,
+        initialization_epochs=INITIALIZATION_EPOCHS,
+    )
 
 
-def run_name(partition: str, privacy: str, noise_multiplier: float | None) -> str:
-    """Build a deterministic run name; ``vanilla`` carries no noise token."""
-    base = f"sigma48__{partition}__{privacy}__{AGGREGATION}"
-    if noise_multiplier is None:
-        return base
-    return f"{base}__nm{format_noise(noise_multiplier)}"
+def _matrix(
+    partition: str, privacy_modes: tuple[str, ...], noise_multiplier: float
+) -> Matrix:
+    """Return one partition's matrix at one noise multiplier."""
+    return Matrix(
+        partitions=(partition,),
+        privacy_modes=privacy_modes,
+        aggregations=(AGGREGATION,),
+        seeds=(SEED,),
+        hyperparams=_hyperparams(noise_multiplier),
+    )
 
 
-def result_path(partition: str, privacy: str, noise_multiplier: float | None) -> Path:
-    return OUTPUT_DIR / f"{run_name(partition, privacy, noise_multiplier)}.json"
+def iter_combos() -> list[Combo]:
+    """Enumerate every configured run in execution order.
 
-
-def is_complete(path: Path, *, expected_rounds: int = EXPECTED_ROUNDS) -> bool:
-    """Return whether ``path`` holds a valid, fully-completed result.
-
-    Treats a missing, unparseable, or short-of-rounds file as incomplete, so a
-    prior run that was killed mid-write (or mid-sweep) is rerun rather than
-    silently accepted.
+    The noise multiplier is a hyperparameter rather than a matrix dimension, so
+    the grid is assembled from one :class:`Matrix` per multiplier, restricted to
+    a single partition at a time. The vanilla reference for a partition runs
+    first -- and only once, since it ignores the noise settings entirely -- so
+    that a partially completed sweep still yields an interpretable baseline.
     """
-    if not path.exists():
-        return False
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return False
-    history = data.get("server_evaluate_metrics", {})
-    completed_rounds = [int(round_number) for round_number in history if int(round_number) > 0]
-    return len(completed_rounds) >= expected_rounds
-
-
-def run_one_combo(
-    partition: str,
-    privacy: str,
-    noise_multiplier: float | None,
-    *,
-    force: bool,
-    max_parallel_clients: int,
-    client_gpus: float,
-    offline: bool,
-) -> bool:
-    """Run one combination; return True on success (or already-complete)."""
-    name = run_name(partition, privacy, noise_multiplier)
-    path = result_path(partition, privacy, noise_multiplier)
-    if not force and is_complete(path):
-        _log(f"SKIP  {name} (already complete)")
-        return True
-
-    command = [
-        sys.executable,
-        "-m",
-        "experiments.reproduce.runner",
-        "--num-clients",
-        str(NUM_CLIENTS),
-        "--partition",
-        partition,
-        "--privacy",
-        privacy,
-        "--aggregation",
-        AGGREGATION,
-        "--clipping-norm",
-        str(CLIPPING_NORM),
-        "--rounds",
-        str(ROUNDS),
-        "--local-epochs",
-        str(LOCAL_EPOCHS),
-        "--seed",
-        str(SEED),
-        "--max-parallel-clients",
-        str(max_parallel_clients),
-        "--client-gpus",
-        str(client_gpus),
-        "--output-dir",
-        str(OUTPUT_DIR),
-        "--run-name",
-        name,
-    ]
-    if noise_multiplier is not None:
-        command += ["--noise-multiplier", str(noise_multiplier)]
-
-    if noise_multiplier is None:
-        _log(f"START {name} (no noise)")
-    else:
-        _log(f"START {name} (nm={noise_multiplier}, sigma={effective_sigma(noise_multiplier):.3e})")
-    started = time.monotonic()
-    result = subprocess.run(command, cwd=PROJECT_ROOT, env=subprocess_env(offline=offline))
-    elapsed = time.monotonic() - started
-    if result.returncode == 0:
-        _log(f"DONE  {name} ({elapsed:.1f}s)")
-        return True
-    _log(f"FAILED {name} (exit={result.returncode}, {elapsed:.1f}s)")
-    return False
-
-
-def iter_combos() -> list[tuple[str, str, float | None]]:
-    """Enumerate ``(partition, privacy, noise_multiplier)`` in execution order.
-
-    The vanilla reference for a partition runs first so that a partially
-    completed sweep still yields an interpretable baseline.
-    """
-    combos: list[tuple[str, str, float | None]] = []
+    combos: list[Combo] = []
     for partition in PARTITION_MODES:
-        combos.append((partition, "vanilla", None))
-        for noise_multiplier in NOISE_MULTIPLIERS:
-            for privacy in DP_PRIVACY_MODES:
-                combos.append((partition, privacy, noise_multiplier))
+        matrices = [_matrix(partition, ("vanilla",), DEFAULT_NOISE_MULTIPLIER)]
+        matrices += [
+            _matrix(partition, DP_PRIVACY_MODES, nm) for nm in NOISE_MULTIPLIERS
+        ]
+        for matrix in matrices:
+            combos.extend(
+                matrix.list_combos(name_prefix="sigma48", num_clients=NUM_CLIENTS)
+            )
     return combos
+
+
+def start_detail(combo: Combo) -> str:
+    """Describe a combo's noise setting for the launch log line."""
+    if combo.privacy == "vanilla":
+        return "(no noise)"
+    noise_multiplier = combo.hyperparams.noise_multiplier
+    return f"(nm={noise_multiplier}, sigma={effective_sigma(noise_multiplier):.3e})"
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -276,12 +221,6 @@ def _parser() -> argparse.ArgumentParser:
         type=int,
         default=MAX_PARALLEL_CLIENTS,
         help="cap simultaneous Ray actors to control memory use",
-    )
-    parser.add_argument(
-        "--client-gpus",
-        type=float,
-        default=CLIENT_GPUS,
-        help="logical GPU share per client actor; 0.0 forces CPU-only clients",
     )
     parser.add_argument(
         "--allow-hf-network",
@@ -304,24 +243,24 @@ def main() -> None:
         f"Sweep starting: {len(combos)} combinations, num_clients={NUM_CLIENTS}, "
         f"aggregation={AGGREGATION}, clipping_norm={CLIPPING_NORM}, seed={SEED}, "
         f"grid=[{sigma_grid}], max_parallel_clients={args.max_parallel_clients}, "
-        f"client_gpus={args.client_gpus}, hf_offline={offline}, force={args.force}"
+        f"hf_offline={offline}, force={args.force}"
     )
 
     completed = 0
     failed: list[str] = []
-    for partition, privacy, noise_multiplier in combos:
+    for combo in combos:
         ok = run_one_combo(
-            partition,
-            privacy,
-            noise_multiplier,
-            force=args.force,
+            combo,
+            output_dir=OUTPUT_DIR,
             max_parallel_clients=args.max_parallel_clients,
-            client_gpus=args.client_gpus,
-            offline=offline,
+            force=args.force,
+            log=_log,
+            env=subprocess_env(offline=offline),
+            start_detail=start_detail(combo),
         )
         completed += 1
         if not ok:
-            failed.append(run_name(partition, privacy, noise_multiplier))
+            failed.append(combo.run_name())
         _log(f"PROGRESS {completed}/{len(combos)} ({len(failed)} failed so far)")
 
     _log(f"Sweep finished: {completed}/{len(combos)} attempted, {len(failed)} failed")
