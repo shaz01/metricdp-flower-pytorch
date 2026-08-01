@@ -7,21 +7,20 @@ DataLoader construction live under ``metricdp_pytorch.utils``.
 
 from __future__ import annotations
 
-import os
-from collections.abc import Iterator, Mapping, Sequence
-from contextlib import contextmanager
-from functools import cache
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 import numpy as np
-import torch
 from datasets import Dataset as HuggingFaceDataset
 from datasets import DatasetDict, load_dataset
-from PIL import Image
 from torch.utils.data import DataLoader
-from torchvision.transforms import ToTensor
 
+from experiments.reproduce.dataset.common import (
+    PartitionMode,
+    grayscale_image_transform,
+    load_hf_dataset_cached,
+)
 from metricdp_pytorch.utils.data import (
     RecordImageDataset,
     labels_from_records,
@@ -42,7 +41,6 @@ CLASS_NAMES = (
     "Non_Demented",
     "Very_Mild_Demented",
 )
-PartitionMode = Literal["homogeneous", "non-iid"]
 
 # Exact distributions reported in Tables 1–3. Rows correspond to clients 1–4;
 # columns correspond to classes 0–3.
@@ -61,39 +59,6 @@ PAPER_NON_IID_CLIENT_COUNTS = (
     (80, 3, 263, 166),
 )
 
-_TO_TENSOR = ToTensor()
-
-
-_HF_OFFLINE_VARS = ("HF_HUB_OFFLINE", "HF_DATASETS_OFFLINE")
-
-
-@contextmanager
-def _hf_offline() -> Iterator[None]:
-    """Temporarily pin HuggingFace lookups to the local cache."""
-    previous = {name: os.environ.get(name) for name in _HF_OFFLINE_VARS}
-    os.environ.update({name: "1" for name in _HF_OFFLINE_VARS})
-    try:
-        yield
-    finally:
-        for name, value in previous.items():
-            if value is None:
-                os.environ.pop(name, None)
-            else:
-                os.environ[name] = value
-
-
-@cache
-def _load_alzheimer_dataset_once(cache_dir: str | None) -> DatasetDict:
-    """Materialise one shared dataset instance for a resolved cache location."""
-    if any(os.environ.get(name) is not None for name in _HF_OFFLINE_VARS):
-        return load_dataset(DATASET_ID, cache_dir=cache_dir)
-    try:
-        with _hf_offline():
-            return load_dataset(DATASET_ID, cache_dir=cache_dir)
-    except Exception:  # noqa: BLE001 - any cache miss should retry over network
-        return load_dataset(DATASET_ID, cache_dir=cache_dir)
-
-
 def load_alzheimer_dataset(cache_dir: str | Path | None = None) -> DatasetDict:
     """Return the process-wide Alzheimer MRI dataset singleton.
 
@@ -106,27 +71,17 @@ def load_alzheimer_dataset(cache_dir: str | Path | None = None) -> DatasetDict:
 
     Explicit ``HF_*_OFFLINE`` settings are respected on the first call.
     """
-    resolved_cache_dir = None if cache_dir is None else str(cache_dir)
-    return _load_alzheimer_dataset_once(resolved_cache_dir)
+    return load_hf_dataset_cached(DATASET_ID, cache_dir, loader=load_dataset)
 
 
-def _alzheimer_image_transform(image: Any) -> torch.Tensor:
-    """Convert one paper MRI image to a grayscale ``(1, 128, 128)`` tensor."""
-    if not isinstance(image, Image.Image):
-        raise TypeError("The image column must decode to a PIL image.")
-    grayscale = image.convert("L")
-    if grayscale.size != IMAGE_SIZE:
-        raise ValueError(
-            f"Expected {IMAGE_SIZE[0]}×{IMAGE_SIZE[1]} images, got {grayscale.size}."
-        )
-    return _TO_TENSOR(grayscale)
+_ALZHEIMER_IMAGE_TRANSFORM = grayscale_image_transform(IMAGE_SIZE)
 
 
 class AlzheimerMRIDataset(RecordImageDataset):
     """Paper-specific view over the generic record-image adapter."""
 
     def __init__(self, dataset: HuggingFaceDataset) -> None:
-        super().__init__(dataset, transform=_alzheimer_image_transform)
+        super().__init__(dataset, transform=_ALZHEIMER_IMAGE_TRANSFORM)
 
 
 def _use_exact_profile(profile: str, num_partitions: int) -> bool:
@@ -239,7 +194,7 @@ class AlzheimerDataModule:
         partition_id: int,
         *,
         num_partitions: int,
-        partition_mode: str,
+        partition_mode: PartitionMode,
         batch_size: int,
         seed: int,
         partition_profile: str = "auto",
