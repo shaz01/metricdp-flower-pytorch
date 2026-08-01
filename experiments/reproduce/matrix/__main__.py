@@ -35,7 +35,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--local-epochs", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=0.001)
-    parser.add_argument("--noise-multiplier", type=float, default=0.01)
+    parser.add_argument("--noise-multiplier", nargs="+", type=float, default=[0.01])
     parser.add_argument("--clipping-norm", type=float, default=5.0)
     parser.add_argument("--initialization-epochs", type=int, default=20)
     parser.add_argument("--output-dir", type=Path, default=Path("results-reproduce-paper/matrix"))
@@ -59,8 +59,8 @@ def main() -> None:
         privacy_modes=tuple(args.privacy_modes),
         aggregations=tuple(args.aggregations),
         seeds=tuple(args.seeds),
+        noise_multipliers=tuple(args.noise_multiplier),
         hyperparams=Hyperparams(
-            noise_multiplier=args.noise_multiplier,
             clipping_norm=args.clipping_norm,
             rounds=args.rounds,
             local_epochs=args.local_epochs,

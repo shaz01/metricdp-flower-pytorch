@@ -52,8 +52,8 @@ MATRIX = Matrix(
     privacy_modes=tuple(PRIVACY_MODES),
     aggregations=("fedavg", "fedyogi"),
     seeds=(42,),
+    noise_multipliers=(0.05,),  # chosen from sweep_noise_multiplier.py's 8-client results
     hyperparams=Hyperparams(
-        noise_multiplier=0.05,  # chosen from sweep_noise_multiplier.py's 8-client results
         clipping_norm=5.0,
         rounds=20,
         local_epochs=5,
@@ -95,7 +95,7 @@ def main() -> None:
     total = len(combos)
     _log(
         f"Sweep starting: {total} combinations, num_clients={NUM_CLIENTS}, "
-        f"noise_multiplier={MATRIX.hyperparams.noise_multiplier}, "
+        f"noise_multiplier={MATRIX.noise_multipliers}, "
         f"max_parallel_clients={args.max_parallel_clients}, "
         f"force={args.force}"
     )

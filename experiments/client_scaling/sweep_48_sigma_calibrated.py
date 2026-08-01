@@ -153,47 +153,41 @@ def _log(message: str) -> None:
         handle.write(line + "\n")
 
 
-def _hyperparams(noise_multiplier: float) -> Hyperparams:
-    """Return the shared hyperparameters at one noise multiplier."""
-    return Hyperparams(
-        noise_multiplier=noise_multiplier,
-        clipping_norm=CLIPPING_NORM,
-        rounds=ROUNDS,
-        local_epochs=LOCAL_EPOCHS,
-        batch_size=BATCH_SIZE,
-        learning_rate=LEARNING_RATE,
-        initialization_epochs=INITIALIZATION_EPOCHS,
-    )
-
-
 def _matrix(
-    partition: str, privacy_modes: tuple[str, ...], noise_multiplier: float
+    partition: str,
+    privacy_modes: tuple[str, ...],
+    noise_multipliers: tuple[float, ...],
 ) -> Matrix:
-    """Return one partition's matrix at one noise multiplier."""
+    """Return one partition's matrix over the requested noise multipliers."""
     return Matrix(
         partitions=(partition,),
         privacy_modes=privacy_modes,
         aggregations=(AGGREGATION,),
         seeds=(SEED,),
-        hyperparams=_hyperparams(noise_multiplier),
+        noise_multipliers=noise_multipliers,
+        hyperparams=Hyperparams(
+            clipping_norm=CLIPPING_NORM,
+            rounds=ROUNDS,
+            local_epochs=LOCAL_EPOCHS,
+            batch_size=BATCH_SIZE,
+            learning_rate=LEARNING_RATE,
+            initialization_epochs=INITIALIZATION_EPOCHS,
+        ),
     )
 
 
 def iter_combos() -> list[Combo]:
     """Enumerate every configured run in execution order.
 
-    The noise multiplier is a hyperparameter rather than a matrix dimension, so
-    the grid is assembled from one :class:`Matrix` per multiplier, restricted to
+    The noise multiplier is a matrix dimension, with one matrix restricted to
     a single partition at a time. The vanilla reference for a partition runs
     first -- and only once, since it ignores the noise settings entirely -- so
     that a partially completed sweep still yields an interpretable baseline.
     """
     combos: list[Combo] = []
     for partition in PARTITION_MODES:
-        matrices = [_matrix(partition, ("vanilla",), DEFAULT_NOISE_MULTIPLIER)]
-        matrices += [
-            _matrix(partition, DP_PRIVACY_MODES, nm) for nm in NOISE_MULTIPLIERS
-        ]
+        matrices = [_matrix(partition, ("vanilla",), (DEFAULT_NOISE_MULTIPLIER,))]
+        matrices += [_matrix(partition, DP_PRIVACY_MODES, NOISE_MULTIPLIERS)]
         for matrix in matrices:
             combos.extend(
                 matrix.list_combos(name_prefix="sigma48", num_clients=NUM_CLIENTS)
@@ -205,7 +199,7 @@ def start_detail(combo: Combo) -> str:
     """Describe a combo's noise setting for the launch log line."""
     if combo.privacy == "vanilla":
         return "(no noise)"
-    noise_multiplier = combo.hyperparams.noise_multiplier
+    noise_multiplier = combo.noise_multiplier
     return f"(nm={noise_multiplier}, sigma={effective_sigma(noise_multiplier):.3e})"
 
 

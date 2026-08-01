@@ -9,7 +9,6 @@ from dataclasses import dataclass
 class Hyperparams:
     """Training and privacy hyperparameters shared by reproduction runs."""
 
-    noise_multiplier: float
     clipping_norm: float
     rounds: int
     local_epochs: int

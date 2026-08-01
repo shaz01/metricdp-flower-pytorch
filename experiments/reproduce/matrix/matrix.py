@@ -17,6 +17,7 @@ class Matrix:
     privacy_modes: tuple[str, ...]
     aggregations: tuple[str, ...]
     seeds: tuple[int, ...]
+    noise_multipliers: tuple[float, ...]
     hyperparams: Hyperparams
 
     def list_combos(self, *, name_prefix: str, num_clients: int) -> list[Combo]:
@@ -30,12 +31,14 @@ class Matrix:
                 privacy=privacy,
                 aggregation=aggregation,
                 seed=seed,
+                noise_multiplier=noise_multiplier,
                 hyperparams=self.hyperparams,
             )
-            for partition, privacy, aggregation, seed in product(
+            for partition, privacy, aggregation, seed, noise_multiplier in product(
                 self.partitions,
                 self.privacy_modes,
                 self.aggregations,
                 self.seeds,
+                self.noise_multipliers,
             )
         ]

@@ -11,9 +11,9 @@ a log-ish grid to see whether -- and where -- the two mechanisms actually
 diverge, before committing to a value for the 48-client expansion.
 
 Scoped to ``fedavg`` only (not the full aggregation matrix) and both
-partition modes, to keep the combinatorics bounded; extend
-``AGGREGATION_METHODS_SWEPT`` if a value looks promising and the divergence
-should be checked against other aggregators.
+partition modes, to keep the combinatorics bounded; extend the aggregation
+values below if a value looks promising and the divergence should be checked
+against other aggregators.
 
 Reuses ``experiments.reproduce.runner`` unmodified via subprocess, exactly
 like ``sweep_8_clients.py``: resumable (skips combinations whose result JSON
@@ -28,58 +28,30 @@ import argparse
 import time
 from pathlib import Path
 
-from experiments.reproduce.matrix import Combo, Hyperparams, Matrix
+from experiments.reproduce.matrix import Hyperparams, Matrix
 from experiments.reproduce.matrix.run_combo import run_one_combo
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-PARTITION_MODES = ("homogeneous", "non-iid")
-PRIVACY_MODES_SWEPT = ("global-dp", "metric-privacy")
-AGGREGATION_METHODS_SWEPT = ("fedavg",)
-NOISE_MULTIPLIERS = (0.01, 0.05, 0.1, 0.25, 0.5, 1.0)
 NUM_CLIENTS = 8
-SEED = 42
-CLIPPING_NORM = 5.0
-ROUNDS = 20
-LOCAL_EPOCHS = 5
-BATCH_SIZE = 32
-LEARNING_RATE = 0.001
-INITIALIZATION_EPOCHS = 20
 MAX_PARALLEL_CLIENTS = 2
 OUTPUT_DIR = PROJECT_ROOT / "results" / "noise_sweep"
 LOG_PATH = OUTPUT_DIR / "sweep_progress.log"
 
-
-def list_combos() -> list[Combo]:
-    """Enumerate every swept combination in execution order.
-
-    One :class:`Matrix` per (partition, noise multiplier) pair, since the noise
-    multiplier lives in the shared hyperparameters rather than being a matrix
-    dimension. Partition stays outermost and noise multiplier next, so a
-    partially completed sweep still walks the grid in a readable order.
-    """
-    combos: list[Combo] = []
-    for partition in PARTITION_MODES:
-        for noise_multiplier in NOISE_MULTIPLIERS:
-            matrix = Matrix(
-                partitions=(partition,),
-                privacy_modes=PRIVACY_MODES_SWEPT,
-                aggregations=AGGREGATION_METHODS_SWEPT,
-                seeds=(SEED,),
-                hyperparams=Hyperparams(
-                    noise_multiplier=noise_multiplier,
-                    clipping_norm=CLIPPING_NORM,
-                    rounds=ROUNDS,
-                    local_epochs=LOCAL_EPOCHS,
-                    batch_size=BATCH_SIZE,
-                    learning_rate=LEARNING_RATE,
-                    initialization_epochs=INITIALIZATION_EPOCHS,
-                ),
-            )
-            combos.extend(
-                matrix.list_combos(name_prefix="noise8", num_clients=NUM_CLIENTS)
-            )
-    return combos
-
+MATRIX = Matrix(
+    partitions=("homogeneous", "non-iid"),
+    privacy_modes=("global-dp", "metric-privacy"),
+    aggregations=("fedavg",),
+    seeds=(42,),
+    noise_multipliers=(0.01, 0.05, 0.1, 0.25, 0.5, 1.0),
+    hyperparams=Hyperparams(
+        clipping_norm=5.0,
+        rounds=20,
+        local_epochs=5,
+        batch_size=32,
+        learning_rate=0.001,
+        initialization_epochs=20,
+    ),
+)
 
 def _log(message: str) -> None:
     line = f"{time.strftime('%Y-%m-%d %H:%M:%S')} {message}"
@@ -101,11 +73,12 @@ def _parser() -> argparse.ArgumentParser:
 def main() -> None:
     args = _parser().parse_args()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    combos = list_combos()
+    combos = MATRIX.list_combos(name_prefix="noise8", num_clients=NUM_CLIENTS)
     total = len(combos)
+    noise_multipliers = sorted({combo.noise_multiplier for combo in combos})
     _log(
         f"Sweep starting: {total} combinations, num_clients={NUM_CLIENTS}, "
-        f"noise_multipliers={NOISE_MULTIPLIERS}, force={args.force}"
+        f"noise_multipliers={noise_multipliers}, force={args.force}"
     )
 
     completed = 0

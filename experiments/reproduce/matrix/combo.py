@@ -19,6 +19,7 @@ class Combo:
     privacy: str
     aggregation: str
     seed: int
+    noise_multiplier: float
     hyperparams: Hyperparams
 
     def run_name(self) -> str:
@@ -26,7 +27,7 @@ class Combo:
         return (
             f"{self.name_prefix}__{self.partition}__{self.privacy}__"
             f"{self.aggregation}__clients-{self.num_clients}__seed-{self.seed}__"
-            f"nm{format_noise(self.hyperparams.noise_multiplier)}__"
+            f"nm{format_noise(self.noise_multiplier)}__"
             f"clip{self.hyperparams.clipping_norm:g}__"
             f"rounds-{self.hyperparams.rounds}__"
             f"epochs-{self.hyperparams.local_epochs}"
@@ -56,7 +57,7 @@ class Combo:
             "--seed",
             str(self.seed),
             "--noise-multiplier",
-            str(self.hyperparams.noise_multiplier),
+            str(self.noise_multiplier),
             "--clipping-norm",
             str(self.hyperparams.clipping_norm),
             "--rounds",
