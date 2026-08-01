@@ -96,21 +96,33 @@ def _log(message: str) -> None:
 
 
 def cleanup_orphaned_shm_managers() -> int:
-    """Kill orphaned ``torch_shm_manager`` daemons left by past hard-killed runs.
+    """Kill orphaned daemons left behind by past hard-killed training runs.
 
-    An OOM-kill, ``kill -9``, or crashed combo doesn't give PyTorch's
-    shared-memory manager a chance to shut down cleanly -- it gets reparented
-    to init (ppid 1) and lingers forever holding memory. One bad combo can
-    leave dozens of these behind, and across a long multi-hour/multi-day
-    sweep with several crashes they compound until the machine runs out of
-    RAM/swap even with nothing currently training (observed: ~1,000 of these
-    alone exhausted a 24GB machine's memory and swap). Filtering on ppid 1
-    means this can never touch a live run's own workers, which always have a
-    real parent, so it's safe to call at any point, including mid-sweep.
+    An OOM-kill, ``kill -9``, or crashed combo doesn't give a run's helper
+    processes a chance to shut down cleanly -- they get reparented to init
+    (ppid 1) and linger forever holding memory/CPU. One bad combo can leave
+    dozens behind, and across a long multi-hour/multi-day sweep with several
+    crashes they compound until the machine runs out of RAM/swap even with
+    nothing currently training (observed: ~1,000 torch_shm_manager daemons
+    alone exhausted a 24GB machine's memory and swap).
+
+    Two matching rules, both restricted to ppid 1 so this can never touch a
+    live run's own processes (which always have a real parent):
+    1. Any process literally named ``torch_shm_manager`` (PyTorch's
+       shared-memory manager, spawned by DataLoader workers).
+    2. Any process whose command line runs out of one of runner.py's
+       ``_launch_isolated`` temp venvs (path contains
+       ``paper-reproduction-``) -- covers the same failure mode for Ray's
+       own processes (raylet, gcs_server, dashboard/runtime-env agents) and
+       Python's own multiprocessing resource_tracker/spawn_main helpers,
+       observed live surviving as orphaned trees the first rule missed
+       entirely (their torch_shm_manager child had ppid == the orphaned
+       resource_tracker, not 1, so rule 1 alone never caught the tree's
+       root or its child).
     """
     try:
         output = subprocess.run(
-            ["ps", "-eo", "pid,ppid,comm"],
+            ["ps", "-eo", "pid,ppid,args"],
             capture_output=True,
             text=True,
             check=True,
@@ -124,8 +136,10 @@ def cleanup_orphaned_shm_managers() -> int:
         parts = line.split(maxsplit=2)
         if len(parts) != 3:
             continue
-        pid_text, ppid_text, comm = parts
-        if ppid_text == "1" and comm.strip() == "torch_shm_manager":
+        pid_text, ppid_text, args = parts
+        if ppid_text != "1":
+            continue
+        if args == "torch_shm_manager" or "paper-reproduction-" in args:
             orphaned_pids.append(int(pid_text))
 
     for pid in orphaned_pids:
@@ -135,7 +149,7 @@ def cleanup_orphaned_shm_managers() -> int:
             pass
 
     if orphaned_pids:
-        _log(f"CLEANUP killed {len(orphaned_pids)} orphaned torch_shm_manager process(es)")
+        _log(f"CLEANUP killed {len(orphaned_pids)} orphaned training process(es)")
     return len(orphaned_pids)
 
 
