@@ -34,11 +34,10 @@ clients x more concurrent Ray actors costs more RAM than 8 did).
 from __future__ import annotations
 
 import argparse
-import time
 from pathlib import Path
 
+from experiments.client_scaling.sweep_runner import run_sweep
 from experiments.reproduce.matrix import Hyperparams, Matrix
-from experiments.reproduce.matrix.run_combo import run_one_combo
 from metricdp_pytorch.strategy_factory import PRIVACY_MODES
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -64,13 +63,6 @@ MATRIX = Matrix(
 )
 
 
-def _log(message: str) -> None:
-    line = f"{time.strftime('%Y-%m-%d %H:%M:%S')} {message}"
-    print(line, flush=True)
-    with LOG_PATH.open("a", encoding="utf-8") as handle:
-        handle.write(line + "\n")
-
-
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -90,34 +82,20 @@ def _parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = _parser().parse_args()
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     combos = MATRIX.list_combos(name_prefix="scaling48", num_clients=NUM_CLIENTS)
-    total = len(combos)
-    _log(
-        f"Sweep starting: {total} combinations, num_clients={NUM_CLIENTS}, "
-        f"noise_multiplier={MATRIX.noise_multipliers}, "
-        f"max_parallel_clients={args.max_parallel_clients}, "
-        f"force={args.force}"
+    run_sweep(
+        combos,
+        output_dir=OUTPUT_DIR,
+        log_path=LOG_PATH,
+        max_parallel_clients=args.max_parallel_clients,
+        force=args.force,
+        start_message=(
+            f"Sweep starting: {len(combos)} combinations, num_clients={NUM_CLIENTS}, "
+            f"noise_multiplier={MATRIX.noise_multipliers}, "
+            f"max_parallel_clients={args.max_parallel_clients}, "
+            f"force={args.force}"
+        ),
     )
-
-    completed = 0
-    failed: list[str] = []
-    for combo in combos:
-        ok = run_one_combo(
-            combo,
-            output_dir=OUTPUT_DIR,
-            max_parallel_clients=args.max_parallel_clients,
-            force=args.force,
-            log=_log,
-        )
-        completed += 1
-        if not ok:
-            failed.append(combo.run_name())
-        _log(f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
-
-    _log(f"Sweep finished: {completed}/{total} attempted, {len(failed)} failed")
-    if failed:
-        _log("Failed combinations: " + ", ".join(failed))
 
 
 if __name__ == "__main__":
