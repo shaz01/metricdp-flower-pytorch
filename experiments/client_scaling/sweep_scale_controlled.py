@@ -21,41 +21,56 @@ approximation (average shard size, not per-client exact accounting), which
 is the same fidelity the existing quantity-skewed non-iid partitioning
 already operates at.
 
-Scoped to fedavg and fedyogi (matching the reduced aggregation list used in
-the 8-client/48-client scaling sweeps) at noise_multiplier=0.05, the sweet
-spot from ``sweep_noise_multiplier.py``'s 8-client sweep. Reuses
-``experiments.reproduce.runner`` unmodified via subprocess, exactly like the
-sibling sweep scripts: resumable (skips combinations whose result JSON
-already reports that client count's scaled round total as completed),
+Scoped to the minimum matrix that answers the confound-vs-real-failure
+question, not the full 12-combo grid: only ``global-dp`` and
+``metric-privacy`` (``vanilla`` isn't part of the gap being measured) on
+``fedavg`` only (``fedyogi`` can follow once there's a signal), at
+noise_multiplier=0.05, the sweet spot from ``sweep_noise_multiplier.py``'s
+8-client sweep. ``CLIENT_COUNTS`` is ``{4, 8, 48}`` rather than the full
+``{4, 8, 16, 48}`` -- n=4 is the free/already-complete anchor, n=8 is a cheap
+sanity check that the compute-scaling methodology itself doesn't introduce
+artifacts, and n=48 is the decisive test (does the gap that shrinks at
+``results/48client_scaling``'s fixed 20 rounds come back at the
+compute-matched 240 rounds). n=16 is an interpolation point for the
+eventual paper's dose-response curve, not needed for that yes/no answer, so
+it's deferred -- rerun with a wider ``CLIENT_COUNTS`` later once the n=48
+result direction is known. See the 2026-08-01 note in
+``docs/RESEARCH_ROADMAP.md`` Phase 1 item 1 for the full rationale and the
+memory-leak fix that made even this reduced matrix tractable.
+
+Reuses ``experiments.reproduce.runner`` unmodified via subprocess, exactly
+like the sibling sweep scripts: resumable (skips combinations whose result
+JSON already reports that client count's scaled round total as completed),
 continues past a failing combination rather than aborting the whole
 multi-hour sweep, and supports ``--force`` to ignore existing results and
 rerun everything.
 
 Client counts above the base scale to substantially more rounds (48 clients
 -> 12x the base rounds), so this sweep costs much more wall-clock time than
-``sweep_48_clients.py``'s fixed-round version -- expect a multi-hour-to-
-multi-day run at the higher client counts.
+``sweep_48_clients.py``'s fixed-round version -- expect a multi-hour run at
+n=48 even with the reduced matrix and higher default parallelism.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
+import signal
 import subprocess
 import sys
 import time
 from pathlib import Path
 
-from metricdp_pytorch.strategy_factory import PRIVACY_MODES
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PARTITION_MODES = ("homogeneous", "non-iid")
-AGGREGATION_METHODS_SWEPT = ("fedavg", "fedyogi")
-CLIENT_COUNTS = (4, 8, 16, 48)
+PRIVACY_MODES_SWEPT = ("global-dp", "metric-privacy")
+AGGREGATION_METHODS_SWEPT = ("fedavg",)
+CLIENT_COUNTS = (4, 8, 48)
 BASE_NUM_CLIENTS = 4
 BASE_ROUNDS = 20  # paper default (pyproject.toml num-server-rounds)
 NOISE_MULTIPLIER = 0.05  # chosen from sweep_noise_multiplier.py's 8-client results
-MAX_PARALLEL_CLIENTS = 4
+MAX_PARALLEL_CLIENTS = 8  # raised from 2 now that the MPS cache leak is fixed
 OUTPUT_DIR = PROJECT_ROOT / "results" / "scale_controlled"
 LOG_PATH = OUTPUT_DIR / "sweep_progress.log"
 
@@ -78,6 +93,50 @@ def _log(message: str) -> None:
     print(line, flush=True)
     with LOG_PATH.open("a", encoding="utf-8") as handle:
         handle.write(line + "\n")
+
+
+def cleanup_orphaned_shm_managers() -> int:
+    """Kill orphaned ``torch_shm_manager`` daemons left by past hard-killed runs.
+
+    An OOM-kill, ``kill -9``, or crashed combo doesn't give PyTorch's
+    shared-memory manager a chance to shut down cleanly -- it gets reparented
+    to init (ppid 1) and lingers forever holding memory. One bad combo can
+    leave dozens of these behind, and across a long multi-hour/multi-day
+    sweep with several crashes they compound until the machine runs out of
+    RAM/swap even with nothing currently training (observed: ~1,000 of these
+    alone exhausted a 24GB machine's memory and swap). Filtering on ppid 1
+    means this can never touch a live run's own workers, which always have a
+    real parent, so it's safe to call at any point, including mid-sweep.
+    """
+    try:
+        output = subprocess.run(
+            ["ps", "-eo", "pid,ppid,comm"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError) as error:
+        _log(f"WARN  shm cleanup: could not list processes ({error})")
+        return 0
+
+    orphaned_pids = []
+    for line in output.splitlines()[1:]:
+        parts = line.split(maxsplit=2)
+        if len(parts) != 3:
+            continue
+        pid_text, ppid_text, comm = parts
+        if ppid_text == "1" and comm.strip() == "torch_shm_manager":
+            orphaned_pids.append(int(pid_text))
+
+    for pid in orphaned_pids:
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+
+    if orphaned_pids:
+        _log(f"CLEANUP killed {len(orphaned_pids)} orphaned torch_shm_manager process(es)")
+    return len(orphaned_pids)
 
 
 def run_name(partition: str, privacy: str, aggregation: str, num_clients: int) -> str:
@@ -176,10 +235,11 @@ def _parser() -> argparse.ArgumentParser:
 def main() -> None:
     args = _parser().parse_args()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    cleanup_orphaned_shm_managers()
     total = (
         len(CLIENT_COUNTS)
         * len(PARTITION_MODES)
-        * len(PRIVACY_MODES)
+        * len(PRIVACY_MODES_SWEPT)
         * len(AGGREGATION_METHODS_SWEPT)
     )
     _log(
@@ -193,7 +253,7 @@ def main() -> None:
     failed: list[str] = []
     for num_clients in CLIENT_COUNTS:
         for partition in PARTITION_MODES:
-            for privacy in PRIVACY_MODES:
+            for privacy in PRIVACY_MODES_SWEPT:
                 for aggregation in AGGREGATION_METHODS_SWEPT:
                     ok = run_one_combo(
                         partition,
@@ -203,6 +263,7 @@ def main() -> None:
                         force=args.force,
                         max_parallel_clients=args.max_parallel_clients,
                     )
+                    cleanup_orphaned_shm_managers()
                     completed += 1
                     if not ok:
                         failed.append(run_name(partition, privacy, aggregation, num_clients))
