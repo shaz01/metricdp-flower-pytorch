@@ -8,7 +8,11 @@ optionally persist the Flower metric histories.
 from __future__ import annotations
 
 import json
+import platform
+import subprocess
+import sys
 from collections.abc import Callable, Mapping
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +27,7 @@ from experiments.reproduce.paper_strategies import create_paper_strategy
 from experiments.reproduce.paper_training import create_initial_model
 from metricdp_pytorch.data_module import load_data_module
 from metricdp_pytorch.model_module import load_model
+from metricdp_pytorch.utils.device import resolve_device
 from metricdp_pytorch.utils.runtime import runtime_config
 
 app = ServerApp()
@@ -34,6 +39,48 @@ def _plain_metrics(metrics: Mapping[str, Any]) -> dict[str, Any]:
     return {
         str(key): value.item() if hasattr(value, "item") else value
         for key, value in metrics.items()
+    }
+
+
+def _runtime_metadata() -> dict[str, Any]:
+    """Return reproducibility metadata captured by the process doing the run."""
+    packages = {}
+    for package in ("flwr", "numpy", "scikit-learn", "torch", "torchvision"):
+        try:
+            packages[package] = version(package)
+        except PackageNotFoundError:
+            packages[package] = "unavailable"
+    try:
+        commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        dirty = bool(
+            subprocess.run(
+                ["git", "status", "--porcelain"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+        )
+    except (OSError, subprocess.SubprocessError):
+        commit, dirty = "unavailable", None
+
+    device = resolve_device()
+    device_name = str(device)
+    if device.type == "cuda":
+        device_name = torch.cuda.get_device_name(device)
+    return {
+        "python_version": platform.python_version(),
+        "platform": platform.platform(),
+        "library_versions": packages,
+        "device": str(device),
+        "device_name": device_name,
+        "git_commit": commit,
+        "git_dirty": dirty,
+        "python_executable": sys.executable,
     }
 
 
@@ -194,6 +241,7 @@ def main(grid: Grid, context: Context) -> None:
             "initialization_final_loss": (
                 initialization_losses[-1] if initialization_losses else None
             ),
+            **_runtime_metadata(),
         }
         path = destination / f"{run_name}.json"
         serialized_result = result_to_dict(result, metadata)

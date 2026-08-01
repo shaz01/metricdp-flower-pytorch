@@ -8,12 +8,16 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import torch
+from sklearn.metrics import roc_auc_score
 
 from experiments.cia.datasets.shadow import ShadowDataModule
 from experiments.cia.iter_combos import iter_combos
 from experiments.cia.result import CiaResult, make_cia_result
 from experiments.reproduce.matrix import Combo
-from experiments.reproduce.paper_loss import evaluate_model
+from experiments.reproduce.paper_loss import (
+    evaluate_model,
+    sparse_categorical_cross_entropy,
+)
 from metricdp_pytorch.model_module import load_model
 
 
@@ -27,6 +31,27 @@ def _logger(log_path: Path):
     return log
 
 
+def _membership_scores(
+    model: torch.nn.Module,
+    loader,
+    device: torch.device,
+) -> list[float]:
+    """Return per-example membership scores ``-loss(W, x)``."""
+    scores: list[float] = []
+    model.to(device)
+    model.eval()
+    with torch.no_grad():
+        for images, labels in loader:
+            probabilities = model(images.to(device, non_blocking=True))
+            losses = sparse_categorical_cross_entropy(
+                probabilities,
+                labels.to(device, non_blocking=True),
+                reduction="none",
+            )
+            scores.extend((-losses).cpu().tolist())
+    return [float(score) for score in scores]
+
+
 def _evaluate_combo(
     model_path: Path,
     *,
@@ -35,7 +60,7 @@ def _evaluate_combo(
     batch_size: int,
     seed: int,
     combo: Combo,
-) -> tuple[float, float, int]:
+) -> tuple[float, float, int, list[float], list[float], float]:
     model = load_model(combo.model_module)
     model.load_state_dict(
         torch.load(model_path, map_location="cpu", weights_only=True)
@@ -49,10 +74,21 @@ def _evaluate_combo(
     )
     aggregated_metrics = evaluate_model(model, test_loader, device)
     target_metrics = evaluate_model(model, shadow_loader, device)
+    in_scores = _membership_scores(model, shadow_loader, device)
+    out_scores = _membership_scores(model, test_loader, device)
+    attack_auc = float(
+        roc_auc_score(
+            [1] * len(in_scores) + [0] * len(out_scores),
+            in_scores + out_scores,
+        )
+    )
     return (
         aggregated_metrics["loss"],
         target_metrics["loss"],
         len(shadow_loader.dataset),
+        in_scores,
+        out_scores,
+        attack_auc,
     )
 
 
@@ -105,7 +141,14 @@ def run_attack(
             for round_number, round_model_path in zip(
                 checkpoint_rounds, checkpoint_paths, strict=True
             ):
-                aggregated_loss, target_loss, shadow_size = _evaluate_combo(
+                (
+                    aggregated_loss,
+                    target_loss,
+                    shadow_size,
+                    in_scores,
+                    out_scores,
+                    attack_auc,
+                ) = _evaluate_combo(
                     round_model_path,
                     data_module=data_module,
                     device=device,
@@ -121,6 +164,9 @@ def run_attack(
                         target_shadow_loss=target_loss,
                         shadow_fraction=data_module.shadow_fraction,
                         shadow_size=shadow_size,
+                        in_scores=in_scores,
+                        out_scores=out_scores,
+                        attack_auc=attack_auc,
                     )
                 )
                 log(f"EVALUATED {name} round={round_number}")

@@ -20,6 +20,9 @@ class CiaResult:
     shadow_fraction: float
     shadow_size: int
     difference_pct: float
+    in_scores: list[float] | None = None
+    out_scores: list[float] | None = None
+    attack_auc: float | None = None
 
 
 def relative_difference(aggregated_loss: float, target_loss: float) -> float:
@@ -37,6 +40,9 @@ def make_cia_result(
     target_shadow_loss: float,
     shadow_fraction: float,
     shadow_size: int,
+    in_scores: list[float] | None = None,
+    out_scores: list[float] | None = None,
+    attack_auc: float | None = None,
 ) -> CiaResult:
     return CiaResult(
         partition_mode=combo.partition,
@@ -50,4 +56,7 @@ def make_cia_result(
         shadow_fraction=shadow_fraction,
         shadow_size=shadow_size,
         difference_pct=relative_difference(aggregated_test_loss, target_shadow_loss),
+        in_scores=in_scores,
+        out_scores=out_scores,
+        attack_auc=attack_auc,
     )
