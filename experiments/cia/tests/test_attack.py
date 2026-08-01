@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from experiments.cia.attack import CiaResult, make_cia_result, relative_difference
+from experiments.cia.result import CiaResult, make_cia_result, relative_difference
 
 
 def test_relative_difference_exact_values() -> None:

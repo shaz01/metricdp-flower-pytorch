@@ -1,6 +1,6 @@
 """Attack-score record for the 48-client CIA experiment.
 
-Reuses ``experiments.cia.attack.relative_difference`` unmodified; only adds
+Reuses ``experiments.cia.result.relative_difference`` unmodified; only adds
 the ``partition_mode``/``timing``/``noise_multiplier`` fields the 3-client CIA
 experiment didn't need.
 """
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from experiments.cia.attack import relative_difference
+from experiments.cia.result import relative_difference
 
 
 @dataclass(frozen=True)

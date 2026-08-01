@@ -17,7 +17,7 @@ from pathlib import Path
 
 import torch
 
-from experiments.cia.attack import CiaResult, make_cia_result
+from experiments.cia.result import CiaResult, make_cia_result
 from experiments.cia.datasets.paper import (
     PAPER_CIA_NUM_CLIENTS,
     PaperShadowDataModule,
