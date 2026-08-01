@@ -44,11 +44,6 @@ def pairwise_model_distances(models: Sequence[ArrayRecord]) -> list[float]:
     return distances
 
 
-def maximum_pairwise_model_distance(models: Sequence[ArrayRecord]) -> float:
-    """Return the maximum mean layer-wise Euclidean distance between models."""
-    return max(pairwise_model_distances(models))
-
-
 class MetricPrivacyServerSideFixedClipping(
     DifferentialPrivacyServerSideFixedClipping
 ):
