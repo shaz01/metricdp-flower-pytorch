@@ -14,10 +14,10 @@ def run_combos(
     combos: list[Combo],
     *,
     output_dir: Path,
-    parallel_experiments: int,
     max_parallel_clients: int,
-    force: bool,
-    client_cpus: float,
+    force: bool = False,
+    client_cpus: float = 1.0,
+    parallel_experiments: int = 1,
 ) -> None:
     """Execute one parallel pass over the pending matrix runs."""
     progress_path = output_dir / "progress.log"

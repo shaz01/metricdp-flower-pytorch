@@ -28,7 +28,7 @@ import argparse
 import time
 from pathlib import Path
 
-from experiments.reproduce.matrix import Combo, Hyperparams
+from experiments.reproduce.matrix import Combo, Hyperparams, Matrix
 from experiments.reproduce.matrix.run_combo import run_one_combo
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -47,6 +47,38 @@ INITIALIZATION_EPOCHS = 20
 MAX_PARALLEL_CLIENTS = 2
 OUTPUT_DIR = PROJECT_ROOT / "results" / "noise_sweep"
 LOG_PATH = OUTPUT_DIR / "sweep_progress.log"
+
+
+def list_combos() -> list[Combo]:
+    """Enumerate every swept combination in execution order.
+
+    One :class:`Matrix` per (partition, noise multiplier) pair, since the noise
+    multiplier lives in the shared hyperparameters rather than being a matrix
+    dimension. Partition stays outermost and noise multiplier next, so a
+    partially completed sweep still walks the grid in a readable order.
+    """
+    combos: list[Combo] = []
+    for partition in PARTITION_MODES:
+        for noise_multiplier in NOISE_MULTIPLIERS:
+            matrix = Matrix(
+                partitions=(partition,),
+                privacy_modes=PRIVACY_MODES_SWEPT,
+                aggregations=AGGREGATION_METHODS_SWEPT,
+                seeds=(SEED,),
+                hyperparams=Hyperparams(
+                    noise_multiplier=noise_multiplier,
+                    clipping_norm=CLIPPING_NORM,
+                    rounds=ROUNDS,
+                    local_epochs=LOCAL_EPOCHS,
+                    batch_size=BATCH_SIZE,
+                    learning_rate=LEARNING_RATE,
+                    initialization_epochs=INITIALIZATION_EPOCHS,
+                ),
+            )
+            combos.extend(
+                matrix.list_combos(name_prefix="noise8", num_clients=NUM_CLIENTS)
+            )
+    return combos
 
 
 def _log(message: str) -> None:
@@ -69,12 +101,8 @@ def _parser() -> argparse.ArgumentParser:
 def main() -> None:
     args = _parser().parse_args()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    total = (
-        len(PARTITION_MODES)
-        * len(PRIVACY_MODES_SWEPT)
-        * len(AGGREGATION_METHODS_SWEPT)
-        * len(NOISE_MULTIPLIERS)
-    )
+    combos = list_combos()
+    total = len(combos)
     _log(
         f"Sweep starting: {total} combinations, num_clients={NUM_CLIENTS}, "
         f"noise_multipliers={NOISE_MULTIPLIERS}, force={args.force}"
@@ -82,38 +110,18 @@ def main() -> None:
 
     completed = 0
     failed: list[str] = []
-    for partition in PARTITION_MODES:
-        for noise_multiplier in NOISE_MULTIPLIERS:
-            for privacy in PRIVACY_MODES_SWEPT:
-                for aggregation in AGGREGATION_METHODS_SWEPT:
-                    combo = Combo(
-                        name_prefix="noise8",
-                        num_clients=NUM_CLIENTS,
-                        partition=partition,
-                        privacy=privacy,
-                        aggregation=aggregation,
-                        seed=SEED,
-                        hyperparams=Hyperparams(
-                            noise_multiplier=noise_multiplier,
-                            clipping_norm=CLIPPING_NORM,
-                            rounds=ROUNDS,
-                            local_epochs=LOCAL_EPOCHS,
-                            batch_size=BATCH_SIZE,
-                            learning_rate=LEARNING_RATE,
-                            initialization_epochs=INITIALIZATION_EPOCHS,
-                        ),
-                    )
-                    ok = run_one_combo(
-                        combo,
-                        output_dir=OUTPUT_DIR,
-                        max_parallel_clients=MAX_PARALLEL_CLIENTS,
-                        force=args.force,
-                        log=_log,
-                    )
-                    completed += 1
-                    if not ok:
-                        failed.append(combo.run_name())
-                    _log(f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
+    for combo in combos:
+        ok = run_one_combo(
+            combo,
+            output_dir=OUTPUT_DIR,
+            max_parallel_clients=MAX_PARALLEL_CLIENTS,
+            force=args.force,
+            log=_log,
+        )
+        completed += 1
+        if not ok:
+            failed.append(combo.run_name())
+        _log(f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
 
     _log(f"Sweep finished: {completed}/{total} attempted, {len(failed)} failed")
     if failed:

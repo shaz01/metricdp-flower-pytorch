@@ -37,25 +37,31 @@ import argparse
 import time
 from pathlib import Path
 
-from experiments.reproduce.matrix import Combo, Hyperparams
+from experiments.reproduce.matrix import Hyperparams, Matrix
 from experiments.reproduce.matrix.run_combo import run_one_combo
 from metricdp_pytorch.strategy_factory import PRIVACY_MODES
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-PARTITION_MODES = ("homogeneous", "non-iid")
-AGGREGATION_METHODS_SWEPT = ("fedavg", "fedyogi")
 NUM_CLIENTS = 48
-SEED = 42
-NOISE_MULTIPLIER = 0.05  # chosen from sweep_noise_multiplier.py's 8-client results
-CLIPPING_NORM = 5.0
-ROUNDS = 20
-LOCAL_EPOCHS = 5
-BATCH_SIZE = 32
-LEARNING_RATE = 0.001
-INITIALIZATION_EPOCHS = 20
 MAX_PARALLEL_CLIENTS = 4
 OUTPUT_DIR = PROJECT_ROOT / "results" / "48client_scaling"
 LOG_PATH = OUTPUT_DIR / "sweep_progress.log"
+
+MATRIX = Matrix(
+    partitions=("homogeneous", "non-iid"),
+    privacy_modes=tuple(PRIVACY_MODES),
+    aggregations=("fedavg", "fedyogi"),
+    seeds=(42,),
+    hyperparams=Hyperparams(
+        noise_multiplier=0.05,  # chosen from sweep_noise_multiplier.py's 8-client results
+        clipping_norm=5.0,
+        rounds=20,
+        local_epochs=5,
+        batch_size=32,
+        learning_rate=0.001,
+        initialization_epochs=20,
+    ),
+)
 
 
 def _log(message: str) -> None:
@@ -81,49 +87,33 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+
 def main() -> None:
     args = _parser().parse_args()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    total = len(PARTITION_MODES) * len(PRIVACY_MODES) * len(AGGREGATION_METHODS_SWEPT)
+    combos = MATRIX.list_combos(name_prefix="scaling48", num_clients=NUM_CLIENTS)
+    total = len(combos)
     _log(
         f"Sweep starting: {total} combinations, num_clients={NUM_CLIENTS}, "
-        f"noise_multiplier={NOISE_MULTIPLIER}, max_parallel_clients={args.max_parallel_clients}, "
+        f"noise_multiplier={MATRIX.hyperparams.noise_multiplier}, "
+        f"max_parallel_clients={args.max_parallel_clients}, "
         f"force={args.force}"
     )
 
     completed = 0
     failed: list[str] = []
-    for partition in PARTITION_MODES:
-        for privacy in PRIVACY_MODES:
-            for aggregation in AGGREGATION_METHODS_SWEPT:
-                combo = Combo(
-                    name_prefix="scaling48",
-                    num_clients=NUM_CLIENTS,
-                    partition=partition,
-                    privacy=privacy,
-                    aggregation=aggregation,
-                    seed=SEED,
-                    hyperparams=Hyperparams(
-                        noise_multiplier=NOISE_MULTIPLIER,
-                        clipping_norm=CLIPPING_NORM,
-                        rounds=ROUNDS,
-                        local_epochs=LOCAL_EPOCHS,
-                        batch_size=BATCH_SIZE,
-                        learning_rate=LEARNING_RATE,
-                        initialization_epochs=INITIALIZATION_EPOCHS,
-                    ),
-                )
-                ok = run_one_combo(
-                    combo,
-                    output_dir=OUTPUT_DIR,
-                    max_parallel_clients=args.max_parallel_clients,
-                    force=args.force,
-                    log=_log,
-                )
-                completed += 1
-                if not ok:
-                    failed.append(combo.run_name())
-                _log(f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
+    for combo in combos:
+        ok = run_one_combo(
+            combo,
+            output_dir=OUTPUT_DIR,
+            max_parallel_clients=args.max_parallel_clients,
+            force=args.force,
+            log=_log,
+        )
+        completed += 1
+        if not ok:
+            failed.append(combo.run_name())
+        _log(f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
 
     _log(f"Sweep finished: {completed}/{total} attempted, {len(failed)} failed")
     if failed:

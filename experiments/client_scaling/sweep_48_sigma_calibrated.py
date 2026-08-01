@@ -65,7 +65,7 @@ import sys
 import time
 from pathlib import Path
 
-from experiments.reproduce.matrix import Combo, Hyperparams
+from experiments.reproduce.matrix import Combo, Hyperparams, Matrix
 from experiments.reproduce.matrix.run_combo import run_one_combo
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -153,19 +153,60 @@ def _log(message: str) -> None:
         handle.write(line + "\n")
 
 
-def iter_combos() -> list[tuple[str, str, float | None]]:
-    """Enumerate ``(partition, privacy, noise_multiplier)`` in execution order.
+def _hyperparams(noise_multiplier: float) -> Hyperparams:
+    """Return the shared hyperparameters at one noise multiplier."""
+    return Hyperparams(
+        noise_multiplier=noise_multiplier,
+        clipping_norm=CLIPPING_NORM,
+        rounds=ROUNDS,
+        local_epochs=LOCAL_EPOCHS,
+        batch_size=BATCH_SIZE,
+        learning_rate=LEARNING_RATE,
+        initialization_epochs=INITIALIZATION_EPOCHS,
+    )
 
-    The vanilla reference for a partition runs first so that a partially
-    completed sweep still yields an interpretable baseline.
+
+def _matrix(
+    partition: str, privacy_modes: tuple[str, ...], noise_multiplier: float
+) -> Matrix:
+    """Return one partition's matrix at one noise multiplier."""
+    return Matrix(
+        partitions=(partition,),
+        privacy_modes=privacy_modes,
+        aggregations=(AGGREGATION,),
+        seeds=(SEED,),
+        hyperparams=_hyperparams(noise_multiplier),
+    )
+
+
+def iter_combos() -> list[Combo]:
+    """Enumerate every configured run in execution order.
+
+    The noise multiplier is a hyperparameter rather than a matrix dimension, so
+    the grid is assembled from one :class:`Matrix` per multiplier, restricted to
+    a single partition at a time. The vanilla reference for a partition runs
+    first -- and only once, since it ignores the noise settings entirely -- so
+    that a partially completed sweep still yields an interpretable baseline.
     """
-    combos: list[tuple[str, str, float | None]] = []
+    combos: list[Combo] = []
     for partition in PARTITION_MODES:
-        combos.append((partition, "vanilla", None))
-        for noise_multiplier in NOISE_MULTIPLIERS:
-            for privacy in DP_PRIVACY_MODES:
-                combos.append((partition, privacy, noise_multiplier))
+        matrices = [_matrix(partition, ("vanilla",), DEFAULT_NOISE_MULTIPLIER)]
+        matrices += [
+            _matrix(partition, DP_PRIVACY_MODES, nm) for nm in NOISE_MULTIPLIERS
+        ]
+        for matrix in matrices:
+            combos.extend(
+                matrix.list_combos(name_prefix="sigma48", num_clients=NUM_CLIENTS)
+            )
     return combos
+
+
+def start_detail(combo: Combo) -> str:
+    """Describe a combo's noise setting for the launch log line."""
+    if combo.privacy == "vanilla":
+        return "(no noise)"
+    noise_multiplier = combo.hyperparams.noise_multiplier
+    return f"(nm={noise_multiplier}, sigma={effective_sigma(noise_multiplier):.3e})"
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -207,35 +248,7 @@ def main() -> None:
 
     completed = 0
     failed: list[str] = []
-    for partition, privacy, noise_multiplier in combos:
-        combo = Combo(
-            name_prefix="sigma48",
-            num_clients=NUM_CLIENTS,
-            partition=partition,
-            privacy=privacy,
-            aggregation=AGGREGATION,
-            seed=SEED,
-            hyperparams=Hyperparams(
-                noise_multiplier=(
-                    noise_multiplier
-                    if noise_multiplier is not None
-                    else DEFAULT_NOISE_MULTIPLIER
-                ),
-                clipping_norm=CLIPPING_NORM,
-                rounds=ROUNDS,
-                local_epochs=LOCAL_EPOCHS,
-                batch_size=BATCH_SIZE,
-                learning_rate=LEARNING_RATE,
-                initialization_epochs=INITIALIZATION_EPOCHS,
-            ),
-        )
-        if noise_multiplier is None:
-            start_detail = "(no noise)"
-        else:
-            start_detail = (
-                f"(nm={noise_multiplier}, "
-                f"sigma={effective_sigma(noise_multiplier):.3e})"
-            )
+    for combo in combos:
         ok = run_one_combo(
             combo,
             output_dir=OUTPUT_DIR,
@@ -243,7 +256,7 @@ def main() -> None:
             force=args.force,
             log=_log,
             env=subprocess_env(offline=offline),
-            start_detail=start_detail,
+            start_detail=start_detail(combo),
         )
         completed += 1
         if not ok:
