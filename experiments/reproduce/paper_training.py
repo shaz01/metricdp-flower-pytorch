@@ -19,10 +19,13 @@ PAPER_ADAM_LEARNING_RATE = 1e-3
 
 
 def seed_training(seed: int) -> None:
-    """Seed Python, NumPy, and PyTorch before creating an initial model."""
+    """Seed all supported RNGs and enable deterministic PyTorch kernels."""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+    torch.use_deterministic_algorithms(True)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 from collections.abc import Callable, Sequence
 from typing import Any
 
@@ -12,6 +13,13 @@ from torch.utils.data import DataLoader, Dataset, Subset
 from metricdp_pytorch.utils.split_data import split_stratified
 
 Sample = tuple[torch.Tensor, int]
+
+
+def _seed_worker(_worker_id: int) -> None:
+    """Seed Python and NumPy RNGs from PyTorch's per-worker seed."""
+    worker_seed = torch.initial_seed() % (2**32)
+    random.seed(worker_seed)
+    np.random.seed(worker_seed)
 
 
 class RecordImageDataset(Dataset[Sample]):
@@ -65,7 +73,8 @@ def make_indexed_loader(
         Subset(dataset, selected),
         batch_size=batch_size,
         shuffle=shuffle,
-        generator=generator if shuffle else None,
+        generator=generator,
+        worker_init_fn=_seed_worker,
         num_workers=num_workers,
         pin_memory=torch.cuda.is_available(),
         persistent_workers=num_workers > 0,

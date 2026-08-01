@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import time
@@ -82,8 +83,12 @@ def run_one_combo(
     if stdout is not None:
         subprocess_options["stdout"] = stdout
         subprocess_options["stderr"] = subprocess.STDOUT
+    child_env = os.environ.copy()
     if env is not None:
-        subprocess_options["env"] = dict(env)
+        child_env.update(env)
+    child_env.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+    child_env.setdefault("PYTHONHASHSEED", "0")
+    subprocess_options["env"] = child_env
     result = subprocess.run(command, cwd=PROJECT_ROOT, **subprocess_options)
     elapsed = time.monotonic() - started
 

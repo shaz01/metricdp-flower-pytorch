@@ -19,6 +19,10 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
+# Set this before importing PyTorch-dependent modules or starting CUDA. The
+# isolated worker and Ray client processes inherit the environment.
+os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+
 from metricdp_pytorch.utils.runtime import RUN_CONFIG_ENV
 from metricdp_pytorch.strategy_factory import AGGREGATION_METHODS, PRIVACY_MODES
 
@@ -314,7 +318,10 @@ def _launch_isolated(args: argparse.Namespace, config: dict[str, Any]) -> None:
         ]
         if args.verbose:
             command.append("--verbose")
-        subprocess.run(command, cwd=PROJECT_ROOT, check=True)
+        child_env = os.environ.copy()
+        child_env.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+        child_env.setdefault("PYTHONHASHSEED", "0")
+        subprocess.run(command, cwd=PROJECT_ROOT, env=child_env, check=True)
 
 
 def _print_result(config: dict[str, Any]) -> None:
