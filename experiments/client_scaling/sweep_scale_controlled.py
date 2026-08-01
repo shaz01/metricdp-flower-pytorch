@@ -175,6 +175,63 @@ def is_complete(path: Path, *, expected_rounds: int) -> bool:
     return evaluation_path.exists()
 
 
+def resumable_checkpoint(path: Path, *, expected_rounds: int) -> Path | None:
+    """Return the checkpoint path if only the evaluation step needs (re)running.
+
+    True when training fully completed (round count met) but the evaluation
+    artifact is missing and a checkpoint from server.py's always-on
+    pre-evaluation save (see server.py's ``main``) survived -- i.e. training
+    itself doesn't need to be redone, just the cheap evaluation step. Returns
+    None if a full (re)run is required instead (no run JSON, short of
+    rounds, or no checkpoint to evaluate from -- e.g. a run that predates
+    server.py always checkpointing before evaluation).
+    """
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    history = data.get("server_evaluate_metrics", {})
+    completed_rounds = [int(round_number) for round_number in history if int(round_number) > 0]
+    if len(completed_rounds) < expected_rounds:
+        return None
+    evaluation_path = path.parent / f"{path.stem}.evaluation.json"
+    if evaluation_path.exists():
+        return None
+    checkpoint_path = path.parent / f"{path.stem}.pt"
+    return checkpoint_path if checkpoint_path.exists() else None
+
+
+def resume_evaluation_only(name: str, path: Path, checkpoint_path: Path) -> bool:
+    """Re-run just the evaluation step from a saved checkpoint; return success."""
+    evaluation_path = path.parent / f"{path.stem}.evaluation.json"
+    predictions_path = path.parent / f"{path.stem}.predictions.npz"
+    command = [
+        sys.executable,
+        "-m",
+        "experiments.reproduce.detailed_evaluation",
+        "--model",
+        str(checkpoint_path),
+        "--run-json",
+        str(path),
+        "--evaluation-json",
+        str(evaluation_path),
+        "--predictions",
+        str(predictions_path),
+        "--delete-model-on-success",
+    ]
+    _log(f"RESUME-EVAL {name} (training already complete, retrying evaluation only)")
+    started = time.monotonic()
+    result = subprocess.run(command, cwd=PROJECT_ROOT)
+    elapsed = time.monotonic() - started
+    if result.returncode == 0:
+        _log(f"DONE  {name} ({elapsed:.1f}s, evaluation-only resume)")
+        return True
+    _log(f"FAILED {name} (evaluation-only resume, exit={result.returncode}, {elapsed:.1f}s)")
+    return False
+
+
 def run_one_combo(
     partition: str,
     privacy: str,
@@ -191,6 +248,11 @@ def run_one_combo(
     if not force and is_complete(path, expected_rounds=rounds):
         _log(f"SKIP  {name} (already complete)")
         return True
+
+    if not force:
+        checkpoint_path = resumable_checkpoint(path, expected_rounds=rounds)
+        if checkpoint_path is not None:
+            return resume_evaluation_only(name, path, checkpoint_path)
 
     command = [
         sys.executable,
