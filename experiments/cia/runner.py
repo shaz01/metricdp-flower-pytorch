@@ -22,8 +22,8 @@ from experiments.cia.datasets.paper import (
     PAPER_CIA_NUM_CLIENTS,
     PaperShadowDataModule,
 )
+from experiments.cia.iter_combos import iter_combos
 from experiments.reproduce.matrix import Combo, Hyperparams, Matrix
-from experiments.reproduce.matrix.run_combo import run_one_combo
 from experiments.reproduce.paper_cnn import PaperCNN
 from experiments.reproduce.paper_loss import evaluate_model
 from metricdp_pytorch.strategy_factory import AGGREGATION_METHODS, PRIVACY_MODES
@@ -111,18 +111,15 @@ def run_first_round_cia(
     combos = build_cia_combos(
         privacy_modes=privacy_modes, aggregations=aggregations
     )
-    for combo in combos:
-        success = run_one_combo(
-            combo,
-            output_dir=output_dir,
-            max_parallel_clients=max_parallel_clients,
-            force=force,
-            log=lambda message: print(message, flush=True),
-            save_model=True,
-        )
+    for combo, success, model_path in iter_combos(
+        combos,
+        output_dir=output_dir,
+        max_parallel_clients=max_parallel_clients,
+        force=force,
+        log=lambda message: print(message, flush=True),
+    ):
         if not success:
             continue
-        model_path = output_dir / f"{combo.run_name()}.pt"
         aggregated_loss, target_loss = evaluate_combo(
             model_path, data_module=data_module, device=device
         )
