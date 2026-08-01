@@ -90,6 +90,21 @@ def _parser() -> argparse.ArgumentParser:
         default="",
         help="optional cache directory passed to the data-module factory",
     )
+    parser.add_argument(
+        "--target-partition-id",
+        type=int,
+        help="optional target partition interpreted by CIA data modules",
+    )
+    parser.add_argument(
+        "--shadow-fraction",
+        type=float,
+        help="optional target-shadow fraction interpreted by CIA data modules",
+    )
+    parser.add_argument(
+        "--train-fraction",
+        type=float,
+        help="optional client train fraction interpreted by data modules",
+    )
     parser.add_argument("--output-dir", type=Path, default=Path("results-reproduce-paper/reproduce"))
     parser.add_argument("--run-name")
     parser.add_argument("--save-model", action="store_true")
@@ -138,6 +153,16 @@ def _validate(args: argparse.Namespace) -> None:
         raise ValueError("max-parallel-clients must be positive.")
     if args.client_cpus <= 0:
         raise ValueError("client-cpus must be positive.")
+    if args.target_partition_id is not None and not (
+        0 <= args.target_partition_id < args.num_clients
+    ):
+        raise ValueError("target-partition-id must identify a configured client.")
+    for name, fraction in (
+        ("shadow-fraction", args.shadow_fraction),
+        ("train-fraction", args.train_fraction),
+    ):
+        if fraction is not None and not 0.0 < fraction < 1.0:
+            raise ValueError(f"{name} must be in (0, 1).")
     if args.client_weights:
         weights = [part.strip() for part in args.client_weights.split(",") if part.strip()]
         if len(weights) != args.num_clients:
@@ -196,6 +221,12 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
             "save-model": args.save_model,
         }
     )
+    if args.target_partition_id is not None:
+        config["target-partition-id"] = args.target_partition_id
+    if args.shadow_fraction is not None:
+        config["shadow-fraction"] = args.shadow_fraction
+    if args.train_fraction is not None:
+        config["train-fraction"] = args.train_fraction
     return config
 
 

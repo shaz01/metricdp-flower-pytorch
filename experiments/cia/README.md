@@ -15,19 +15,29 @@ AUC-based variant (Section 7.4.2, Table 13) is not implemented here.
    Table 9 distribution (client 1 = attacker, client 2 = bystander, client 3
    = target). Table 9 as published has a typo in Client 2's row (1591/180);
    the corrected values (1491/80) are used here -- see
-   `experiments/cia/dataset.py`'s module docstring for the arithmetic proof
-   (row sum, column sums against Table 1, and the grand total all reconcile
-   only with the corrected values).
+   `experiments/cia/datasets/paper.py`'s module docstring for the arithmetic
+   proof (row sum, column sums against Table 1, and the grand total all
+   reconcile only with the corrected values).
 2. For each of the 18 `(privacy_mode, aggregation)` combinations, runs one
    real 1-round, 3-client Flower simulation with `local-epochs=20` (the
-   paper's CIA-specific value), reusing `experiments.reproduce.runner`
-   unmodified via `experiments.cia.dataset:create_cia_data_module`.
+   paper's CIA-specific value), reusing `experiments.reproduce.runner` via
+   `experiments.cia.datasets.paper:create_paper_shadow_data_module`.
 3. Evaluates the resulting model's loss on the global held-out test set and
    on a stratified 10% shadow sample of the target's train indices (which
    overlaps with, not excluded from, what the target trains on -- matching
    the paper's stated "strong adversarial assumption").
 4. Reports `(target_loss - aggregated_loss) / target_loss * 100` per
    combination, matching Tables 10-12's structure.
+
+## Data-module structure
+
+`experiments/cia/datasets/shadow.py:ShadowDataModule` is a dataset-independent
+decorator: it delegates normal client/server loading to any federated data
+module and derives the shadow set from the target client's actual training
+loader. `experiments/cia/datasets/paper.py:PaperShadowDataModule` composes
+that decorator with the corrected Table 9 partition. Scalable experiments
+can instead wrap the standard Alzheimer module, or another future data
+module, without duplicating shadow-split logic.
 
 ## Running it
 

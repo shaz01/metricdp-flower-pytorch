@@ -88,6 +88,27 @@ def test_runner_passes_plugin_specific_partition_values_through(tmp_path) -> Non
     assert config["data-module"] == "my_package.data:create_data_module"
 
 
+def test_runner_passes_cia_data_module_options_through(tmp_path) -> None:
+    config = build_run_config(
+        _args(
+            "--num-clients",
+            "16",
+            "--target-partition-id",
+            "7",
+            "--shadow-fraction",
+            "0.2",
+            "--train-fraction",
+            "0.75",
+            "--output-dir",
+            str(tmp_path),
+        )
+    )
+
+    assert config["target-partition-id"] == 7
+    assert config["shadow-fraction"] == 0.2
+    assert config["train-fraction"] == 0.75
+
+
 def test_auto_client_gpus_is_zero_without_cuda() -> None:
     """CPU and Apple-MPS hosts keep the historical CPU-only client behaviour."""
     with patch.object(torch.cuda, "is_available", return_value=False):

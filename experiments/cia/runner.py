@@ -3,8 +3,9 @@
 For each of the 18 (privacy, aggregation) combinations, this launches one
 real 1-round, 3-client Flower simulation by shelling out to the existing,
 unmodified ``experiments.reproduce.runner`` CLI (pointed at this package's
-``create_cia_data_module``), then evaluates the resulting saved model's loss
-on the global test set and on the target client's shadow split, reporting
+paper-exact shadow data-module factory), then evaluates the resulting saved
+model's loss on the global test set and on the target client's shadow split,
+reporting
 the relative-difference attack score for each combination.
 """
 
@@ -19,7 +20,10 @@ from pathlib import Path
 import torch
 
 from experiments.cia.attack import CiaResult, make_cia_result
-from experiments.cia.dataset import CIA_NUM_CLIENTS, CiaDataModule
+from experiments.cia.datasets.paper import (
+    PAPER_CIA_NUM_CLIENTS,
+    PaperShadowDataModule,
+)
 from experiments.reproduce.paper_cnn import PaperCNN
 from experiments.reproduce.paper_loss import evaluate_model
 from metricdp_pytorch.strategy_factory import AGGREGATION_METHODS, PRIVACY_MODES
@@ -46,7 +50,7 @@ def build_reproduce_command(
     """Build the argv for one real 1-round CIA training run.
 
     Reuses ``experiments.reproduce.runner`` unmodified, pointed at this
-    package's ``create_cia_data_module`` factory instead of the paper's
+    package's paper-exact shadow data-module factory instead of the default
     4-client module.
     """
     name = run_name(privacy, aggregation)
@@ -55,9 +59,9 @@ def build_reproduce_command(
         "-m",
         "experiments.reproduce.runner",
         "--data-module",
-        "experiments.cia.dataset:create_cia_data_module",
+        "experiments.cia.datasets.paper:create_paper_shadow_data_module",
         "--num-clients",
-        str(CIA_NUM_CLIENTS),
+        str(PAPER_CIA_NUM_CLIENTS),
         "--rounds",
         "1",
         "--local-epochs",
@@ -103,7 +107,7 @@ def run_one_combo(
 def evaluate_combo(
     model_path: Path,
     *,
-    data_module: CiaDataModule,
+    data_module: PaperShadowDataModule,
     device: torch.device,
 ) -> tuple[float, float]:
     """Return ``(aggregated_test_loss, target_shadow_loss)`` for one saved model."""
@@ -131,7 +135,7 @@ def run_first_round_cia(
 ) -> list[CiaResult]:
     output_dir.mkdir(parents=True, exist_ok=True)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    data_module = CiaDataModule()
+    data_module = PaperShadowDataModule()
 
     results: list[CiaResult] = []
     for privacy in privacy_modes:

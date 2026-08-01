@@ -28,7 +28,10 @@ def test_build_reproduce_command_uses_cia_data_module_and_paper_settings() -> No
     )
     joined = " ".join(command)
     assert "experiments.reproduce.runner" in joined
-    assert "--data-module experiments.cia.dataset:create_cia_data_module" in joined
+    assert (
+        "--data-module "
+        "experiments.cia.datasets.paper:create_paper_shadow_data_module"
+    ) in joined
     assert "--num-clients 3" in joined
     assert "--rounds 1" in joined
     assert f"--local-epochs {CIA_LOCAL_EPOCHS}" in joined

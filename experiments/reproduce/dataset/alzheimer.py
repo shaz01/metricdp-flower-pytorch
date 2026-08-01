@@ -216,8 +216,16 @@ def partition_train_indices(
 class AlzheimerDataModule:
     """Pluggable data module for ``Falah/Alzheimer_MRI``."""
 
-    def __init__(self, cache_dir: str | Path | None = None) -> None:
+    def __init__(
+        self,
+        cache_dir: str | Path | None = None,
+        *,
+        train_fraction: float = 0.8,
+    ) -> None:
+        if not 0.0 < train_fraction < 1.0:
+            raise ValueError("train_fraction must be in (0, 1).")
         self.cache_dir = cache_dir
+        self.train_fraction = train_fraction
         self._dataset: DatasetDict | None = None
 
     @property
@@ -256,7 +264,7 @@ class AlzheimerDataModule:
             partitions[partition_id],
             batch_size=batch_size,
             seed=seed + partition_id,
-            train_fraction=0.8,
+            train_fraction=self.train_fraction,
             max_samples=max_samples,
         )
 
@@ -281,7 +289,10 @@ class AlzheimerDataModule:
 def create_data_module(config: Mapping[str, Any]) -> AlzheimerDataModule:
     """Factory used by the configurable ClientApp and ServerApp."""
     cache_dir = str(config.get("data-cache-dir", "")).strip() or None
-    return AlzheimerDataModule(cache_dir=cache_dir)
+    return AlzheimerDataModule(
+        cache_dir=cache_dir,
+        train_fraction=float(config.get("train-fraction", 0.8)),
+    )
 
 
 def load_client_data(

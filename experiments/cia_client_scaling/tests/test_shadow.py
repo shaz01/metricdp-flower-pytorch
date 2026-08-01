@@ -31,8 +31,11 @@ def test_shadow_loader_is_ten_percent_of_targets_train_indices(
     )
     assert len(loader.dataset) == len(expected_shadow)
     assert len(loader.dataset) == pytest.approx(0.10 * len(train_indices), abs=2)
-    assert list(loader.dataset.indices) == list(expected_shadow)
-    assert set(loader.dataset.indices) <= set(train_indices)
+    resolved_shadow_indices = [
+        train_indices[index] for index in loader.dataset.indices
+    ]
+    assert resolved_shadow_indices == list(expected_shadow)
+    assert set(resolved_shadow_indices) <= set(train_indices)
 
 
 def test_shadow_loader_is_deterministic(alzheimer_dataset: DatasetDict) -> None:
