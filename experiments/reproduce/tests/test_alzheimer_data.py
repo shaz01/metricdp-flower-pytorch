@@ -23,6 +23,14 @@ from experiments.reproduce.dataset.alzheimer import (
 )
 
 
+@pytest.fixture(autouse=True)
+def _clear_dataset_singleton() -> None:
+    """Keep loader monkeypatches isolated from the process-wide cache."""
+    alzheimer._load_alzheimer_dataset_once.cache_clear()
+    yield
+    alzheimer._load_alzheimer_dataset_once.cache_clear()
+
+
 def _class_counts(labels: np.ndarray, indices: list[int] | None = None) -> tuple[int, ...]:
     selected = labels if indices is None else labels[indices]
     return tuple(np.bincount(selected, minlength=4).tolist())
@@ -221,6 +229,28 @@ def test_load_alzheimer_dataset_prefers_cache_then_falls_back(monkeypatch) -> No
 
     assert alzheimer.load_alzheimer_dataset() == "networked"
     assert seen == [True, False]  # offline attempted first, then network
+
+
+def test_load_alzheimer_dataset_reuses_process_wide_instance(monkeypatch) -> None:
+    """Later data modules must not repeat even an offline HuggingFace lookup."""
+    monkeypatch.setenv("HF_HUB_OFFLINE", "1")
+    loaded = DatasetDict()
+    calls: list[str | None] = []
+
+    def fake_load_dataset(_dataset_id, cache_dir=None):
+        calls.append(cache_dir)
+        return loaded
+
+    monkeypatch.setattr(alzheimer, "load_dataset", fake_load_dataset)
+
+    first = alzheimer.load_alzheimer_dataset()
+    second = alzheimer.load_alzheimer_dataset()
+    module_dataset = alzheimer.AlzheimerDataModule().dataset
+
+    assert first is loaded
+    assert second is first
+    assert module_dataset is first
+    assert calls == [None]
 
 
 def test_load_alzheimer_dataset_defers_to_explicit_offline_setting(monkeypatch) -> None:

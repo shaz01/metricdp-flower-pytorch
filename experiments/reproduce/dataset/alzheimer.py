@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
+from functools import cache
 from pathlib import Path
 from typing import Any, Literal
 
@@ -81,24 +82,32 @@ def _hf_offline() -> Iterator[None]:
                 os.environ[name] = value
 
 
-def load_alzheimer_dataset(cache_dir: str | Path | None = None) -> DatasetDict:
-    """Download once or load the public Alzheimer MRI dataset from HF cache.
-
-    Tries the local cache first. Callers rebuild the data module once per client
-    per round, so a 48-client 20-round run issues ~960 of these calls; letting
-    each one revalidate against the Hub gets concurrent unauthenticated workers
-    rate-limited into multi-minute backoff (measured cold load: 155.94s online
-    vs 0.10s offline). Falls back to a networked load so a cold cache still
-    works, and defers entirely to an explicit ``HF_*_OFFLINE`` setting.
-    """
-    resolved_cache_dir = None if cache_dir is None else str(cache_dir)
+@cache
+def _load_alzheimer_dataset_once(cache_dir: str | None) -> DatasetDict:
+    """Materialise one shared dataset instance for a resolved cache location."""
     if any(os.environ.get(name) is not None for name in _HF_OFFLINE_VARS):
-        return load_dataset(DATASET_ID, cache_dir=resolved_cache_dir)
+        return load_dataset(DATASET_ID, cache_dir=cache_dir)
     try:
         with _hf_offline():
-            return load_dataset(DATASET_ID, cache_dir=resolved_cache_dir)
+            return load_dataset(DATASET_ID, cache_dir=cache_dir)
     except Exception:  # noqa: BLE001 - any cache miss should retry over network
-        return load_dataset(DATASET_ID, cache_dir=resolved_cache_dir)
+        return load_dataset(DATASET_ID, cache_dir=cache_dir)
+
+
+def load_alzheimer_dataset(cache_dir: str | Path | None = None) -> DatasetDict:
+    """Return the process-wide Alzheimer MRI dataset singleton.
+
+    The first call for each cache location checks the local HuggingFace cache
+    before allowing a network download. The resulting ``DatasetDict`` is then
+    reused by every data-module instance in this process, avoiding repeated Hub
+    checks when Flower rebuilds a data module for each client call. Separate
+    worker processes still load their own instance, but do so from the shared
+    on-disk HuggingFace cache.
+
+    Explicit ``HF_*_OFFLINE`` settings are respected on the first call.
+    """
+    resolved_cache_dir = None if cache_dir is None else str(cache_dir)
+    return _load_alzheimer_dataset_once(resolved_cache_dir)
 
 
 def _alzheimer_image_transform(image: Any) -> torch.Tensor:
