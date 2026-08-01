@@ -134,3 +134,50 @@ def test_diverged_models_fall_back_instead_of_raising() -> None:
     assert metrics["metric-dp-distance-invalid"] == 1.0
     # No prior valid distance exists yet, so the fallback is 1.0.
     assert strategy.current_distance == pytest.approx(1.0)
+
+
+def test_collapsed_zero_norm_updates_skip_round_instead_of_raising() -> None:
+    """A round where every client's update collapses to zero must not abort.
+
+    Flower's own DifferentialPrivacyServerSideFixedClipping.aggregate_train
+    divides by each client update's L2 norm to compute a clipping scale,
+    with no guard for an exactly-zero-norm update -- reachable when
+    calibrated noise has already driven every client to return the current
+    global model unchanged (observed live on real metric-privacy runs: a
+    ZeroDivisionError from flwr.supercore.differential_privacy.
+    clip_inputs_inplace crashed and lost a full training run's history).
+    Must instead skip aggregation for the round (arrays=None keeps the
+    strategy on the previous round's model) so the run keeps going.
+    """
+    strategy = MetricPrivacyServerSideFixedClipping(
+        strategy=FedAvg(),
+        noise_multiplier=0.0,
+        clipping_norm=10.0,
+        num_sampled_clients=2,
+    )
+    strategy.current_arrays = model(np.array([0.0, 0.0]))
+
+    replies = []
+    for node_id in (1, 2):
+        request = Message(
+            content=RecordDict(), message_type="train", dst_node_id=node_id
+        )
+        content = RecordDict(
+            {
+                # Identical to each other AND to current_arrays: no local
+                # training signal at all, matching the observed divergence
+                # state (pairwise distance among clients collapses to 0.0,
+                # and each client's update relative to the previous global
+                # model is also exactly 0.0).
+                "arrays": model(np.array([0.0, 0.0])),
+                "metrics": MetricRecord({"num-examples": 1}),
+            }
+        )
+        replies.append(Message(content=content, reply_to=request))
+
+    arrays, metrics = strategy.aggregate_train(1, replies)
+
+    assert arrays is None
+    assert metrics is not None
+    assert metrics["metric-dp-aggregation-collapsed"] == 1.0
+    assert metrics["metric-dp-distance-invalid"] == 1.0

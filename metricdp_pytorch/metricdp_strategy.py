@@ -155,9 +155,48 @@ class MetricPrivacyServerSideFixedClipping(
             len(distances),
         )
 
-        aggregated_arrays, aggregated_metrics = super().aggregate_train(
-            server_round, reply_list
-        )
+        try:
+            aggregated_arrays, aggregated_metrics = super().aggregate_train(
+                server_round, reply_list
+            )
+        except ZeroDivisionError:
+            # Flower's own DifferentialPrivacyServerSideFixedClipping.
+            # aggregate_train (flwr.supercore.differential_privacy.
+            # clip_inputs_inplace) divides by a client update's L2 norm to
+            # compute its clipping scale, with no guard for a zero-norm
+            # update. This is reachable in practice: when calibrated noise
+            # (noise_multiplier / distance) has already blown up because
+            # client models converged to a small pairwise distance (the
+            # non-finite/non-positive fallback above), the resulting noise
+            # can be large enough that every client's next-round local
+            # update becomes numerically indistinguishable from the current
+            # global model -- a genuine total-divergence state, observed
+            # live on metric-privacy combos (never global-dp, which doesn't
+            # have this distance-dependent noise blowup). Returning None
+            # for arrays keeps Strategy.start() on the previous round's
+            # model (see flwr's Strategy.start(): "if agg_arrays is not
+            # None: arrays = agg_arrays"), so a run survives one collapsed
+            # round instead of losing every prior round's history.
+            log(
+                WARNING,
+                "aggregate_train: round %d client updates collapsed to a "
+                "zero-norm state (likely total divergence following an "
+                "earlier non-finite/non-positive distance round) -- "
+                "Flower's clipping code can't handle a zero-magnitude "
+                "update; skipping aggregation this round and keeping the "
+                "previous round's model",
+                server_round,
+            )
+            return None, MetricRecord(
+                {
+                    "metric-dp-distance": raw_distance,
+                    "metric-dp-distance-mean": float(np.mean(distances)),
+                    "metric-dp-distance-median": float(np.median(distances)),
+                    "metric-dp-distance-count": len(distances),
+                    "metric-dp-distance-invalid": 1.0 if distance_invalid else 0.0,
+                    "metric-dp-aggregation-collapsed": 1.0,
+                }
+            )
         if aggregated_metrics is None:
             aggregated_metrics = MetricRecord()
         aggregated_metrics["metric-dp-distance"] = raw_distance
@@ -165,6 +204,7 @@ class MetricPrivacyServerSideFixedClipping(
         aggregated_metrics["metric-dp-distance-median"] = float(np.median(distances))
         aggregated_metrics["metric-dp-distance-count"] = len(distances)
         aggregated_metrics["metric-dp-distance-invalid"] = 1.0 if distance_invalid else 0.0
+        aggregated_metrics["metric-dp-aggregation-collapsed"] = 0.0
         if self.current_noise_stdv is not None:
             aggregated_metrics["metric-dp-noise-stdv"] = self.current_noise_stdv
         return aggregated_arrays, aggregated_metrics
