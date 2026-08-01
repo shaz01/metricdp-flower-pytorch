@@ -50,6 +50,24 @@ cached Alzheimer MRI dataset and training 3 clients for 20 local epochs.
 Results are written to `experiments/cia/results/first_round_cia.json` and
 printed to stdout.
 
+## 48-client checkpoint comparison
+
+The scalable CIA experiment now lives in `experiments/cia/client_scaling.py`.
+It trains each 48-client trajectory once for 20 rounds with the concluded
+client-scaling settings (`local-epochs=5`, `noise-multiplier=0.05`) and
+retains checkpoints at rounds 1 and 20. Both attacks therefore evaluate the
+same model trajectory rather than independently training a one-round model.
+
+```bash
+uv run python -m experiments.cia.client_scaling \
+  --output-dir results/cia_client_scaling
+```
+
+Its matrix covers homogeneous/non-IID partitions, all three privacy modes,
+and FedAvg/FedYogi. Results include the server round, client count, partition,
+noise multiplier, shadow fraction, and realized shadow size, and are written to
+`results/cia_client_scaling/cia_client_scaling.json`.
+
 ## Comparing against the paper
 
 The paper's Table 10 (FedAvg) and Table 11 (FedYogi) report, per privacy

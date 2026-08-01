@@ -89,11 +89,12 @@ def run_first_round_cia(
             f"CIA attack starting: {len(combos)} combinations, "
             f"num_clients={PAPER_CIA_NUM_CLIENTS}, force={force}"
         ),
-        data_module=PaperShadowDataModule(),
+        data_module_factory=lambda _combo: PaperShadowDataModule(),
         device=device,
         batch_size=CIA_BATCH_SIZE,
         seed=CIA_SEED,
         checkpoint_rounds=(1,),
+        report_name="first_round_cia.json",
     )
 
 

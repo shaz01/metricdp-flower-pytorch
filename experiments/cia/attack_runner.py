@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import json
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import torch
 
-from experiments.cia.datasets.paper import PaperShadowDataModule
+from experiments.cia.datasets.shadow import ShadowDataModule
 from experiments.cia.iter_combos import iter_combos
 from experiments.cia.result import CiaResult, make_cia_result
 from experiments.reproduce.matrix import Combo
@@ -30,13 +30,15 @@ def _logger(log_path: Path):
 def _evaluate_combo(
     model_path: Path,
     *,
-    data_module: PaperShadowDataModule,
+    data_module: ShadowDataModule,
     device: torch.device,
     batch_size: int,
     seed: int,
-) -> tuple[float, float]:
+) -> tuple[float, float, int]:
     model = PaperCNN()
-    model.load_state_dict(torch.load(model_path, map_location="cpu"))
+    model.load_state_dict(
+        torch.load(model_path, map_location="cpu", weights_only=True)
+    )
 
     _validation_loader, test_loader = data_module.server_loaders(
         batch_size=batch_size, seed=seed
@@ -46,7 +48,11 @@ def _evaluate_combo(
     )
     aggregated_metrics = evaluate_model(model, test_loader, device)
     target_metrics = evaluate_model(model, shadow_loader, device)
-    return aggregated_metrics["loss"], target_metrics["loss"]
+    return (
+        aggregated_metrics["loss"],
+        target_metrics["loss"],
+        len(shadow_loader.dataset),
+    )
 
 
 def run_attack(
@@ -57,11 +63,12 @@ def run_attack(
     max_parallel_clients: int,
     force: bool,
     start_message: str,
-    data_module: PaperShadowDataModule,
+    data_module_factory: Callable[[Combo], ShadowDataModule],
     device: torch.device,
     batch_size: int,
     seed: int,
     checkpoint_rounds: tuple[int, ...] = (),
+    report_name: str = "cia.json",
 ) -> list[CiaResult]:
     """Run and evaluate every CIA combo, continuing past failures."""
     if not checkpoint_rounds:
@@ -93,10 +100,11 @@ def run_attack(
             continue
 
         try:
+            data_module = data_module_factory(combo)
             for round_number, round_model_path in zip(
                 checkpoint_rounds, checkpoint_paths, strict=True
             ):
-                aggregated_loss, target_loss = _evaluate_combo(
+                aggregated_loss, target_loss, shadow_size = _evaluate_combo(
                     round_model_path,
                     data_module=data_module,
                     device=device,
@@ -105,11 +113,12 @@ def run_attack(
                 )
                 results.append(
                     make_cia_result(
-                        privacy=combo.privacy,
-                        aggregation=combo.aggregation,
+                        combo=combo,
                         server_round=round_number,
                         aggregated_test_loss=aggregated_loss,
                         target_shadow_loss=target_loss,
+                        shadow_fraction=data_module.shadow_fraction,
+                        shadow_size=shadow_size,
                     )
                 )
                 log(f"EVALUATED {name} round={round_number}")
@@ -119,7 +128,7 @@ def run_attack(
 
         log(f"PROGRESS {completed}/{total} ({len(failed)} failed so far)")
 
-    report_path = output_dir / "first_round_cia.json"
+    report_path = output_dir / report_name
     report_path.write_text(
         json.dumps([result.__dict__ for result in results], indent=2) + "\n",
         encoding="utf-8",
