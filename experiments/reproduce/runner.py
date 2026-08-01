@@ -309,6 +309,8 @@ def _launch_isolated(args: argparse.Namespace, config: dict[str, Any]) -> None:
             str(args.rounds),
             "--local-epochs",
             str(args.local_epochs),
+            "--model-module",
+            str(args.model_module),
         ]
         if args.verbose:
             command.append("--verbose")
