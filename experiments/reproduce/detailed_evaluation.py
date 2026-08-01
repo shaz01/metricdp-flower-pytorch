@@ -22,6 +22,7 @@ from torch.utils.data import DataLoader
 
 from experiments.reproduce.dataset.alzheimer import AlzheimerDataModule, CLASS_NAMES
 from experiments.reproduce.paper_cnn import PaperCNN
+from metricdp_pytorch.utils.device import resolve_device
 
 
 def predict_probabilities(
@@ -240,9 +241,15 @@ def _evaluate_model(
         if encoded_weights
         else None
     )
-    selected_device = device or torch.device(
-        "cuda:0" if torch.cuda.is_available() else "cpu"
-    )
+    # Must match the device used by the training-time centralized eval
+    # (paper_loss.py:make_evaluate_fn, via resolve_device()) -- the recorded
+    # accuracy below comes from that pass, and this function's own
+    # postprocessed accuracy is checked against it to abs_tol=1e-12.
+    # Falling back to CPU here (the previous cuda-only check skipped MPS)
+    # let MPS-vs-CPU floating-point differences flip enough borderline
+    # predictions to fail that check outright on runs that converged to a
+    # near-random-chance accuracy regime.
+    selected_device = device or resolve_device()
     model.to(selected_device)
 
     _, server_loader = data_module.server_loaders(

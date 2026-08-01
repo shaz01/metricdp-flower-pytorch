@@ -152,7 +152,14 @@ def is_complete(path: Path, *, expected_rounds: int) -> bool:
 
     Treats a missing, unparseable, or short-of-rounds file as incomplete, so
     a prior run that was killed mid-write (or mid-sweep) is rerun rather than
-    silently accepted.
+    silently accepted. Also requires the post-hoc evaluation artifact
+    (``<run>.evaluation.json``, written by detailed_evaluation.py after
+    training finishes) to exist -- training can complete all its rounds and
+    still leave that step unrun/failed (observed: a device-mismatch bug in
+    evaluate_state_dict's consistency check crashed after a full 40-round
+    training run, leaving the round-complete run JSON behind with no
+    evaluation file), which this function would otherwise treat as complete
+    forever and silently never retry.
     """
     if not path.exists():
         return False
@@ -162,7 +169,10 @@ def is_complete(path: Path, *, expected_rounds: int) -> bool:
         return False
     history = data.get("server_evaluate_metrics", {})
     completed_rounds = [int(round_number) for round_number in history if int(round_number) > 0]
-    return len(completed_rounds) >= expected_rounds
+    if len(completed_rounds) < expected_rounds:
+        return False
+    evaluation_path = path.parent / f"{path.stem}.evaluation.json"
+    return evaluation_path.exists()
 
 
 def run_one_combo(
