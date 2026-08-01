@@ -82,6 +82,7 @@ def train(msg: Message, context: Context) -> Message:
                 "arrays": ArrayRecord(model.state_dict()),
                 "metrics": MetricRecord(
                     {
+                        "client-id": partition_id,
                         "train_loss": epoch_losses[-1],
                         "train_loss_mean": sum(epoch_losses) / len(epoch_losses),
                         "num-examples": len(trainloader.dataset),
@@ -97,6 +98,7 @@ def train(msg: Message, context: Context) -> Message:
 def evaluate(msg: Message, context: Context) -> Message:
     """Evaluate the global model on one client's held-out split."""
     run_config = runtime_config(context)
+    partition_id = int(context.node_config["partition-id"])
     model = load_model(str(run_config["model-module"]))
     model.load_state_dict(msg.content["arrays"].to_torch_state_dict())
     _, testloader = _client_data(context)
@@ -108,6 +110,7 @@ def evaluate(msg: Message, context: Context) -> Message:
             {
                 "metrics": MetricRecord(
                     {
+                        "client-id": partition_id,
                         "eval_loss": metrics["loss"],
                         "eval_acc": metrics["accuracy"],
                         "num-examples": len(testloader.dataset),

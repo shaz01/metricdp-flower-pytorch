@@ -71,4 +71,17 @@ def test_modern_strategy_aggregates_message_replies() -> None:
     assert metrics is not None
     assert arrays.to_numpy_ndarrays()[0] == pytest.approx(np.array([2.0, 2.0]))
     assert metrics["metric-dp-distance"] == pytest.approx(np.sqrt(20.0))
+    assert metrics["metric-dp-pairwise-distances"] == pytest.approx(
+        [np.sqrt(20.0)]
+    )
+    assert metrics["metric-dp-pairwise-client-i"] == [0]
+    assert metrics["metric-dp-pairwise-client-j"] == [1]
+    assert metrics["metric-dp-distance-min"] == pytest.approx(np.sqrt(20.0))
+    assert metrics["metric-dp-distance-median"] == pytest.approx(np.sqrt(20.0))
+    assert metrics["metric-dp-distance-mean"] == pytest.approx(np.sqrt(20.0))
     assert metrics["metric-dp-noise-stdv"] == 0.0
+    assert metrics["dp-update-norms-before-clipping"] == pytest.approx([1.0, 5.0])
+    assert metrics["dp-client-clipped"] == [0, 0]
+    assert metrics["dp-fraction-clipped"] == 0.0
+    assert metrics["dp-parameter-count"] == 2
+    assert metrics["dp-expected-noise-l2-norm"] == 0.0
