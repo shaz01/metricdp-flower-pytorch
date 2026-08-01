@@ -68,13 +68,16 @@ def make_indexed_loader(
         generator=generator if shuffle else None,
         num_workers=num_workers,
         pin_memory=torch.cuda.is_available(),
-        # A new loader is built fresh every round (see client.py's
-        # per-round _client_data()), so persistent_workers buys nothing
-        # across rounds -- it only adds worker-subprocess churn that, left
-        # to Python's GC to tear down inside a long-lived Ray client actor,
-        # compounds the per-round accelerator-memory growth this loader
-        # already contends with.
-        persistent_workers=False,
+        # train_with_adam iterates this same loader object once per local
+        # epoch, so persistent_workers=True keeps one pair of workers alive
+        # across those epochs instead of respawning them every epoch --
+        # setting this False previously caused a 5x (epochs=5) increase in
+        # worker-process churn per round, which showed up as CPU spikes and,
+        # worse, leaked orphaned torch_shm_manager daemons even faster than
+        # before. Leak protection belongs to release_device_cache() (called
+        # every task) and cleanup_orphaned_shm_managers() (run at sweep
+        # start and after every combo), not to disabling persistence here.
+        persistent_workers=num_workers > 0,
         prefetch_factor=2 if num_workers > 0 else None,
     )
 
