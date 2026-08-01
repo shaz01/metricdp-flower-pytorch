@@ -15,7 +15,7 @@ from sklearn.preprocessing import label_binarize
 from torch.utils.data import DataLoader
 
 from experiments.reproduce.paper_cnn import PaperCNN
-from metricdp_pytorch.utils.device import resolve_device
+from metricdp_pytorch.utils.device import release_device_cache, resolve_device
 
 
 def sparse_categorical_cross_entropy(
@@ -130,8 +130,9 @@ def make_evaluate_fn(
     def evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
         model = PaperCNN()
         model.load_state_dict(arrays.to_torch_state_dict())
-        return MetricRecord(
-            evaluate_model(model, testloader, device, server_round=server_round)
-        )
+        metrics = evaluate_model(model, testloader, device, server_round=server_round)
+        model.cpu()
+        release_device_cache(device)
+        return MetricRecord(metrics)
 
     return evaluate

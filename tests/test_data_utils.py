@@ -19,7 +19,11 @@ def test_indexed_loader_uses_parallel_prefetching() -> None:
     )
 
     assert loader.num_workers == 2
-    assert loader.persistent_workers is True
+    # Workers are not kept alive across loader instances: a fresh loader is
+    # built every round (see client.py's per-round _client_data()), so
+    # persistence would only add worker-teardown risk inside a long-lived
+    # simulation actor without any cross-round reuse benefit.
+    assert loader.persistent_workers is False
     assert loader.prefetch_factor == 2
     assert loader.pin_memory is torch.cuda.is_available()
 

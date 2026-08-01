@@ -68,7 +68,13 @@ def make_indexed_loader(
         generator=generator if shuffle else None,
         num_workers=num_workers,
         pin_memory=torch.cuda.is_available(),
-        persistent_workers=num_workers > 0,
+        # A new loader is built fresh every round (see client.py's
+        # per-round _client_data()), so persistent_workers buys nothing
+        # across rounds -- it only adds worker-subprocess churn that, left
+        # to Python's GC to tear down inside a long-lived Ray client actor,
+        # compounds the per-round accelerator-memory growth this loader
+        # already contends with.
+        persistent_workers=False,
         prefetch_factor=2 if num_workers > 0 else None,
     )
 
