@@ -53,6 +53,7 @@ Run the default 36-configuration partition × privacy × aggregation matrix with
 
 ```bash
 uv run python -m experiments.reproduce.matrix \
+  --data-module experiments.reproduce.dataset.alzheimer:create_data_module \
   --output-dir results-reproduce-paper/matrix \
   --max-parallel-clients 4
 ```

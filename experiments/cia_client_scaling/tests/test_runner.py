@@ -84,10 +84,10 @@ def test_timing_configs_match_design_spec() -> None:
     }
 
 
-def test_combo_uses_default_matrix_run_name() -> None:
+def test_combo_includes_explicit_data_module_in_run_name() -> None:
     assert _combo_name("homogeneous", "first-round", "vanilla", "fedavg") == (
         "cia_scaling__first-round__homogeneous__vanilla__fedavg__clients-48__"
-        "seed-42__nm0p01__clip5__rounds-1__epochs-20"
+        "seed-42__nm0p01__clip5__rounds-1__epochs-20__alzheimer"
     )
 
 

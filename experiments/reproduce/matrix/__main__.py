@@ -11,6 +11,14 @@ from metricdp_pytorch.strategy_factory import AGGREGATION_METHODS, PRIVACY_MODES
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output-dir", type=Path)
+    parser.add_argument("--name-prefix", type=str)
+    parser.add_argument(
+        "--data-module",
+        required=True,
+        help="data-module factory in package.module:factory format",
+    )
+
     parser.add_argument(
         "--partitions",
         nargs="+",
@@ -30,7 +38,6 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--seeds", nargs="+", type=int, default=[42])
     parser.add_argument("--num-clients", type=int, default=4)
-    parser.add_argument("--name-prefix", default="paper")
     parser.add_argument("--rounds", type=int, default=20)
     parser.add_argument("--local-epochs", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=32)
@@ -38,7 +45,6 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--noise-multiplier", nargs="+", type=float, default=[0.01])
     parser.add_argument("--clipping-norm", type=float, default=5.0)
     parser.add_argument("--initialization-epochs", type=int, default=20)
-    parser.add_argument("--output-dir", type=Path, default=Path("results-reproduce-paper/matrix"))
     parser.add_argument("--parallel-experiments", type=int, default=1)
     parser.add_argument("--retries", type=int, default=1)
     parser.add_argument("--max-parallel-clients", type=int, default=2)
@@ -68,6 +74,7 @@ def main() -> None:
             learning_rate=args.learning_rate,
             initialization_epochs=args.initialization_epochs,
         ),
+        data_module=args.data_module,
     ).list_combos(name_prefix=args.name_prefix, num_clients=args.num_clients)
     print(f"Matrix contains {len(matrix)} configurations.")
     pending = matrix

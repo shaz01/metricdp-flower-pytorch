@@ -19,6 +19,7 @@ class Matrix:
     seeds: tuple[int, ...]
     noise_multipliers: tuple[float, ...]
     hyperparams: Hyperparams
+    data_module: str
 
     def list_combos(self, *, name_prefix: str, num_clients: int) -> list[Combo]:
         """List one combo for every point in this matrix."""
@@ -33,6 +34,7 @@ class Matrix:
                 seed=seed,
                 noise_multiplier=noise_multiplier,
                 hyperparams=self.hyperparams,
+                data_module=self.data_module,
             )
             for partition, privacy, aggregation, seed, noise_multiplier in product(
                 self.partitions,

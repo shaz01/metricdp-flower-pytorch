@@ -2,44 +2,61 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from experiments.cia.runner import (
     CIA_CLIPPING_NORM,
     CIA_LOCAL_EPOCHS,
+    CIA_MATRIX,
     CIA_NOISE_MULTIPLIER,
     CIA_SEED,
-    build_reproduce_command,
-    run_name,
+    build_cia_combos,
 )
 
 
-def test_run_name_is_stable_and_readable() -> None:
-    assert run_name("vanilla", "fedavg") == "cia__vanilla__fedavg"
-    assert run_name("metric-privacy", "fedyogi") == "cia__metric-privacy__fedyogi"
+def test_cia_matrix_contains_paper_privacy_aggregation_grid() -> None:
+    combos = build_cia_combos()
+
+    assert len(combos) == len(CIA_MATRIX.privacy_modes) * len(CIA_MATRIX.aggregations)
+    assert {combo.privacy for combo in combos} == set(CIA_MATRIX.privacy_modes)
+    assert {combo.aggregation for combo in combos} == set(CIA_MATRIX.aggregations)
 
 
-def test_build_reproduce_command_uses_cia_data_module_and_paper_settings() -> None:
-    command = build_reproduce_command(
-        privacy="global-dp",
-        aggregation="fedprox",
-        output_dir=Path("/tmp/cia-results"),
-        max_parallel_clients=2,
-    )
-    joined = " ".join(command)
-    assert "experiments.reproduce.runner" in joined
-    assert (
-        "--data-module "
+def test_cia_combos_use_paper_settings() -> None:
+    combo = build_cia_combos(
+        privacy_modes=("global-dp",), aggregations=("fedprox",)
+    )[0]
+
+    assert combo.num_clients == 3
+    assert combo.partition == "homogeneous"
+    assert combo.privacy == "global-dp"
+    assert combo.aggregation == "fedprox"
+    assert combo.seed == CIA_SEED
+    assert combo.noise_multiplier == CIA_NOISE_MULTIPLIER
+    assert combo.hyperparams.clipping_norm == CIA_CLIPPING_NORM
+    assert combo.hyperparams.rounds == 1
+    assert combo.hyperparams.local_epochs == CIA_LOCAL_EPOCHS
+    assert combo.data_module == (
         "experiments.cia.datasets.paper:create_paper_shadow_data_module"
-    ) in joined
+    )
+    assert combo.run_name().endswith("__epochs-20__paper")
+
+
+def test_cia_combo_runner_args_are_matrix_api_compatible(tmp_path) -> None:
+    combo = build_cia_combos(
+        privacy_modes=("vanilla",), aggregations=("fedavg",)
+    )[0]
+    joined = " ".join(
+        combo.runner_args(
+            output_dir=tmp_path,
+            max_parallel_clients=2,
+            client_cpus=1.0,
+            save_model=True,
+        )
+    )
+
+    assert "--data-module experiments.cia.datasets.paper:create_paper_shadow_data_module" in joined
     assert "--num-clients 3" in joined
     assert "--rounds 1" in joined
-    assert f"--local-epochs {CIA_LOCAL_EPOCHS}" in joined
-    assert "--privacy global-dp" in joined
-    assert "--aggregation fedprox" in joined
-    assert f"--seed {CIA_SEED}" in joined
-    assert f"--noise-multiplier {CIA_NOISE_MULTIPLIER}" in joined
-    assert f"--clipping-norm {CIA_CLIPPING_NORM}" in joined
-    assert "--run-name cia__global-dp__fedprox" in joined
+    assert "--local-epochs 20" in joined
+    assert "--privacy vanilla" in joined
+    assert "--aggregation fedavg" in joined
     assert "--save-model" in joined
-    assert "--max-parallel-clients 2" in joined

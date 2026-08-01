@@ -97,6 +97,7 @@ def build_combo(
             learning_rate=0.001,
             initialization_epochs=20,
         ),
+        data_module="experiments.reproduce.dataset.alzheimer:create_data_module",
     )
 
 

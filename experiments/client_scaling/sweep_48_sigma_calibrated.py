@@ -99,6 +99,7 @@ def _matrix(
             learning_rate=LEARNING_RATE,
             initialization_epochs=INITIALIZATION_EPOCHS,
         ),
+        data_module="experiments.reproduce.dataset.alzheimer:create_data_module",
     )
 
 

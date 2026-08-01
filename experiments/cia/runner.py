@@ -13,8 +13,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import subprocess
-import sys
 from pathlib import Path
 
 import torch
@@ -24,6 +22,8 @@ from experiments.cia.datasets.paper import (
     PAPER_CIA_NUM_CLIENTS,
     PaperShadowDataModule,
 )
+from experiments.reproduce.matrix import Combo, Hyperparams, Matrix
+from experiments.reproduce.matrix.run_combo import run_one_combo
 from experiments.reproduce.paper_cnn import PaperCNN
 from experiments.reproduce.paper_loss import evaluate_model
 from metricdp_pytorch.strategy_factory import AGGREGATION_METHODS, PRIVACY_MODES
@@ -35,73 +35,42 @@ CIA_NOISE_MULTIPLIER = 0.01
 CIA_CLIPPING_NORM = 5.0
 CIA_BATCH_SIZE = 32
 
+CIA_MATRIX = Matrix(
+    partitions=("homogeneous",),
+    privacy_modes=tuple(PRIVACY_MODES),
+    aggregations=tuple(AGGREGATION_METHODS),
+    seeds=(CIA_SEED,),
+    noise_multipliers=(CIA_NOISE_MULTIPLIER,),
+    hyperparams=Hyperparams(
+        clipping_norm=CIA_CLIPPING_NORM,
+        rounds=1,
+        local_epochs=CIA_LOCAL_EPOCHS,
+        batch_size=CIA_BATCH_SIZE,
+        learning_rate=0.001,
+        initialization_epochs=20,
+    ),
+    data_module="experiments.cia.datasets.paper:create_paper_shadow_data_module",
+)
 
-def run_name(privacy: str, aggregation: str) -> str:
-    return f"cia__{privacy}__{aggregation}"
 
-
-def build_reproduce_command(
+def build_cia_combos(
     *,
-    privacy: str,
-    aggregation: str,
-    output_dir: Path,
-    max_parallel_clients: int,
-) -> list[str]:
-    """Build the argv for one real 1-round CIA training run.
-
-    Reuses ``experiments.reproduce.runner`` unmodified, pointed at this
-    package's paper-exact shadow data-module factory instead of the default
-    4-client module.
-    """
-    name = run_name(privacy, aggregation)
-    return [
-        sys.executable,
-        "-m",
-        "experiments.reproduce.runner",
-        "--data-module",
-        "experiments.cia.datasets.paper:create_paper_shadow_data_module",
-        "--num-clients",
-        str(PAPER_CIA_NUM_CLIENTS),
-        "--rounds",
-        "1",
-        "--local-epochs",
-        str(CIA_LOCAL_EPOCHS),
-        "--privacy",
-        privacy,
-        "--aggregation",
-        aggregation,
-        "--seed",
-        str(CIA_SEED),
-        "--noise-multiplier",
-        str(CIA_NOISE_MULTIPLIER),
-        "--clipping-norm",
-        str(CIA_CLIPPING_NORM),
-        "--output-dir",
-        str(output_dir),
-        "--run-name",
-        name,
-        "--save-model",
-        "--max-parallel-clients",
-        str(max_parallel_clients),
-    ]
-
-
-def run_one_combo(
-    *,
-    privacy: str,
-    aggregation: str,
-    output_dir: Path,
-    max_parallel_clients: int,
-) -> Path:
-    """Launch one real 1-round CIA training run; return the saved model path."""
-    command = build_reproduce_command(
-        privacy=privacy,
-        aggregation=aggregation,
-        output_dir=output_dir,
-        max_parallel_clients=max_parallel_clients,
+    privacy_modes: tuple[str, ...] = tuple(PRIVACY_MODES),
+    aggregations: tuple[str, ...] = tuple(AGGREGATION_METHODS),
+) -> list[Combo]:
+    """Return the requested paper privacy × aggregation matrix."""
+    matrix = Matrix(
+        partitions=CIA_MATRIX.partitions,
+        privacy_modes=privacy_modes,
+        aggregations=aggregations,
+        seeds=CIA_MATRIX.seeds,
+        noise_multipliers=CIA_MATRIX.noise_multipliers,
+        hyperparams=CIA_MATRIX.hyperparams,
+        data_module=CIA_MATRIX.data_module,
     )
-    subprocess.run(command, cwd=PROJECT_ROOT, check=True)
-    return output_dir / f"{run_name(privacy, aggregation)}.pt"
+    return matrix.list_combos(
+        name_prefix="cia", num_clients=PAPER_CIA_NUM_CLIENTS
+    )
 
 
 def evaluate_combo(
@@ -132,31 +101,39 @@ def run_first_round_cia(
     aggregations: tuple[str, ...] = AGGREGATION_METHODS,
     privacy_modes: tuple[str, ...] = PRIVACY_MODES,
     max_parallel_clients: int = 2,
+    force: bool = False,
 ) -> list[CiaResult]:
     output_dir.mkdir(parents=True, exist_ok=True)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_module = PaperShadowDataModule()
 
     results: list[CiaResult] = []
-    for privacy in privacy_modes:
-        for aggregation in aggregations:
-            model_path = run_one_combo(
-                privacy=privacy,
-                aggregation=aggregation,
-                output_dir=output_dir,
-                max_parallel_clients=max_parallel_clients,
+    combos = build_cia_combos(
+        privacy_modes=privacy_modes, aggregations=aggregations
+    )
+    for combo in combos:
+        success = run_one_combo(
+            combo,
+            output_dir=output_dir,
+            max_parallel_clients=max_parallel_clients,
+            force=force,
+            log=lambda message: print(message, flush=True),
+            save_model=True,
+        )
+        if not success:
+            continue
+        model_path = output_dir / f"{combo.run_name()}.pt"
+        aggregated_loss, target_loss = evaluate_combo(
+            model_path, data_module=data_module, device=device
+        )
+        results.append(
+            make_cia_result(
+                privacy=combo.privacy,
+                aggregation=combo.aggregation,
+                aggregated_test_loss=aggregated_loss,
+                target_shadow_loss=target_loss,
             )
-            aggregated_loss, target_loss = evaluate_combo(
-                model_path, data_module=data_module, device=device
-            )
-            results.append(
-                make_cia_result(
-                    privacy=privacy,
-                    aggregation=aggregation,
-                    aggregated_test_loss=aggregated_loss,
-                    target_shadow_loss=target_loss,
-                )
-            )
+        )
 
     report_path = output_dir / "first_round_cia.json"
     report_path.write_text(
@@ -174,6 +151,11 @@ def _parser() -> argparse.ArgumentParser:
         default=PROJECT_ROOT / "experiments" / "cia" / "results",
     )
     parser.add_argument("--max-parallel-clients", type=int, default=2)
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="rerun combinations even when their result and model already exist",
+    )
     return parser
 
 
@@ -182,6 +164,7 @@ def main() -> None:
     results = run_first_round_cia(
         output_dir=args.output_dir,
         max_parallel_clients=args.max_parallel_clients,
+        force=args.force,
     )
     for result in results:
         print(
