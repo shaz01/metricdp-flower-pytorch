@@ -86,6 +86,11 @@ def _parser() -> argparse.ArgumentParser:
         help="pluggable dataset factory in package.module:factory format",
     )
     parser.add_argument(
+        "--model-module",
+        required=True,
+        help="pluggable model factory in package.module:factory format",
+    )
+    parser.add_argument(
         "--data-cache-dir",
         default="",
         help="optional cache directory passed to the data-module factory",
@@ -225,6 +230,7 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
             "noise-multiplier": args.noise_multiplier,
             "clipping-norm": args.clipping_norm,
             "data-module": args.data_module,
+            "model-module": args.model_module,
             "data-cache-dir": cache_dir,
             "output-dir": str(output_dir),
             "run-name": run_name,

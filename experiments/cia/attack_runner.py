@@ -13,8 +13,8 @@ from experiments.cia.datasets.shadow import ShadowDataModule
 from experiments.cia.iter_combos import iter_combos
 from experiments.cia.result import CiaResult, make_cia_result
 from experiments.reproduce.matrix import Combo
-from experiments.reproduce.paper_cnn import PaperCNN
 from experiments.reproduce.paper_loss import evaluate_model
+from metricdp_pytorch.model_module import load_model
 
 
 def _logger(log_path: Path):
@@ -34,8 +34,9 @@ def _evaluate_combo(
     device: torch.device,
     batch_size: int,
     seed: int,
+    combo: Combo,
 ) -> tuple[float, float, int]:
-    model = PaperCNN()
+    model = load_model(combo.model_module)
     model.load_state_dict(
         torch.load(model_path, map_location="cpu", weights_only=True)
     )
@@ -110,6 +111,7 @@ def run_attack(
                     device=device,
                     batch_size=batch_size,
                     seed=seed,
+                    combo=combo,
                 )
                 results.append(
                     make_cia_result(

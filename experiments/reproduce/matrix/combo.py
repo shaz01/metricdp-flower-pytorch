@@ -22,11 +22,14 @@ class Combo:
     noise_multiplier: float
     hyperparams: Hyperparams
     data_module: str
+    model_module: str
 
     def run_name(self) -> str:
         """Build the complete deterministic name from this combo's parameters."""
         module_path = self.data_module.rsplit(":", 1)[0]
         data_module_name = module_path.rsplit(".", 1)[-1]
+        model_path = self.model_module.rsplit(":", 1)[0]
+        model_suffix = f"__{model_path.rsplit('.', 1)[-1]}"
         return (
             f"{self.name_prefix}__{self.partition}__{self.privacy}__"
             f"{self.aggregation}__clients-{self.num_clients}__seed-{self.seed}__"
@@ -34,7 +37,7 @@ class Combo:
             f"clip{self.hyperparams.clipping_norm:g}__"
             f"rounds-{self.hyperparams.rounds}__"
             f"epochs-{self.hyperparams.local_epochs}__"
-            f"{data_module_name}"
+            f"{data_module_name}{model_suffix}"
         )
 
     def result_path(self, output_dir: Path) -> Path:
@@ -53,6 +56,8 @@ class Combo:
         args = (
             "--data-module",
             self.data_module,
+            "--model-module",
+            self.model_module,
             "--num-clients",
             str(self.num_clients),
             "--partition",

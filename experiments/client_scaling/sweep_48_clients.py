@@ -61,6 +61,7 @@ MATRIX = Matrix(
         initialization_epochs=20,
     ),
     data_module="experiments.reproduce.dataset.alzheimer:create_data_module",
+    model_module="experiments.reproduce.paper_cnn:create_model",
 )
 
 

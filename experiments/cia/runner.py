@@ -44,6 +44,7 @@ CIA_MATRIX = Matrix(
         initialization_epochs=20,
     ),
     data_module="experiments.cia.datasets.paper:create_paper_shadow_data_module",
+    model_module="experiments.reproduce.paper_cnn:create_model",
 )
 
 
@@ -61,6 +62,7 @@ def build_cia_combos(
         noise_multipliers=CIA_MATRIX.noise_multipliers,
         hyperparams=CIA_MATRIX.hyperparams,
         data_module=CIA_MATRIX.data_module,
+        model_module=CIA_MATRIX.model_module,
     )
     return matrix.list_combos(
         name_prefix="cia", num_clients=PAPER_CIA_NUM_CLIENTS

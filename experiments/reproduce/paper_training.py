@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import random
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 
 import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-from experiments.reproduce.paper_cnn import PaperCNN
 from experiments.reproduce.paper_loss import sparse_categorical_cross_entropy
 from metricdp_pytorch.utils.device import resolve_device
 
@@ -125,7 +124,8 @@ def create_initial_model(
     epochs: int = PAPER_INITIALIZATION_EPOCHS,
     learning_rate: float = PAPER_ADAM_LEARNING_RATE,
     device: torch.device | None = None,
-) -> tuple[PaperCNN, list[float]]:
+    model_factory: Callable[[], nn.Module],
+) -> tuple[nn.Module, list[float]]:
     """Create the paper's initial model and pretrain it when required.
 
     FedAvgM, FedOpt, and FedYogi are trained on the stratified server
@@ -133,14 +133,14 @@ def create_initial_model(
     batch size). The remaining strategies retain the same seeded random model.
     """
     seed_training(seed)
-    model = PaperCNN()
+    selected_model = model_factory()
     losses: list[float] = []
     if requires_validation_initialization(aggregation):
         losses = train_with_adam(
-            model,
+            selected_model,
             validation_loader,
             epochs=epochs,
             learning_rate=learning_rate,
             device=device,
         )
-    return model.cpu(), losses
+    return selected_model.cpu(), losses

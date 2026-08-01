@@ -94,6 +94,11 @@ class ShadowDataModule:
         self.partition_profile = partition_profile
         self.client_weights = client_weights
 
+    @property
+    def class_names(self) -> Sequence[str]:
+        """Expose class names from the wrapped data module when available."""
+        return getattr(self.data_module, "class_names", ())
+
     def client_loaders(
         self,
         partition_id: int,

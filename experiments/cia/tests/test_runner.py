@@ -37,7 +37,7 @@ def test_cia_combos_use_paper_settings() -> None:
     assert combo.data_module == (
         "experiments.cia.datasets.paper:create_paper_shadow_data_module"
     )
-    assert combo.run_name().endswith("__epochs-20__paper")
+    assert combo.run_name().endswith("__epochs-20__paper__paper_cnn")
 
 
 def test_cia_combo_runner_args_are_matrix_api_compatible(tmp_path) -> None:

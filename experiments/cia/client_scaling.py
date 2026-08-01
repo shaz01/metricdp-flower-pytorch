@@ -43,6 +43,7 @@ MATRIX = Matrix(
         initialization_epochs=20,
     ),
     data_module="experiments.cia.datasets.shadow:create_shadow_data_module",
+    model_module="experiments.reproduce.paper_cnn:create_model",
 )
 
 

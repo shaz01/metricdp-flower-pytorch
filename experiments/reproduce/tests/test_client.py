@@ -43,6 +43,7 @@ def _context() -> Context:
             "partition-mode": "homogeneous",
             "local-epochs": 5,
             "data-module": "example.data:create_data_module",
+            "model-module": "example.model:create_model",
             "partition-profile": "auto",
             "client-weights": "",
             "max-client-samples": 0,
@@ -89,7 +90,7 @@ def test_train_uses_paper_epochs_adam_config_and_fedprox(
         )
         return [0.8, 0.6]
 
-    monkeypatch.setattr(paper_client, "PaperCNN", TinyPaperCNN)
+    monkeypatch.setattr(paper_client, "load_model", lambda path: TinyPaperCNN())
     monkeypatch.setattr(paper_client, "_client_data", lambda context: (loader, loader))
     monkeypatch.setattr(paper_client, "train_with_adam", fake_train)
 
@@ -106,7 +107,7 @@ def test_train_uses_paper_epochs_adam_config_and_fedprox(
 
 def test_evaluate_reports_local_loss_accuracy_and_count(monkeypatch) -> None:
     loader = _loader()
-    monkeypatch.setattr(paper_client, "PaperCNN", TinyPaperCNN)
+    monkeypatch.setattr(paper_client, "load_model", lambda path: TinyPaperCNN())
     monkeypatch.setattr(paper_client, "_client_data", lambda context: (loader, loader))
     monkeypatch.setattr(
         paper_client,

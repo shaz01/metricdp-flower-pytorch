@@ -18,11 +18,11 @@ from flwr.serverapp import Grid, ServerApp
 from flwr.serverapp.strategy import Result
 
 from experiments.reproduce.detailed_evaluation import evaluate_state_dict
-from experiments.reproduce.paper_cnn import PaperCNN
 from experiments.reproduce.paper_loss import make_evaluate_fn
 from experiments.reproduce.paper_strategies import create_paper_strategy
 from experiments.reproduce.paper_training import create_initial_model
 from metricdp_pytorch.data_module import load_data_module
+from metricdp_pytorch.model_module import load_model
 from metricdp_pytorch.utils.runtime import runtime_config
 
 app = ServerApp()
@@ -89,10 +89,12 @@ def run(
 
     ``main`` supplies the paper's validation-pretrained arrays for FedAvgM,
     FedOpt, and FedYogi. Direct callers may provide their own arrays; otherwise
-    this function falls back to a randomly initialized ``PaperCNN``.
+    this function falls back to a randomly initialized configured model.
     """
     if initial_arrays is None:
-        initial_arrays = ArrayRecord(PaperCNN().state_dict())
+        initial_arrays = ArrayRecord(
+            load_model(str(config["model-module"])).state_dict()
+        )
 
     strategy = create_paper_strategy(
         aggregation=str(config["aggregation"]),
@@ -126,17 +128,21 @@ def main(grid: Grid, context: Context) -> None:
         seed=seed,
         max_samples=int(config.get("max-test-samples", 0)),
     )
+    model_factory = lambda: load_model(str(config["model-module"]))
     initial_model, initialization_losses = create_initial_model(
         str(config["aggregation"]),
         validation_loader,
         seed=seed,
         epochs=int(config.get("initialization-epochs", 20)),
         learning_rate=float(config.get("initialization-learning-rate", 1e-3)),
+        model_factory=model_factory,
     )
 
     output_dir = config.get("output-dir")
     run_name = config.get("run-name")
-    evaluate_fn = make_evaluate_fn(final_testloader)
+    evaluate_fn = make_evaluate_fn(
+        final_testloader, model_factory=model_factory
+    )
     checkpoint_rounds = {
         int(round_number) for round_number in config.get("checkpoint-rounds", [])
     }
@@ -165,6 +171,7 @@ def main(grid: Grid, context: Context) -> None:
         metadata = {
             "run_name": str(run_name),
             "data_module": str(config["data-module"]),
+            "model_module": str(config["model-module"]),
             "partition_mode": str(config.get("partition-mode", "unknown")),
             "partition_profile": str(config.get("partition-profile", "auto")),
             "privacy": str(config["privacy"]),
@@ -205,6 +212,8 @@ def main(grid: Grid, context: Context) -> None:
             evaluation_json_path=evaluation_path,
             predictions_path=predictions_path,
             data_module=data_module,
+            model=model_factory(),
+            class_names=getattr(data_module, "class_names", ()),
         )
         print(
             "Detailed evaluation written to "

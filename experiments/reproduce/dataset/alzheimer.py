@@ -181,6 +181,7 @@ class AlzheimerDataModule:
             raise ValueError("train_fraction must be in (0, 1).")
         self.cache_dir = cache_dir
         self.train_fraction = train_fraction
+        self.class_names = CLASS_NAMES
         self._dataset: DatasetDict | None = None
 
     @property

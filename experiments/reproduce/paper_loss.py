@@ -11,7 +11,6 @@ from sklearn.metrics import auc, f1_score, precision_score, roc_curve
 from sklearn.preprocessing import label_binarize
 from torch.utils.data import DataLoader
 
-from experiments.reproduce.paper_cnn import PaperCNN
 from metricdp_pytorch.utils.device import resolve_device
 
 
@@ -93,14 +92,16 @@ def evaluate_model(
 def make_evaluate_fn(
     testloader: DataLoader,
     device: torch.device | None = None,
+    *,
+    model_factory: Callable[[], torch.nn.Module],
 ) -> Callable[[int, ArrayRecord], MetricRecord]:
-    """Create centralized sparse-CE loss/accuracy evaluation for ``PaperCNN``."""
+    """Create centralized sparse-CE loss/accuracy evaluation."""
     if device is None:
         device = resolve_device()
 
     def evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
         del server_round
-        model = PaperCNN()
+        model = model_factory()
         model.load_state_dict(arrays.to_torch_state_dict())
         return MetricRecord(evaluate_model(model, testloader, device))
 

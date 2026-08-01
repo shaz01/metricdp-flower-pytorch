@@ -54,3 +54,8 @@ class PaperCNN(nn.Module):
         """Return four-class probabilities for grayscale 128×128 images."""
         return self.classifier(self.features(inputs))
 
+
+def create_model() -> PaperCNN:
+    """Create the paper model."""
+    return PaperCNN()
+

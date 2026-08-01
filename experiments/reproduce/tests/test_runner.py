@@ -22,6 +22,8 @@ def _args(*arguments: str):
             "20",
             "--local-epochs",
             "5",
+            "--model-module",
+            "experiments.reproduce.paper_cnn:create_model",
             *arguments,
         ]
     )
@@ -39,6 +41,9 @@ def test_default_runner_config_uses_paper_settings(tmp_path) -> None:
     assert config["partition-profile"] == "auto"
     assert config["data-module"] == (
         "experiments.reproduce.dataset.alzheimer:create_data_module"
+    )
+    assert config["model-module"] == (
+        "experiments.reproduce.paper_cnn:create_model"
     )
     assert config["run-name"] == "test-run"
 
@@ -78,6 +83,8 @@ def test_runner_passes_plugin_specific_partition_values_through(tmp_path) -> Non
             "dataset-profile-a",
             "--data-module",
             "my_package.data:create_data_module",
+            "--model-module",
+            "my_package.model:create_model",
             "--output-dir",
             str(tmp_path),
         )
@@ -86,6 +93,7 @@ def test_runner_passes_plugin_specific_partition_values_through(tmp_path) -> Non
     assert config["partition-mode"] == "custom-label-skew"
     assert config["partition-profile"] == "dataset-profile-a"
     assert config["data-module"] == "my_package.data:create_data_module"
+    assert config["model-module"] == "my_package.model:create_model"
 
 
 def test_runner_passes_checkpoint_rounds_through(tmp_path) -> None:

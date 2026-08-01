@@ -20,6 +20,12 @@ def _parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        "--model-module",
+        required=True,
+        help="model factory in package.module:factory format",
+    )
+
+    parser.add_argument(
         "--partitions",
         nargs="+",
         default=["homogeneous", "non-iid"],
@@ -75,6 +81,7 @@ def main() -> None:
             initialization_epochs=args.initialization_epochs,
         ),
         data_module=args.data_module,
+        model_module=args.model_module,
     ).list_combos(name_prefix=args.name_prefix, num_clients=args.num_clients)
     print(f"Matrix contains {len(matrix)} configurations.")
     pending = matrix

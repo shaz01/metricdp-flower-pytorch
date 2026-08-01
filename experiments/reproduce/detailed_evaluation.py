@@ -12,6 +12,7 @@ import argparse
 import json
 import math
 import os
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +22,8 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from experiments.reproduce.dataset.alzheimer import AlzheimerDataModule, CLASS_NAMES
-from experiments.reproduce.paper_cnn import PaperCNN
+from metricdp_pytorch.data_module import FederatedDataModule, load_data_module
+from metricdp_pytorch.model_module import load_model
 
 
 def predict_probabilities(
@@ -83,14 +85,22 @@ def binary_roc_curve(
 
 
 def classification_metrics(
-        labels: np.ndarray,
-        probabilities: np.ndarray,
+    labels: np.ndarray,
+    probabilities: np.ndarray,
+    class_names: Sequence[str] | None = None,
 ) -> dict[str, Any]:
     """Compute confusion, F1/precision/recall, log loss, and OVR ROC/AUC."""
     labels = np.asarray(labels, dtype=np.int64)
     probabilities = np.asarray(probabilities, dtype=np.float64)
-    if probabilities.ndim != 2 or probabilities.shape[1] != len(CLASS_NAMES):
-        raise ValueError("Probabilities must have one column per paper class.")
+    if probabilities.ndim != 2:
+        raise ValueError("Probabilities must be a two-dimensional array.")
+    selected_class_names = tuple(class_names or ())
+    if selected_class_names and probabilities.shape[1] != len(selected_class_names):
+        raise ValueError("Probabilities must have one column per class name.")
+    if not selected_class_names:
+        selected_class_names = tuple(
+            str(index) for index in range(probabilities.shape[1])
+        )
     if len(labels) != len(probabilities) or len(labels) == 0:
         raise ValueError("Labels and probabilities must have equal non-zero length.")
 
@@ -157,7 +167,7 @@ def classification_metrics(
         "confusion_matrix": confusion.tolist(),
         "per_class": {
             str(class_id): {
-                "name": CLASS_NAMES[class_id],
+                "name": selected_class_names[class_id],
                 "support": int(support[class_id]),
                 "precision": float(precision[class_id]),
                 "recall": float(recall[class_id]),
@@ -211,12 +221,13 @@ def _atomic_npz(path: Path, arrays: dict[str, np.ndarray]) -> None:
 
 def _evaluate_model(
     *,
-    model: PaperCNN,
+    model: nn.Module,
     run: dict[str, Any],
     run_json_path: Path,
     evaluation_json_path: Path,
     predictions_path: Path,
-    data_module: AlzheimerDataModule,
+    data_module: FederatedDataModule,
+    class_names: Sequence[str],
     device: torch.device | None,
 ) -> dict[str, Any]:
     """Evaluate a loaded final model and atomically persist detailed artifacts."""
@@ -279,7 +290,10 @@ def _evaluate_model(
             np.int64
         )
         client_results.append(
-            {"client_id": client_id, **classification_metrics(labels, probabilities)}
+            {
+                "client_id": client_id,
+                **classification_metrics(labels, probabilities, class_names),
+            }
         )
 
     combined_labels = np.concatenate(all_client_labels)
@@ -294,12 +308,12 @@ def _evaluate_model(
         "schema_version": 1,
         "run_name": metadata["run_name"],
         "source_run_json": str(run_json_path.resolve()),
-        "class_names": list(CLASS_NAMES),
+        "class_names": list(class_names),
         "server_final_test": classification_metrics(
-            server_labels, server_probabilities
+            server_labels, server_probabilities, class_names
         ),
         "clients_combined_test": classification_metrics(
-            combined_labels, combined_probabilities
+            combined_labels, combined_probabilities, class_names
         ),
         "clients": client_results,
         "raw_predictions": str(predictions_path.resolve()),
@@ -344,11 +358,12 @@ def evaluate_state_dict(
     run_json_path: Path,
     evaluation_json_path: Path,
     predictions_path: Path,
-    data_module: AlzheimerDataModule | None = None,
+    data_module: FederatedDataModule | None = None,
+    model: nn.Module,
+    class_names: Sequence[str] = CLASS_NAMES,
     device: torch.device | None = None,
 ) -> dict[str, Any]:
     """Persist detailed evaluation directly from in-memory final parameters."""
-    model = PaperCNN()
     model.load_state_dict(state_dict)
     return _evaluate_model(
         model=model,
@@ -357,6 +372,7 @@ def evaluate_state_dict(
         evaluation_json_path=evaluation_json_path,
         predictions_path=predictions_path,
         data_module=data_module or AlzheimerDataModule(),
+        class_names=class_names,
         device=device,
     )
 
@@ -371,12 +387,21 @@ def evaluate_saved_model(
     device: torch.device | None = None,
 ) -> dict[str, Any]:
     """Evaluate one final checkpoint and atomically persist detailed artifacts."""
+    run = json.loads(run_json_path.read_text(encoding="utf-8"))
+    metadata = run["metadata"]
+    config = {key.replace("_", "-"): value for key, value in metadata.items()}
+    data_module_path = str(metadata["data_module"])
+    model_module_path = str(metadata["model_module"])
+    data_module = load_data_module(data_module_path, config)
     output = evaluate_state_dict(
         state_dict=torch.load(model_path, map_location="cpu", weights_only=True),
-        run=json.loads(run_json_path.read_text(encoding="utf-8")),
+        run=run,
         run_json_path=run_json_path,
         evaluation_json_path=evaluation_json_path,
         predictions_path=predictions_path,
+        data_module=data_module,
+        model=load_model(model_module_path),
+        class_names=getattr(data_module, "class_names", ()),
         device=device,
     )
     if delete_model_on_success:
