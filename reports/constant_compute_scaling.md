@@ -1,8 +1,21 @@
-# Phase 1 Diagnosis: Constant-Compute Client-Count Scaling
+# Phase 1 Diagnosis: Constant-Compute Client-Count Scaling (v1, superseded design)
 
 Source data: `results/scale_controlled/`.
 Code: `experiments/client_scaling/sweep_scale_controlled.py`, `metricdp_pytorch/metricdp_strategy.py`,
 `experiments/reproduce/`.
+
+> **This report's original Finding 1 was wrong and has been corrected in place (see that section).**
+> The `rounds(n) = 5n` design analyzed here scales aggregation/noise-injection frequency 12x from
+> n=4 to n=48 while *also* shrinking per-client shard size 12x, at fixed `--local-epochs`/
+> `--batch-size` — meaning n=48 clients get only 2–4 mini-batches per local epoch, and are
+> interrupted by aggregation 12x more often than n=4 clients, despite the total gradient-step count
+> being roughly preserved. That confound, not "more accumulated DP noise" as originally claimed
+> here, is the best-supported explanation for why 240-round accuracy came in so far below the
+> fixed-20-round baseline. A redesigned control that holds rounds fixed and scales
+> `--local-epochs` instead (holding aggregation frequency constant, not just step count) supersedes
+> the sweep in this report — see its own report once available. This document is kept as the
+> historical record of what v1 found and why it needed revision, not as the final word on the
+> confound.
 
 ## Overview
 
@@ -87,19 +100,36 @@ rounds.
 
 ## Findings
 
-1. **Scaling rounds to compensate for less per-client data made accuracy worse, not better, for
-   both mechanisms.** The constant-compute design's premise was that 240 rounds at 48 clients would
-   let each client complete roughly the same total local gradient steps as 20 rounds at 4 clients,
-   isolating "does the mechanism degrade with n" from "is there just less data per round." Instead,
-   accuracy at 48 clients *dropped* substantially versus the fixed-20-round baseline for every
-   partition/privacy combination — global-dp fell 62%→33% (homogeneous) and 62%→17% (non-iid);
-   metric-privacy fell 63%→15% (homogeneous) and 64%→20% (non-iid). The most likely explanation:
-   DP noise is added once per round regardless of round count
-   (`MetricPrivacyServerSideFixedClipping._add_noise_to_aggregated_arrays`,
-   `metricdp_pytorch/metricdp_strategy.py`), so 240 rounds injects roughly 12x the total noise of 20
-   rounds. The constant-compute design held local training steps fixed but let total accumulated
-   privacy noise scale freely — a real confound the original Phase 1 plan did not account for, and
-   one that dominates any signal from the round-budget question the sweep set out to answer.
+1. **[Corrected] Scaling rounds to compensate for less per-client data made accuracy worse, not
+   better, for both mechanisms — but not because of accumulated DP noise magnitude, which was
+   verified to *not* grow the way originally claimed here.** Accuracy at 48 clients dropped
+   substantially versus the fixed-20-round baseline for every combination — global-dp fell 62%→33%
+   (homogeneous) and 62%→17% (non-iid); metric-privacy fell 63%→15% (homogeneous) and 64%→20%
+   (non-iid). This report originally attributed that to "240 rounds injects ~12x the noise of 20,"
+   which is wrong: Flower's `compute_stdv` scales per-round sigma as
+   `noise_multiplier * clipping_norm / num_clients`, and under this sweep's exact
+   `rounds(n) = 5n` scaling, `rounds(n) * sigma(n) = 5n * (0.25/n) = 1.25` — an exact constant,
+   verified directly from the formula, independent of n. Metric-privacy's calibrated noise
+   (`noise_multiplier / distance`) isn't 1/n-scaled the same way, but its logged
+   `metric-dp-noise-stdv` trajectory is *not* monotonically worse at higher n either: total summed
+   sigma across all rounds is higher at n=8 than n=48 for both partitions (homogeneous: 2.06 vs
+   2.87 — comparable; non-iid: 1.60 vs 0.99 — n=48 is *lower*), and `homogeneous/n=48` — the combo
+   with the single worst accuracy of the whole sweep — has the *most* stable, slowest-growing noise
+   trajectory of the three metric-privacy n values (σ moves from 0.0048 to only 0.0132 over 240
+   rounds). Accumulated noise magnitude does not explain the accuracy drop.
+
+   What does line up with the drop: per-client training-set size at n=48 collapses to 86 samples
+   (homogeneous) or 34–137 (non-iid), which at `batch_size=32` means 2–4 mini-batches per local
+   epoch (some non-iid clients get 1). The `rounds(n)=5n` formula does roughly preserve *total*
+   gradient-step count across the whole run (~3200 at n=4 vs. ~3600 at n=48, homogeneous), but it
+   delivers that count as 240 rounds of 2–4 tiny batches each — interrupted by aggregation and
+   noise-injection 240 times — instead of 20 rounds of 32 substantial batches each, interrupted 20
+   times. Total step count parity does not imply comparable training dynamics when the same step
+   count is fragmented into 12x more, much shorter local phases, each drawn from a much smaller and
+   (for non-iid) much noisier local sample. This reframing is why the redesigned control (see the
+   note at the top of this report) holds *rounds* fixed and scales `--local-epochs` instead of
+   scaling rounds — it targets aggregation-frequency/batch-count parity directly, rather than only
+   total-step-count parity.
 
 2. **The metric-privacy advantage over global-dp shrinks monotonically from n=4 to n=8 in both
    partitions, then diverges sharply at n=48.** Homogeneous: +21.41pp (n=4) → +5.62pp (n=8) →
