@@ -1,10 +1,19 @@
 """
 Contests paper Tables 1-3. Is not for contesting paper's Table 9.
 """
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
 from experiments.cia.attack_runner import run_attack
+from experiments.cia.datasets.partitions import (
+    PartitionViewDataModule,
+    in_remove,
+)
 from experiments.cia.shadow_dataset import clean_shadow_dataset, noisy_shadow_dataset
+from experiments.reproduce.dataset.alzheimer import (
+    create_data_module as create_alzheimer_data_module,
+)
 from experiments.reproduce.matrix import Matrix, Hyperparams, Combo
 from metricdp_pytorch.utils.device import resolve_device
 
@@ -18,6 +27,17 @@ NOISE_STD_FRACTION = 0.10
 
 ROUNDS = 20
 CHECKPOINT_ROUNDS = (1, ROUNDS)  # Single round CIA - first round and last round.
+
+
+def create_data_module(config: Mapping[str, Any]) -> PartitionViewDataModule:
+    """Build this script's IN-remove participant view over Alzheimer MRI."""
+    canonical_num_partitions = int(config["num-clients"])
+    return in_remove(
+        create_alzheimer_data_module(config),
+        canonical_num_partitions=canonical_num_partitions,
+        target_partition_id=TARGET_PARTITION_ID,
+    )
+
 
 MATRIX = Matrix(
     partitions=("homogeneous",),
@@ -33,7 +53,7 @@ MATRIX = Matrix(
         learning_rate=0.001,
         initialization_epochs=20,
     ),
-    data_module="experiments.reproduce.dataset.alzheimer:create_data_module",
+    data_module="experiments.cia.scripts.contest:create_data_module",
     model_module="experiments.reproduce.paper_cnn:create_model",
 )
 
