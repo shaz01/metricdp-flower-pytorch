@@ -17,7 +17,7 @@ SHADOW_FRACTION = 0.10
 NOISE_STD_FRACTION = 0.10
 
 ROUNDS = 20
-CHECKPOINT_ROUNDS = (1, ROUNDS)  # IN / OUT
+CHECKPOINT_ROUNDS = (1, ROUNDS)  # Single round CIA - first round and last round.
 
 MATRIX = Matrix(
     partitions=("homogeneous",),
