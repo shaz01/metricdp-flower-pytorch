@@ -9,6 +9,8 @@ from experiments.reproduce.matrix import Combo
 
 @dataclass(frozen=True)
 class CiaResult:
+    run_name: str
+    seed: int
     partition_mode: str
     num_clients: int
     privacy: str
@@ -45,6 +47,8 @@ def make_cia_result(
     attack_auc: float | None = None,
 ) -> CiaResult:
     return CiaResult(
+        run_name=combo.run_name(),
+        seed=combo.seed,
         partition_mode=combo.partition,
         num_clients=combo.num_clients,
         privacy=combo.privacy,
