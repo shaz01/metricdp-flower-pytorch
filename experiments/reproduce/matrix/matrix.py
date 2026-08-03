@@ -23,7 +23,11 @@ class Matrix:
     model_module: str
 
     def list_combos(self, *, name_prefix: str, num_clients: int) -> list[Combo]:
-        """List one combo for every point in this matrix."""
+        """List every meaningful combo in this matrix.
+
+        Vanilla training does not use the noise multiplier, so only the first
+        configured value is retained for that privacy mode.
+        """
 
         return [
             Combo(
@@ -38,11 +42,15 @@ class Matrix:
                 data_module=self.data_module,
                 model_module=self.model_module,
             )
-            for partition, privacy, aggregation, seed, noise_multiplier in product(
+            for partition, privacy, aggregation, seed in product(
                 self.partitions,
                 self.privacy_modes,
                 self.aggregations,
                 self.seeds,
-                self.noise_multipliers,
+            )
+            for noise_multiplier in (
+                self.noise_multipliers[:1]
+                if privacy == "vanilla"
+                else self.noise_multipliers
             )
         ]
