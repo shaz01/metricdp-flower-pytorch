@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import time
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
@@ -19,16 +18,7 @@ from experiments.reproduce.paper_loss import (
     sparse_categorical_cross_entropy,
 )
 from metricdp_pytorch.model_module import load_model
-
-
-def _logger(log_path: Path):
-    def log(message: str) -> None:
-        line = f"{time.strftime('%Y-%m-%d %H:%M:%S')} {message}"
-        print(line, flush=True)
-        with log_path.open("a", encoding="utf-8") as handle:
-            handle.write(line + "\n")
-
-    return log
+from metricdp_pytorch.utils.logging import make_file_logger
 
 
 def _membership_scores(
@@ -118,7 +108,7 @@ def run_attack(
         raise ValueError("CIA attacks require at least one checkpoint round.")
     output_dir.mkdir(parents=True, exist_ok=True)
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    log = _logger(log_path)
+    log = make_file_logger(log_path)
 
     total = len(combos)
     log(start_message)
