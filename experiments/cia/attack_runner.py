@@ -7,77 +7,47 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import torch
-from sklearn.metrics import roc_auc_score
 
+from experiments.cia import cia
 from experiments.cia.datasets.shadow import ShadowDataModule
 from experiments.cia.iter_combos import iter_combos
 from experiments.cia.result import CiaResult, make_cia_result
 from experiments.reproduce.matrix import Combo
-from experiments.reproduce.paper_loss import (
-    evaluate_model,
-    sparse_categorical_cross_entropy,
-)
-from metricdp_pytorch.model_module import load_model
 from metricdp_pytorch.utils.logging import make_file_logger
 
 
-def _membership_scores(
-    model: torch.nn.Module,
-    loader,
-    device: torch.device,
-) -> list[float]:
-    """Return per-example membership scores ``-loss(W, x)``."""
-    scores: list[float] = []
-    model.to(device)
-    model.eval()
-    with torch.no_grad():
-        for images, labels in loader:
-            probabilities = model(images.to(device, non_blocking=True))
-            losses = sparse_categorical_cross_entropy(
-                probabilities,
-                labels.to(device, non_blocking=True),
-                reduction="none",
-            )
-            scores.extend((-losses).cpu().tolist())
-    return [float(score) for score in scores]
+def _load_results(report_path: Path) -> list[CiaResult]:
+    """Load resumable CIA results from an existing report."""
+    if not report_path.exists():
+        return []
+    saved_results = json.loads(report_path.read_text(encoding="utf-8"))
+    return [
+        CiaResult(**saved_result)
+        for saved_result in saved_results
+        if "run_name" in saved_result and "seed" in saved_result
+    ]
 
 
-def _evaluate_combo(
-    model_path: Path,
-    *,
-    data_module: ShadowDataModule,
-    device: torch.device,
-    combo: Combo,
-) -> tuple[float, float, int, list[float], list[float], float]:
-    model = load_model(combo.model_module)
-    model.load_state_dict(
-        torch.load(model_path, map_location="cpu", weights_only=True)
-    )
-
-    _validation_loader, test_loader = data_module.server_loaders(
-        batch_size=combo.hyperparams.batch_size, seed=combo.seed
-    )
-    shadow_loader = data_module.target_shadow_loader(
-        batch_size=combo.hyperparams.batch_size, seed=combo.seed
-    )
-    aggregated_metrics = evaluate_model(model, test_loader, device)
-    target_metrics = evaluate_model(model, shadow_loader, device)
-    in_scores = _membership_scores(model, shadow_loader, device)
-    out_scores = _membership_scores(model, test_loader, device)
-    attack_auc = float(
-        roc_auc_score(
-            [1] * len(in_scores) + [0] * len(out_scores),
-            in_scores + out_scores,
+def _pending_combos(
+        combos: Sequence[Combo],
+        results: Sequence[CiaResult],
+        checkpoint_rounds: tuple[int, ...],
+        *,
+        force: bool,
+) -> list[Combo]:
+    """Return combos with at least one checkpoint result still missing."""
+    completed_keys = {
+        (result.run_name, result.server_round) for result in results
+    }
+    return [
+        combo
+        for combo in combos
+        if force
+           or not all(
+            (combo.run_name(), round_number) in completed_keys
+            for round_number in checkpoint_rounds
         )
-    )
-    return (
-        aggregated_metrics["loss"],
-        target_metrics["loss"],
-        len(shadow_loader.dataset),
-        in_scores,
-        out_scores,
-        attack_auc,
-    )
+    ]
 
 
 def _write_report(report_path: Path, results: Sequence[CiaResult]) -> None:
@@ -90,18 +60,70 @@ def _write_report(report_path: Path, results: Sequence[CiaResult]) -> None:
     temporary_path.replace(report_path)
 
 
+def _replace_result(results: list[CiaResult], result: CiaResult) -> None:
+    """Replace the result for the same run and round, or append it."""
+    result_key = (result.run_name, result.server_round)
+    results[:] = [
+        existing
+        for existing in results
+        if (existing.run_name, existing.server_round) != result_key
+    ]
+    results.append(result)
+
+
+def _evaluate_checkpoints(
+        combo: Combo,
+        checkpoint_rounds: tuple[int, ...],
+        checkpoint_paths: Sequence[Path],
+        *,
+        data_module_factory: Callable[[Combo], ShadowDataModule],
+        device: torch.device,
+        report_path: Path,
+        results: list[CiaResult],
+        log: Callable[[str], None],
+) -> None:
+    """Evaluate, persist, and delete every checkpoint for one combo."""
+    data_module = data_module_factory(combo)
+    name = combo.run_name()
+
+    # For each specified checkpoint round, evaluate the model and persist the result.
+    for round_number, round_model_path in zip(
+            checkpoint_rounds, checkpoint_paths, strict=True
+    ):
+        aggregated_loss, target_loss, shadow_size = cia.eval_model(
+            round_model_path,
+            data_module=data_module,
+            device=device,
+            combo=combo,
+        )
+        result = make_cia_result(
+            combo=combo,
+            server_round=round_number,
+            aggregated_test_loss=aggregated_loss,
+            target_shadow_loss=target_loss,
+            shadow_fraction=data_module.shadow_fraction,
+            shadow_size=shadow_size,
+        )
+        _replace_result(results, result)
+        _write_report(report_path, results)
+        # Delete the checkpoint after evaluation
+        round_model_path.unlink()
+
+        log(f"EVALUATED {name} round={round_number} (checkpoint deleted)")
+
+
 def run_attack(
-    combos: Sequence[Combo],
-    *,
-    output_dir: Path,
-    log_path: Path,
-    max_parallel_clients: int,
-    force: bool,
-    start_message: str,
-    data_module_factory: Callable[[Combo], ShadowDataModule],
-    device: torch.device,
-    checkpoint_rounds: tuple[int, ...] = (),
-    report_name: str = "cia.json",
+        combos: Sequence[Combo],
+        *,
+        output_dir: Path,
+        log_path: Path,
+        max_parallel_clients: int,
+        force: bool,
+        start_message: str,
+        data_module_factory: Callable[[Combo], ShadowDataModule],
+        device: torch.device,
+        checkpoint_rounds: tuple[int, ...] = (),
+        report_name: str = "cia.json",
 ) -> list[CiaResult]:
     """Run and evaluate every CIA combo, continuing past failures."""
     if not checkpoint_rounds:
@@ -113,42 +135,26 @@ def run_attack(
     total = len(combos)
     log(start_message)
     report_path = output_dir / report_name
-    results: list[CiaResult] = []
-    if report_path.exists():
-        saved_results = json.loads(report_path.read_text(encoding="utf-8"))
-        results = [
-            CiaResult(**saved_result)
-            for saved_result in saved_results
-            if "run_name" in saved_result and "seed" in saved_result
-        ]
+    results = _load_results(report_path)
 
-    completed_keys = {
-        (result.run_name, result.server_round) for result in results
-    }
-    pending_combos = [
-        combo
-        for combo in combos
-        if force
-        or not all(
-            (combo.run_name(), round_number) in completed_keys
-            for round_number in checkpoint_rounds
-        )
-    ]
+    pending_combos = _pending_combos(
+        combos, results, checkpoint_rounds, force=force
+    )
     skipped = total - len(pending_combos)
     if skipped:
         log(f"SKIP  {skipped} combinations (attack results already exist)")
 
     failed: list[str] = []
     for completed, (combo, success, checkpoint_paths) in enumerate(
-        iter_combos(
-            pending_combos,
-            output_dir=output_dir,
-            max_parallel_clients=max_parallel_clients,
-            force=force,
-            log=log,
-            checkpoint_rounds=checkpoint_rounds,
-        ),
-        start=skipped + 1,
+            iter_combos(
+                pending_combos,
+                output_dir=output_dir,
+                max_parallel_clients=max_parallel_clients,
+                force=force,
+                log=log,
+                checkpoint_rounds=checkpoint_rounds,
+            ),
+            start=skipped + 1,
     ):
         name = combo.run_name()
         if not success:
@@ -157,44 +163,16 @@ def run_attack(
             continue
 
         try:
-            data_module = data_module_factory(combo)
-            for round_number, round_model_path in zip(
-                checkpoint_rounds, checkpoint_paths, strict=True
-            ):
-                (
-                    aggregated_loss,
-                    target_loss,
-                    shadow_size,
-                    in_scores,
-                    out_scores,
-                    attack_auc,
-                ) = _evaluate_combo(
-                    round_model_path,
-                    data_module=data_module,
-                    device=device,
-                    combo=combo,
-                )
-                result = make_cia_result(
-                    combo=combo,
-                    server_round=round_number,
-                    aggregated_test_loss=aggregated_loss,
-                    target_shadow_loss=target_loss,
-                    shadow_fraction=data_module.shadow_fraction,
-                    shadow_size=shadow_size,
-                    in_scores=in_scores,
-                    out_scores=out_scores,
-                    attack_auc=attack_auc,
-                )
-                result_key = (result.run_name, result.server_round)
-                results = [
-                    existing
-                    for existing in results
-                    if (existing.run_name, existing.server_round) != result_key
-                ]
-                results.append(result)
-                _write_report(report_path, results)
-                round_model_path.unlink()
-                log(f"EVALUATED {name} round={round_number} (checkpoint deleted)")
+            _evaluate_checkpoints(
+                combo,
+                checkpoint_rounds,
+                checkpoint_paths,
+                data_module_factory=data_module_factory,
+                device=device,
+                report_path=report_path,
+                results=results,
+                log=log,
+            )
         except Exception as error:  # noqa: BLE001 - continue the sweep
             failed.append(name)
             log(f"FAILED {name} (evaluation error: {error})")

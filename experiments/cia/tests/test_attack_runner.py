@@ -62,7 +62,7 @@ def test_force_reruns_requested_combo_without_removing_other_results(
     monkeypatch.setattr(
         attack_runner,
         "_evaluate_combo",
-        lambda *_args, **_kwargs: (1.0, 2.0, 10, [0.5], [0.1], 1.0),
+        lambda *_args, **_kwargs: (1.0, 2.0, 10),
     )
 
     results = attack_runner.run_attack(
