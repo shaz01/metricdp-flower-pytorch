@@ -131,15 +131,28 @@ rounds.
    scaling rounds — it targets aggregation-frequency/batch-count parity directly, rather than only
    total-step-count parity.
 
-2. **The metric-privacy advantage over global-dp shrinks monotonically from n=4 to n=8 in both
-   partitions, then diverges sharply at n=48.** Homogeneous: +21.41pp (n=4) → +5.62pp (n=8) →
-   **−18.91pp** (n=48). Non-iid: +35.94pp (n=4) → +7.34pp (n=8) → +3.12pp (n=48). The non-iid
-   partition retains a small positive advantage all the way to 48 clients under constant compute;
-   the homogeneous partition reverses into a large deficit. This is a stronger, partition-dependent
-   version of the shrinking-advantage pattern already seen under the fixed-round design.
+2. **[Corrected] The metric-privacy advantage over global-dp shrinks monotonically from n=4 to n=8
+   in both partitions; the homogeneous/n=48 reversal below is directionally weak evidence, not a
+   reliable magnitude.** Homogeneous: +21.41pp (n=4) → +5.62pp (n=8) → **−18.91pp** (n=48). Non-iid:
+   +35.94pp (n=4) → +7.34pp (n=8) → +3.12pp (n=48). The −18.91pp homogeneous/n=48 figure was later
+   checked against MPS's own run-to-run noise (`results/noise_floor_check/`, 2 extra reps each of
+   both privacy modes at identical settings, given `metricdp_pytorch/utils/device.py`'s confirmed
+   MPS non-determinism — see `resolve_device`'s docstring). Both accuracies swing enormously on
+   their own: global-dp ranged 33.44–63.12% and metric-privacy 14.53–39.38% across just 3 runs each.
+   Paired within the same run generation, the delta stayed negative in all 3 cases (−18.91, −34.22,
+   −17.97pp) — some directional consistency — but crossing generations (e.g. comparing one run's
+   global-dp against a *different* run's metric-privacy, which is what a single-seed comparison risks
+   doing) it ranges from −48.59pp to **+5.94pp**, including a sign flip. Treat "metric-privacy
+   underperforms at homogeneous/n=48" as weakly supported direction, not an established effect, and
+   do not cite −18.91pp as a precise magnitude. The non-iid n=48 result (+3.12pp) has not been
+   noise-checked and carries the same unverified-magnitude caveat by extension.
 
 3. **Two distinct metric-privacy failure modes are visible in the round-level data, and neither
-   fully explains the homogeneous/n=48 reversal.** At n=8, both partitions hit frequent
+   fully explains the homogeneous/n=48 reversal** — though per Finding 2's correction, that
+   reversal's magnitude is itself not established, so "explaining" its exact size isn't a
+   well-posed question yet; the finding below stands as "these two known failure modes weren't
+   active in this specific run," not as an open mystery requiring a specific-sized effect to
+   explain. At n=8, both partitions hit frequent
    zero-norm-update collapse rounds (caught non-fatally by the fix in `metricdp_strategy.py`'s
    `aggregate_train`, previously an uncaught `ZeroDivisionError`) — 14/40 rounds (homogeneous),
    23/40 rounds (non-iid) — alongside catastrophic loss blowup (54.86, 23.47) even though the run
