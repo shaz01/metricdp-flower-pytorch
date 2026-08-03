@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
 from typing import Any, Literal
@@ -20,22 +21,29 @@ PartitionMode = Literal["homogeneous", "non-iid"]
 _TO_TENSOR = ToTensor()
 
 
-def grayscale_image_transform(
-    image_size: tuple[int, int],
-) -> Callable[[Any], torch.Tensor]:
-    """Create a transform for validated grayscale image tensors."""
-    def transform(image: Any) -> torch.Tensor:
+@dataclass(frozen=True)
+class GrayscaleImageTransform:
+    """Pickle-safe validated grayscale tensor transform for loader workers."""
+
+    image_size: tuple[int, int]
+
+    def __call__(self, image: Any) -> torch.Tensor:
         if not isinstance(image, Image.Image):
             raise TypeError("The image column must decode to a PIL image.")
         grayscale = image.convert("L")
-        if grayscale.size != image_size:
+        if grayscale.size != self.image_size:
             raise ValueError(
-                f"Expected {image_size[0]}×{image_size[1]} images, "
+                f"Expected {self.image_size[0]}×{self.image_size[1]} images, "
                 f"got {grayscale.size}."
             )
         return _TO_TENSOR(grayscale)
 
-    return transform
+
+def grayscale_image_transform(
+    image_size: tuple[int, int],
+) -> Callable[[Any], torch.Tensor]:
+    """Create a pickle-safe transform for validated grayscale tensors."""
+    return GrayscaleImageTransform(image_size)
 
 
 @contextmanager
