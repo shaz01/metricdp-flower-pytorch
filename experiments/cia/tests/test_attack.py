@@ -52,7 +52,8 @@ def test_make_cia_result_computes_difference_pct() -> None:
         combo=combo,
         server_round=1,
         aggregated_test_loss=1.032,
-        target_shadow_loss=1.182,
+        target_clean_shadow_loss=1.182,
+        target_noisy_shadow_loss=1.250,
         shadow_fraction=0.10,
         shadow_size=150,
     )
@@ -63,4 +64,7 @@ def test_make_cia_result_computes_difference_pct() -> None:
     assert result.num_clients == 3
     assert result.shadow_fraction == 0.10
     assert result.shadow_size == 150
-    assert result.difference_pct == pytest.approx(12.719, abs=0.1)
+    assert result.target_clean_shadow_loss == 1.182
+    assert result.target_noisy_shadow_loss == 1.250
+    assert result.clean_difference_pct == pytest.approx(12.719, abs=0.1)
+    assert result.noisy_difference_pct == pytest.approx(17.44)

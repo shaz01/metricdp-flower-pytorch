@@ -18,10 +18,12 @@ class CiaResult:
     noise_multiplier: float
     server_round: int
     aggregated_test_loss: float
-    target_shadow_loss: float
+    target_clean_shadow_loss: float
+    target_noisy_shadow_loss: float
     shadow_fraction: float
     shadow_size: int
-    difference_pct: float
+    clean_difference_pct: float
+    noisy_difference_pct: float
 
 
 def relative_difference(aggregated_loss: float, target_loss: float) -> float:
@@ -36,7 +38,8 @@ def make_cia_result(
     combo: Combo,
     server_round: int,
     aggregated_test_loss: float,
-    target_shadow_loss: float,
+    target_clean_shadow_loss: float,
+    target_noisy_shadow_loss: float,
     shadow_fraction: float,
     shadow_size: int,
 ) -> CiaResult:
@@ -50,8 +53,14 @@ def make_cia_result(
         noise_multiplier=combo.noise_multiplier,
         server_round=server_round,
         aggregated_test_loss=aggregated_test_loss,
-        target_shadow_loss=target_shadow_loss,
+        target_clean_shadow_loss=target_clean_shadow_loss,
+        target_noisy_shadow_loss=target_noisy_shadow_loss,
         shadow_fraction=shadow_fraction,
         shadow_size=shadow_size,
-        difference_pct=relative_difference(aggregated_test_loss, target_shadow_loss),
+        clean_difference_pct=relative_difference(
+            aggregated_test_loss, target_clean_shadow_loss
+        ),
+        noisy_difference_pct=relative_difference(
+            aggregated_test_loss, target_noisy_shadow_loss
+        ),
     )

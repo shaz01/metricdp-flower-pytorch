@@ -21,10 +21,16 @@ def _load_results(report_path: Path) -> list[CiaResult]:
     if not report_path.exists():
         return []
     saved_results = json.loads(report_path.read_text(encoding="utf-8"))
+    required_loss_fields = {
+        "target_clean_shadow_loss",
+        "target_noisy_shadow_loss",
+    }
     return [
         CiaResult(**saved_result)
         for saved_result in saved_results
-        if "run_name" in saved_result and "seed" in saved_result
+        if "run_name" in saved_result
+        and "seed" in saved_result
+        and required_loss_fields <= saved_result.keys()
     ]
 
 
@@ -76,23 +82,33 @@ def _evaluate_checkpoints(
         checkpoint_rounds: tuple[int, ...],
         checkpoint_paths: Sequence[Path],
         *,
-        data_module_factory: Callable[[Combo], ShadowDataModule],
+        clean_data_module_factory: Callable[[Combo], ShadowDataModule],
+        noisy_data_module_factory: Callable[[Combo], ShadowDataModule],
         device: torch.device,
         report_path: Path,
         results: list[CiaResult],
         log: Callable[[str], None],
 ) -> None:
     """Evaluate, persist, and delete every checkpoint for one combo."""
-    data_module = data_module_factory(combo)
+    clean_data_module = clean_data_module_factory(combo)
+    noisy_data_module = noisy_data_module_factory(combo)
+    if clean_data_module.shadow_fraction != noisy_data_module.shadow_fraction:
+        raise ValueError("Clean and noisy shadow fractions must match.")
     name = combo.run_name()
 
     # For each specified checkpoint round, evaluate the model and persist the result.
     for round_number, round_model_path in zip(
             checkpoint_rounds, checkpoint_paths, strict=True
     ):
-        aggregated_loss, target_loss, shadow_size = cia.eval_model(
+        (
+            aggregated_loss,
+            clean_target_loss,
+            noisy_target_loss,
+            shadow_size,
+        ) = cia.eval_model(
             round_model_path,
-            data_module=data_module,
+            clean_data_module=clean_data_module,
+            noisy_data_module=noisy_data_module,
             device=device,
             combo=combo,
         )
@@ -100,8 +116,9 @@ def _evaluate_checkpoints(
             combo=combo,
             server_round=round_number,
             aggregated_test_loss=aggregated_loss,
-            target_shadow_loss=target_loss,
-            shadow_fraction=data_module.shadow_fraction,
+            target_clean_shadow_loss=clean_target_loss,
+            target_noisy_shadow_loss=noisy_target_loss,
+            shadow_fraction=clean_data_module.shadow_fraction,
             shadow_size=shadow_size,
         )
         _replace_result(results, result)
@@ -120,7 +137,8 @@ def run_attack(
         max_parallel_clients: int,
         force: bool,
         start_message: str,
-        data_module_factory: Callable[[Combo], ShadowDataModule],
+        clean_data_module_factory: Callable[[Combo], ShadowDataModule],
+        noisy_data_module_factory: Callable[[Combo], ShadowDataModule],
         device: torch.device,
         checkpoint_rounds: tuple[int, ...] = (),
         report_name: str = "cia.json",
@@ -167,7 +185,8 @@ def run_attack(
                 combo,
                 checkpoint_rounds,
                 checkpoint_paths,
-                data_module_factory=data_module_factory,
+                clean_data_module_factory=clean_data_module_factory,
+                noisy_data_module_factory=noisy_data_module_factory,
                 device=device,
                 report_path=report_path,
                 results=results,

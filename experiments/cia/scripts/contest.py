@@ -43,7 +43,6 @@ CLEAN_SHADOW_DATASET = lambda combo: clean_shadow_dataset(
     shadow_fraction=SHADOW_FRACTION,
 )
 
-# TODO - use after multi-round cia is implemented
 NOISY_SHADOW_DATASET = lambda combo: noisy_shadow_dataset(
     combo,
     target_partition_id=TARGET_PARTITION_ID,
@@ -61,7 +60,8 @@ def main() -> None:
         max_parallel_clients=4,
         force=False,
         start_message=f"Reproduction starting: {len(combos)} combinations",
-        data_module_factory=CLEAN_SHADOW_DATASET,
+        clean_data_module_factory=CLEAN_SHADOW_DATASET,
+        noisy_data_module_factory=NOISY_SHADOW_DATASET,
         device=resolve_device(),
         checkpoint_rounds=CHECKPOINT_ROUNDS,
         report_name="contest.json",
@@ -71,6 +71,9 @@ def main() -> None:
             f"round={result.server_round:2d} {result.partition_mode:12s} "
             f"{result.privacy:15s} {result.aggregation:8s} "
             f"agg={result.aggregated_test_loss:.3f} "
-            f"target={result.target_shadow_loss:.3f} "
-            f"shadow_n={result.shadow_size} diff={result.difference_pct:.3f}%"
+            f"clean_target={result.target_clean_shadow_loss:.3f} "
+            f"noisy_target={result.target_noisy_shadow_loss:.3f} "
+            f"shadow_n={result.shadow_size} "
+            f"clean_diff={result.clean_difference_pct:.3f}% "
+            f"noisy_diff={result.noisy_difference_pct:.3f}%"
         )

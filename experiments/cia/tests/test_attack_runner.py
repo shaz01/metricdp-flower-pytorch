@@ -43,7 +43,8 @@ def test_force_reruns_requested_combo_without_removing_other_results(
         combo=previous_combo,
         server_round=1,
         aggregated_test_loss=1.0,
-        target_shadow_loss=2.0,
+        target_clean_shadow_loss=2.0,
+        target_noisy_shadow_loss=2.5,
         shadow_fraction=0.1,
         shadow_size=10,
     )
@@ -60,9 +61,9 @@ def test_force_reruns_requested_combo_without_removing_other_results(
 
     monkeypatch.setattr(attack_runner, "iter_combos", fake_iter_combos)
     monkeypatch.setattr(
-        attack_runner,
-        "_evaluate_combo",
-        lambda *_args, **_kwargs: (1.0, 2.0, 10),
+        attack_runner.cia,
+        "eval_model",
+        lambda *_args, **_kwargs: (1.0, 2.0, 2.5, 10),
     )
 
     results = attack_runner.run_attack(
@@ -72,7 +73,12 @@ def test_force_reruns_requested_combo_without_removing_other_results(
         max_parallel_clients=1,
         force=True,
         start_message="start",
-        data_module_factory=lambda _combo: SimpleNamespace(shadow_fraction=0.1),
+        clean_data_module_factory=lambda _combo: SimpleNamespace(
+            shadow_fraction=0.1
+        ),
+        noisy_data_module_factory=lambda _combo: SimpleNamespace(
+            shadow_fraction=0.1
+        ),
         device=torch.device("cpu"),
         checkpoint_rounds=(1,),
     )
