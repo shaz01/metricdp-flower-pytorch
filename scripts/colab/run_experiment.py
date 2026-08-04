@@ -26,7 +26,10 @@ SECRET_PATTERNS = (
 
 
 def _run(
-    *args: str, check: bool = True, capture: bool = False
+    *args: str,
+    check: bool = True,
+    capture: bool = False,
+    local_timeout: float | None = None,
 ) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         args,
@@ -34,6 +37,7 @@ def _run(
         check=check,
         text=True,
         capture_output=capture,
+        timeout=local_timeout,
     )
 
 
@@ -106,14 +110,18 @@ def _make_source_archive(destination: Path) -> None:
 
 
 def _colab(
-    session: str, command: str, *args: str, timeout: str | None = None
+    session: str,
+    command: str,
+    *args: str,
+    timeout: str | None = None,
+    local_timeout: float | None = None,
 ) -> subprocess.CompletedProcess[str]:
     invocation = ["colab", command, "-s", session]
     if timeout is not None:
         invocation.extend(("--timeout", timeout))
     invocation.extend(args)
     try:
-        return _run(*invocation, capture=True)
+        return _run(*invocation, capture=True, local_timeout=local_timeout)
     except subprocess.CalledProcessError as error:
         if error.stdout:
             print(error.stdout, end="")
@@ -156,13 +164,18 @@ def _upload_and_start(state: dict[str, Any], archive: Path, config_path: Path) -
 
 
 def _probe(session: str) -> tuple[str, str]:
-    result = _colab(
-        session,
-        "exec",
-        "-f",
-        str(HELPER_DIR / "remote_probe.py"),
-        timeout="120",
-    )
+    try:
+        result = _colab(
+            session,
+            "exec",
+            "-f",
+            str(HELPER_DIR / "remote_probe.py"),
+            timeout="30",
+            local_timeout=45,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+        print(f"Colab status probe failed ({error}); retrying without stopping training.")
+        return "unknown", ""
     output = result.stdout
     print(output, end="")
     marker = "COLAB_JOB_STATUS="
