@@ -90,6 +90,55 @@ reference, this is the same order of magnitude as the pairwise-distance statisti
 inside real FL rounds at n=48 in the v2 sweep (`results/scale_controlled_epochs/`, ~1.1–2.2) — even
 with zero aggregation and zero DP noise here, clients don't drift wildly apart on homogeneous data.
 
+## Follow-up: literal raw gradients, not accumulated weight deltas
+
+The result above compares each client's *final trained model* after 10 epochs of Adam — which, per
+the note above, is mathematically the same as comparing accumulated weight deltas
+(`w_final - w_init`), but is **not** the same as comparing actual gradients (`∂L/∂W`). No `.grad`
+tensor was captured anywhere in that experiment.
+
+This follow-up captures the literal thing: for each of the same 20 clients, one full pass over that
+client's own local data at the shared initial weights (no optimizer step, no training loop) —
+`loss.backward()` per batch with `reduction="sum"`, no `zero_grad()` between batches so gradients
+accumulate, then divided by the client's total example count. This gives each client's mean
+per-example gradient of its own local loss at the shared starting point,
+`grad_i = (1/n_i) * Σ_x ∂L(x; w0)/∂w` — the object FedSGD (and FedAvg's first-order connection to
+it) actually means by "client gradient." Compared the same way, via
+`pairwise_model_distances`, by wrapping each client's gradient dict in an `ArrayRecord` (the
+function only needs matching-shape arrays; it doesn't care whether they're weights or gradients).
+Code: `no_agg_raw_gradient_compare.py`. Source data: `results/no_agg_raw_gradient_compare/`.
+
+**A new, sharper reproducibility failure showed up here.** Two of three attempts at this simpler,
+single-pass computation produced an outright `NaN` gradient for one or two clients — a different,
+seemingly random client each time (client 1 alone; then client 0 alone; then clients 0 and 3
+together). A direct isolated re-test of one of the affected clients, run again on its own,
+completed cleanly with a normal-looking gradient norm — confirming this is transient MPS
+instability, not a deterministic bug in the client's data or the script. This is a sharper
+manifestation of the same non-determinism already documented above: the 10-epoch trained models
+never produced a NaN in either run, but a single accumulated backward pass hit one at roughly a
+5–10% per-client rate across three attempts. NaN clients were excluded from the pairwise comparison
+below rather than silently pollute it.
+
+| Statistic | Value (18/20 valid clients, 2 excluded for NaN) |
+|---|---:|
+| Pairwise distance min | 0.0087 |
+| Pairwise distance median | 0.0330 |
+| Pairwise distance mean | 0.0361 |
+| Pairwise distance max | 0.0753 |
+
+Two things stand out against the trained-model-delta result above:
+
+1. **Raw gradient magnitudes are ~15-30x smaller** than the 10-epoch accumulated deltas (pairwise
+   distances ~0.01–0.08 here vs. ~0.7–1.5 there) — expected, since these are single unoptimized
+   gradients at initialization, not the result of 70 Adam steps with momentum and adaptive
+   per-parameter scaling compounding over 10 epochs.
+2. **Proportionally, the spread is wider**: max/min is ~8.6x here vs. ~1.9x for the trained deltas.
+   With homogeneous data, clients' *raw* per-example gradient directions at a shared random
+   initialization vary more, relative to their own scale, than their *trained* models do after 10
+   epochs pull each client toward a similar local optimum on similarly-distributed data. Single
+   run, not cross-checked against a repeat — treat this specific ratio as suggestive, not
+   established, given everything above about this platform's reproducibility.
+
 ## Known gaps / caveats
 
 - **Not reproducible at face value** — see the finding above. Treat both runs' numbers as one
@@ -104,3 +153,7 @@ with zero aggregation and zero DP noise here, clients don't drift wildly apart o
   0.29–1.21) despite near-identical data volume per client (all 204 samples) — consistent with
   this project's other observations that homogeneous partitioning doesn't fully equalize per-client
   training difficulty, but not investigated further here.
+- **The raw-gradient follow-up hit MPS-produced NaN gradients on 1–2 of 20 clients per attempt**,
+  a different client each time. Excluded from the reported pairwise stats rather than silently
+  pollute them, but not root-caused beyond confirming (via an isolated re-test) that it's transient
+  and MPS-specific, not a deterministic bug tied to a specific client's data.
