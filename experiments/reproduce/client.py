@@ -18,6 +18,24 @@ from metricdp_pytorch.utils.runtime import runtime_config
 app = ClientApp()
 
 
+def _client_round_seed(base_seed: int, client_id: int, server_round: int) -> int:
+    """Derive a reproducible, distinct RNG seed for one client round."""
+    return base_seed + client_id * 100_000 + server_round
+
+
+def _reseed_loader(loader, seed: int) -> None:
+    """Reset an indexed loader's sampler/worker generator without repartitioning."""
+    generators = {
+        generator
+        for generator in (
+            getattr(loader, "generator", None),
+            getattr(getattr(loader, "sampler", None), "generator", None),
+        )
+        if generator is not None
+    }
+    for generator in generators:
+        generator.manual_seed(seed)
+
 
 def _client_weights(config: Mapping[str, Any]) -> Sequence[float] | None:
     """Return optional non-IID quantity weights from run configuration."""
@@ -59,12 +77,18 @@ def train(msg: Message, context: Context) -> Message:
     """Train the received global PaperCNN on one MRI client partition."""
     run_config = runtime_config(context)
     partition_id = int(context.node_config["partition-id"])
-    seed_training(int(run_config.get("seed", 42)) + partition_id)
+    train_config = msg.content["config"]
+    round_seed = _client_round_seed(
+        int(run_config.get("seed", 42)),
+        partition_id,
+        int(train_config["server-round"]),
+    )
+    seed_training(round_seed)
 
     model = load_model(str(run_config["model-module"]))
     model.load_state_dict(msg.content["arrays"].to_torch_state_dict())
     trainloader, _ = _client_data(context)
-    train_config = msg.content["config"]
+    _reseed_loader(trainloader, round_seed)
     device = resolve_device()
     epoch_losses = train_with_adam(
         model,

@@ -55,7 +55,7 @@ def _request(message_type: str, *, proximal_mu: float = 0.0) -> Message:
     records = {"arrays": ArrayRecord(TinyPaperCNN().state_dict())}
     if message_type == "train":
         records["config"] = ConfigRecord(
-            {"lr": 0.001, "proximal-mu": proximal_mu}
+            {"lr": 0.001, "proximal-mu": proximal_mu, "server-round": 1}
         )
     return Message(
         content=RecordDict(records),
@@ -68,6 +68,7 @@ def test_train_uses_paper_epochs_adam_config_and_fedprox(
     monkeypatch,
 ) -> None:
     calls: list[dict[str, float | int]] = []
+    seeds: list[int] = []
     loader = _loader()
 
     def fake_train(
@@ -92,6 +93,7 @@ def test_train_uses_paper_epochs_adam_config_and_fedprox(
 
     monkeypatch.setattr(paper_client, "load_model", lambda path: TinyPaperCNN())
     monkeypatch.setattr(paper_client, "_client_data", lambda context: (loader, loader))
+    monkeypatch.setattr(paper_client, "seed_training", seeds.append)
     monkeypatch.setattr(paper_client, "train_with_adam", fake_train)
 
     reply = paper_client.train(_request("train", proximal_mu=0.5), _context())
@@ -99,6 +101,7 @@ def test_train_uses_paper_epochs_adam_config_and_fedprox(
     assert calls == [
         {"epochs": 5, "learning_rate": 0.001, "proximal_mu": 0.5}
     ]
+    assert seeds == [43]
     assert reply.content["metrics"]["train_loss"] == 0.6
     assert reply.content["metrics"]["train_loss_mean"] == 0.7
     assert reply.content["metrics"]["num-examples"] == 4
@@ -152,3 +155,10 @@ def test_partition_configuration_parsing() -> None:
         2.0,
         3.0,
     ]
+
+
+def test_client_round_seed_is_stable_and_varies_by_client_and_round() -> None:
+    assert paper_client._client_round_seed(42, 3, 7) == 300_049
+    assert paper_client._client_round_seed(42, 3, 7) == 300_049
+    assert paper_client._client_round_seed(42, 3, 8) != 300_049
+    assert paper_client._client_round_seed(42, 4, 7) != 300_049
