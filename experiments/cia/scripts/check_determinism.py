@@ -8,6 +8,8 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 from experiments.cia.attack_runner import run_attack
 from experiments.cia.datasets.partitions import PartitionViewDataModule, in_remove
 from experiments.cia.result import CiaResult
@@ -111,6 +113,78 @@ def _canonical_results(results: list[CiaResult]) -> list[dict[str, Any]]:
     )
 
 
+def _normalize_artifact_json(value: Any) -> Any:
+    """Remove only intentional run labels and random temporary-venv paths."""
+    if isinstance(value, str):
+        for prefix in RUN_PREFIXES:
+            value = value.replace(prefix, "check-determinism-run-X")
+        return value
+    if isinstance(value, list):
+        return [_normalize_artifact_json(item) for item in value]
+    if isinstance(value, dict):
+        normalized = {
+            key: _normalize_artifact_json(item) for key, item in value.items()
+        }
+        metadata = normalized.get("metadata")
+        if isinstance(metadata, dict):
+            # The runner records its fresh, randomly named temporary venv.
+            metadata.pop("python_executable", None)
+        return normalized
+    return value
+
+
+def _compare_artifacts() -> dict[str, Any]:
+    """Compare per-round JSON, detailed evaluations, and prediction arrays."""
+    json_equal = True
+    evaluation_equal = True
+    predictions_equal = True
+    checked_pairs = 0
+    first_combos = MATRIX.list_combos(
+        name_prefix=RUN_PREFIXES[0], num_clients=NUM_CLIENTS
+    )
+    second_combos = MATRIX.list_combos(
+        name_prefix=RUN_PREFIXES[1], num_clients=NUM_CLIENTS
+    )
+    for first, second in zip(first_combos, second_combos, strict=True):
+        first_base = OUTPUT_DIR / first.run_name()
+        second_base = OUTPUT_DIR / second.run_name()
+        for suffix, report_key in (
+            (".json", "json"),
+            (".evaluation.json", "evaluation"),
+        ):
+            left = _normalize_artifact_json(
+                json.loads(first_base.with_suffix(suffix).read_text(encoding="utf-8"))
+            )
+            right = _normalize_artifact_json(
+                json.loads(second_base.with_suffix(suffix).read_text(encoding="utf-8"))
+            )
+            if report_key == "json":
+                json_equal &= left == right
+            else:
+                evaluation_equal &= left == right
+
+        with (
+            np.load(first_base.with_suffix(".predictions.npz")) as left_arrays,
+            np.load(second_base.with_suffix(".predictions.npz")) as right_arrays,
+        ):
+            predictions_equal &= left_arrays.files == right_arrays.files and all(
+                np.array_equal(left_arrays[key], right_arrays[key], equal_nan=True)
+                for key in left_arrays.files
+            )
+        checked_pairs += 1
+
+    return {
+        "training_json_equal": json_equal,
+        "evaluation_json_equal": evaluation_equal,
+        "prediction_arrays_equal": predictions_equal,
+        "checked_configuration_pairs": checked_pairs,
+        "ignored_differences": [
+            "intentional run-name prefix",
+            "metadata.python_executable random temporary-venv path",
+        ],
+    }
+
+
 def _write_comparison(
     first: list[CiaResult], second: list[CiaResult]
 ) -> dict[str, Any]:
@@ -118,9 +192,21 @@ def _write_comparison(
     expected_count = combo_count * len(CHECKPOINT_ROUNDS)
     first_values = _canonical_results(first)
     second_values = _canonical_results(second)
+    artifact_comparison = _compare_artifacts()
+    artifacts_equal = all(
+        artifact_comparison[key]
+        for key in (
+            "training_json_equal",
+            "evaluation_json_equal",
+            "prediction_arrays_equal",
+        )
+    )
     report = {
-        "deterministic": first_values == second_values,
-        "comparison": "exact equality after removing only run_name",
+        "deterministic": first_values == second_values and artifacts_equal,
+        "comparison": (
+            "exact CIA results plus canonical training/evaluation JSON and exact "
+            "prediction arrays"
+        ),
         "seed": SEED,
         "expected_results_per_run": expected_count,
         "actual_results": {
@@ -128,6 +214,7 @@ def _write_comparison(
             RUN_PREFIXES[1]: len(second_values),
         },
         "run_prefixes": list(RUN_PREFIXES),
+        "artifact_comparison": artifact_comparison,
         "first": first_values,
         "second": second_values,
     }

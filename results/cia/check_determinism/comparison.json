@@ -1,6 +1,6 @@
 {
   "deterministic": true,
-  "comparison": "exact equality after removing only run_name",
+  "comparison": "exact CIA results plus canonical training/evaluation JSON and exact prediction arrays",
   "seed": 42,
   "expected_results_per_run": 6,
   "actual_results": {
@@ -11,6 +11,16 @@
     "check-determinism-run-1",
     "check-determinism-run-2"
   ],
+  "artifact_comparison": {
+    "training_json_equal": true,
+    "evaluation_json_equal": true,
+    "prediction_arrays_equal": true,
+    "checked_configuration_pairs": 3,
+    "ignored_differences": [
+      "intentional run-name prefix",
+      "metadata.python_executable random temporary-venv path"
+    ]
+  },
   "first": [
     {
       "seed": 42,
