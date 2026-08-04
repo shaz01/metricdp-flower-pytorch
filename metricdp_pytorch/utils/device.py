@@ -18,21 +18,40 @@ def resolve_device() -> torch.device:
     Measured directly (feature/scaling-diagnosis, 2026-08-02): MPS's backward
     pass is non-deterministic across separate process launches when multiple
     Ray client actors train concurrently on the shared MPS device, even with
-    every seed fixed. Isolated single-process runs, sequential
-    (max_parallel_clients=1) runs, and torch.use_deterministic_algorithms(True)
-    all failed to reproduce or fix it (the latter silently no-ops for MPS in
-    this torch version -- zero warnings even with warn_only=True, meaning
-    these ops aren't hooked into the determinism-checking machinery at all).
-    PYTORCH_ENABLE_MPS_FALLBACK=1 doesn't help either and made the real
-    pipeline hang. The resulting weight divergence is real (~5e-4 per
-    parameter after a single round, confirmed via direct state_dict diffing,
-    not floating-point-summation-order noise) and compounds over many rounds
-    into accuracy swings of the same order of magnitude as the deltas this
-    project's research reports treat as signal (~15pp on identical settings
-    across three reruns) -- unlike CPU, which reproduces exactly (differences
-    at float32's own ~1e-8 precision floor, the same harmless noise
-    multi-threaded CPU BLAS always has, confirmed via metrics matching to
-    full displayed precision across runs).
+    every seed fixed. torch.use_deterministic_algorithms(True) does not fix
+    it -- it silently no-ops for MPS in this torch version, zero warnings
+    even with warn_only=True, meaning these ops aren't hooked into the
+    determinism-checking machinery at all. PYTORCH_ENABLE_MPS_FALLBACK=1
+    doesn't help either and made the real pipeline hang.
+
+    **Correction, 2026-08-04**: this was originally scoped to concurrent
+    multi-actor training only, on the belief that isolated single-process and
+    sequential (max_parallel_clients=1) runs reproduced exactly. That belief
+    was wrong -- it was tested through the Flower/Ray pipeline over too few
+    steps to show it, and never checked with direct tensor equality over a
+    realistic number of steps. A minimal, no-Ray, no-Flower, single-process,
+    single-client repro (10 local epochs, one PaperCNN, plain PyTorch) shows
+    the same non-determinism with zero concurrency involved: two back-to-back
+    training runs of the identical model/data/seed inside one process land
+    ~0.02-0.04 max-abs-diff apart per parameter tensor. Ruled out as causes:
+    DataLoader shuffle order (seeded generator, confirmed byte-identical
+    across runs) and MPS's own RNG for dropout (adding
+    torch.mps.manual_seed(seed) changed nothing). What's left is genuine
+    backward-pass kernel non-determinism (most likely non-deterministic
+    parallel-reduction order in MPS's conv2d/linear backward), present with
+    or without Ray, with or without concurrency. **Treat MPS as
+    non-reproducible for this project's training loop under any
+    configuration**, not just concurrent multi-actor ones.
+
+    The resulting weight divergence is real (~5e-4 per parameter after a
+    single federated round under concurrent multi-actor training, confirmed
+    via direct state_dict diffing, not floating-point-summation-order noise)
+    and compounds over many rounds/epochs into accuracy swings of the same
+    order of magnitude as the deltas this project's research reports treat as
+    signal (~15pp on identical settings across three reruns) -- unlike CPU,
+    which reproduces exactly (differences at float32's own ~1e-8 precision
+    floor, the same harmless noise multi-threaded CPU BLAS always has,
+    confirmed via metrics matching to full displayed precision across runs).
 
     MPS stays the *default* despite this: measured directly, CPU is ~3x
     slower than MPS even at matched Ray parallelism (a real n=4/20-round run
