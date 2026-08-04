@@ -144,8 +144,16 @@ rounds.
    global-dp against a *different* run's metric-privacy, which is what a single-seed comparison risks
    doing) it ranges from −48.59pp to **+5.94pp**, including a sign flip. Treat "metric-privacy
    underperforms at homogeneous/n=48" as weakly supported direction, not an established effect, and
-   do not cite −18.91pp as a precise magnitude. The non-iid n=48 result (+3.12pp) has not been
-   noise-checked and carries the same unverified-magnitude caveat by extension.
+   do not cite −18.91pp as a precise magnitude.
+
+   The non-iid n=48 result was noise-checked the same way (`results/noise_floor_check_noniid/`,
+   2026-08-04) and fails for a different reason: individual accuracies are far more stable there
+   (global-dp 16.41–17.97%, metric-privacy 14.69–21.41% — a few pp of spread, not tens) but the
+   +3.12pp delta itself is small enough to be within that smaller noise anyway. Paired deltas were
+   +3.12, +5.00, and **−3.28pp** — the sign flips on the third pair. Small effect, comparable-sized
+   noise: same "not established" verdict as homogeneous, via the opposite mechanism (there, a large
+   effect was swamped by even larger noise; here, a small effect is swamped by smaller but
+   still-comparable noise).
 
 3. **Two distinct metric-privacy failure modes are visible in the round-level data, and neither
    fully explains the homogeneous/n=48 reversal** — though per Finding 2's correction, that
