@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 import pytest
 import torch
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader, Subset, TensorDataset
 
 from experiments.cia.datasets.partitions import (
     PartitionViewDataModule,
@@ -15,6 +15,8 @@ from experiments.cia.datasets.partitions import (
     out_remove,
     out_replace,
 )
+from metricdp_pytorch.utils.data import make_client_loaders
+from metricdp_pytorch.utils.split_data import balanced_stratified_partitions
 
 
 class RecordingDataModule:
@@ -49,6 +51,53 @@ class RecordingDataModule:
         return self.loader, self.loader
 
 
+class SeededDataModule:
+    """Synthetic module whose canonical partition membership depends on seed."""
+
+    def __init__(self) -> None:
+        self.labels = [index % 4 for index in range(240)]
+        self.dataset = TensorDataset(
+            torch.arange(240, dtype=torch.float32).unsqueeze(1),
+            torch.tensor(self.labels),
+        )
+
+    def client_loaders(
+        self,
+        partition_id: int,
+        *,
+        num_partitions: int,
+        partition_mode: str,
+        batch_size: int,
+        seed: int,
+        partition_profile: str = "auto",
+        client_weights: Sequence[float] | None = None,
+        max_samples: int = 0,
+    ) -> tuple[DataLoader, DataLoader]:
+        del partition_mode, partition_profile, client_weights
+        partitions = balanced_stratified_partitions(
+            self.labels, num_partitions, seed=seed
+        )
+        return make_client_loaders(
+            self.dataset,
+            self.labels,
+            partitions[partition_id],
+            batch_size=batch_size,
+            seed=seed + partition_id,
+            max_samples=max_samples,
+        )
+
+    def server_loaders(
+        self, *, batch_size: int, seed: int, max_samples: int = 0
+    ) -> tuple[DataLoader, DataLoader]:
+        return make_client_loaders(
+            self.dataset,
+            self.labels,
+            list(range(len(self.dataset))),
+            batch_size=batch_size,
+            seed=seed,
+            max_samples=max_samples,
+        )
+
 def _load_every_active_partition(view: PartitionViewDataModule) -> None:
     for partition_id in range(view.num_active_partitions):
         view.client_loaders(
@@ -58,6 +107,77 @@ def _load_every_active_partition(view: PartitionViewDataModule) -> None:
             batch_size=32,
             seed=42,
         )
+
+
+def _active_train_indices(
+    view: PartitionViewDataModule, *, seed: int
+) -> dict[int, tuple[int, ...]]:
+    """Return source indices keyed by canonical partition ID."""
+    memberships: dict[int, tuple[int, ...]] = {}
+    for active_id in range(view.num_active_partitions):
+        train_loader, _ = view.client_loaders(
+            active_id,
+            num_partitions=view.num_active_partitions,
+            partition_mode="homogeneous",
+            batch_size=8,
+            seed=seed,
+        )
+        assert isinstance(train_loader.dataset, Subset)
+        memberships[view.canonical_partition_id(active_id)] = tuple(
+            int(index) for index in train_loader.dataset.indices
+        )
+    return memberships
+
+
+ViewFactory = Callable[[SeededDataModule], PartitionViewDataModule]
+
+
+@pytest.mark.parametrize(
+    "view_factory",
+    (
+        pytest.param(
+            lambda module: in_remove(
+                module, canonical_num_partitions=4, target_partition_id=2
+            ),
+            id="in-remove",
+        ),
+        pytest.param(
+            lambda module: out_remove(
+                module, canonical_num_partitions=4, target_partition_id=2
+            ),
+            id="out-remove",
+        ),
+        pytest.param(
+            lambda module: in_replace(
+                module,
+                canonical_num_partitions=4,
+                target_partition_id=2,
+                replacement_partition_id=3,
+            ),
+            id="in-replace",
+        ),
+        pytest.param(
+            lambda module: out_replace(
+                module,
+                canonical_num_partitions=4,
+                target_partition_id=2,
+                replacement_partition_id=3,
+            ),
+            id="out-replace",
+        ),
+    ),
+)
+def test_partition_views_are_deterministic_with_seed(
+    view_factory: ViewFactory,
+) -> None:
+    view = view_factory(SeededDataModule())
+
+    seed_42_a = _active_train_indices(view, seed=42)
+    seed_42_b = _active_train_indices(view, seed=42)
+    seed_43 = _active_train_indices(view, seed=43)
+
+    assert seed_42_a == seed_42_b
+    assert seed_42_a != seed_43
 
 
 def test_remove_views_include_or_exclude_target_without_repartitioning() -> None:
