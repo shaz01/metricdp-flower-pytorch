@@ -48,6 +48,21 @@ def test_metric_aggregation_preserves_aligned_client_values() -> None:
     assert metrics["train_loss"] == pytest.approx((0.3 * 4 + 0.7 * 8) / 12)
 
 
+def test_metric_aggregation_is_independent_of_record_arrival_order() -> None:
+    records = [
+        _reply(0, [0.0], loss=1e20).content,
+        _reply(1, [0.0], loss=-1e20).content,
+        _reply(2, [0.0], loss=1.0).content,
+    ]
+
+    forward = aggregate_metrics_with_clients(records, "num-examples")
+    reordered = aggregate_metrics_with_clients(
+        [records[0], records[2], records[1]], "num-examples"
+    )
+
+    assert forward == reordered
+
+
 def test_global_dp_logs_sigma_clipping_and_signal_diagnostics() -> None:
     strategy = LoggedGlobalDPServerSideFixedClipping(
         strategy=FedAvg(train_metrics_aggr_fn=aggregate_metrics_with_clients),

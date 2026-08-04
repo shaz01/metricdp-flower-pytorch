@@ -10,27 +10,33 @@ def aggregate_metrics_with_clients(
     records: list[RecordDict], weighting_metric_name: str
 ) -> MetricRecord:
     """Return weighted aggregates plus one aligned list per client metric."""
-    aggregated = aggregate_metricrecords(records, weighting_metric_name)
-    aggregated.pop("client-id", None)
-
-    rows: list[tuple[int, MetricRecord]] = []
-    for fallback_id, record in enumerate(records):
+    rows: list[tuple[int, MetricRecord, RecordDict]] = []
+    for record in records:
         metrics = next(iter(record.metric_records.values()))
-        rows.append((int(metrics.get("client-id", fallback_id)), metrics))
+        if "client-id" not in metrics:
+            raise ValueError(
+                "Metric records must include a 'client-id' for deterministic "
+                "aggregation."
+            )
+        rows.append((int(metrics["client-id"]), metrics, record))
     rows.sort(key=lambda row: row[0])
 
-    aggregated["client-ids"] = [client_id for client_id, _ in rows]
+    aggregated = aggregate_metricrecords(
+        [record for _, _, record in rows], weighting_metric_name
+    )
+    aggregated.pop("client-id", None)
+    aggregated["client-ids"] = [client_id for client_id, _, _ in rows]
     keys = sorted(
         {
             key
-            for _, metrics in rows
+            for _, metrics, _ in rows
             for key, value in metrics.items()
             if key != "client-id" and not isinstance(value, list)
         }
     )
     for key in keys:
-        if all(key in metrics for _, metrics in rows):
+        if all(key in metrics for _, metrics, _ in rows):
             aggregated[f"per-client-{key}"] = [
-                metrics[key] for _, metrics in rows
+                metrics[key] for _, metrics, _ in rows
             ]
     return aggregated
