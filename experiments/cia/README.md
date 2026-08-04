@@ -100,3 +100,43 @@ numeric parity is not expected (different hardware/library versions, and
 the paper doesn't specify all stochastic-seed details), but the qualitative
 pattern -- metric-privacy loss lower than global-DP loss, with comparable
 CIA protection -- should hold.
+
+## Colab CLI workflow
+
+`scripts/colab/run_experiment.py` runs a Python experiment module on a named
+Colab session, prints a live `nvidia-smi` snapshot while it trains, downloads
+the designated result directory, commits only that directory, pushes the
+current branch, and finally releases the VM. Git credentials never leave the
+local machine.
+
+The determinism check is a copy of the contest configuration with only seed
+42. It executes the three privacy configurations twice under distinct
+`check-determinism-run-1` and `check-determinism-run-2` names, then requires
+exact equality after removing only the deliberately different run name:
+
+```bash
+uv run python scripts/colab/run_experiment.py run \
+  --session cia-determinism \
+  --gpu L4 \
+  --module experiments.cia.scripts.check_determinism \
+  --results results/cia/check_determinism \
+  --commit-message "results(cia): add Colab determinism check"
+```
+
+The command stays attached so collection and pushing cannot be skipped. From
+another terminal, inspect the training log and GPU utilization at any time:
+
+```bash
+uv run python scripts/colab/run_experiment.py status --session cia-determinism
+```
+
+If local monitoring is interrupted, the remote supervisor keeps training.
+Resume the automatic collect/push/stop finalizer with:
+
+```bash
+uv run python scripts/colab/run_experiment.py wait --session cia-determinism
+```
+
+Use `collect` for a job that has already finished or `stop` to explicitly
+release an abandoned VM. Colab source archives exclude notebooks and are
+scanned for common GitHub-token and private-key formats before upload.
