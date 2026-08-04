@@ -8,7 +8,11 @@ optionally persist the Flower metric histories.
 from __future__ import annotations
 
 import json
+import platform
+import subprocess
+import sys
 from collections.abc import Callable, Mapping
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
@@ -18,11 +22,12 @@ from flwr.serverapp import Grid, ServerApp
 from flwr.serverapp.strategy import Result
 
 from experiments.reproduce.detailed_evaluation import evaluate_state_dict
-from experiments.reproduce.paper_cnn import PaperCNN
 from experiments.reproduce.paper_loss import make_evaluate_fn
 from experiments.reproduce.paper_strategies import create_paper_strategy
 from experiments.reproduce.paper_training import create_initial_model
 from metricdp_pytorch.data_module import load_data_module
+from metricdp_pytorch.model_module import load_model
+from metricdp_pytorch.utils.device import resolve_device
 from metricdp_pytorch.utils.runtime import runtime_config
 
 app = ServerApp()
@@ -35,6 +40,72 @@ def _plain_metrics(metrics: Mapping[str, Any]) -> dict[str, Any]:
         str(key): value.item() if hasattr(value, "item") else value
         for key, value in metrics.items()
     }
+
+
+def _runtime_metadata() -> dict[str, Any]:
+    """Return reproducibility metadata captured by the process doing the run."""
+    packages = {}
+    for package in ("flwr", "numpy", "scikit-learn", "torch", "torchvision"):
+        try:
+            packages[package] = version(package)
+        except PackageNotFoundError:
+            packages[package] = "unavailable"
+    try:
+        commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        dirty = bool(
+            subprocess.run(
+                ["git", "status", "--porcelain"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+        )
+    except (OSError, subprocess.SubprocessError):
+        commit, dirty = "unavailable", None
+
+    device = resolve_device()
+    device_name = str(device)
+    if device.type == "cuda":
+        device_name = torch.cuda.get_device_name(device)
+    return {
+        "python_version": platform.python_version(),
+        "platform": platform.platform(),
+        "library_versions": packages,
+        "device": str(device),
+        "device_name": device_name,
+        "git_commit": commit,
+        "git_dirty": dirty,
+        "python_executable": sys.executable,
+    }
+
+
+def checkpoint_model_path(output_dir: Path, run_name: str, round_number: int) -> Path:
+    """Return the model-checkpoint path for one aggregated server round."""
+    return output_dir / f"{run_name}.round-{round_number}.pt"
+
+
+def _checkpointing_evaluate_fn(
+    evaluate_fn: Callable[[int, ArrayRecord], MetricRecord],
+    *,
+    output_dir: Path,
+    run_name: str,
+    checkpoint_rounds: set[int],
+) -> Callable[[int, ArrayRecord], MetricRecord]:
+    """Decorate server evaluation to persist selected round models."""
+
+    def evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
+        if server_round in checkpoint_rounds:
+            path = checkpoint_model_path(output_dir, run_name, server_round)
+            torch.save(arrays.to_torch_state_dict(), path)
+            print(f"Round {server_round} checkpoint written to {path}")
+        return evaluate_fn(server_round, arrays)
+
+    return evaluate
 
 
 def result_to_dict(result: Result, metadata: Mapping[str, Any]) -> dict[str, Any]:
@@ -65,10 +136,12 @@ def run(
 
     ``main`` supplies the paper's validation-pretrained arrays for FedAvgM,
     FedOpt, and FedYogi. Direct callers may provide their own arrays; otherwise
-    this function falls back to a randomly initialized ``PaperCNN``.
+    this function falls back to a randomly initialized configured model.
     """
     if initial_arrays is None:
-        initial_arrays = ArrayRecord(PaperCNN().state_dict())
+        initial_arrays = ArrayRecord(
+            load_model(str(config["model-module"])).state_dict()
+        )
 
     strategy = create_paper_strategy(
         aggregation=str(config["aggregation"]),
@@ -102,23 +175,42 @@ def main(grid: Grid, context: Context) -> None:
         seed=seed,
         max_samples=int(config.get("max-test-samples", 0)),
     )
+    model_factory = lambda: load_model(str(config["model-module"]))
     initial_model, initialization_losses = create_initial_model(
         str(config["aggregation"]),
         validation_loader,
         seed=seed,
         epochs=int(config.get("initialization-epochs", 20)),
         learning_rate=float(config.get("initialization-learning-rate", 1e-3)),
-    )
-    result = run(
-        grid,
-        config,
-        evaluate_fn=make_evaluate_fn(final_testloader),
-        initial_arrays=ArrayRecord(initial_model.state_dict()),
+        model_factory=model_factory,
     )
 
     output_dir = config.get("output-dir")
     run_name = config.get("run-name")
-    save_model = bool(config.get("save-model", False))
+    evaluate_fn = make_evaluate_fn(
+        final_testloader, model_factory=model_factory
+    )
+    checkpoint_rounds = {
+        int(round_number) for round_number in config.get("checkpoint-rounds", [])
+    }
+    if checkpoint_rounds:
+        if not output_dir or not run_name:
+            raise ValueError("Checkpoint rounds require output-dir and run-name.")
+        destination = Path(str(output_dir))
+        destination.mkdir(parents=True, exist_ok=True)
+        evaluate_fn = _checkpointing_evaluate_fn(
+            evaluate_fn,
+            output_dir=destination,
+            run_name=str(run_name),
+            checkpoint_rounds=checkpoint_rounds,
+        )
+
+    result = run(
+        grid,
+        config,
+        evaluate_fn=evaluate_fn,
+        initial_arrays=ArrayRecord(initial_model.state_dict()),
+    )
 
     if output_dir and run_name:
         destination = Path(str(output_dir))
@@ -126,6 +218,7 @@ def main(grid: Grid, context: Context) -> None:
         metadata = {
             "run_name": str(run_name),
             "data_module": str(config["data-module"]),
+            "model_module": str(config["model-module"]),
             "partition_mode": str(config.get("partition-mode", "unknown")),
             "partition_profile": str(config.get("partition-profile", "auto")),
             "privacy": str(config["privacy"]),
@@ -148,6 +241,7 @@ def main(grid: Grid, context: Context) -> None:
             "initialization_final_loss": (
                 initialization_losses[-1] if initialization_losses else None
             ),
+            **_runtime_metadata(),
         }
         path = destination / f"{run_name}.json"
         serialized_result = result_to_dict(result, metadata)
@@ -166,14 +260,10 @@ def main(grid: Grid, context: Context) -> None:
             evaluation_json_path=evaluation_path,
             predictions_path=predictions_path,
             data_module=data_module,
+            model=model_factory(),
+            class_names=getattr(data_module, "class_names", ()),
         )
         print(
             "Detailed evaluation written to "
             f"{evaluation_path} and {predictions_path}"
         )
-
-        if save_model:
-            torch.save(
-                result.arrays.to_torch_state_dict(),
-                Path(str(output_dir)) / f"{run_name}.pt",
-            )

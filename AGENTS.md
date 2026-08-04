@@ -26,9 +26,9 @@ No enforced or configured lint pipeline exists (no `[tool.ruff]`, no `ruff.toml`
 
 ## Running experiments
 
-- Smoke test: `uv run python -m experiments.reproduce.runner --smoke`
-- Full run: `uv run python -m experiments.reproduce.runner --partition <homogeneous|non-iid> --privacy <vanilla|global-dp|metric-privacy> --aggregation <fedavg|fedavgm|fedmedian|fedprox|fedopt|fedyogi> --rounds 20 --local-epochs 5`
-- Matrix run: `uv run python -m experiments.reproduce.matrix_runner ...`
+- Smoke test: `uv run python -m experiments.reproduce.runner --smoke --seed 42 --noise-multiplier 0.01 --clipping-norm 5.0 --rounds 20 --local-epochs 5`
+- Full run: `uv run python -m experiments.reproduce.runner --partition <homogeneous|non-iid> --privacy <vanilla|global-dp|metric-privacy> --aggregation <fedavg|fedavgm|fedmedian|fedprox|fedopt|fedyogi> --rounds 20 --local-epochs 5 --seed 42 --noise-multiplier 0.01 --clipping-norm 5.0`
+- Matrix run: `uv run python -m experiments.reproduce.matrix ...`
 - CIA experiment: `uv run python -m experiments.cia.runner ...`
 - Registered Flower App: `uv run flwr run . --stream`
 

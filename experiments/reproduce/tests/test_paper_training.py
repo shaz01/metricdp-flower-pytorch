@@ -8,6 +8,7 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
 import experiments.reproduce.paper_training as paper_training
+from experiments.reproduce.paper_cnn import PaperCNN
 
 
 def _tiny_loader() -> DataLoader:
@@ -56,6 +57,7 @@ def test_create_initial_model_pretrains_fedavgm(
         epochs=20,
         learning_rate=0.001,
         device=torch.device("cpu"),
+        model_factory=PaperCNN,
     )
 
     assert calls == [(20, 0.001)]
@@ -74,6 +76,7 @@ def test_create_initial_model_leaves_fedavg_random(
         _tiny_loader(),
         seed=42,
         device=torch.device("cpu"),
+        model_factory=PaperCNN,
     )
 
     assert losses == []

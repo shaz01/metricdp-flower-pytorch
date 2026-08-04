@@ -3,25 +3,23 @@
 For each of the 18 (privacy, aggregation) combinations, this launches one
 real 1-round, 3-client Flower simulation by shelling out to the existing,
 unmodified ``experiments.reproduce.runner`` CLI (pointed at this package's
-``create_cia_data_module``), then evaluates the resulting saved model's loss
-on the global test set and on the target client's shadow split, reporting
+paper-exact shadow data-module factory), then evaluates the resulting saved
+model's loss on the global test set and on the target client's shadow split,
+reporting
 the relative-difference attack score for each combination.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
-import subprocess
-import sys
 from pathlib import Path
 
 import torch
 
-from experiments.cia.attack import CiaResult, make_cia_result
-from experiments.cia.dataset import CIA_NUM_CLIENTS, CiaDataModule
-from experiments.reproduce.paper_cnn import PaperCNN
-from experiments.reproduce.paper_loss import evaluate_model
+from experiments.cia.attack_runner import run_attack
+from experiments.cia.datasets.paper import PAPER_CIA_NUM_CLIENTS, PaperShadowDataModule
+from experiments.cia.result import CiaResult
+from experiments.reproduce.matrix import Combo, Hyperparams, Matrix
 from metricdp_pytorch.strategy_factory import AGGREGATION_METHODS, PRIVACY_MODES
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -31,95 +29,44 @@ CIA_NOISE_MULTIPLIER = 0.01
 CIA_CLIPPING_NORM = 5.0
 CIA_BATCH_SIZE = 32
 
+CIA_MATRIX = Matrix(
+    partitions=("homogeneous",),
+    privacy_modes=tuple(PRIVACY_MODES),
+    aggregations=tuple(AGGREGATION_METHODS),
+    seeds=(CIA_SEED,),
+    noise_multipliers=(CIA_NOISE_MULTIPLIER,),
+    hyperparams=Hyperparams(
+        clipping_norm=CIA_CLIPPING_NORM,
+        rounds=1,
+        local_epochs=CIA_LOCAL_EPOCHS,
+        batch_size=CIA_BATCH_SIZE,
+        learning_rate=0.001,
+        initialization_epochs=20,
+    ),
+    data_module="experiments.cia.datasets.paper:create_paper_shadow_data_module",
+    model_module="experiments.reproduce.paper_cnn:create_model",
+)
 
-def run_name(privacy: str, aggregation: str) -> str:
-    return f"cia__{privacy}__{aggregation}"
 
-
-def build_reproduce_command(
+def build_cia_combos(
     *,
-    privacy: str,
-    aggregation: str,
-    output_dir: Path,
-    max_parallel_clients: int,
-) -> list[str]:
-    """Build the argv for one real 1-round CIA training run.
-
-    Reuses ``experiments.reproduce.runner`` unmodified, pointed at this
-    package's ``create_cia_data_module`` factory instead of the paper's
-    4-client module.
-    """
-    name = run_name(privacy, aggregation)
-    return [
-        sys.executable,
-        "-m",
-        "experiments.reproduce.runner",
-        "--data-module",
-        "experiments.cia.dataset:create_cia_data_module",
-        "--num-clients",
-        str(CIA_NUM_CLIENTS),
-        "--rounds",
-        "1",
-        "--local-epochs",
-        str(CIA_LOCAL_EPOCHS),
-        "--privacy",
-        privacy,
-        "--aggregation",
-        aggregation,
-        "--seed",
-        str(CIA_SEED),
-        "--noise-multiplier",
-        str(CIA_NOISE_MULTIPLIER),
-        "--clipping-norm",
-        str(CIA_CLIPPING_NORM),
-        "--output-dir",
-        str(output_dir),
-        "--run-name",
-        name,
-        "--save-model",
-        "--max-parallel-clients",
-        str(max_parallel_clients),
-    ]
-
-
-def run_one_combo(
-    *,
-    privacy: str,
-    aggregation: str,
-    output_dir: Path,
-    max_parallel_clients: int,
-) -> Path:
-    """Launch one real 1-round CIA training run; return the saved model path."""
-    command = build_reproduce_command(
-        privacy=privacy,
-        aggregation=aggregation,
-        output_dir=output_dir,
-        max_parallel_clients=max_parallel_clients,
+    privacy_modes: tuple[str, ...] = tuple(PRIVACY_MODES),
+    aggregations: tuple[str, ...] = tuple(AGGREGATION_METHODS),
+) -> list[Combo]:
+    """Return the requested paper privacy × aggregation matrix."""
+    matrix = Matrix(
+        partitions=CIA_MATRIX.partitions,
+        privacy_modes=privacy_modes,
+        aggregations=aggregations,
+        seeds=CIA_MATRIX.seeds,
+        noise_multipliers=CIA_MATRIX.noise_multipliers,
+        hyperparams=CIA_MATRIX.hyperparams,
+        data_module=CIA_MATRIX.data_module,
+        model_module=CIA_MATRIX.model_module,
     )
-    subprocess.run(command, cwd=PROJECT_ROOT, check=True)
-    return output_dir / f"{run_name(privacy, aggregation)}.pt"
-
-
-def evaluate_combo(
-    model_path: Path,
-    *,
-    data_module: CiaDataModule,
-    device: torch.device,
-) -> tuple[float, float]:
-    """Return ``(aggregated_test_loss, target_shadow_loss)`` for one saved model."""
-    model = PaperCNN()
-    model.load_state_dict(torch.load(model_path, map_location="cpu"))
-
-    _validation_loader, test_loader = data_module.server_loaders(
-        batch_size=CIA_BATCH_SIZE, seed=CIA_SEED
+    return matrix.list_combos(
+        name_prefix="cia", num_clients=PAPER_CIA_NUM_CLIENTS
     )
-    shadow_loader = data_module.target_shadow_loader(
-        batch_size=CIA_BATCH_SIZE, seed=CIA_SEED
-    )
-
-    aggregated_metrics = evaluate_model(model, test_loader, device)
-    target_metrics = evaluate_model(model, shadow_loader, device)
-    return aggregated_metrics["loss"], target_metrics["loss"]
 
 
 def run_first_round_cia(
@@ -128,38 +75,29 @@ def run_first_round_cia(
     aggregations: tuple[str, ...] = AGGREGATION_METHODS,
     privacy_modes: tuple[str, ...] = PRIVACY_MODES,
     max_parallel_clients: int = 2,
+    force: bool = False,
 ) -> list[CiaResult]:
-    output_dir.mkdir(parents=True, exist_ok=True)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    data_module = CiaDataModule()
-
-    results: list[CiaResult] = []
-    for privacy in privacy_modes:
-        for aggregation in aggregations:
-            model_path = run_one_combo(
-                privacy=privacy,
-                aggregation=aggregation,
-                output_dir=output_dir,
-                max_parallel_clients=max_parallel_clients,
-            )
-            aggregated_loss, target_loss = evaluate_combo(
-                model_path, data_module=data_module, device=device
-            )
-            results.append(
-                make_cia_result(
-                    privacy=privacy,
-                    aggregation=aggregation,
-                    aggregated_test_loss=aggregated_loss,
-                    target_shadow_loss=target_loss,
-                )
-            )
-
-    report_path = output_dir / "first_round_cia.json"
-    report_path.write_text(
-        json.dumps([result.__dict__ for result in results], indent=2) + "\n",
-        encoding="utf-8",
+    combos = build_cia_combos(
+        privacy_modes=privacy_modes, aggregations=aggregations
     )
-    return results
+    return run_attack(
+        combos,
+        output_dir=output_dir,
+        log_path=output_dir / "attack_progress.log",
+        max_parallel_clients=max_parallel_clients,
+        force=force,
+        start_message=(
+            f"CIA attack starting: {len(combos)} combinations, "
+            f"num_clients={PAPER_CIA_NUM_CLIENTS}, force={force}"
+        ),
+        data_module_factory=lambda _combo: PaperShadowDataModule(),
+        device=device,
+        batch_size=CIA_BATCH_SIZE,
+        seed=CIA_SEED,
+        checkpoint_rounds=(1,),
+        report_name="first_round_cia.json",
+    )
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -170,6 +108,11 @@ def _parser() -> argparse.ArgumentParser:
         default=PROJECT_ROOT / "experiments" / "cia" / "results",
     )
     parser.add_argument("--max-parallel-clients", type=int, default=2)
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="rerun combinations even when their result and model already exist",
+    )
     return parser
 
 
@@ -178,6 +121,7 @@ def main() -> None:
     results = run_first_round_cia(
         output_dir=args.output_dir,
         max_parallel_clients=args.max_parallel_clients,
+        force=args.force,
     )
     for result in results:
         print(

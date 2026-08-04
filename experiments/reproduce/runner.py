@@ -19,6 +19,10 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
+# Set this before importing PyTorch-dependent modules or starting CUDA. The
+# isolated worker and Ray client processes inherit the environment.
+os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+
 from metricdp_pytorch.utils.runtime import RUN_CONFIG_ENV
 from metricdp_pytorch.strategy_factory import AGGREGATION_METHODS, PRIVACY_MODES
 
@@ -58,13 +62,13 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--num-clients", type=int, default=4)
     parser.add_argument("--fraction-evaluate", type=float, default=1.0)
-    parser.add_argument("--rounds", type=int, default=20)
-    parser.add_argument("--local-epochs", type=int, default=5)
+    parser.add_argument("--rounds", type=int, required=True)
+    parser.add_argument("--local-epochs", type=int, required=True)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=0.001)
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--noise-multiplier", type=float, default=0.01)
-    parser.add_argument("--clipping-norm", type=float, default=5.0)
+    parser.add_argument("--seed", type=int, required=True)
+    parser.add_argument("--noise-multiplier", type=float, required=True)
+    parser.add_argument("--clipping-norm", type=float, required=True)
     parser.add_argument(
         "--partition-profile",
         default="auto",
@@ -86,13 +90,39 @@ def _parser() -> argparse.ArgumentParser:
         help="pluggable dataset factory in package.module:factory format",
     )
     parser.add_argument(
+        "--model-module",
+        required=True,
+        help="pluggable model factory in package.module:factory format",
+    )
+    parser.add_argument(
         "--data-cache-dir",
         default="",
         help="optional cache directory passed to the data-module factory",
     )
+    parser.add_argument(
+        "--target-partition-id",
+        type=int,
+        help="optional target partition interpreted by CIA data modules",
+    )
+    parser.add_argument(
+        "--shadow-fraction",
+        type=float,
+        help="optional target-shadow fraction interpreted by CIA data modules",
+    )
+    parser.add_argument(
+        "--train-fraction",
+        type=float,
+        help="optional client train fraction interpreted by data modules",
+    )
     parser.add_argument("--output-dir", type=Path, default=Path("results-reproduce-paper/reproduce"))
     parser.add_argument("--run-name")
-    parser.add_argument("--save-model", action="store_true")
+    parser.add_argument(
+        "--checkpoint-rounds",
+        nargs="+",
+        type=int,
+        default=(),
+        help="server rounds whose aggregated models should be saved",
+    )
     parser.add_argument(
         "--smoke",
         action="store_true",
@@ -104,18 +134,16 @@ def _parser() -> argparse.ArgumentParser:
         "--max-parallel-clients",
         type=int,
         default=2,
-        help="cap simultaneous Ray actors to control memory use",
-    )
-    parser.add_argument("--client-cpus", type=float, default=1.0)
-    parser.add_argument(
-        "--client-gpus",
-        type=float,
-        default=None,
         help=(
-            "Ray GPUs per client actor, e.g. 0.25; default auto-shares one CUDA "
-            "device across --max-parallel-clients actors, or 0.0 without CUDA"
+            "cap simultaneous Ray actors to control memory use. Also sets each "
+            "actor's automatically calculated GPU share. Ray's num_gpus is only "
+            "bookkeeping -- it never reserves or limits VRAM, so "
+            "raising this past what the device holds will OOM rather than queue. "
+            "Each actor cost ~1.06 GiB of VRAM on PaperCNN, i.e. roughly 42 actors "
+            "on a 46 GiB card; a larger model lowers that ceiling"
         ),
     )
+    parser.add_argument("--client-cpus", type=float, default=1.0)
     parser.add_argument("--worker-config", type=Path, help=argparse.SUPPRESS)
     return parser
 
@@ -132,6 +160,10 @@ def _validate(args: argparse.Namespace) -> None:
         raise ValueError("fraction-evaluate must be in (0, 1].")
     if args.rounds < 1 or args.local_epochs < 1:
         raise ValueError("rounds and local-epochs must be positive.")
+    if len(set(args.checkpoint_rounds)) != len(args.checkpoint_rounds):
+        raise ValueError("checkpoint-rounds must not contain duplicates.")
+    if any(round_number < 1 or round_number > args.rounds for round_number in args.checkpoint_rounds):
+        raise ValueError("checkpoint-rounds must be between 1 and rounds.")
     if args.batch_size < 1 or args.initialization_batch_size < 1:
         raise ValueError("batch sizes must be positive.")
     if args.initialization_epochs < 1:
@@ -140,8 +172,16 @@ def _validate(args: argparse.Namespace) -> None:
         raise ValueError("max-parallel-clients must be positive.")
     if args.client_cpus <= 0:
         raise ValueError("client-cpus must be positive.")
-    if args.client_gpus is not None and args.client_gpus < 0:
-        raise ValueError("client-gpus must be non-negative.")
+    if args.target_partition_id is not None and not (
+        0 <= args.target_partition_id < args.num_clients
+    ):
+        raise ValueError("target-partition-id must identify a configured client.")
+    for name, fraction in (
+        ("shadow-fraction", args.shadow_fraction),
+        ("train-fraction", args.train_fraction),
+    ):
+        if fraction is not None and not 0.0 < fraction < 1.0:
+            raise ValueError(f"{name} must be in (0, 1).")
     if args.client_weights:
         weights = [part.strip() for part in args.client_weights.split(",") if part.strip()]
         if len(weights) != args.num_clients:
@@ -194,12 +234,19 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
             "noise-multiplier": args.noise_multiplier,
             "clipping-norm": args.clipping_norm,
             "data-module": args.data_module,
+            "model-module": args.model_module,
             "data-cache-dir": cache_dir,
             "output-dir": str(output_dir),
             "run-name": run_name,
-            "save-model": args.save_model,
+            "checkpoint-rounds": sorted(args.checkpoint_rounds),
         }
     )
+    if args.target_partition_id is not None:
+        config["target-partition-id"] = args.target_partition_id
+    if args.shadow_fraction is not None:
+        config["shadow-fraction"] = args.shadow_fraction
+    if args.train_fraction is not None:
+        config["train-fraction"] = args.train_fraction
     return config
 
 
@@ -256,12 +303,25 @@ def _launch_isolated(args: argparse.Namespace, config: dict[str, Any]) -> None:
             str(args.max_parallel_clients),
             "--client-cpus",
             str(args.client_cpus),
-            "--client-gpus",
-            str(args.client_gpus),
+            "--seed",
+            str(args.seed),
+            "--noise-multiplier",
+            str(args.noise_multiplier),
+            "--clipping-norm",
+            str(args.clipping_norm),
+            "--rounds",
+            str(args.rounds),
+            "--local-epochs",
+            str(args.local_epochs),
+            "--model-module",
+            str(args.model_module),
         ]
         if args.verbose:
             command.append("--verbose")
-        subprocess.run(command, cwd=PROJECT_ROOT, check=True)
+        child_env = os.environ.copy()
+        child_env.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+        child_env.setdefault("PYTHONHASHSEED", "0")
+        subprocess.run(command, cwd=PROJECT_ROOT, env=child_env, check=True)
 
 
 def _print_result(config: dict[str, Any]) -> None:
@@ -278,11 +338,6 @@ def _print_result(config: dict[str, Any]) -> None:
 def main() -> None:
     parser = _parser()
     args = parser.parse_args()
-    if args.client_gpus is None:
-        args.client_gpus = _auto_client_gpus(
-            num_clients=args.num_clients,
-            max_parallel_clients=args.max_parallel_clients,
-        )
     if args.worker_config is not None:
         config = json.loads(args.worker_config.read_text(encoding="utf-8"))
         _run_worker(
@@ -290,7 +345,10 @@ def main() -> None:
             num_supernodes=args.num_clients,
             max_parallel_clients=args.max_parallel_clients,
             client_cpus=args.client_cpus,
-            client_gpus=args.client_gpus,
+            client_gpus=_auto_client_gpus(
+                num_clients=args.num_clients,
+                max_parallel_clients=args.max_parallel_clients,
+            ),
             verbose=args.verbose,
         )
         return

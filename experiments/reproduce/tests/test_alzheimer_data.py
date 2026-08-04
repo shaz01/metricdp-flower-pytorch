@@ -10,6 +10,11 @@ import torch
 from datasets import DatasetDict
 
 from experiments.reproduce.dataset import alzheimer
+from experiments.reproduce.dataset.common import (
+    HF_OFFLINE_VARS,
+    clear_hf_dataset_cache,
+    hf_offline,
+)
 from experiments.reproduce.dataset.alzheimer import (
     CLASS_NAMES,
     PAPER_HOMOGENEOUS_CLIENT_COUNTS,
@@ -21,6 +26,14 @@ from experiments.reproduce.dataset.alzheimer import (
     load_server_data,
     partition_train_indices,
 )
+
+
+@pytest.fixture(autouse=True)
+def _clear_dataset_singleton() -> None:
+    """Keep loader monkeypatches isolated from the process-wide cache."""
+    clear_hf_dataset_cache()
+    yield
+    clear_hf_dataset_cache()
 
 
 def _class_counts(labels: np.ndarray, indices: list[int] | None = None) -> tuple[int, ...]:
@@ -196,7 +209,7 @@ def test_hf_offline_context_restores_previous_environment(monkeypatch) -> None:
     monkeypatch.delenv("HF_HUB_OFFLINE", raising=False)
     monkeypatch.setenv("HF_DATASETS_OFFLINE", "0")
 
-    with alzheimer._hf_offline():
+    with hf_offline():
         assert os.environ["HF_HUB_OFFLINE"] == "1"
         assert os.environ["HF_DATASETS_OFFLINE"] == "1"
 
@@ -206,7 +219,7 @@ def test_hf_offline_context_restores_previous_environment(monkeypatch) -> None:
 
 def test_load_alzheimer_dataset_prefers_cache_then_falls_back(monkeypatch) -> None:
     """A cold cache must still load, by retrying over the network."""
-    for name in alzheimer._HF_OFFLINE_VARS:
+    for name in HF_OFFLINE_VARS:
         monkeypatch.delenv(name, raising=False)
     seen: list[bool] = []
 
@@ -221,6 +234,28 @@ def test_load_alzheimer_dataset_prefers_cache_then_falls_back(monkeypatch) -> No
 
     assert alzheimer.load_alzheimer_dataset() == "networked"
     assert seen == [True, False]  # offline attempted first, then network
+
+
+def test_load_alzheimer_dataset_reuses_process_wide_instance(monkeypatch) -> None:
+    """Later data modules must not repeat even an offline HuggingFace lookup."""
+    monkeypatch.setenv("HF_HUB_OFFLINE", "1")
+    loaded = DatasetDict()
+    calls: list[str | None] = []
+
+    def fake_load_dataset(_dataset_id, cache_dir=None):
+        calls.append(cache_dir)
+        return loaded
+
+    monkeypatch.setattr(alzheimer, "load_dataset", fake_load_dataset)
+
+    first = alzheimer.load_alzheimer_dataset()
+    second = alzheimer.load_alzheimer_dataset()
+    module_dataset = alzheimer.AlzheimerDataModule().dataset
+
+    assert first is loaded
+    assert second is first
+    assert module_dataset is first
+    assert calls == [None]
 
 
 def test_load_alzheimer_dataset_defers_to_explicit_offline_setting(monkeypatch) -> None:

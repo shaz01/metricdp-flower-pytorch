@@ -6,7 +6,6 @@ from collections.abc import Iterable
 
 from flwr.app import ArrayRecord, Message, MetricRecord
 from flwr.serverapp.strategy import (
-    DifferentialPrivacyServerSideFixedClipping,
     FedAdam,
     FedAvg,
     FedAvgM,
@@ -16,9 +15,11 @@ from flwr.serverapp.strategy import (
     Strategy,
 )
 
+from metricdp_pytorch.globaldp_strategy import LoggedGlobalDPServerSideFixedClipping
 from metricdp_pytorch.metricdp_strategy import (
     MetricPrivacyServerSideFixedClipping,
 )
+from metricdp_pytorch.metrics import aggregate_metrics_with_clients
 
 AGGREGATION_METHODS = (
     "fedavg",
@@ -130,6 +131,8 @@ def make_base_strategy(
         "min_train_nodes": num_clients,
         "min_evaluate_nodes": num_clients,
         "min_available_nodes": num_clients,
+        "train_metrics_aggr_fn": aggregate_metrics_with_clients,
+        "evaluate_metrics_aggr_fn": aggregate_metrics_with_clients,
     }
     if aggregation == "fedavg":
         return FedAvg(**common)
@@ -177,7 +180,7 @@ def make_strategy(
     if privacy == "vanilla":
         return strategy
     if privacy == "global-dp":
-        return DifferentialPrivacyServerSideFixedClipping(
+        return LoggedGlobalDPServerSideFixedClipping(
             strategy=strategy,
             noise_multiplier=noise_multiplier,
             clipping_norm=clipping_norm,

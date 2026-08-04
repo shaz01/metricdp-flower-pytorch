@@ -8,10 +8,10 @@ from typing import Any
 from flwr.app import ArrayRecord, Context, Message, MetricRecord, RecordDict
 from flwr.clientapp import ClientApp
 
-from experiments.reproduce.paper_cnn import PaperCNN
 from experiments.reproduce.paper_loss import evaluate_model
 from experiments.reproduce.paper_training import seed_training, train_with_adam
 from metricdp_pytorch.data_module import load_data_module
+from metricdp_pytorch.model_module import load_model
 from metricdp_pytorch.utils.device import resolve_device
 from metricdp_pytorch.utils.runtime import runtime_config
 
@@ -61,7 +61,7 @@ def train(msg: Message, context: Context) -> Message:
     partition_id = int(context.node_config["partition-id"])
     seed_training(int(run_config.get("seed", 42)) + partition_id)
 
-    model = PaperCNN()
+    model = load_model(str(run_config["model-module"]))
     model.load_state_dict(msg.content["arrays"].to_torch_state_dict())
     trainloader, _ = _client_data(context)
     train_config = msg.content["config"]
@@ -82,6 +82,7 @@ def train(msg: Message, context: Context) -> Message:
                 "arrays": ArrayRecord(model.state_dict()),
                 "metrics": MetricRecord(
                     {
+                        "client-id": partition_id,
                         "train_loss": epoch_losses[-1],
                         "train_loss_mean": sum(epoch_losses) / len(epoch_losses),
                         "num-examples": len(trainloader.dataset),
@@ -95,8 +96,10 @@ def train(msg: Message, context: Context) -> Message:
 
 @app.evaluate()
 def evaluate(msg: Message, context: Context) -> Message:
-    """Evaluate the global PaperCNN on one client's held-out 20% split."""
-    model = PaperCNN()
+    """Evaluate the global model on one client's held-out split."""
+    run_config = runtime_config(context)
+    partition_id = int(context.node_config["partition-id"])
+    model = load_model(str(run_config["model-module"]))
     model.load_state_dict(msg.content["arrays"].to_torch_state_dict())
     _, testloader = _client_data(context)
     device = resolve_device()
@@ -107,6 +110,7 @@ def evaluate(msg: Message, context: Context) -> Message:
             {
                 "metrics": MetricRecord(
                     {
+                        "client-id": partition_id,
                         "eval_loss": metrics["loss"],
                         "eval_acc": metrics["accuracy"],
                         "num-examples": len(testloader.dataset),
