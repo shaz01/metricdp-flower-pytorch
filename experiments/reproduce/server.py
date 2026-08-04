@@ -24,7 +24,7 @@ from flwr.serverapp.strategy import Result
 from experiments.reproduce.detailed_evaluation import evaluate_state_dict
 from experiments.reproduce.paper_loss import make_evaluate_fn
 from experiments.reproduce.paper_strategies import create_paper_strategy
-from experiments.reproduce.paper_training import create_initial_model
+from experiments.reproduce.paper_training import create_initial_model, seed_training
 from metricdp_pytorch.data_module import load_data_module
 from metricdp_pytorch.model_module import load_model
 from metricdp_pytorch.utils.device import resolve_device
@@ -139,6 +139,7 @@ def run(
     this function falls back to a randomly initialized configured model.
     """
     if initial_arrays is None:
+        seed_training(int(config.get("seed", 42)))
         initial_arrays = ArrayRecord(
             load_model(str(config["model-module"])).state_dict()
         )
