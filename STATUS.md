@@ -18,9 +18,9 @@ non-IID at `noise_multiplier=0.05`) — shrinks or reverses at 48 clients
 (`results/48client_scaling`), and whether that's a genuine mechanism failure or a confound with
 the fixed 20-round training budget every earlier sweep used regardless of client count.
 
-Full writeup: `reports/constant_compute_scaling.md` (detailed, v1 design + corrections) and
-`reports/progress_report_phase1.tex`/`.pdf` (compiled, supervisor-facing progress report covering
-both sweep designs and the MPS finding below — also committed on `master`).
+Full writeup: `reports/constant_compute_scaling.md` (detailed, covers both v1 and v2 designs plus
+corrections) and `reports/progress_report_phase1.tex`/`.pdf` (compiled, supervisor-facing progress
+report covering both sweep designs and the MPS finding below — also committed on `master`).
 
 ## What's established (safe to build on)
 
@@ -50,10 +50,11 @@ both sweep designs and the MPS finding below — also committed on `master`).
     trustworthy (`results/noise_floor_check/`).
   - Non-IID/n=48 delta (v1 reported +3.12pp): not established, sign flips across reps
     (`results/noise_floor_check_noniid/`).
-- Everything else remains unverified: v1's `n=8` points, all of v2
-  (`results/scale_controlled_epochs/`, never checked), and the original
-  `8client_scaling`/`48client_scaling`/`noise_sweep` result sets that motivated this whole
-  investigation in the first place. The noise magnitude found for one finding does **not**
+- Everything else remains unverified: v1's `n=8` points, all of v2's `n=8`/`n=48` rows
+  (`results/scale_controlled_epochs/` — v2's `n=4` row has direct proof of unreliability via the
+  identical-config comparison above, but `n=8`/`n=48` have not individually been noise-checked),
+  and the original `8client_scaling`/`48client_scaling`/`noise_sweep` result sets that motivated
+  this whole investigation in the first place. The noise magnitude found for one finding does **not**
   generalize to another (the two checked so far failed via two different mechanisms — large effect
   swamped by larger noise vs. small effect swamped by comparable noise) — each remaining
   single-seed number needs its own check before being cited.
