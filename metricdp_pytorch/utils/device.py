@@ -43,6 +43,28 @@ def resolve_device() -> torch.device:
     non-reproducible for this project's training loop under any
     configuration**, not just concurrent multi-actor ones.
 
+    **No settings-based fix exists (checked, 2026-08-04).** Every real,
+    discoverable lever was tested directly against the same single-process,
+    single-client, 10-epoch repro above, individually and combined -- none
+    changed the outcome:
+    torch.use_deterministic_algorithms(True) (confirmed no-op for MPS, see
+    above); torch.mps.manual_seed(seed) (rules out MPS's own RNG, e.g. for
+    dropout, as the cause); torch.mps.synchronize() after every optimizer
+    step (rules out async/overlapping kernel dispatch as the cause);
+    PYTORCH_MPS_FAST_MATH=0 (rules out relaxed-precision fast-math reduction
+    as the cause); PYTORCH_MPS_PREFER_METAL=1 (rules out the MPSGraph vs.
+    raw-Metal kernel-selection path as the cause). torch.backends.mps also
+    has no cudnn.deterministic-equivalent flag at all in this torch version
+    (2.10.0) -- inspected directly, it exposes only is_available/is_built/
+    get_core_count/get_name. This backend currently has no way to make its
+    backward kernels deterministic; ``METRICDP_FORCE_CPU=1`` is not a
+    workaround among several, it is the only one that has actually worked.
+    CUDA (unavailable on this machine, not tested) has real equivalents --
+    torch.backends.cudnn.deterministic=True,
+    torch.backends.cudnn.benchmark=False, CUBLAS_WORKSPACE_CONFIG=:4096:8 --
+    that would be worth trying first if this project ever runs there,
+    rather than assuming CPU fallback is needed on every backend.
+
     The resulting weight divergence is real (~5e-4 per parameter after a
     single federated round under concurrent multi-actor training, confirmed
     via direct state_dict diffing, not floating-point-summation-order noise)
