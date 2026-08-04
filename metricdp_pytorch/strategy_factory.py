@@ -35,7 +35,53 @@ FEDOPT_ETA_0 = 0.01
 FEDOPT_ETA_DECAY = 0.15
 
 
-class DecayingEtaFedAdam(FedAdam):
+def _client_id(reply: Message) -> int:
+    """Return the logical client ID carried by one successful train reply."""
+    metrics = next(iter(reply.content.metric_records.values()), None)
+    if metrics is None or "client-id" not in metrics:
+        raise ValueError(
+            "Successful train replies must include a 'client-id' metric for "
+            "deterministic aggregation."
+        )
+    return int(metrics["client-id"])
+
+
+class DeterministicReplyOrderMixin:
+    """Sort successful client replies before floating-point aggregation."""
+
+    def aggregate_train(
+        self, server_round: int, replies: Iterable[Message]
+    ) -> tuple[ArrayRecord | None, MetricRecord | None]:
+        reply_list = list(replies)
+        successful = sorted(
+            (reply for reply in reply_list if not reply.has_error()),
+            key=_client_id,
+        )
+        failures = [reply for reply in reply_list if reply.has_error()]
+        return super().aggregate_train(server_round, [*successful, *failures])
+
+
+class DeterministicFedAvg(DeterministicReplyOrderMixin, FedAvg):
+    """FedAvg with client-ID-ordered floating-point accumulation."""
+
+
+class DeterministicFedAvgM(DeterministicReplyOrderMixin, FedAvgM):
+    """FedAvgM with client-ID-ordered floating-point accumulation."""
+
+
+class DeterministicFedMedian(DeterministicReplyOrderMixin, FedMedian):
+    """FedMedian with stable client reply ordering."""
+
+
+class DeterministicFedProx(DeterministicReplyOrderMixin, FedProx):
+    """FedProx with client-ID-ordered floating-point accumulation."""
+
+
+class DeterministicFedYogi(DeterministicReplyOrderMixin, FedYogi):
+    """FedYogi with client-ID-ordered floating-point accumulation."""
+
+
+class DecayingEtaFedAdam(DeterministicReplyOrderMixin, FedAdam):
     """FedAdam whose server-side eta decays each round as
     ``eta_0 / (1 + decay * (round - 1))``.
 
@@ -135,17 +181,17 @@ def make_base_strategy(
         "evaluate_metrics_aggr_fn": aggregate_metrics_with_clients,
     }
     if aggregation == "fedavg":
-        return FedAvg(**common)
+        return DeterministicFedAvg(**common)
     if aggregation == "fedavgm":
-        return FedAvgM(
+        return DeterministicFedAvgM(
             **common,
             server_learning_rate=0.1,
             server_momentum=0.5,
         )
     if aggregation == "fedmedian":
-        return FedMedian(**common)
+        return DeterministicFedMedian(**common)
     if aggregation == "fedprox":
-        return FedProx(**common, proximal_mu=0.5)
+        return DeterministicFedProx(**common, proximal_mu=0.5)
     if aggregation == "fedopt":
         return DecayingEtaFedAdam(
             **common,
@@ -156,7 +202,9 @@ def make_base_strategy(
             decay=FEDOPT_ETA_DECAY,
         )
     if aggregation == "fedyogi":
-        return FedYogi(**common, beta_1=0.9, beta_2=0.99, tau=1e-3)
+        return DeterministicFedYogi(
+            **common, beta_1=0.9, beta_2=0.99, tau=1e-3
+        )
     raise ValueError(
         f"Unknown aggregation method {aggregation!r}; choose from {AGGREGATION_METHODS}."
     )
