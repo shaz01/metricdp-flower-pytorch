@@ -292,7 +292,7 @@ def _launch_isolated(args: argparse.Namespace, config: dict[str, Any]) -> None:
         venv_link = temporary_dir / "venv"
         os.symlink(sys.prefix, venv_link, target_is_directory=True)
         command = [
-            str(venv_link / "bin" / "python"),
+            str(venv_link / "bin" / Path(sys.executable).name),
             "-m",
             "experiments.reproduce.runner",
             "--worker-config",
