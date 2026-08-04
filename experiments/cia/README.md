@@ -140,3 +140,15 @@ uv run python scripts/colab/run_experiment.py wait --session cia-determinism
 Use `collect` for a job that has already finished or `stop` to explicitly
 release an abandoned VM. Colab source archives exclude notebooks and are
 scanned for common GitHub-token and private-key formats before upload.
+
+Colab CLI 0.6.0 currently declares an unpinned `jupyter-kernel-client`
+dependency even though it uses an API from Google's fork. If `colab exec`
+fails with `jupyter_kernel_client` missing `KernelClient`, repair the tool
+environment once with:
+
+```bash
+uv pip install \
+  --python ~/.local/share/uv/tools/google-colab-cli/bin/python \
+  --reinstall \
+  "jupyter-kernel-client @ git+https://github.com/googlecolab/jupyter-kernel-client.git"
+```

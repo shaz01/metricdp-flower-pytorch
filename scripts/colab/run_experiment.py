@@ -112,7 +112,14 @@ def _colab(
     if timeout is not None:
         invocation.extend(("--timeout", timeout))
     invocation.extend(args)
-    return _run(*invocation, capture=True)
+    try:
+        return _run(*invocation, capture=True)
+    except subprocess.CalledProcessError as error:
+        if error.stdout:
+            print(error.stdout, end="")
+        if error.stderr:
+            print(error.stderr, end="")
+        raise
 
 
 def _provision(state: dict[str, Any]) -> None:

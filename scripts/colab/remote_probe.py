@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import subprocess
 from pathlib import Path
 
@@ -19,14 +18,17 @@ def main() -> None:
     if LOG_PATH.exists():
         print("".join(LOG_PATH.read_text(errors="replace").splitlines(True)[-20:]))
     print("--- nvidia-smi ---")
-    subprocess.run(
+    gpu = subprocess.run(
         [
             "nvidia-smi",
             "--query-gpu=timestamp,name,utilization.gpu,memory.used,memory.total",
             "--format=csv,noheader",
         ],
+        capture_output=True,
+        text=True,
         check=False,
     )
+    print(gpu.stdout if gpu.returncode == 0 else gpu.stderr)
 
 
 if __name__ == "__main__":
