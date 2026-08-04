@@ -24,12 +24,12 @@
 
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{Phase 1 Diagnosis --- Progress Report}
+\fancyhead[L]{Scaling Diagnosis --- Progress Report}
 \fancyhead[R]{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 
 \title{\textbf{Diagnosing the Client-Count Scaling Failure of\\ Metric-Privacy Noise Calibration}\\[0.3em]
-\large Phase 1 Progress Report}
+\large Progress Report}
 \author{Federated Learning + Differential Privacy Research Project}
 \date{August 4, 2026}
 
@@ -38,7 +38,7 @@
 
 \begin{abstract}
 \noindent
-This report documents Phase 1 (``Diagnosis'') of an ongoing investigation into why the
+This report documents an ongoing investigation into why the
 metric-privacy noise-calibration mechanism of Sáinz-Pardo~Díaz et al.\ (2026), which showed a
 genuine accuracy advantage over fixed-multiplier global DP at 8 federated clients
 ($+6.9\pp$ homogeneous, $+12.2\pp$ non-IID), collapses or reverses at 48 clients. Two
@@ -70,7 +70,7 @@ $\text{noise\_multiplier} / \text{distance}$. It reports this beating a fixed-mu
 baseline on accuracy at matched privacy, but validates the claim only at 4 clients, on one
 dataset/model, with an explicitly heuristic (unproven) calibration.
 
-Prior work in this repository established two facts that motivate the current phase:
+Prior work in this repository established two facts that motivate this diagnosis:
 \begin{itemize}[leftmargin=1.4em]
     \item At \textbf{8 clients}, sweeping the noise multiplier surfaces a genuine, previously
     unpublished effect: metric-privacy beats global-DP by $+6.9\pp$ (homogeneous) and $+12.2\pp$
@@ -84,8 +84,8 @@ However, both the 8-client and 48-client sweeps hardcoded a 20-round training bu
 client count, while per-client data shrinks roughly $\propto 1/n$. This confounds two hypotheses:
 (a) the metric-privacy mechanism genuinely degrades as client count grows, or (b) each client is
 simply under-trained at 48 clients because a fixed round budget gives it far less data per round
-than at 8. \textbf{Phase 1's goal is to disentangle these two hypotheses} before any mechanism
-redesign (Phase 2) is attempted.
+than at 8. \textbf{The goal of this diagnosis is to disentangle these two hypotheses} before any
+mechanism redesign is attempted.
 
 % =====================================================================
 \section{Summary of Work Completed}
@@ -111,7 +111,7 @@ could produce trustworthy data:
     noise; neither does, for different reasons.
 \end{enumerate}
 
-The net result of this phase to date is not yet ``does the mechanism fail at scale'' --- it is
+The net result of this work to date is not yet ``does the mechanism fail at scale'' --- it is
 ``the constant-compute controls needed to answer that question are built and run, but the platform
 they ran on is not yet proven precise enough to trust the answer they gave.'' \S\ref{sec:status}
 states this precisely.
@@ -362,7 +362,7 @@ to reproduce.}
 exactly where v1's headline finding (metric-privacy's large $n{=}4$ advantage) lives.}
 \end{center}
 
-This is, by a wide margin, the strongest and most direct evidence in this phase of work. It does
+This is, by a wide margin, the strongest and most direct evidence produced so far. It does
 not depend on interpreting small sample noise across a handful of extra reps (\S\ref{sec:noisefloor})
 --- it is one configuration, one seed, compared against itself.
 
@@ -488,14 +488,14 @@ comparable noise.
     \item \textbf{Every other single-seed result produced so far is unverified}, including: v1's
     $n{=}8$ points, v1's $n{=}4$ baseline (now known to be unstable per Table~\ref{tab:mps-proof}),
     all of v2 (Table~\ref{tab:v2}), and the original \code{8client\_scaling}/\code{48client\_scaling}
-    /\code{noise\_sweep} result sets that motivated this phase in the first place. Given how
+    /\code{noise\_sweep} result sets that motivated this investigation in the first place. Given how
     differently the two checked findings behaved (huge individual-run noise vs.\ small
     individual-run noise), the noise magnitude found for one finding does \emph{not} generalize to
     another --- each remaining single-seed number needs its own check before being cited.
 \end{itemize}
 
-\textbf{Bottom line for this reporting period}: Phase 1's stated goal (disentangle round-budget
-confound from genuine scaling failure) is \emph{methodologically ready to answer} --- both a flawed
+\textbf{Bottom line for this reporting period}: this diagnosis's stated goal (disentangle
+round-budget confound from genuine scaling failure) is \emph{methodologically ready to answer} --- both a flawed
 and a corrected constant-compute design exist and have both been run --- but \emph{not yet
 answerable with confidence}, because the platform used to generate every data point so far has a
 proven noise floor of the same order of magnitude as the effects being measured. The diagnosis has
@@ -513,7 +513,7 @@ work continues:
     \item \textbf{Continue noise-checking existing findings} (2 extra MPS reps per remaining
     finding, $\sim$3.5--4.5h each) --- cheap per check, purely retrospective, tells us which of the
     already-collected numbers to trust or discard, but produces no new diagnostic progress.
-    \item \textbf{Proceed to the remaining Phase 1 roadmap items} (per-client-count noise-multiplier
+    \item \textbf{Proceed to the remaining diagnostic work} (per-client-count noise-multiplier
     re-sweep; instrumenting the raw pairwise-distance distribution per round; failure-mode/NaN
     logging in the runner) on the current MPS pipeline, accepting that these new numbers will carry
     the same unresolved noise until separately checked.
@@ -523,22 +523,21 @@ work continues:
 \end{enumerate}
 
 Recommendation to be finalized with the supervisor: given how central measurement precision has
-turned out to be to this phase, item 3 --- forcing CPU for anything that will be cited as a result
---- is the most defensible path for the remainder of Phase 1, reserving MPS for fast exploratory
-iteration only.
+turned out to be to this work, item 3 --- forcing CPU for anything that will be cited as a result
+--- is the most defensible path going forward, reserving MPS for fast exploratory iteration only.
 
 % =====================================================================
 \section{Conclusion}
 % =====================================================================
 
-This phase set out to answer a scoping question (is the metric-privacy scaling failure real, or an
-artifact of a fixed round budget) and, in the process of building the infrastructure to answer it
+This diagnosis set out to answer a scoping question (is the metric-privacy scaling failure real, or
+an artifact of a fixed round budget) and, in the process of building the infrastructure to answer it
 rigorously, uncovered a more fundamental problem: the experimental platform itself was not precise
-enough to trust the answer. That discovery is itself a legitimate and useful Phase 1 outcome --- it
-prevents a false conclusion from being carried into Phase 2's mechanism redesign, where it would be
-far more expensive to unwind. The corrected constant-compute control (v2), the confirmed and
-documented MPS non-determinism, and the two completed noise-floor checks together define exactly
-what further work (per \S\ref{sec:status}) is required before Phase 1's central question can be
-answered with confidence.
+enough to trust the answer. That discovery is itself a legitimate and useful outcome --- it prevents
+a false conclusion from being carried into a future mechanism-redesign effort, where it would be far
+more expensive to unwind. The corrected constant-compute control (v2), the confirmed and documented
+MPS non-determinism, and the two completed noise-floor checks together define exactly what further
+work (per \S\ref{sec:status}) is required before this diagnosis's central question can be answered
+with confidence.
 
 \end{document}
