@@ -55,3 +55,11 @@ See `README.md` and each experiment's own `README.md` (where present) for full f
 - Once an experiment is finished: merge its branch into `master` (organizing its code into `experiments/<name>/` and its results into `results/<name>/` if not already structured that way), run the test suite to confirm the merge is clean, then delete the branch both locally and on `origin` (`git branch -d`, `git push origin --delete`). Don't leave fully-merged branches lying around.
 - Prefer a real `git merge` over rebase/squash for finished experiment branches — it preserves each experiment's actual commit history.
 - **Never add a `Co-Authored-By` trailer to commits.** This is a strict, explicit rule from the project owner.
+
+## Working across machines
+
+- This project runs across multiple machines (this repo has no built-in cross-machine session sync — each machine's Claude Code install is independent, keyed by its own local project path). Compensate with a habit, not a tool.
+- **Session start**: before making any changes, read `STATUS.md` and skim recent history (`git log --oneline -10`) to pick up state left by other machines/sessions.
+- **Session end**: when a meaningful chunk of work wraps up (same granularity as "worth a commit" — not every message), update `STATUS.md`'s Active work section — current state, what's running where, next steps — then commit and push.
+- `docs/RESEARCH_ROADMAP.md` is gitignored and doesn't travel via `git pull`; if it changes, copy it to other machines manually.
+- Track "what's running where" in `STATUS.md`'s Currently running table using generic machine-role labels (e.g. "GPU workstation", "GPU laptop") — never hostnames, IPs, or usernames, in this or any other committed doc.
