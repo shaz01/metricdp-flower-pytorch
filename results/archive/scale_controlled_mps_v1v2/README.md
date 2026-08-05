@@ -13,8 +13,8 @@ Archived 2026-08-05. These are Phase 1 Part 1 (constant-compute control sweep,
    `metricdp_pytorch/utils/device.py`) that CUDA does not share.
 
 Kept for historical reference and comparison, but superseded by a full redo
-on CUDA hardware (RTX workstations/laptop) with the determinism fix in
-place, tracked on `feature/deterministic-aggregation`. See
+on CUDA hardware with the determinism fix in place, tracked on
+`feature/scale-controlled-redo`. See
 `reports/archive/constant_compute_scaling_mps_v1v2.md` for the write-up this
 data supported.
 
