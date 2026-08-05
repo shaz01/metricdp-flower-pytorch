@@ -62,6 +62,8 @@ import sys
 import time
 from pathlib import Path
 
+from metricdp_pytorch.strategy_factory import AGGREGATION_METHODS
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PARTITION_MODES = ("homogeneous", "non-iid")
 PRIVACY_MODES_SWEPT = ("global-dp", "metric-privacy")
@@ -325,22 +327,35 @@ def _parser() -> argparse.ArgumentParser:
             f"{CLIENT_COUNTS}); lets one sweep be split across machines"
         ),
     )
+    parser.add_argument(
+        "--aggregation-methods",
+        choices=AGGREGATION_METHODS,
+        nargs="+",
+        default=list(AGGREGATION_METHODS_SWEPT),
+        help=(
+            "subset of aggregation methods to run (default: "
+            f"{AGGREGATION_METHODS_SWEPT}); lets e.g. fedyogi be added on a "
+            "separate machine from the default fedavg sweep"
+        ),
+    )
     return parser
 
 
 def main() -> None:
     args = _parser().parse_args()
     client_counts = tuple(args.client_counts)
+    aggregation_methods = tuple(args.aggregation_methods)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     cleanup_orphaned_shm_managers()
     total = (
         len(client_counts)
         * len(PARTITION_MODES)
         * len(PRIVACY_MODES_SWEPT)
-        * len(AGGREGATION_METHODS_SWEPT)
+        * len(aggregation_methods)
     )
     _log(
         f"Sweep starting: {total} combinations, client_counts={client_counts}, "
+        f"aggregation_methods={aggregation_methods}, "
         f"rounds={[rounds_for(n) for n in client_counts]}, "
         f"noise_multiplier={NOISE_MULTIPLIER}, "
         f"max_parallel_clients={args.max_parallel_clients}, force={args.force}"
@@ -351,7 +366,7 @@ def main() -> None:
     for num_clients in client_counts:
         for partition in PARTITION_MODES:
             for privacy in PRIVACY_MODES_SWEPT:
-                for aggregation in AGGREGATION_METHODS_SWEPT:
+                for aggregation in aggregation_methods:
                     ok = run_one_combo(
                         partition,
                         privacy,
