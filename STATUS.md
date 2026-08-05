@@ -1,8 +1,8 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-08-05, CUDA workstation (fedavg matrix done, fedyogi leg picked up) — see
-`git log` for anything more recent
+**Last updated:** 2026-08-05, CUDA workstation (fedyogi leg done too — redo's full matrix now
+complete) — see `git log` for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -59,7 +59,8 @@ run on native Windows, and it hit a stack of platform issues, most not fixable i
   separate, not-yet-started effort, not this redo.
 
 The four fixes above are genuine and stay regardless; only the fedyogi leg itself didn't happen
-here. fedyogi at n=4/n=8 is now running on the CUDA workstation (see Currently running below).
+here. fedyogi at n=4/n=8 has since finished on the CUDA workstation (see below) — the redo's full
+matrix (fedavg n=4/8/48 + fedyogi n=4/8) is now complete.
 
 Along the way, the CUDA workstation independently hit and fixed the same
 `sweep_scale_controlled(_epochs)` missing-required-args bug the laptop found (both machines were
@@ -79,18 +80,30 @@ not just metric-privacy — explaining why global-dp's own numbers jumped too. N
 `master` or written up in `reports/` — results are in `results/scale_controlled(_epochs)/` pending
 review.
 
+Picking up fedyogi also surfaced a second bug, this time in one of the laptop's own cross-platform
+fixes: `_launch_isolated`'s new venv-relative interpreter path (`aa72c2e`) `.resolve()`d both
+`sys.executable` and `sys.prefix` before computing the relative path, which works on a normal venv
+but not on `uv`-managed ones here — `uv` symlinks `.venv/bin/python` straight through to a shared
+interpreter store outside the project (`~/.local/share/uv/python/...`), so resolving follows that
+symlink past `sys.prefix` entirely and `relative_to()` raises `ValueError`. Every isolated-worker
+run failed instantly (exit=1) on first use, not caught by `aa72c2e`'s own `--dry-run` verification
+since `main()` returns before ever reaching `_launch_isolated` on a dry run. Fixed by dropping the
+`.resolve()` calls — `sys.executable` is already venv-relative as reported, on both platforms this
+matters for. Worth knowing on any other machine with a similarly `uv`-managed venv.
+
+fedyogi finished clean afterward: 16/16 combinations (n=4/n=8 only, both sweeps), 0 failures,
+~49m wall-clock total. Combined with the fedavg matrix: **40/40 combinations across both sweeps,
+0 failures.** Not yet merged to `master` or written up in `reports/` — results are in
+`results/scale_controlled(_epochs)/` pending review.
+
 ### Currently running
 
-| Machine role | Task | Status |
-|---|---|---|
-| CUDA workstation | fedavg matrix (client counts 4/8/48), `sweep_scale_controlled(_epochs)` | done |
-| CUDA workstation | fedyogi (client counts 4/8), `sweep_scale_controlled(_epochs)` | running |
-
-fedavg matrix finished, 0 failures — see `results/scale_controlled(_epochs)/`, not yet merged/
-reviewed. fedyogi at n=4/n=8 picked up right after on the same machine/GPU. Update this table
-whenever what's running changes: edit the Status column in place (e.g. `running` -> `done`) and
-leave a finished row for one update cycle before removing it, so machine-to-results provenance
-isn't lost; see `AGENTS.md`'s "Working across machines" section.
+Nothing currently running on this redo — the full matrix (fedavg n=4/8/48 + fedyogi n=4/8,
+`sweep_scale_controlled(_epochs)`) finished on the CUDA workstation with 0 failures across 40/40
+combinations. Results pending review before merge; not yet in `reports/`. Update this table
+whenever a machine picks up new work: edit the Status column in place (e.g. `running` -> `done`)
+and leave a finished row for one update cycle before removing it, so machine-to-results
+provenance isn't lost; see `AGENTS.md`'s "Working across machines" section.
 
 ## What's established on `master`
 
