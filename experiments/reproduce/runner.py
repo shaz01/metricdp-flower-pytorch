@@ -293,8 +293,16 @@ def _launch_isolated(args: argparse.Namespace, config: dict[str, Any]) -> None:
         config_path.write_text(json.dumps(config), encoding="utf-8")
         venv_link = temporary_dir / "venv"
         os.symlink(sys.prefix, venv_link, target_is_directory=True)
+        # sys.executable's path relative to sys.prefix gives the venv's own
+        # interpreter regardless of platform layout (POSIX: bin/python;
+        # Windows: Scripts/python.exe) -- hardcoding bin/python here always
+        # raised FileNotFoundError on Windows, since this venv has no bin/
+        # directory at all.
+        python_relative = Path(sys.executable).resolve().relative_to(
+            Path(sys.prefix).resolve()
+        )
         command = [
-            str(venv_link / "bin" / "python"),
+            str(venv_link / python_relative),
             "-m",
             "experiments.reproduce.runner",
             "--worker-config",
