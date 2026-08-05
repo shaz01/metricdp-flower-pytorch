@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-08-05, commit `8617c05` (cross-machine workflow docs) — see `git log`
+**Last updated:** 2026-08-05, commit `43b6d05` (CUDA laptop drops fedyogi leg) — see `git log`
 for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -39,17 +39,40 @@ superseded, kept for historical comparison only.
 `--aggregation-methods` override flags so the redo can be split across multiple machines instead
 of running the whole matrix sequentially on one box.
 
+**CUDA laptop (Windows, RTX 5070) dropped out of this redo** — first time this pipeline has been
+run on native Windows, and it hit a stack of platform issues, most not fixable in place:
+- `uv` wasn't installed; installed fine.
+- PyPI's default Windows `torch` wheel is CPU-only (unlike Linux) — fixed for good via a
+  `[tool.uv.sources]` override routing Windows to the PyTorch cu128 index (`pyproject.toml`/
+  `uv.lock`).
+- `sweep_scale_controlled.py`/`sweep_scale_controlled_epochs.py` were both silently broken since
+  the `feature/scaling-diagnosis` merge (missing `runner.py` args `5e22567` made required) — fixed
+  for every machine, not just this one.
+- `runner.py`'s `_launch_isolated` hardcoded a POSIX venv layout (`bin/python`) — fixed for good to
+  derive the interpreter path cross-platform.
+- **Not fixable without a full Windows reset, which is off the table on this machine**: (1) Ray has
+  no published wheel for Windows + Python 3.13 (`flwr[simulation]`'s own metadata already excludes
+  that combination) and (2) Windows' Smart App Control is Enforced on this machine and blocks the
+  unsigned `pyarrow`/`scipy` native DLLs the pipeline needs for dataset loading and evaluation —
+  by design, Microsoft doesn't allow disabling Smart App Control once Enforced except via a reset.
+  WSL2 (untested here) would likely route around both, since it's Linux underneath, but that's a
+  separate, not-yet-started effort, not this redo.
+
+The four fixes above are genuine and stay regardless; only the fedyogi leg itself didn't happen
+here. **fedyogi at n=4/n=8 (`sweep_scale_controlled(_epochs)`) still needs to run somewhere** — not
+started, not this laptop.
+
 ### Currently running
 
 | Machine role | Task | Status |
 |---|---|---|
 | CUDA workstation | fedavg matrix (client counts 4/8/48), `sweep_scale_controlled(_epochs)` | running |
-| CUDA laptop | fedyogi at n=4/n=8, `sweep_scale_controlled(_epochs)` | running |
 
-Neither finished yet — don't treat `results/scale_controlled*/` as complete. Update this table
-whenever what's running changes: edit the Status column in place (e.g. `running` -> `done`) and
-leave a finished row for one update cycle before removing it, so machine-to-results provenance
-isn't lost; see `AGENTS.md`'s "Working across machines" section.
+Not finished yet — don't treat `results/scale_controlled*/` as complete. fedyogi at n=4/n=8 has no
+machine running it (see above). Update this table whenever what's running changes: edit the Status
+column in place (e.g. `running` -> `done`) and leave a finished row for one update cycle before
+removing it, so machine-to-results provenance isn't lost; see `AGENTS.md`'s "Working across
+machines" section.
 
 ## What's established on `master`
 
