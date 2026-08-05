@@ -315,29 +315,40 @@ def _parser() -> argparse.ArgumentParser:
         default=MAX_PARALLEL_CLIENTS,
         help="cap simultaneous Ray actors to control memory use",
     )
+    parser.add_argument(
+        "--client-counts",
+        type=int,
+        nargs="+",
+        default=list(CLIENT_COUNTS),
+        help=(
+            "subset of client counts to run (default: all of "
+            f"{CLIENT_COUNTS}); lets one sweep be split across machines"
+        ),
+    )
     return parser
 
 
 def main() -> None:
     args = _parser().parse_args()
+    client_counts = tuple(args.client_counts)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     cleanup_orphaned_shm_managers()
     total = (
-        len(CLIENT_COUNTS)
+        len(client_counts)
         * len(PARTITION_MODES)
         * len(PRIVACY_MODES_SWEPT)
         * len(AGGREGATION_METHODS_SWEPT)
     )
     _log(
-        f"Sweep starting: {total} combinations, client_counts={CLIENT_COUNTS}, "
-        f"rounds={[rounds_for(n) for n in CLIENT_COUNTS]}, "
+        f"Sweep starting: {total} combinations, client_counts={client_counts}, "
+        f"rounds={[rounds_for(n) for n in client_counts]}, "
         f"noise_multiplier={NOISE_MULTIPLIER}, "
         f"max_parallel_clients={args.max_parallel_clients}, force={args.force}"
     )
 
     completed = 0
     failed: list[str] = []
-    for num_clients in CLIENT_COUNTS:
+    for num_clients in client_counts:
         for partition in PARTITION_MODES:
             for privacy in PRIVACY_MODES_SWEPT:
                 for aggregation in AGGREGATION_METHODS_SWEPT:
