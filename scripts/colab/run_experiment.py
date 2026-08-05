@@ -72,6 +72,11 @@ def _validate_results_path(value: str) -> Path:
     return path
 
 
+def _forwarded_module_args(values: list[str]) -> list[str]:
+    """Remove argparse's delimiter before forwarding experiment arguments."""
+    return values[1:] if values[:1] == ["--"] else values
+
+
 def _source_paths() -> list[Path]:
     command = [
         "git",
@@ -252,7 +257,7 @@ def run_job(args: argparse.Namespace) -> None:
         "session": args.session,
         "gpu": args.gpu,
         "module": args.module,
-        "args": args.module_args,
+        "args": _forwarded_module_args(args.module_args),
         "results": results.as_posix(),
         "commit_message": args.commit_message,
         "source_branch": branch,
