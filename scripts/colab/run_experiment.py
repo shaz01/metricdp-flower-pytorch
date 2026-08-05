@@ -7,6 +7,7 @@ import json
 import re
 import shutil
 import subprocess
+import sys
 import tarfile
 import tempfile
 import time
@@ -23,6 +24,28 @@ SECRET_PATTERNS = (
     re.compile(rb"github_pat_[A-Za-z0-9_]{20,}"),
     re.compile(rb"-----BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY-----"),
 )
+_CONNECTION_FAILURE_NOTIFIED: set[str] = set()
+
+
+def _notify_macos(title: str, message: str) -> None:
+    """Send a best-effort macOS notification without affecting the controller."""
+    if sys.platform != "darwin" or shutil.which("osascript") is None:
+        return
+    script = (
+        "on run argv\n"
+        " display notification (item 2 of argv) with title (item 1 of argv)\n"
+        "end run"
+    )
+    try:
+        subprocess.run(
+            ["osascript", "-e", script, title, message],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        pass
 
 
 def _run(
@@ -180,7 +203,14 @@ def _probe(session: str) -> tuple[str, str]:
         )
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
         print(f"Colab status probe failed ({error}); retrying without stopping training.")
+        if session not in _CONNECTION_FAILURE_NOTIFIED:
+            _notify_macos(
+                "Colab connection lost",
+                f"Could not connect to session {session}; monitoring will retry.",
+            )
+            _CONNECTION_FAILURE_NOTIFIED.add(session)
         return "unknown", ""
+    _CONNECTION_FAILURE_NOTIFIED.discard(session)
     output = result.stdout
     print(output, end="")
     marker = "COLAB_JOB_STATUS="
@@ -227,9 +257,15 @@ def _commit_and_push(state: dict[str, Any], remote_state: str) -> None:
     print(f"Results committed and pushed to origin/{branch}")
 
 
-def collect(session: str, *, stop: bool = True) -> str:
+def collect(
+    session: str,
+    *,
+    stop: bool = True,
+    remote_state: str | None = None,
+) -> str:
     state = _load_state(session)
-    remote_state, _ = _probe(session)
+    if remote_state is None:
+        remote_state, _ = _probe(session)
     if remote_state not in {"complete", "failed"}:
         raise RuntimeError(f"Colab job is not finished (state={remote_state})")
     with tempfile.TemporaryDirectory(prefix="metricdp-colab-download-") as temp_name:
@@ -242,6 +278,10 @@ def collect(session: str, *, stop: bool = True) -> str:
         )
         _extract_results(archive_path, Path(state["results"]))
     _commit_and_push(state, remote_state)
+    _notify_macos(
+        "Colab results collected",
+        f"Session {session} ({remote_state}) was collected and pushed.",
+    )
     if stop:
         _colab(session, "stop")
         print(f"Released Colab session {session!r}")
@@ -286,7 +326,7 @@ def run_job(args: argparse.Namespace) -> None:
             if remote_state in {"complete", "failed"}:
                 break
             time.sleep(args.poll_seconds)
-        final_state = collect(args.session)
+        final_state = collect(args.session, remote_state=remote_state)
         if final_state != "complete":
             raise RuntimeError("Colab experiment failed; partial artifacts were pushed")
     except KeyboardInterrupt:
@@ -312,7 +352,7 @@ def wait_for_job(session: str, poll_seconds: int) -> None:
         if remote_state in {"complete", "failed"}:
             break
         time.sleep(poll_seconds)
-    final_state = collect(session)
+    final_state = collect(session, remote_state=remote_state)
     if final_state != "complete":
         raise RuntimeError("Colab experiment failed; partial artifacts were pushed")
 

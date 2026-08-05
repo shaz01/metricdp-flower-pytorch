@@ -44,6 +44,43 @@ controller attached when possible; successful completion means artifacts were
 downloaded, committed, pushed, and the VM was stopped—not merely that training
 exited.
 
+On macOS, the controller sends a local notification after results have been
+collected and pushed, and once when a continuous status-probe connection failure
+begins. It is best-effort only and never changes the remote job's state.
+
+### Five-minute launch watchdog
+
+Treat the first five minutes after every allocation as an attended startup
+window, especially for A100 sessions. The agent must remain in its active task
+loop for the entire five minutes: wait in intervals of no more than 60 seconds,
+then perform the check below at the five-minute deadline. Do not replace this
+with a detached shell, background terminal session, queued watcher, reminder,
+or an instruction for a later agent turn.
+
+At the five-minute check:
+
+1. Inspect the local controller process tree and output. A controller still
+   blocked in `remote_setup.py` or `remote_start.py` after five minutes is a
+   startup hang, not useful experiment progress.
+2. Run `status` and require the remote state to be `running` or `complete`, with
+   real training output that has advanced beyond startup. Include an
+   `nvidia-smi` utilization and memory sample. Do not interpret a single idle
+   sample as failure when the log is advancing between rounds or evaluations.
+3. If the job is `not-started`, the log is absent or unchanged, or the local
+   launch command is hung, investigate immediately. Do not let an idle
+   allocation continue consuming runtime or compute credits.
+4. If no useful artifacts have been produced, release the stuck VM and relaunch
+   on a fresh session. Do not recover a new long run onto an allocation whose
+   startup hang has already consumed a material part of its lifetime. If useful
+   artifacts may exist, preserve the VM and use the recovery procedure before
+   deciding whether to stop it.
+
+Launches queued behind another run need the same watchdog, measured from when
+the queued controller actually allocates its VM rather than when the local
+queue process was created. The watchdog is incomplete until the agent has
+personally performed the deadline check and, when training has not begun,
+actively stopped or recovered the session.
+
 ## Monitor
 
 Run this from another terminal whenever a progress or GPU check is needed:
