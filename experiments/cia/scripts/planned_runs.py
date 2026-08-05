@@ -234,9 +234,9 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--suite",
-        choices=("all", "original", "fashion"),
+        choices=("all", "reproduction", "alzheimer", "fashion"),
         default="all",
-        help="independent subset to run (use original/fashion for parallel Colab jobs)",
+        help="independent subset to run in a dedicated Colab job",
     )
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     return parser
@@ -260,7 +260,7 @@ def main() -> None:
         "groups": {},
     }
     all_complete = True
-    if args.suite in ("all", "original"):
+    if args.suite in ("all", "reproduction"):
         reproduction_dir = output_dir / "original_reproduction"
         reproduction_combos = REPRODUCTION_MATRIX.list_combos(
             name_prefix="original-reproduction", num_clients=4
@@ -282,7 +282,9 @@ def main() -> None:
 
     for name_prefix, active_clients, matrix in CIA_GROUPS:
         is_fashion = name_prefix.startswith("fashion-")
-        if args.suite == "original" and is_fashion:
+        if args.suite == "reproduction":
+            continue
+        if args.suite == "alzheimer" and is_fashion:
             continue
         if args.suite == "fashion" and not is_fashion:
             continue

@@ -24,7 +24,7 @@ def test_planned_matrix_matches_unblocked_plan() -> None:
     assert all("replace" not in name for name in names)
 
 
-def test_suites_split_original_and_fashion_groups() -> None:
+def test_suites_split_reproduction_alzheimer_and_fashion_groups() -> None:
     groups = [name for name, _clients, _matrix in planned_runs.CIA_GROUPS]
     assert [name for name in groups if not name.startswith("fashion-")] == [
         "alzheimer-in-remove",
