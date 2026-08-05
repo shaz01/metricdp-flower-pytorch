@@ -1,8 +1,8 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-08-04, commit `cf0e29c` (merge of a large collaborator-authored batch of
-work — runner refactor, model-module abstraction, CIA client-scaling — see below)
+**Last updated:** 2026-08-05, commit `fa32977` (merge of `feature/scaling-diagnosis`) plus
+follow-on fixes `eb98bd2`/`757fac5` (client-ID-ordered aggregation)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -13,17 +13,31 @@ changes — keep it short, don't turn it into a changelog.
 
 ## Active work
 
-`feature/scaling-diagnosis` (not yet merged) is diagnosing why the metric-privacy
-noise-calibration mechanism's accuracy advantage over global-DP — real at 8 clients (+6.9pp
-homogeneous, +12.2pp non-IID at `noise_multiplier=0.05`, see below) — shrinks or reverses at 48
-clients, and whether that's a genuine mechanism failure or a confound with the fixed round budget
-every earlier sweep used. That branch's own `STATUS.md` has the detailed current state; short
-version: two experimental controls are built and have both been run, but a proven
-non-determinism in this machine's MPS backend (noise floor comparable to the effect sizes being
-measured) means no single-run result from either control can currently be trusted at face value.
-See `reports/progress_report_phase1.tex`/`.pdf` — a supervisor-facing progress report, committed
-here ahead of the rest of that branch (which stays on `feature/scaling-diagnosis` until finished,
-per `AGENTS.md`'s branch-per-experiment convention).
+`feature/scale-controlled-redo` (not yet merged) is redoing Phase 1 Part 1 (the constant-compute
+control sweep — `docs/RESEARCH_ROADMAP.md`) from scratch on CUDA hardware, now that two things
+changed since the last attempt:
+
+1. **A genuine non-determinism source was found and fixed on master**: Flower's own weighted
+   aggregation (`aggregate_arrayrecords`/`aggregate_metricrecords`) summed client replies in
+   network-arrival order, not a deterministic order — floating-point addition isn't associative,
+   so run-to-run arrival jitter produced small numeric drift that compounds over rounds. Fixed via
+   a `DeterministicReplyOrderMixin` (`metricdp_pytorch/strategy_factory.py`) and a matching fix in
+   `metricdp_pytorch/metrics.py`, sorting by the already-present per-reply `client-id` metric
+   before aggregating.
+2. Runs are moving off this Mac's MPS backend entirely, which has its own separate, unfixable
+   non-determinism (see `metricdp_pytorch/utils/device.py:resolve_device()`'s docstring) — onto
+   CUDA hardware instead.
+
+The old MPS-era v1 (rounds-fixed)/v2 (epoch-scaled) sweep attempts are archived at
+`results/archive/scale_controlled_mps_v1v2/` (see its `README.md`) rather than deleted, and
+`reports/archive/constant_compute_scaling_mps_v1v2.md` is the write-up they supported — both
+superseded, kept for historical comparison only.
+
+`sweep_scale_controlled.py`/`sweep_scale_controlled_epochs.py` gained `--client-counts` and
+`--aggregation-methods` override flags so the redo can be split across multiple machines instead
+of running the whole matrix sequentially on one box. In progress as of this update: full fedavg
+matrix (client counts 4/8/48) on a CUDA workstation, fedyogi at n=4/n=8 on a second, lower-VRAM
+CUDA machine — neither finished yet, don't treat `results/scale_controlled*/` as complete.
 
 ## What's established on `master`
 
@@ -32,42 +46,24 @@ per `AGENTS.md`'s branch-per-experiment convention).
 - A genuine, previously unpublished effect exists at 8 clients: metric-privacy beats global-DP by
   +6.9pp (homogeneous) / +12.2pp (non-IID) at `noise_multiplier=0.05`
   (`reports/client_count_scaling.md`).
-- `reports/first_round_cia.md` is **stale as of this merge** — it says "no result data yet," but
-  `results/cia_client_scaling/` now has real trained models and partial attack scores (see below).
-  Needs a rewrite; not done as part of this merge. The Flower-1.32 port-equivalence check
-  (`reports/port_equivalence.md`) is unaffected by this merge and still has no committed result
-  data.
-
-## What changed in this merge (previously only on other branches/machines)
-
-Landed via merging `origin/master`, authored by `atahakancildas` and a collaborator (`olcay`):
-
-- **Runner refactor**: the old `experiments/reproduce/matrix_runner.py` is now
-  `experiments/reproduce/matrix/` (a proper package, "Matrix API"), shared by both the CIA and
-  client-scaling sweep scripts via new `sweep_runner.py`/`iter_combos.py` helpers.
-- **Pluggable model layer**: `metricdp_pytorch/model_module.py` + a `--model-module` CLI flag —
-  the model is now swappable the same way the data module already was. First non-Alzheimer
-  dataset/model pair added: Fashion-MNIST (`experiments/reproduce/dataset/fashion_mnist.py`,
-  `fashion_mnist_cnn.py`).
-- **CIA experiment overhaul**: `attack.py` → `result.py`; new `experiments/cia/client_scaling.py`
-  runs a 48-client CIA variant that attacks a single trained trajectory at checkpoints (round 1,
-  round 20) instead of retraining per attack. Real data now exists at
-  `results/cia_client_scaling/`: 18 models trained (full first-round matrix + a
-  `noise_multiplier=0.12`/FedYogi-specific set), but only 6 attacks are actually scored in
-  `cia_client_scaling.json` so far — all `homogeneous / fedyogi / nm=0.12`, split between
-  first-round and post-convergence checkpoints. The other 12 trained combos (fedavg, non-IID,
-  default `nm=0.05`) don't have attack scores yet — **this experiment is in progress, not
-  finished**, don't treat it as a complete result set.
-- New diagnostics: `metricdp_pytorch/dp_diagnostics.py`, `globaldp_strategy.py`, deterministic-mode
-  settings added to `paper_training.py`.
-- Test suite grew from 47 to 71 passing tests (still 5 reproducibility-marker tests deselected by
-  default).
+- `MetricPrivacyServerSideFixedClipping.aggregate_train` (`metricdp_pytorch/metricdp_strategy.py`)
+  no longer aborts a whole run on a non-finite/non-positive client-model distance or a
+  `ZeroDivisionError` from Flower's own clipping code on zero-norm updates — both fall back
+  gracefully (last-valid distance, or skip-and-keep-previous-round respectively) so a run's full
+  round-by-round history survives instead of being discarded on one bad round. Richer per-round
+  diagnostics also landed: full pairwise client-model distance distribution, per-pair client IDs,
+  min/median/mean/count, not just the single max used for calibration.
+- `reports/first_round_cia.md` is stale — says "no result data yet," but `results/cia_client_scaling/`
+  has real trained models and partial attack scores. Needs a rewrite, not done yet. The Flower-1.32
+  port-equivalence check (`reports/port_equivalence.md`) still has no committed result data.
 
 ## Where to look
 
+- `docs/RESEARCH_ROADMAP.md` — canonical multi-session research plan (gitignored — not on every
+  machine by default; copy it manually if a fresh checkout is missing it).
 - `reports/*.md`, `reports/*.tex` — narrative writeups; source of truth over this file for
   anything beyond a one-line summary.
-- `results/<name>/` — raw run data.
+- `results/<name>/` — raw run data; `results/archive/` — superseded data kept for comparison.
 - `AGENTS.md` — repo conventions, including the branch-per-experiment workflow that explains why
   most in-progress work isn't here yet.
 - `git branch -a` — see which experiment branches are currently active.
