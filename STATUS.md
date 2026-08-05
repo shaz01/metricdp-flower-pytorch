@@ -35,9 +35,18 @@ superseded, kept for historical comparison only.
 
 `sweep_scale_controlled.py`/`sweep_scale_controlled_epochs.py` gained `--client-counts` and
 `--aggregation-methods` override flags so the redo can be split across multiple machines instead
-of running the whole matrix sequentially on one box. In progress as of this update: full fedavg
-matrix (client counts 4/8/48) on a CUDA workstation, fedyogi at n=4/n=8 on a second, lower-VRAM
-CUDA machine — neither finished yet, don't treat `results/scale_controlled*/` as complete.
+of running the whole matrix sequentially on one box.
+
+### Currently running
+
+| Machine role | Task | Status |
+|---|---|---|
+| GPU workstation | fedavg matrix (client counts 4/8/48), `sweep_scale_controlled(_epochs)` | running |
+| GPU laptop | fedyogi at n=4/n=8, `sweep_scale_controlled(_epochs)` | running |
+
+Neither finished yet — don't treat `results/scale_controlled*/` as complete. Update this table
+(add/remove/edit rows) whenever what's running changes; see `AGENTS.md`'s "Working across
+machines" section.
 
 ## What's established on `master`
 
