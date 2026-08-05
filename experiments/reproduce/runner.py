@@ -298,9 +298,14 @@ def _launch_isolated(args: argparse.Namespace, config: dict[str, Any]) -> None:
         # Windows: Scripts/python.exe) -- hardcoding bin/python here always
         # raised FileNotFoundError on Windows, since this venv has no bin/
         # directory at all.
-        python_relative = Path(sys.executable).resolve().relative_to(
-            Path(sys.prefix).resolve()
-        )
+        # Deliberately NOT .resolve()d: uv-managed venvs symlink their own
+        # bin/python straight through to a shared interpreter store outside
+        # the venv (e.g. ~/.local/share/uv/python/...), so resolving before
+        # taking the relative path follows that symlink past sys.prefix
+        # entirely and relative_to() raises ValueError. sys.executable is
+        # already venv-relative as reported (e.g. ".venv/bin/python3") --
+        # resolving is neither needed nor safe here.
+        python_relative = Path(sys.executable).relative_to(Path(sys.prefix))
         command = [
             str(venv_link / python_relative),
             "-m",
