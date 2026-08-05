@@ -60,6 +60,7 @@ import sys
 import time
 from pathlib import Path
 
+from experiments.reproduce.matrix import Combo, Hyperparams
 from metricdp_pytorch.strategy_factory import AGGREGATION_METHODS
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -74,6 +75,17 @@ NOISE_MULTIPLIER = 0.05  # unchanged from sweep_scale_controlled.py (v1)
 MAX_PARALLEL_CLIENTS = 8
 OUTPUT_DIR = PROJECT_ROOT / "results" / "scale_controlled_epochs"
 LOG_PATH = OUTPUT_DIR / "sweep_progress.log"
+
+# Paper-default hyperparameters held fixed across the whole sweep (only
+# --local-epochs varies, via local_epochs_for()) -- same values as
+# sweep_8_clients.py / pyproject.toml's [tool.flwr.app.config] defaults.
+SEED = 42
+CLIPPING_NORM = 5.0
+BATCH_SIZE = 32
+LEARNING_RATE = 0.001
+INITIALIZATION_EPOCHS = 20
+DATA_MODULE = "experiments.reproduce.dataset.alzheimer:create_data_module"
+MODEL_MODULE = "experiments.reproduce.paper_cnn:create_model"
 
 
 def rounds_for(num_clients: int) -> int:
@@ -224,6 +236,29 @@ def resume_evaluation_only(name: str, path: Path, checkpoint_path: Path) -> bool
     return False
 
 
+def runner_args_with_name(
+    combo: Combo, *, name: str, max_parallel_clients: int
+) -> tuple[str, ...]:
+    """Build this combo's runner.py CLI args under this sweep's own run name.
+
+    See ``sweep_scale_controlled.py``'s copy for the full rationale
+    (duplicated, not imported, per this module's self-containment
+    docstring) -- delegates to ``Combo.runner_args()`` so every arg
+    runner.py now requires (--local-epochs/--seed/--clipping-norm/
+    --model-module, missing here before this fix -- see the 2026-08-05 note
+    in STATUS.md) is included, then swaps Combo's trailing ``--run-name``
+    pair for this sweep's own naming so ``result_path()``/``is_complete()``
+    keep matching what actually lands on disk.
+    """
+    args = combo.runner_args(
+        output_dir=OUTPUT_DIR,
+        max_parallel_clients=max_parallel_clients,
+        client_cpus=1.0,
+    )
+    assert args[-2] == "--run-name"
+    return (*args[:-1], name)
+
+
 def run_one_combo(
     partition: str,
     privacy: str,
@@ -247,34 +282,42 @@ def run_one_combo(
         if checkpoint_path is not None:
             return resume_evaluation_only(name, path, checkpoint_path)
 
+    combo = Combo(
+        name_prefix="scalectrlep",
+        num_clients=num_clients,
+        partition=partition,
+        privacy=privacy,
+        aggregation=aggregation,
+        seed=SEED,
+        noise_multiplier=NOISE_MULTIPLIER,
+        hyperparams=Hyperparams(
+            clipping_norm=CLIPPING_NORM,
+            rounds=rounds,
+            local_epochs=local_epochs,
+            batch_size=BATCH_SIZE,
+            learning_rate=LEARNING_RATE,
+            initialization_epochs=INITIALIZATION_EPOCHS,
+        ),
+        data_module=DATA_MODULE,
+        model_module=MODEL_MODULE,
+    )
     command = [
         sys.executable,
         "-m",
         "experiments.reproduce.runner",
-        "--num-clients",
-        str(num_clients),
-        "--partition",
-        partition,
-        "--privacy",
-        privacy,
-        "--aggregation",
-        aggregation,
-        "--noise-multiplier",
-        str(NOISE_MULTIPLIER),
-        "--rounds",
-        str(rounds),
-        "--local-epochs",
-        str(local_epochs),
-        "--max-parallel-clients",
-        str(max_parallel_clients),
-        "--output-dir",
-        str(OUTPUT_DIR),
-        "--run-name",
-        name,
+        *runner_args_with_name(
+            combo, name=name, max_parallel_clients=max_parallel_clients
+        ),
     ]
     _log(f"START {name} (rounds={rounds}, local_epochs={local_epochs})")
     started = time.monotonic()
-    result = subprocess.run(command, cwd=PROJECT_ROOT)
+    child_env = os.environ.copy()
+    # Same determinism env vars experiments/reproduce/matrix/run_combo.py sets
+    # for the sibling sweeps -- required for the reply-order/floating-point
+    # determinism fix this whole redo exists to rely on (see STATUS.md).
+    child_env.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+    child_env.setdefault("PYTHONHASHSEED", "0")
+    result = subprocess.run(command, cwd=PROJECT_ROOT, env=child_env)
     elapsed = time.monotonic() - started
     if result.returncode == 0:
         _log(f"DONE  {name} ({elapsed:.1f}s)")
