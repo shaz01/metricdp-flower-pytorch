@@ -238,6 +238,11 @@ def _parser() -> argparse.ArgumentParser:
         default="all",
         help="independent subset to run in a dedicated Colab job",
     )
+    parser.add_argument(
+        "--group",
+        choices=tuple(name for name, _clients, _matrix in CIA_GROUPS),
+        help="run exactly one CIA adjacency group (overrides --suite)",
+    )
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     return parser
 
@@ -260,7 +265,7 @@ def main() -> None:
         "groups": {},
     }
     all_complete = True
-    if args.suite in ("all", "reproduction"):
+    if args.group is None and args.suite in ("all", "reproduction"):
         reproduction_dir = output_dir / "original_reproduction"
         reproduction_combos = REPRODUCTION_MATRIX.list_combos(
             name_prefix="original-reproduction", num_clients=4
@@ -281,12 +286,14 @@ def main() -> None:
         all_complete &= reproduction_complete
 
     for name_prefix, active_clients, matrix in CIA_GROUPS:
+        if args.group is not None and name_prefix != args.group:
+            continue
         is_fashion = name_prefix.startswith("fashion-")
-        if args.suite == "reproduction":
+        if args.group is None and args.suite == "reproduction":
             continue
-        if args.suite == "alzheimer" and is_fashion:
+        if args.group is None and args.suite == "alzheimer" and is_fashion:
             continue
-        if args.suite == "fashion" and not is_fashion:
+        if args.group is None and args.suite == "fashion" and not is_fashion:
             continue
         group_dir = output_dir / name_prefix
         combos = matrix.list_combos(

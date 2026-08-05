@@ -38,6 +38,14 @@ def test_suites_split_reproduction_alzheimer_and_fashion_groups() -> None:
     ]
 
 
+def test_parser_accepts_one_adjacency_group() -> None:
+    args = planned_runs._parser().parse_args(
+        ["--group", "fashion-in-remove"]
+    )
+
+    assert args.group == "fashion-in-remove"
+
+
 def test_fashion_transfer_reuses_exact_table9_counts(monkeypatch) -> None:
     labels = [label for label in range(4) for _ in range(3_000)]
     captured = {}
