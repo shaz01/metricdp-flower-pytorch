@@ -1,8 +1,8 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-08-05, commit `43b6d05` (CUDA laptop drops fedyogi leg) — see `git log`
-for anything more recent
+**Last updated:** 2026-08-05, CUDA workstation (fedavg matrix done, fedyogi leg picked up) — see
+`git log` for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -59,20 +59,38 @@ run on native Windows, and it hit a stack of platform issues, most not fixable i
   separate, not-yet-started effort, not this redo.
 
 The four fixes above are genuine and stay regardless; only the fedyogi leg itself didn't happen
-here. **fedyogi at n=4/n=8 (`sweep_scale_controlled(_epochs)`) still needs to run somewhere** — not
-started, not this laptop.
+here. fedyogi at n=4/n=8 is now running on the CUDA workstation (see Currently running below).
+
+Along the way, the CUDA workstation independently hit and fixed the same
+`sweep_scale_controlled(_epochs)` missing-required-args bug the laptop found (both machines were
+bringing this branch up in parallel) — no functional difference, same fix landed either way.
+
+The CUDA workstation's fedavg matrix (client counts 4/8/48) finished clean: 24/24 combinations, 0
+failures, ~5h21m wall-clock. Result highlights vs the archived MPS baseline: 0 invalid-distance/
+collapsed-aggregation rounds anywhere (MPS had up to 239/240 invalid and 7-23 collapsed rounds per
+combo), smooth monotonic convergence at every client count instead of MPS's stuck-at-random-ish
+plateaus, and determinism confirmed directly (v1 and v2's n=4 combos, which share identical
+hyperparameters, produced bit-identical results from two independently-launched subprocesses).
+Also traced two apparent anomalies back to MPS's own non-determinism rather than a new-run problem:
+MPS's archived v1/v2 n=4 results disagree with each other despite identical config (diverging
+already at round 0, before any client aggregation), and the deterministic-reply-order fix
+(`DeterministicReplyOrderMixin`) turned out to cover every aggregation method including global-dp,
+not just metric-privacy — explaining why global-dp's own numbers jumped too. Not yet merged to
+`master` or written up in `reports/` — results are in `results/scale_controlled(_epochs)/` pending
+review.
 
 ### Currently running
 
 | Machine role | Task | Status |
 |---|---|---|
-| CUDA workstation | fedavg matrix (client counts 4/8/48), `sweep_scale_controlled(_epochs)` | running |
+| CUDA workstation | fedavg matrix (client counts 4/8/48), `sweep_scale_controlled(_epochs)` | done |
+| CUDA workstation | fedyogi (client counts 4/8), `sweep_scale_controlled(_epochs)` | running |
 
-Not finished yet — don't treat `results/scale_controlled*/` as complete. fedyogi at n=4/n=8 has no
-machine running it (see above). Update this table whenever what's running changes: edit the Status
-column in place (e.g. `running` -> `done`) and leave a finished row for one update cycle before
-removing it, so machine-to-results provenance isn't lost; see `AGENTS.md`'s "Working across
-machines" section.
+fedavg matrix finished, 0 failures — see `results/scale_controlled(_epochs)/`, not yet merged/
+reviewed. fedyogi at n=4/n=8 picked up right after on the same machine/GPU. Update this table
+whenever what's running changes: edit the Status column in place (e.g. `running` -> `done`) and
+leave a finished row for one update cycle before removing it, so machine-to-results provenance
+isn't lost; see `AGENTS.md`'s "Working across machines" section.
 
 ## What's established on `master`
 
