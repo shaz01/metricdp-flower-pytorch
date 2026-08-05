@@ -1,5 +1,7 @@
 """Configuration tests for the unblocked PLAN.md experiment runner."""
 
+from collections import Counter
+
 from experiments.cia.datasets.paper import PAPER_CIA_CLIENT_COUNTS
 from experiments.cia.scripts import planned_runs
 
@@ -69,6 +71,31 @@ def test_fashion_transfer_reuses_exact_table9_counts(monkeypatch) -> None:
     )
 
     assert captured == {"counts": PAPER_CIA_CLIENT_COUNTS, "seed": 43}
+
+
+def test_table9_counts_select_a_deterministic_fashion_subset() -> None:
+    labels = [label for label in range(4) for _ in range(6_000)]
+
+    seed_42_a = planned_runs.partition_by_class_counts(
+        labels, PAPER_CIA_CLIENT_COUNTS, seed=42
+    )
+    seed_42_b = planned_runs.partition_by_class_counts(
+        labels, PAPER_CIA_CLIENT_COUNTS, seed=42
+    )
+    seed_43 = planned_runs.partition_by_class_counts(
+        labels, PAPER_CIA_CLIENT_COUNTS, seed=43
+    )
+
+    assert seed_42_a == seed_42_b
+    assert seed_42_a != seed_43
+    assert sum(map(len, seed_42_a)) == 5_120
+    for partition, expected_counts in zip(
+        seed_42_a, PAPER_CIA_CLIENT_COUNTS, strict=True
+    ):
+        assert tuple(
+            Counter(labels[index] for index in partition)[label]
+            for label in range(4)
+        ) == expected_counts
 
 
 def test_in_out_factories_share_canonical_target_partition() -> None:

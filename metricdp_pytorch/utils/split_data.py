@@ -63,10 +63,11 @@ def partition_by_class_counts(
     *,
     seed: int,
 ) -> list[list[int]]:
-    """Partition examples using an exact partition-by-class count matrix.
+    """Partition a deterministic subset using a partition-by-class count matrix.
 
     Matrix rows correspond to partitions and columns to sorted unique labels.
-    Every example must be consumed exactly once.
+    Surplus examples are left unused; requested counts may not exceed the
+    number of available examples in any class.
     """
     label_array = np.asarray(labels)
     unique_labels = np.unique(label_array)
@@ -80,9 +81,10 @@ def partition_by_class_counts(
     observed = np.asarray(
         [np.sum(label_array == label) for label in unique_labels], dtype=np.int64
     )
-    if not np.array_equal(count_matrix.sum(axis=0), observed):
+    requested = count_matrix.sum(axis=0)
+    if np.any(requested > observed):
         raise ValueError(
-            "Count-matrix column totals must match the observed class counts."
+            "Count-matrix column totals cannot exceed observed class counts."
         )
 
     rng = np.random.default_rng(seed)
