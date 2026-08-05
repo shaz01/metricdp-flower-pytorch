@@ -116,6 +116,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--output-dir", type=Path, default=Path("results-reproduce-paper/reproduce"))
     parser.add_argument("--run-name")
+    parser.add_argument("--save-model", action="store_true")
     parser.add_argument(
         "--checkpoint-rounds",
         nargs="+",
@@ -238,6 +239,7 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
             "data-cache-dir": cache_dir,
             "output-dir": str(output_dir),
             "run-name": run_name,
+            "save-model": args.save_model,
             "checkpoint-rounds": sorted(args.checkpoint_rounds),
         }
     )

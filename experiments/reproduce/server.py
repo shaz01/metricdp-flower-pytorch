@@ -187,6 +187,7 @@ def main(grid: Grid, context: Context) -> None:
 
     output_dir = config.get("output-dir")
     run_name = config.get("run-name")
+    save_model = bool(config.get("save-model", False))
     evaluate_fn = make_evaluate_fn(
         final_testloader, model_factory=model_factory
     )
@@ -245,16 +246,36 @@ def main(grid: Grid, context: Context) -> None:
         }
         path = destination / f"{run_name}.json"
         serialized_result = result_to_dict(result, metadata)
+        # allow_nan=True (json's default): a diverged high-noise run can still
+        # carry a stray NaN/Inf metric even with the evaluate_model/
+        # aggregate_train divergence guards, and json.load/json.loads parse
+        # NaN/Infinity back in fine. Refusing to write here would discard the
+        # full round-by-round history over one bad value.
         path.write_text(
-            json.dumps(serialized_result, indent=2, allow_nan=False) + "\n",
+            json.dumps(serialized_result, indent=2) + "\n",
             encoding="utf-8",
         )
         print(f"Experiment result written to {path}")
 
         evaluation_path = destination / f"{run_name}.evaluation.json"
         predictions_path = destination / f"{run_name}.predictions.npz"
+        checkpoint_path = destination / f"{run_name}.pt"
+        state_dict = result.arrays.to_torch_state_dict()
+
+        # Always checkpoint before evaluating, regardless of --save-model:
+        # detailed evaluation runs after training in the same process and
+        # can fail for reasons unrelated to training itself (data-loading
+        # flakiness, disk errors, ...). Without this, such a failure would
+        # force redoing the full -- possibly many-hour -- training run just
+        # to retry evaluation. detailed_evaluation.py's evaluate_saved_model
+        # (and its `python -m experiments.reproduce.detailed_evaluation` CLI)
+        # can resume evaluation alone from this checkpoint instead. Left in
+        # place if evaluate_state_dict raises; cleaned up below on success
+        # unless the caller explicitly asked to keep it via --save-model.
+        torch.save(state_dict, checkpoint_path)
+
         evaluate_state_dict(
-            state_dict=result.arrays.to_torch_state_dict(),
+            state_dict=state_dict,
             run=serialized_result,
             run_json_path=path,
             evaluation_json_path=evaluation_path,
@@ -267,3 +288,6 @@ def main(grid: Grid, context: Context) -> None:
             "Detailed evaluation written to "
             f"{evaluation_path} and {predictions_path}"
         )
+
+        if not save_model:
+            checkpoint_path.unlink(missing_ok=True)

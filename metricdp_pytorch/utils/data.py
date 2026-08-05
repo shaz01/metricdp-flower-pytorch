@@ -58,9 +58,24 @@ def make_indexed_loader(
     batch_size: int,
     shuffle: bool,
     seed: int,
-    num_workers: int = 2,
+    num_workers: int = 0,
 ) -> DataLoader:
-    """Create a deterministic, accelerator-friendly indexed DataLoader."""
+    """Create a deterministic, accelerator-friendly indexed DataLoader.
+
+    ``num_workers`` defaults to 0 (no subprocess workers). Measured live on
+    this project's Ray simulation runs: every DataLoader-with-workers
+    instantiation leaked its ``torch_shm_manager`` shared-memory daemon --
+    reparented to init, never cleanly torn down -- at a robust 1:1 ratio (16
+    orphans per round with 8 clients x 2 loaders, exactly once per round,
+    regardless of ``persistent_workers``). A fresh loader is built once per
+    round per client anyway (see ``experiments/reproduce/client.py``'s
+    per-round ``_client_data()``), so that's one guaranteed leak per loader
+    per round for the whole run. With num_workers=0 there is no worker
+    process and no shared-memory manager to leak in the first place; data
+    loading runs synchronously in the caller, which is not the bottleneck
+    against an accelerator-bound CNN forward/backward pass on this dataset's
+    modest per-client shard sizes and 128x128 grayscale images.
+    """
     if batch_size < 1:
         raise ValueError("batch_size must be positive.")
     if num_workers < 0:

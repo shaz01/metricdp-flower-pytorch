@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from logging import WARNING
 
+import numpy as np
 import torch
 import torch.nn.functional as functional
 from flwr.app import ArrayRecord, MetricRecord
+from flwr.common import log
 from sklearn.metrics import auc, f1_score, precision_score, roc_curve
 from sklearn.preprocessing import label_binarize
 from torch.utils.data import DataLoader
 
-from metricdp_pytorch.utils.device import resolve_device
+from metricdp_pytorch.utils.device import release_device_cache, resolve_device
 
 
 def sparse_categorical_cross_entropy(
@@ -35,6 +38,8 @@ def evaluate_model(
     model: torch.nn.Module,
     testloader: DataLoader,
     device: torch.device,
+    *,
+    server_round: int | None = None,
 ) -> dict[str, float]:
     """Evaluate a softmax-output model: loss, accuracy, weighted F1/precision
     (Tables 6/8), and micro-averaged one-vs-rest AUC (Appendix C)."""
@@ -62,6 +67,29 @@ def evaluate_model(
 
     labels_array = torch.cat(all_labels).numpy()
     probabilities_array = torch.cat(all_probabilities).numpy()
+
+    if not np.isfinite(probabilities_array).all() or not np.isfinite(total_loss):
+        # High DP noise multipliers can drive the model to NaN/Inf weights
+        # (observed at nm >= 0.25 in results/noise_sweep/); feeding that into
+        # sklearn's roc_curve/f1_score raises "Input contains NaN", which
+        # previously aborted the whole run and lost every prior round's
+        # history. Report a finite, clearly-flagged degenerate result instead
+        # so training keeps producing a full round-by-round history.
+        log(
+            WARNING,
+            "evaluate_model: non-finite probabilities/loss at round %s -- "
+            "treating as diverged, skipping sklearn metrics this round",
+            server_round,
+        )
+        return {
+            "loss": float(np.finfo(np.float32).max),
+            "accuracy": 0.0,
+            "f1": 0.0,
+            "precision": 0.0,
+            "auc": 0.5,
+            "diverged": 1.0,
+        }
+
     predictions_array = probabilities_array.argmax(axis=1)
     num_classes = probabilities_array.shape[1]
 
@@ -86,6 +114,7 @@ def evaluate_model(
         "f1": float(f1),
         "precision": float(precision),
         "auc": float(auc_micro),
+        "diverged": 0.0,
     }
 
 
@@ -100,9 +129,11 @@ def make_evaluate_fn(
         device = resolve_device()
 
     def evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
-        del server_round
         model = model_factory()
         model.load_state_dict(arrays.to_torch_state_dict())
-        return MetricRecord(evaluate_model(model, testloader, device))
+        metrics = evaluate_model(model, testloader, device, server_round=server_round)
+        model.cpu()
+        release_device_cache(device)
+        return MetricRecord(metrics)
 
     return evaluate

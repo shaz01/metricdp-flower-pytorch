@@ -11,7 +11,7 @@ Federated learning + differential privacy research repo built on Flower and PyTo
 - Install with `uv sync`. Python is pinned via `.python-version` (3.13; `pyproject.toml` requires `>=3.11,<3.14`).
 - Run everything through `uv run <cmd>` (e.g. `uv run pytest`, `uv run python -m ...`).
 - Device selection is automatic: CUDA → MPS → CPU, via `metricdp_pytorch/utils/device.py:resolve_device()`.
-- Known inconsistency: `experiments/cia/runner.py` and `experiments/reproduce/detailed_evaluation.py` use a narrower inline device check that skips MPS, so those two entry points fall back to CPU on Apple Silicon instead of using `resolve_device()`.
+- Known inconsistency: `experiments/cia/runner.py` uses a narrower inline device check that skips MPS, so it falls back to CPU on Apple Silicon instead of using `resolve_device()`. (`experiments/reproduce/detailed_evaluation.py` had the same issue; fixed 2026-08-01 after it caused a real failure — its postprocessed-vs-recorded accuracy consistency check compares against a training-time evaluation that runs on MPS via `resolve_device()`, so evaluating on CPU there could diverge enough on borderline/near-random-accuracy models to fail that check outright.)
 
 ## Testing
 

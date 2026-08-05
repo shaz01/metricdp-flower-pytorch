@@ -1,7 +1,7 @@
 """Message-based metric-aware server-side DP strategy for Flower."""
 
 from collections.abc import Iterable, Sequence
-from logging import INFO
+from logging import INFO, WARNING
 
 import numpy as np
 from flwr.app import Array, ArrayRecord, Message, MetricRecord
@@ -21,9 +21,13 @@ from metricdp_pytorch.dp_diagnostics import (
     signal_to_noise_diagnostics,
 )
 
-
 def pairwise_model_distances(models: Sequence[ArrayRecord]) -> list[float]:
-    """Return upper-triangle mean layer-wise distances in row-major order."""
+    """Return every pairwise mean layer-wise Euclidean distance between models.
+
+    Order is unspecified (insertion order of the ``i < j`` pairs); callers
+    that need a single summary statistic should reduce this list themselves
+    (see ``maximum_pairwise_model_distance``) rather than assume an order.
+    """
     if len(models) < 2:
         raise ValueError("Metric-aware calibration requires at least two client models.")
 
@@ -41,7 +45,13 @@ def pairwise_model_distances(models: Sequence[ArrayRecord]) -> list[float]:
                 for array_i, array_j in zip(model_i, model_j, strict=True)
             ]
             distances.append(float(np.mean(layer_distances)))
+
     return distances
+
+
+def maximum_pairwise_model_distance(models: Sequence[ArrayRecord]) -> float:
+    """Return the maximum mean layer-wise Euclidean distance between models."""
+    return max(pairwise_model_distances(models))
 
 
 class MetricPrivacyServerSideFixedClipping(
@@ -123,17 +133,50 @@ class MetricPrivacyServerSideFixedClipping(
             for i in range(len(client_ids))
             for j in range(i + 1, len(client_ids))
         ]
-        distance = max(distances)
-        if not np.isfinite(distance) or distance <= 0.0:
-            raise ValueError(
-                "The client-model distance must be finite and greater than zero; "
-                "noise_multiplier / distance is undefined otherwise."
+        raw_distance = max(distances)
+        distance_invalid = not np.isfinite(raw_distance) or raw_distance <= 0.0
+        if distance_invalid:
+            # A non-finite/non-positive distance means client models have
+            # already diverged (typically from too much accumulated DP
+            # noise at a high noise_multiplier) -- noise_multiplier / distance
+            # is undefined in that case. Rather than raising and aborting the
+            # whole run (which previously discarded every prior round's
+            # history, since Strategy.start()'s Result accumulator lives
+            # entirely inside the base-class call stack), fall back to the
+            # last valid distance so training keeps running and a full
+            # round-by-round history -- including the divergence itself --
+            # survives to the result JSON for post-mortem analysis.
+            fallback = (
+                self.current_distance
+                if self.current_distance is not None
+                and np.isfinite(self.current_distance)
+                and self.current_distance > 0.0
+                else 1.0
             )
+            log(
+                WARNING,
+                "aggregate_train: round %d client-model distance is "
+                "non-finite/non-positive (%.6f) -- likely model divergence; "
+                "falling back to %.6f for this round's noise calibration",
+                server_round,
+                raw_distance,
+                fallback,
+            )
+            self.current_distance = fallback
+        else:
+            self.current_distance = raw_distance
 
-        self.current_distance = distance
         self.current_noise_stdv = None
         self.current_round_diagnostics = {}
-        log(INFO, "aggregate_train: maximum pairwise model distance: %.6f", distance)
+        log(
+            INFO,
+            "aggregate_train: pairwise model distance -- max=%.6f mean=%.6f "
+            "median=%.6f count=%d",
+            raw_distance,
+            float(np.mean(distances)),
+            float(np.median(distances)),
+            len(distances),
+        )
         diagnostics = clipping_diagnostics(
             reply_list,
             current_arrays=self.current_arrays,
@@ -148,13 +191,48 @@ class MetricPrivacyServerSideFixedClipping(
                 "metric-dp-distance-min": float(np.min(distances)),
                 "metric-dp-distance-median": float(np.median(distances)),
                 "metric-dp-distance-mean": float(np.mean(distances)),
-                "metric-dp-distance": distance,
+                "metric-dp-distance-count": len(distances),
+                "metric-dp-distance": raw_distance,
+                "metric-dp-distance-invalid": 1.0 if distance_invalid else 0.0,
             }
         )
 
-        aggregated_arrays, aggregated_metrics = super().aggregate_train(
-            server_round, reply_list
-        )
+        try:
+            aggregated_arrays, aggregated_metrics = super().aggregate_train(
+                server_round, reply_list
+            )
+        except ZeroDivisionError:
+            # Flower's own DifferentialPrivacyServerSideFixedClipping.
+            # aggregate_train (flwr.supercore.differential_privacy.
+            # clip_inputs_inplace) divides by a client update's L2 norm to
+            # compute its clipping scale, with no guard for a zero-norm
+            # update. This is reachable in practice: when calibrated noise
+            # (noise_multiplier / distance) has already blown up because
+            # client models converged to a small pairwise distance (the
+            # non-finite/non-positive fallback above), the resulting noise
+            # can be large enough that every client's next-round local
+            # update becomes numerically indistinguishable from the current
+            # global model -- a genuine total-divergence state, observed
+            # live on metric-privacy combos (never global-dp, which doesn't
+            # have this distance-dependent noise blowup). Returning None
+            # for arrays keeps Strategy.start() on the previous round's
+            # model (see flwr's Strategy.start(): "if agg_arrays is not
+            # None: arrays = agg_arrays"), so a run survives one collapsed
+            # round instead of losing every prior round's history.
+            log(
+                WARNING,
+                "aggregate_train: round %d client updates collapsed to a "
+                "zero-norm state (likely total divergence following an "
+                "earlier non-finite/non-positive distance round) -- "
+                "Flower's clipping code can't handle a zero-magnitude "
+                "update; skipping aggregation this round and keeping the "
+                "previous round's model",
+                server_round,
+            )
+            diagnostics["metric-dp-aggregation-collapsed"] = 1.0
+            return None, add_diagnostics(None, diagnostics)
+
+        diagnostics["metric-dp-aggregation-collapsed"] = 0.0
         diagnostics.update(self.current_round_diagnostics)
         if self.current_noise_stdv is not None:
             diagnostics["metric-dp-noise-stdv"] = self.current_noise_stdv

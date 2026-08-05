@@ -12,7 +12,7 @@ from experiments.reproduce.paper_loss import evaluate_model
 from experiments.reproduce.paper_training import seed_training, train_with_adam
 from metricdp_pytorch.data_module import load_data_module
 from metricdp_pytorch.model_module import load_model
-from metricdp_pytorch.utils.device import resolve_device
+from metricdp_pytorch.utils.device import release_device_cache, resolve_device
 from metricdp_pytorch.utils.runtime import runtime_config
 
 app = ClientApp()
@@ -75,6 +75,7 @@ def train(msg: Message, context: Context) -> Message:
         proximal_mu=float(train_config.get("proximal-mu", 0.0)),
     )
     model.cpu()
+    release_device_cache(device)
 
     return Message(
         content=RecordDict(
@@ -104,6 +105,8 @@ def evaluate(msg: Message, context: Context) -> Message:
     _, testloader = _client_data(context)
     device = resolve_device()
     metrics = evaluate_model(model, testloader, device)
+    model.cpu()
+    release_device_cache(device)
 
     return Message(
         content=RecordDict(
