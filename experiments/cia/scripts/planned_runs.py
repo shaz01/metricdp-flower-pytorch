@@ -29,6 +29,7 @@ from experiments.cia.datasets.partitions import (
 from experiments.cia.result import CiaResult
 from experiments.cia.shadow_dataset import clean_shadow_dataset, noisy_shadow_dataset
 from experiments.reproduce.dataset.alzheimer import create_data_module as alzheimer
+from experiments.reproduce.dataset.cifar10 import Cifar10DataModule, Cifar10Dataset
 from experiments.reproduce.dataset.fashion_mnist import (
     FashionMNISTDataModule,
     FashionMNISTDataset,
@@ -101,6 +102,45 @@ class FashionTable9DataModule(FashionMNISTDataModule):
         )
 
 
+class CifarTable9DataModule(Cifar10DataModule):
+    """Four-class CIFAR-10 with the paper CIA's exact client counts."""
+
+    def client_loaders(
+        self,
+        partition_id: int,
+        *,
+        num_partitions: int,
+        partition_mode: str,
+        batch_size: int,
+        seed: int,
+        partition_profile: str = "auto",
+        client_weights: Sequence[float] | None = None,
+        max_samples: int = 0,
+    ) -> tuple[DataLoader, DataLoader]:
+        del partition_mode, partition_profile
+        if num_partitions != PAPER_CIA_NUM_CLIENTS:
+            raise ValueError("The Table-9 transfer distribution requires three clients.")
+        if client_weights is not None:
+            raise ValueError("The Table-9 transfer distribution does not use client weights.")
+        if not 0 <= partition_id < PAPER_CIA_NUM_CLIENTS:
+            raise ValueError("partition_id must identify one of the three clients.")
+
+        split = self.dataset["train"]
+        labels = labels_from_records(split)
+        partitions = partition_by_class_counts(
+            labels, PAPER_CIA_CLIENT_COUNTS, seed=seed
+        )
+        return make_client_loaders(
+            Cifar10Dataset(split),
+            labels,
+            partitions[partition_id],
+            batch_size=batch_size,
+            seed=seed + partition_id,
+            train_fraction=self.train_fraction,
+            max_samples=max_samples,
+        )
+
+
 def _cache_dir(config: Mapping[str, Any]) -> str | None:
     return str(config.get("data-cache-dir", "")).strip() or None
 
@@ -136,6 +176,24 @@ def create_fashion_out(config: Mapping[str, Any]) -> PartitionViewDataModule:
     """Create the three-client Fashion-MNIST OUT-remove transfer view."""
     return out_remove(
         FashionTable9DataModule(cache_dir=_cache_dir(config)),
+        canonical_num_partitions=PAPER_CIA_NUM_CLIENTS,
+        target_partition_id=TARGET_PARTITION_ID,
+    )
+
+
+def create_cifar_in(config: Mapping[str, Any]) -> PartitionViewDataModule:
+    """Create the three-client CIFAR-10 IN-remove transfer view."""
+    return in_remove(
+        CifarTable9DataModule(cache_dir=_cache_dir(config)),
+        canonical_num_partitions=PAPER_CIA_NUM_CLIENTS,
+        target_partition_id=TARGET_PARTITION_ID,
+    )
+
+
+def create_cifar_out(config: Mapping[str, Any]) -> PartitionViewDataModule:
+    """Create the three-client CIFAR-10 OUT-remove transfer view."""
+    return out_remove(
+        CifarTable9DataModule(cache_dir=_cache_dir(config)),
         canonical_num_partitions=PAPER_CIA_NUM_CLIENTS,
         target_partition_id=TARGET_PARTITION_ID,
     )
@@ -198,6 +256,22 @@ CIA_GROUPS = (
             model_module="experiments.reproduce.fashion_mnist_cnn:create_model",
         ),
     ),
+    (
+        "cifar-in-remove",
+        PAPER_CIA_NUM_CLIENTS,
+        _matrix(
+            data_module="experiments.cia.scripts.planned_runs:create_cifar_in",
+            model_module="experiments.reproduce.cifar10_cnn:create_model",
+        ),
+    ),
+    (
+        "cifar-out-remove",
+        PAPER_CIA_NUM_CLIENTS - 1,
+        _matrix(
+            data_module="experiments.cia.scripts.planned_runs:create_cifar_out",
+            model_module="experiments.reproduce.cifar10_cnn:create_model",
+        ),
+    ),
 )
 
 
@@ -234,7 +308,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--suite",
-        choices=("all", "reproduction", "alzheimer", "fashion"),
+        choices=("all", "reproduction", "alzheimer", "fashion", "cifar"),
         default="all",
         help="independent subset to run in a dedicated Colab job",
     )
@@ -288,12 +362,14 @@ def main() -> None:
     for name_prefix, active_clients, matrix in CIA_GROUPS:
         if args.group is not None and name_prefix != args.group:
             continue
-        is_fashion = name_prefix.startswith("fashion-")
+        dataset_name = name_prefix.split("-", 1)[0]
         if args.group is None and args.suite == "reproduction":
             continue
-        if args.group is None and args.suite == "alzheimer" and is_fashion:
-            continue
-        if args.group is None and args.suite == "fashion" and not is_fashion:
+        if (
+            args.group is None
+            and args.suite in ("alzheimer", "fashion", "cifar")
+            and dataset_name != args.suite
+        ):
             continue
         group_dir = output_dir / name_prefix
         combos = matrix.list_combos(

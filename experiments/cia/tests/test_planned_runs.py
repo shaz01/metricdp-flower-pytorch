@@ -22,19 +22,25 @@ def test_planned_matrix_matches_unblocked_plan() -> None:
         "alzheimer-out-remove",
         "fashion-in-remove",
         "fashion-out-remove",
+        "cifar-in-remove",
+        "cifar-out-remove",
     ]
     assert all("replace" not in name for name in names)
 
 
-def test_suites_split_reproduction_alzheimer_and_fashion_groups() -> None:
+def test_suites_split_dataset_adjacency_groups() -> None:
     groups = [name for name, _clients, _matrix in planned_runs.CIA_GROUPS]
-    assert [name for name in groups if not name.startswith("fashion-")] == [
+    assert [name for name in groups if name.startswith("alzheimer-")] == [
         "alzheimer-in-remove",
         "alzheimer-out-remove",
     ]
     assert [name for name in groups if name.startswith("fashion-")] == [
         "fashion-in-remove",
         "fashion-out-remove",
+    ]
+    assert [name for name in groups if name.startswith("cifar-")] == [
+        "cifar-in-remove",
+        "cifar-out-remove",
     ]
 
 
@@ -110,6 +116,7 @@ def test_in_out_factories_share_canonical_target_partition() -> None:
     for in_factory, out_factory in (
         (planned_runs.create_alzheimer_in, planned_runs.create_alzheimer_out),
         (planned_runs.create_fashion_in, planned_runs.create_fashion_out),
+        (planned_runs.create_cifar_in, planned_runs.create_cifar_out),
     ):
         in_view = in_factory({})
         out_view = out_factory({})

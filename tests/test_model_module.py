@@ -25,6 +25,15 @@ def test_fashion_mnist_model_matches_dataset_shape_and_classes() -> None:
     assert torch.allclose(probabilities.sum(dim=1), torch.ones(2))
 
 
+def test_cifar10_model_matches_dataset_shape_and_classes() -> None:
+    model = load_model("experiments.reproduce.cifar10_cnn:create_model")
+
+    probabilities = model(torch.randn(2, 3, 32, 32))
+
+    assert probabilities.shape == (2, 4)
+    assert torch.allclose(probabilities.sum(dim=1), torch.ones(2))
+
+
 def test_load_model_rejects_non_model_factory() -> None:
     with pytest.raises(TypeError, match="did not return a torch.nn.Module"):
         load_model("experiments.reproduce.dataset.common:hf_offline")
