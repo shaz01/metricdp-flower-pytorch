@@ -7,7 +7,7 @@ from torch import nn
 
 
 class FashionMNISTCNN(nn.Module):
-    """Ten-class CNN for grayscale 28×28 Fashion-MNIST images."""
+    """Four-class CNN for grayscale 28×28 Fashion-MNIST images."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -29,12 +29,12 @@ class FashionMNISTCNN(nn.Module):
             nn.Linear(64, 32),
             nn.ReLU(),
             nn.Dropout(p=0.1),
-            nn.Linear(32, 10),
+            nn.Linear(32, 4),
             nn.Softmax(dim=1),
         )
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        """Return ten-class probabilities for grayscale 28×28 images."""
+        """Return four-class probabilities for grayscale 28×28 images."""
         return self.classifier(self.features(inputs))
 
 
