@@ -1,15 +1,17 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-08-05, commit `fa32977` (merge of `feature/scaling-diagnosis`) plus
-follow-on fixes `eb98bd2`/`757fac5` (client-ID-ordered aggregation)
+**Last updated:** 2026-08-05, commit `8617c05` (cross-machine workflow docs) — see `git log`
+for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
 branch you're working on before trusting it. Treat it as a pointer, not the source of truth: for
 full narrative detail see `reports/`, for raw run data see `results/`, for chronological detail
 use `git log`. Update it whenever a branch merges into `master` or `master`-level state otherwise
-changes — keep it short, don't turn it into a changelog.
+changes — keep it short, don't turn it into a changelog. Exception: the Active work
+section (including the Currently running table) updates more often, at "worth a commit"
+granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
@@ -41,12 +43,13 @@ of running the whole matrix sequentially on one box.
 
 | Machine role | Task | Status |
 |---|---|---|
-| GPU workstation | fedavg matrix (client counts 4/8/48), `sweep_scale_controlled(_epochs)` | running |
-| GPU laptop | fedyogi at n=4/n=8, `sweep_scale_controlled(_epochs)` | running |
+| CUDA workstation | fedavg matrix (client counts 4/8/48), `sweep_scale_controlled(_epochs)` | running |
+| CUDA laptop | fedyogi at n=4/n=8, `sweep_scale_controlled(_epochs)` | running |
 
 Neither finished yet — don't treat `results/scale_controlled*/` as complete. Update this table
-(add/remove/edit rows) whenever what's running changes; see `AGENTS.md`'s "Working across
-machines" section.
+whenever what's running changes: edit the Status column in place (e.g. `running` -> `done`) and
+leave a finished row for one update cycle before removing it, so machine-to-results provenance
+isn't lost; see `AGENTS.md`'s "Working across machines" section.
 
 ## What's established on `master`
 
