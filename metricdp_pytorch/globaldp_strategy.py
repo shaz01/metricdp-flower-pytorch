@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from logging import WARNING
 
 from flwr.app import ArrayRecord, Message, MetricRecord
+from flwr.common import log
 from flwr.serverapp.strategy import DifferentialPrivacyServerSideFixedClipping, Strategy
 from flwr.supercore.differential_privacy import compute_stdv
 
@@ -48,9 +50,42 @@ class LoggedGlobalDPServerSideFixedClipping(
             current_arrays=self.current_arrays,
             clipping_norm=self.clipping_norm,
         )
-        aggregated_arrays, aggregated_metrics = super().aggregate_train(
-            server_round, reply_list
-        )
+        try:
+            aggregated_arrays, aggregated_metrics = super().aggregate_train(
+                server_round, reply_list
+            )
+        except ZeroDivisionError:
+            # Flower's own DifferentialPrivacyServerSideFixedClipping.aggregate_train
+            # (flwr.supercore.differential_privacy.clip_inputs_inplace) divides by a
+            # client update's L2 norm to compute its clipping scale, with no guard
+            # for a zero-norm update. metricdp_strategy.py's
+            # MetricPrivacyServerSideFixedClipping already guards this same call for
+            # its own route to the crash (calibrated noise blowing up when the
+            # pairwise-distance denominator collapses); this strategy had no
+            # equivalent guard, because the crash had only been observed via that
+            # metric-privacy-specific route. It reaches here too, by a different
+            # path: sustained high global-dp noise (--noise-multiplier gtrsim 0.25),
+            # compounded round-over-round into the base model every client trains
+            # from, can push local training into a state where a client's fresh
+            # update is numerically indistinguishable from the current global model
+            # -- observed live sweeping noise_multiplier up to 1.0
+            # (results/noise_by_clients/sweep_progress.log). Returning None for
+            # arrays keeps Strategy.start() on the previous round's model (see
+            # flwr's Strategy.start(): "if agg_arrays is not None: arrays =
+            # agg_arrays"), so a run survives one collapsed round instead of
+            # crashing and losing every prior round's history.
+            log(
+                WARNING,
+                "aggregate_train: round %d client updates collapsed to a "
+                "zero-norm state -- Flower's clipping code can't handle a "
+                "zero-magnitude update; skipping aggregation this round and "
+                "keeping the previous round's model",
+                server_round,
+            )
+            diagnostics["global-dp-aggregation-collapsed"] = 1.0
+            return None, add_diagnostics(None, diagnostics)
+
+        diagnostics["global-dp-aggregation-collapsed"] = 0.0
         diagnostics.update(self.current_round_diagnostics)
         diagnostics["global-dp-noise-stdv"] = self.current_noise_stdv
         return aggregated_arrays, add_diagnostics(aggregated_metrics, diagnostics)
