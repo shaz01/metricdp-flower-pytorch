@@ -1,13 +1,8 @@
-# First-round single-shot Client Inference Attack (CIA)
+# Client Inference Attacks (CIA)
 
-Reproduces Section 5 and 7.4.1 of Sáinz-Pardo Díaz et al. (2026): a
-semi-honest client (attacker) infers whether another client (target)
-participated in training by comparing the aggregated model's loss on a
-public test set against its loss on a shadow sample drawn from the target's
-own training data.
-
-Scope: **first-round single-shot only** (Table 9-12). The multi-round
-AUC-based variant (Section 7.4.2, Table 13) is not implemented here.
+Implements both CIA protocols from Sáinz-Pardo Díaz et al. (2026): the
+first-round relative-loss attack in Section 7.4.1 (Tables 9-12) and the paired
+multi-round attack in Section 7.4.2 (Table 13).
 
 ## What this does
 
@@ -39,27 +34,53 @@ that decorator with the corrected Table 9 partition. Scalable experiments
 can instead wrap the standard Alzheimer module, or another future data
 module, without duplicating shadow-split logic.
 
-## Running it
+## Running the first-round attack
 
 ```bash
-uv run python -m experiments.cia.runner --output-dir experiments/cia/results
+uv run python -m experiments.cia.scripts.runner --output-dir results/cia/first_round
 ```
 
 This takes a while: 18 real training runs, each downloading/reusing the
 cached Alzheimer MRI dataset and training 3 clients for 20 local epochs.
-Results are written to `experiments/cia/results/first_round_cia.json` and
-printed to stdout.
+Results are written to `<output-dir>/first_round_cia.json` and printed to
+stdout.
+
+## Multi-round CIA (Table 13)
+
+The multi-round runner trains a matched pair of 20-round FedAvg trajectories
+for each privacy mode:
+
+- **IN:** source clients 1, 2, and target client 3 participate.
+- **OUT:** source clients 1 and 2 participate; client 3 is removed without
+  repartitioning either remaining client's data.
+
+At every round, the checkpoint is evaluated on the same deterministic,
+stratified 10% shadow split of client 3's training data. Gaussian noise with
+standard deviation 20% of each image's maximum pixel value is applied only to
+the shadow view, never to federated training or utility evaluation. The
+per-round score is `-mean_shadow_loss`. The reported AUC ranks the 20 IN scores
+against the 20 OUT scores, and its 95% interval is a stratified percentile
+bootstrap. Accuracy and weighted F1 are the aggregated client-test metrics,
+reported as mean and population standard deviation over rounds 16-20.
+
+```bash
+uv run python -m experiments.cia.scripts.multi_round
+```
+
+Outputs go to `results/cia/multi_round/`. The runner caches evaluated
+trajectories, atomically resumes completed privacy modes, and deletes the 20
+large model checkpoints after extracting each trajectory.
 
 ## 48-client checkpoint comparison
 
-The scalable CIA experiment now lives in `experiments/cia/client_scaling.py`.
+The scalable CIA experiment now lives in `experiments/cia/scripts/client_scaling.py`.
 It trains each 48-client trajectory once for 20 rounds with the concluded
 client-scaling settings (`local-epochs=5`, `noise-multiplier=0.05`) and
 retains checkpoints at rounds 1 and 20. Both attacks therefore evaluate the
 same model trajectory rather than independently training a one-round model.
 
 ```bash
-uv run python -m experiments.cia.client_scaling \
+uv run python -m experiments.cia.scripts.client_scaling \
   --output-dir results/cia_client_scaling
 ```
 
@@ -79,3 +100,55 @@ numeric parity is not expected (different hardware/library versions, and
 the paper doesn't specify all stochastic-seed details), but the qualitative
 pattern -- metric-privacy loss lower than global-DP loss, with comparable
 CIA protection -- should hold.
+
+## Colab CLI workflow
+
+`scripts/colab/run_experiment.py` runs a Python experiment module on a named
+Colab session, prints a live `nvidia-smi` snapshot while it trains, downloads
+the designated result directory, commits only that directory, pushes the
+current branch, and finally releases the VM. Git credentials never leave the
+local machine.
+
+The determinism check is a copy of the contest configuration with only seed
+42. It executes the three privacy configurations twice under distinct
+`check-determinism-run-1` and `check-determinism-run-2` names, then requires
+exact equality after removing only the deliberately different run name:
+
+```bash
+uv run python scripts/colab/run_experiment.py run \
+  --session cia-determinism \
+  --gpu L4 \
+  --module experiments.cia.scripts.check_determinism \
+  --results results/cia/check_determinism \
+  --commit-message "results(cia): add Colab determinism check"
+```
+
+The command stays attached so collection and pushing cannot be skipped. From
+another terminal, inspect the training log and GPU utilization at any time:
+
+```bash
+uv run python scripts/colab/run_experiment.py status --session cia-determinism
+```
+
+If local monitoring is interrupted, the remote supervisor keeps training.
+Resume the automatic collect/push/stop finalizer with:
+
+```bash
+uv run python scripts/colab/run_experiment.py wait --session cia-determinism
+```
+
+Use `collect` for a job that has already finished or `stop` to explicitly
+release an abandoned VM. Colab source archives exclude notebooks and are
+scanned for common GitHub-token and private-key formats before upload.
+
+Colab CLI 0.6.0 currently declares an unpinned `jupyter-kernel-client`
+dependency even though it uses an API from Google's fork. If `colab exec`
+fails with `jupyter_kernel_client` missing `KernelClient`, repair the tool
+environment once with:
+
+```bash
+uv pip install \
+  --python ~/.local/share/uv/tools/google-colab-cli/bin/python \
+  --reinstall \
+  "jupyter-kernel-client @ git+https://github.com/googlecolab/jupyter-kernel-client.git"
+```

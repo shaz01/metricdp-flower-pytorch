@@ -184,31 +184,3 @@ def make_server_loaders(
 def labels_from_records(dataset: Any, label_column: str = "label") -> np.ndarray:
     """Read integer labels from a column-addressable record dataset."""
     return np.asarray(dataset[label_column], dtype=np.int64)
-
-
-class NoisyDataset(Dataset[Sample]):
-    """Add deterministic Gaussian noise to tensor samples from any dataset.
-
-    ``std_fraction`` scales noise by each sample's maximum absolute value. The
-    same index always receives the same noise for a given seed, making shadow
-    and robustness experiments reproducible.
-    """
-
-    def __init__(self, dataset: Dataset[Sample], std_fraction: float, seed: int) -> None:
-        if std_fraction < 0:
-            raise ValueError("std_fraction must be non-negative.")
-        self.dataset = dataset
-        self.std_fraction = std_fraction
-        self.seed = seed
-
-    def __len__(self) -> int:
-        return len(self.dataset)
-
-    def __getitem__(self, index: int) -> Sample:
-        value, label = self.dataset[index]
-        if self.std_fraction == 0:
-            return value, label
-        generator = torch.Generator().manual_seed(self.seed + index)
-        scale = self.std_fraction * float(value.abs().max())
-        noise = torch.randn(value.shape, generator=generator, dtype=value.dtype)
-        return value + scale * noise, label

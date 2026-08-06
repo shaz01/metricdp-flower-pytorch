@@ -33,19 +33,20 @@ CLASS_NAMES = (
     "Trouser",
     "Pullover",
     "Dress",
-    "Coat",
-    "Sandal",
-    "Shirt",
-    "Sneaker",
-    "Bag",
-    "Ankle boot",
 )
+CLASS_IDS = tuple(range(len(CLASS_NAMES)))
+
 
 def load_fashion_mnist_dataset(
     cache_dir: str | Path | None = None,
 ) -> DatasetDict:
-    """Return the process-wide cached Fashion-MNIST dataset."""
-    return load_hf_dataset_cached(DATASET_ID, cache_dir)
+    """Return Fashion-MNIST filtered to the four supported classes."""
+    dataset = load_hf_dataset_cached(DATASET_ID, cache_dir)
+    return dataset.filter(
+        lambda label: label in CLASS_IDS,
+        input_columns=["label"],
+        desc="Filtering Fashion-MNIST to four classes",
+    )
 
 
 _FASHION_MNIST_IMAGE_TRANSFORM = grayscale_image_transform(IMAGE_SIZE)

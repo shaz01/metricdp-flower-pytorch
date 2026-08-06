@@ -1,0 +1,142 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1.9cm,landscape]{geometry}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.15}
+
+\title{Reproduction of the Paper's Table~6}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{table}[h]
+\centering
+\caption{Paper, Table 6.}
+\begin{tabular}{l ccc ccc ccc}
+\toprule
+& \multicolumn{3}{c}{\emph{Vanilla FL}} & \multicolumn{3}{c}{\emph{Global-DP}} & \multicolumn{3}{c}{\emph{Metric-privacy}} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}
+\emph{Strategy} & \emph{Acc.} & \emph{F1} & \emph{Prec.} & \emph{Acc.} & \emph{F1} & \emph{Prec.} & \emph{Acc.} & \emph{F1} & \emph{Prec.} \\
+\midrule
+\emph{FedAvg} & 0.909 & 0.903 & 0.950 & 0.884 & 0.862 & 0.918 & 0.894 & 0.843 & 0.943 \\
+\emph{FedAvgM} & 0.884 & 0.768 & 0.932 & 0.762 & 0.554 & 0.607 & 0.823 & 0.608 & 0.631 \\
+\emph{FedMedian} & 0.932 & 0.899 & 0.946 & 0.875 & 0.827 & 0.913 & 0.895 & 0.843 & 0.943 \\
+\emph{FedProx} & 0.909 & 0.848 & 0.873 & 0.877 & 0.853 & 0.914 & 0.903 & 0.877 & 0.944 \\
+\emph{FedOpt} & 0.950 & 0.936 & 0.970 & 0.918 & 0.877 & 0.911 & 0.930 & 0.917 & 0.950 \\
+\emph{FedYogi} & 0.933 & 0.914 & 0.957 & 0.908 & 0.841 & 0.884 & 0.917 & 0.888 & 0.941 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Ours (mean $\pm$ std over 3 seeds).}
+\begin{tabular}{l ccc ccc ccc}
+\toprule
+& \multicolumn{3}{c}{\emph{Vanilla FL}} & \multicolumn{3}{c}{\emph{Global-DP}} & \multicolumn{3}{c}{\emph{Metric-privacy}} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}
+\emph{Strategy} & \emph{Acc.} & \emph{F1} & \emph{Prec.} & \emph{Acc.} & \emph{F1} & \emph{Prec.} & \emph{Acc.} & \emph{F1} & \emph{Prec.} \\
+\midrule
+\emph{FedAvg} & 0.951 {\scriptsize$\pm$\,0.004} & 0.950 {\scriptsize$\pm$\,0.004} & 0.951 {\scriptsize$\pm$\,0.004} & 0.942 {\scriptsize$\pm$\,0.004} & 0.942 {\scriptsize$\pm$\,0.004} & 0.942 {\scriptsize$\pm$\,0.004} & 0.945 {\scriptsize$\pm$\,0.007} & 0.945 {\scriptsize$\pm$\,0.007} & 0.945 {\scriptsize$\pm$\,0.007} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Difference (ours $-$ paper).}
+\begin{tabular}{l ccc ccc ccc}
+\toprule
+& \multicolumn{3}{c}{\emph{Vanilla FL}} & \multicolumn{3}{c}{\emph{Global-DP}} & \multicolumn{3}{c}{\emph{Metric-privacy}} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}
+\emph{Strategy} & $\Delta$Acc. & $\Delta$F1 & $\Delta$Prec. & $\Delta$Acc. & $\Delta$F1 & $\Delta$Prec. & $\Delta$Acc. & $\Delta$F1 & $\Delta$Prec. \\
+\midrule
+\emph{FedAvg} & +0.042 & +0.047 & +0.001 & +0.058 & +0.080 & +0.024 & +0.051 & +0.102 & +0.002 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Ours, macro-averaged F1/precision.}
+\begin{tabular}{l ccc ccc ccc}
+\toprule
+& \multicolumn{3}{c}{\emph{Vanilla FL}} & \multicolumn{3}{c}{\emph{Global-DP}} & \multicolumn{3}{c}{\emph{Metric-privacy}} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}
+\emph{Strategy} & \emph{Acc.} & \emph{F1} & \emph{Prec.} & \emph{Acc.} & \emph{F1} & \emph{Prec.} & \emph{Acc.} & \emph{F1} & \emph{Prec.} \\
+\midrule
+\emph{FedAvg} & 0.951 {\scriptsize$\pm$\,0.004} & 0.936 {\scriptsize$\pm$\,0.006} & 0.936 {\scriptsize$\pm$\,0.027} & 0.942 {\scriptsize$\pm$\,0.004} & 0.946 {\scriptsize$\pm$\,0.007} & 0.955 {\scriptsize$\pm$\,0.004} & 0.945 {\scriptsize$\pm$\,0.007} & 0.941 {\scriptsize$\pm$\,0.011} & 0.959 {\scriptsize$\pm$\,0.004} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\clearpage
+\begin{table}[h]
+\centering
+\caption{Previous runs, \texttt{results/reproduce\_paper/} (homogeneous, noise 0.01,
+mean $\pm$ std over 5 seeds).}
+\begin{tabular}{l ccc ccc ccc}
+\toprule
+& \multicolumn{3}{c}{\emph{Vanilla FL}} & \multicolumn{3}{c}{\emph{Global-DP}} & \multicolumn{3}{c}{\emph{Metric-privacy}} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}
+\emph{Strategy} & \emph{Acc.} & \emph{F1} & \emph{Prec.} & \emph{Acc.} & \emph{F1} & \emph{Prec.} & \emph{Acc.} & \emph{F1} & \emph{Prec.} \\
+\midrule
+\emph{FedAvg} & 0.958 {\scriptsize$\pm$\,0.012} & 0.958 {\scriptsize$\pm$\,0.012} & 0.959 {\scriptsize$\pm$\,0.011} & 0.942 {\scriptsize$\pm$\,0.012} & 0.942 {\scriptsize$\pm$\,0.012} & 0.943 {\scriptsize$\pm$\,0.012} & 0.945 {\scriptsize$\pm$\,0.009} & 0.945 {\scriptsize$\pm$\,0.009} & 0.945 {\scriptsize$\pm$\,0.009} \\
+\emph{FedAvgM} & 0.919 {\scriptsize$\pm$\,0.017} & 0.918 {\scriptsize$\pm$\,0.017} & 0.921 {\scriptsize$\pm$\,0.016} & 0.777 {\scriptsize$\pm$\,0.027} & 0.773 {\scriptsize$\pm$\,0.029} & 0.773 {\scriptsize$\pm$\,0.030} & 0.792 {\scriptsize$\pm$\,0.020} & 0.787 {\scriptsize$\pm$\,0.024} & 0.788 {\scriptsize$\pm$\,0.026} \\
+\emph{FedMedian} & 0.947 {\scriptsize$\pm$\,0.008} & 0.947 {\scriptsize$\pm$\,0.007} & 0.947 {\scriptsize$\pm$\,0.007} & 0.944 {\scriptsize$\pm$\,0.006} & 0.944 {\scriptsize$\pm$\,0.006} & 0.944 {\scriptsize$\pm$\,0.006} & 0.944 {\scriptsize$\pm$\,0.008} & 0.944 {\scriptsize$\pm$\,0.007} & 0.945 {\scriptsize$\pm$\,0.007} \\
+\emph{FedProx} & 0.550 {\scriptsize$\pm$\,0.014} & 0.508 {\scriptsize$\pm$\,0.015} & 0.474 {\scriptsize$\pm$\,0.017} & 0.549 {\scriptsize$\pm$\,0.018} & 0.506 {\scriptsize$\pm$\,0.027} & 0.499 {\scriptsize$\pm$\,0.076} & 0.496 {\scriptsize$\pm$\,0.001} & 0.329 {\scriptsize$\pm$\,0.002} & 0.317 {\scriptsize$\pm$\,0.161} \\
+\emph{FedOpt} & 0.411 {\scriptsize$\pm$\,0.077} & 0.272 {\scriptsize$\pm$\,0.075} & 0.210 {\scriptsize$\pm$\,0.078} & 0.495 {\scriptsize$\pm$\,0.000} & 0.328 {\scriptsize$\pm$\,0.000} & 0.245 {\scriptsize$\pm$\,0.000} & -- & -- & -- \\
+\emph{FedYogi} & 0.951 {\scriptsize$\pm$\,0.016} & 0.953 {\scriptsize$\pm$\,0.014} & 0.956 {\scriptsize$\pm$\,0.012} & 0.947 {\scriptsize$\pm$\,0.012} & 0.947 {\scriptsize$\pm$\,0.012} & 0.947 {\scriptsize$\pm$\,0.012} & 0.952 {\scriptsize$\pm$\,0.010} & 0.952 {\scriptsize$\pm$\,0.010} & 0.953 {\scriptsize$\pm$\,0.009} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Previous runs, macro-averaged F1/precision.}
+\begin{tabular}{l ccc ccc ccc}
+\toprule
+& \multicolumn{3}{c}{\emph{Vanilla FL}} & \multicolumn{3}{c}{\emph{Global-DP}} & \multicolumn{3}{c}{\emph{Metric-privacy}} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}
+\emph{Strategy} & \emph{Acc.} & \emph{F1} & \emph{Prec.} & \emph{Acc.} & \emph{F1} & \emph{Prec.} & \emph{Acc.} & \emph{F1} & \emph{Prec.} \\
+\midrule
+\emph{FedAvg} & 0.958 {\scriptsize$\pm$\,0.012} & 0.939 {\scriptsize$\pm$\,0.040} & 0.933 {\scriptsize$\pm$\,0.059} & 0.942 {\scriptsize$\pm$\,0.012} & 0.936 {\scriptsize$\pm$\,0.022} & 0.947 {\scriptsize$\pm$\,0.026} & 0.945 {\scriptsize$\pm$\,0.009} & 0.941 {\scriptsize$\pm$\,0.025} & 0.957 {\scriptsize$\pm$\,0.011} \\
+\emph{FedAvgM} & 0.919 {\scriptsize$\pm$\,0.017} & 0.863 {\scriptsize$\pm$\,0.078} & 0.937 {\scriptsize$\pm$\,0.015} & 0.777 {\scriptsize$\pm$\,0.027} & 0.603 {\scriptsize$\pm$\,0.097} & 0.621 {\scriptsize$\pm$\,0.134} & 0.792 {\scriptsize$\pm$\,0.020} & 0.661 {\scriptsize$\pm$\,0.124} & 0.684 {\scriptsize$\pm$\,0.151} \\
+\emph{FedMedian} & 0.947 {\scriptsize$\pm$\,0.008} & 0.945 {\scriptsize$\pm$\,0.012} & 0.947 {\scriptsize$\pm$\,0.012} & 0.944 {\scriptsize$\pm$\,0.006} & 0.940 {\scriptsize$\pm$\,0.014} & 0.954 {\scriptsize$\pm$\,0.006} & 0.944 {\scriptsize$\pm$\,0.008} & 0.942 {\scriptsize$\pm$\,0.010} & 0.947 {\scriptsize$\pm$\,0.020} \\
+\emph{FedProx} & 0.550 {\scriptsize$\pm$\,0.014} & 0.289 {\scriptsize$\pm$\,0.009} & 0.269 {\scriptsize$\pm$\,0.009} & 0.549 {\scriptsize$\pm$\,0.018} & 0.289 {\scriptsize$\pm$\,0.019} & 0.318 {\scriptsize$\pm$\,0.119} & 0.496 {\scriptsize$\pm$\,0.001} & 0.166 {\scriptsize$\pm$\,0.001} & 0.174 {\scriptsize$\pm$\,0.112} \\
+\emph{FedOpt} & 0.411 {\scriptsize$\pm$\,0.077} & 0.157 {\scriptsize$\pm$\,0.024} & 0.120 {\scriptsize$\pm$\,0.035} & 0.495 {\scriptsize$\pm$\,0.000} & 0.166 {\scriptsize$\pm$\,0.000} & 0.124 {\scriptsize$\pm$\,0.000} & -- & -- & -- \\
+\emph{FedYogi} & 0.951 {\scriptsize$\pm$\,0.016} & 0.911 {\scriptsize$\pm$\,0.076} & 0.907 {\scriptsize$\pm$\,0.079} & 0.947 {\scriptsize$\pm$\,0.012} & 0.927 {\scriptsize$\pm$\,0.028} & 0.948 {\scriptsize$\pm$\,0.019} & 0.952 {\scriptsize$\pm$\,0.010} & 0.952 {\scriptsize$\pm$\,0.014} & 0.961 {\scriptsize$\pm$\,0.015} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Per-seed final-model test metrics.}
+\begin{tabular}{l l c ccc ccc c}
+\toprule
+& & & \multicolumn{3}{c}{Weighted avg.} & \multicolumn{3}{c}{Macro avg.} & \\
+\cmidrule(lr){4-6}\cmidrule(lr){7-9}
+Mechanism & Strategy & Seed & Acc. & F1 & Prec. & F1 & Prec. & Rec. & Log-loss \\
+\midrule
+Vanilla FL & FedAvg & 42 & 0.9547 & 0.9546 & 0.9553 & 0.9287 & 0.9126 & 0.9527 & 0.1992 \\
+Vanilla FL & FedAvg & 43 & 0.9469 & 0.9469 & 0.9471 & 0.9410 & 0.9295 & 0.9548 & 0.2977 \\
+Vanilla FL & FedAvg & 44 & 0.9500 & 0.9497 & 0.9505 & 0.9372 & 0.9656 & 0.9130 & 0.2901 \\
+\midrule
+Global-DP & FedAvg & 42 & 0.9391 & 0.9389 & 0.9391 & 0.9491 & 0.9542 & 0.9445 & 0.2432 \\
+Global-DP & FedAvg & 43 & 0.9406 & 0.9407 & 0.9410 & 0.9502 & 0.9514 & 0.9492 & 0.2801 \\
+Global-DP & FedAvg & 44 & 0.9469 & 0.9468 & 0.9469 & 0.9380 & 0.9602 & 0.9187 & 0.2650 \\
+\midrule
+Metric-privacy & FedAvg & 42 & 0.9500 & 0.9497 & 0.9498 & 0.9335 & 0.9573 & 0.9130 & 0.2287 \\
+Metric-privacy & FedAvg & 43 & 0.9375 & 0.9375 & 0.9376 & 0.9533 & 0.9568 & 0.9501 & 0.2861 \\
+Metric-privacy & FedAvg & 44 & 0.9484 & 0.9481 & 0.9489 & 0.9367 & 0.9642 & 0.9131 & 0.2843 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}

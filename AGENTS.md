@@ -23,15 +23,6 @@ Federated learning + differential privacy research repo built on Flower and PyTo
 ## Linting
 
 No enforced or configured lint pipeline exists (no `[tool.ruff]`, no `ruff.toml`, ruff isn't in `uv.lock`). `.ruff_cache/` is leftover from ad hoc `uvx ruff` runs, not a project dependency. Don't assume a lint gate exists, and don't invent lint config unprompted.
-
-## Running experiments
-
-- Smoke test: `uv run python -m experiments.reproduce.runner --smoke --seed 42 --noise-multiplier 0.01 --clipping-norm 5.0 --rounds 20 --local-epochs 5`
-- Full run: `uv run python -m experiments.reproduce.runner --partition <homogeneous|non-iid> --privacy <vanilla|global-dp|metric-privacy> --aggregation <fedavg|fedavgm|fedmedian|fedprox|fedopt|fedyogi> --rounds 20 --local-epochs 5 --seed 42 --noise-multiplier 0.01 --clipping-norm 5.0`
-- Matrix run: `uv run python -m experiments.reproduce.matrix ...`
-- CIA experiment: `uv run python -m experiments.cia.runner ...`
-- Registered Flower App: `uv run flwr run . --stream`
-
 See `README.md` and each experiment's own `README.md` (where present) for full flag references.
 
 ## Repo structure
@@ -55,11 +46,3 @@ See `README.md` and each experiment's own `README.md` (where present) for full f
 - Once an experiment is finished: merge its branch into `master` (organizing its code into `experiments/<name>/` and its results into `results/<name>/` if not already structured that way), run the test suite to confirm the merge is clean, then delete the branch both locally and on `origin` (`git branch -d`, `git push origin --delete`). Don't leave fully-merged branches lying around.
 - Prefer a real `git merge` over rebase/squash for finished experiment branches — it preserves each experiment's actual commit history.
 - **Never add a `Co-Authored-By` trailer to commits.** This is a strict, explicit rule from the project owner.
-
-## Working across machines
-
-- This project runs across multiple machines (this repo has no built-in cross-machine session sync — each machine's Claude Code install is independent, keyed by its own local project path). Compensate with a habit, not a tool.
-- **Session start**: before making any changes, read `STATUS.md` and skim recent history (`git log --oneline -10`) to pick up state left by other machines/sessions.
-- **Session end**: when a meaningful chunk of work wraps up (same granularity as "worth a commit" — not every message), update `STATUS.md`'s Active work section — current state, what's running where (the Currently running table), next steps — refresh the "Last updated" line, then commit and push. This Active-work-section update is more frequent than `STATUS.md`'s own top-level "whenever a branch merges into master" rule, which still governs the rest of the file.
-- `docs/RESEARCH_ROADMAP.md` is gitignored and doesn't travel via `git pull`; if it changes, copy it to other machines manually.
-- Track "what's running where" in `STATUS.md`'s Currently running table using generic machine-role labels (e.g. "CUDA workstation", "CUDA laptop") — never hostnames, IPs, or usernames, in this or any other committed doc.

@@ -1,0 +1,242 @@
+\documentclass[10pt]{article}
+\usepackage[a4paper,landscape,margin=1.7cm]{geometry}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{caption}
+\usepackage{microtype}
+\usepackage{graphicx}
+\captionsetup{font=small,labelfont=bf}
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.18}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+
+\title{CIFAR-10 Client Inference Attack: Transfer Report}
+\author{Planned-run results}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\section*{Scope and protocol}
+FedAvg is evaluated for 20 communication rounds and 5 local epochs on the non-i.i.d. CIFAR-10 split.
+The IN condition has three active clients; the OUT condition removes the target and has two.
+Results use seeds 42--44, a 10\% target shadow split, noise multiplier 0.01, clipping norm 5,
+and both clean and Gaussian-perturbed shadow data (standard deviation 20\% of the maximum pixel value).
+Attack scores follow the paper: $s_r=-\mathcal{L}(W^{(r)},D_x)$.
+The noisy column is the paper-faithful configuration for the multi-round attack (10\% split of the
+target's training data perturbed at 20\% of the maximum pixel value); the clean column is an
+additional strong-adversary reference of ours. Both shadow variants were verified to contain the same
+150 target examples in the IN and OUT conditions, with an identical, deterministic noise draw, so the
+two conditions differ only in whether the target participates in training.
+
+\section*{Client data distribution}
+This CIFAR-10 transfer experiment reuses the corrected three-client count profile from the paper's Table 9, but maps its four columns to the CIFAR-10 classes shown below.
+
+\begin{table}[h]
+\centering
+\caption{Canonical examples assigned to each client. Parentheses show within-client class percentages.}
+\begin{tabular}{clccrrrrr}
+\toprule
+Client & Role & IN & OUT & Total & airplane & automobile & bird & cat \\
+\midrule
+1 & Attacker & yes & yes & 1747 & 120 (6.9\%) & 9 (0.5\%) & 1122 (64.2\%) & 496 (28.4\%) \\
+2 & Bystander & yes & yes & 1491 & 80 (5.4\%) & 11 (0.7\%) & 894 (60.0\%) & 506 (33.9\%) \\
+3 & Target & yes & no & 1882 & 524 (27.8\%) & 29 (1.5\%) & 550 (29.2\%) & 779 (41.4\%) \\
+\midrule
+All & Canonical pool & & & 5120 & 724 (14.1\%) & 49 (1.0\%) & 2566 (50.1\%) & 1781 (34.8\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Examples actually used for local training after the deterministic stratified 80/20 split.}
+\begin{tabular}{clrrrrrr}
+\toprule
+Client & Role & Train total & airplane & automobile & bird & cat & Local evaluation total \\
+\midrule
+1 & Attacker & 1397 & 96 & 7 & 897 & 397 & 350 \\
+2 & Bystander & 1192 & 64 & 9 & 715 & 404 & 299 \\
+3 & Target & 1505 & 419 & 23 & 440 & 623 & 377 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{How non-IID is it?} Total-variation distance from the canonical global class distribution is
+0.141 for Client 1, 0.098 for Client 2, and 0.209 for the target.
+Pairwise distance is only 0.058 between Clients 1 and 2, but rises to
+0.350 between Clients 1 and 3 and 0.307 between Clients 2 and 3.
+Thus, the split is deliberately target-skewed rather than uniformly heterogeneous: the attacker and
+bystander are close to each other, while the target is meaningfully different. The target has 27.8\% airplane
+and 29.2\% bird examples, versus 5.4--6.9\% airplane and 60.0--64.2\% bird for the other clients.
+The automobile class remains rare everywhere (0.5--1.5\%), so it contributes little to the heterogeneity signal.
+
+\section*{Single-round CIA}
+
+\begin{table}[h]
+\centering
+\caption{Published Alzheimer reference (Tables 10 and 12); shown for protocol context only, not as a CIFAR-10 baseline. The target loss is measured on the clean shadow data.}
+\begin{tabular}{lrrrr}
+\toprule
+Approach & Aggregated loss & Target loss & Difference (\%) & Test loss \\
+\midrule
+Vanilla FL & 1.032 & 1.182 & 12.719 & 1.010 \\
+Global-DP & 3.603 & 4.848 & 25.679 & 3.514 \\
+Metric-privacy & 1.135 & 1.506 & 24.631 & 1.106 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Ours, first-round IN condition (mean $\pm$ sample std over three seeds).}
+\begin{tabular}{lrrrrr}
+\toprule
+Approach & Aggregated loss & Clean target & Clean diff. (\%) & Noisy target & Noisy diff. (\%) \\
+\midrule
+Vanilla FL & 1.435 {\scriptsize$\pm$\,0.045} & 1.194 {\scriptsize$\pm$\,0.048} & -20.266 {\scriptsize$\pm$\,6.616} & 1.200 {\scriptsize$\pm$\,0.033} & -19.624 {\scriptsize$\pm$\,5.762} \\
+Global-DP & 1.426 {\scriptsize$\pm$\,0.023} & 1.211 {\scriptsize$\pm$\,0.018} & -17.823 {\scriptsize$\pm$\,0.762} & 1.209 {\scriptsize$\pm$\,0.003} & -17.966 {\scriptsize$\pm$\,1.942} \\
+Metric-privacy & 1.426 {\scriptsize$\pm$\,0.023} & 1.208 {\scriptsize$\pm$\,0.021} & -18.054 {\scriptsize$\pm$\,0.879} & 1.207 {\scriptsize$\pm$\,0.004} & -18.118 {\scriptsize$\pm$\,1.857} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\clearpage
+\begin{figure}[p]
+\centering
+\includegraphics[width=0.96\textwidth]{results/planned_runs/cifar/cifar-cia-score-trajectories.png}
+\caption{CIA score trajectories. Each panel uses raw scores $s_r=-\mathcal{L}(W^{(r)},D_x)$ and
+the shared y-axis range $[-4, 0.2]$.}
+\end{figure}
+
+\clearpage
+\begin{figure}[p]
+\centering
+\includegraphics[width=0.94\textwidth]{results/planned_runs/cifar/cifar-metric-dp-distance-trajectories.png}
+\caption{Metric-privacy maximum pairwise client-model distance recorded before each server aggregation.}
+\end{figure}
+
+\clearpage
+\section*{Multi-round CIA}
+The directional ROC AUC estimates the probability that an IN score ranks above an OUT score.
+The paper reports one set of 20 IN and 20 OUT round scores. Our per-seed estimates use the same
+20-versus-20 construction; the pooled summary combines all three seeds (60 IN and 60 OUT scores).
+Confidence intervals are deterministic 95\% percentile intervals from 10,000 stratified bootstrap resamples.
+Those intervals resample rounds as if they were independent draws, which they are not: the 20 scores of a
+run form one autocorrelated trajectory and the real replication unit is the seed ($n=3$). The reported
+intervals are therefore optimistic and should be read as paper-comparable, not as calibrated coverage.
+
+\begin{table}[h]
+\centering
+\caption{Published Alzheimer reference (Table 13); shown for protocol context only, not as a CIFAR-10 baseline. The attack uses noisy shadow data.}
+\begin{tabular}{lccrrrr}
+\toprule
+Approach & Attack AUC (95\% CI) & & Acc. IN & Acc. OUT & F1 IN & F1 OUT \\
+\midrule
+Vanilla FL & 0.890 (0.767, 0.977) & & 0.948 $\pm$ 0.007 & 0.894 $\pm$ 0.007 & 0.930 $\pm$ 0.006 & 0.729 $\pm$ 0.024 \\
+Global-DP & 0.397 (0.224, 0.585) & & 0.637 $\pm$ 0.009 & 0.680 $\pm$ 0.026 & 0.426 $\pm$ 0.018 & 0.400 $\pm$ 0.008 \\
+Metric-privacy & 0.493 (0.296, 0.689) & & 0.794 $\pm$ 0.023 & 0.746 $\pm$ 0.029 & 0.695 $\pm$ 0.035 & 0.480 $\pm$ 0.022 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Ours, pooled across seeds. Utility is mean $\pm$ sample std over rounds 16--20 and all three seeds.}
+\begin{tabular}{lccrrrr}
+\toprule
+Approach & Clean AUC (95\% CI) & Noisy AUC (95\% CI) & Acc. IN & Acc. OUT & F1 IN & F1 OUT \\
+\midrule
+Vanilla FL & 0.978 (0.954, 0.995) & 0.769 (0.681, 0.851) & 0.627 {\scriptsize$\pm$\,0.021} & 0.529 {\scriptsize$\pm$\,0.021} & 0.610 {\scriptsize$\pm$\,0.026} & 0.477 {\scriptsize$\pm$\,0.027} \\
+Global-DP & 0.987 (0.971, 0.999) & 0.714 (0.618, 0.801) & 0.597 {\scriptsize$\pm$\,0.031} & 0.494 {\scriptsize$\pm$\,0.024} & 0.578 {\scriptsize$\pm$\,0.042} & 0.445 {\scriptsize$\pm$\,0.035} \\
+Metric-privacy & 0.988 (0.971, 0.998) & 0.722 (0.629, 0.808) & 0.604 {\scriptsize$\pm$\,0.024} & 0.507 {\scriptsize$\pm$\,0.047} & 0.584 {\scriptsize$\pm$\,0.032} & 0.464 {\scriptsize$\pm$\,0.062} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Interpretation.} Clean-shadow access produces strong separation for every approach.
+For noisy-shadow access, metric-privacy and global-DP also remain far above 0.5 in this Alzheimer setup;
+neither reproduces the near-random multi-round behavior reported by the paper. Because this is a directional
+AUC, values below 0.5 indicate reversed score ordering and can still be exploitable if an attacker is allowed
+to invert the decision rule.
+
+\clearpage
+\section*{Why the pooled score inverts the clean/noisy ordering}
+The pooled 20-versus-20 AUC ranks every IN checkpoint against every OUT checkpoint, including pairs from
+different communication rounds. Raw shadow loss changes by an order of magnitude over training, so the round
+index, not membership, dominates most of those comparisons. The two shadow variants drift in opposite
+directions: with clean shadow data the OUT loss keeps falling as the two remaining clients converge and drops
+below the IN loss of rounds 1--5, whereas with noisy shadow data the OUT loss grows as the model becomes
+confidently wrong on perturbed inputs, so no late OUT checkpoint can outrank an early IN checkpoint.
+
+For metric-privacy, 1.2\% of pooled pairs are discordant with clean shadow data but only
+27.8\% with noisy shadow data. Restricted to matched rounds the ordering reverses
+(1.7\% discordant clean versus 18.3\% noisy), and
+every clean discordant pair comes from an IN checkpoint that is earlier than its OUT counterpart
+(2.5\% of those pairs are discordant). The pooled clean AUC is thus penalised for a
+training-trajectory effect, not for a weaker membership signal.
+
+\begin{table}[h]
+\centering
+\caption{Score-construction diagnostics. ``Round-matched'' compares IN and OUT only at identical
+(seed, round) checkpoints. ``Aggregate-referenced'' keeps the paper's pooling but scores the
+attacker-observable relative difference between the aggregated test loss and the shadow loss
+(Tables 10--11), which removes the round-wise drift of the global model.}
+\begin{tabular}{llrrr}
+\toprule
+Approach & Shadow & Pooled 20$\times$20 AUC & Round-matched AUC & Aggregate-referenced AUC \\
+\midrule
+Vanilla FL & clean & 0.978 & 0.983 & 0.911 \\
+Vanilla FL & noisy & 0.769 & 0.900 & 0.487 \\
+\midrule
+Global-DP & clean & 0.987 & 0.983 & 0.897 \\
+Global-DP & noisy & 0.714 & 0.783 & 0.386 \\
+\midrule
+Metric-privacy & clean & 0.988 & 0.983 & 0.898 \\
+Metric-privacy & noisy & 0.722 & 0.817 & 0.453 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Under both confound-free constructions, noise weakens the attack exactly as expected. Round-matched, clean
+shadow data is never worse than noisy shadow data for any mechanism. With the aggregate-referenced score, clean access
+stays near-perfect (0.897--0.911 across the three mechanisms) while noisy access falls to
+0.487 for vanilla FL, 0.386 for global-DP, and
+0.453 for metric-privacy --- and the vanilla value lands on the near-random
+regime the paper reports. The conclusion to draw from this experiment is therefore about the metric: the paper's
+pooled multi-round AUC is not a pure membership statistic, because it lets the round index leak into the
+ranking.
+
+\clearpage
+\section*{Per-seed multi-round attack results}
+\begin{table}[h]
+\centering
+\caption{Paper-comparable 20-round AUC estimates for each matched IN/OUT seed pair.}
+\begin{tabular}{lcrr}
+\toprule
+Approach & Seed & Clean AUC (95\% CI) & Noisy AUC (95\% CI) \\
+\midrule
+Vanilla FL & 42 & 0.983 (0.940, 1.000) & 0.782 (0.620, 0.910) \\
+Vanilla FL & 43 & 0.980 (0.930, 1.000) & 0.677 (0.497, 0.843) \\
+Vanilla FL & 44 & 0.983 (0.943, 1.000) & 0.843 (0.700, 0.948) \\
+\midrule
+Global-DP & 42 & 0.988 (0.950, 1.000) & 0.853 (0.725, 0.953) \\
+Global-DP & 43 & 0.983 (0.943, 1.000) & 0.540 (0.355, 0.725) \\
+Global-DP & 44 & 0.990 (0.963, 1.000) & 0.725 (0.552, 0.875) \\
+\midrule
+Metric-privacy & 42 & 0.985 (0.950, 1.000) & 0.868 (0.740, 0.968) \\
+Metric-privacy & 43 & 0.988 (0.955, 1.000) & 0.568 (0.383, 0.755) \\
+Metric-privacy & 44 & 0.993 (0.970, 1.000) & 0.775 (0.613, 0.907) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section*{Data provenance}
+All ``ours'' values are computed directly from the CIFAR-10 IN/OUT artifacts under
+\texttt{results/planned\_runs/cifar}. Published reference values are transcribed from
+Sainz-Pardo Diaz et al., \emph{Metric-privacy-inspired noise calibration in federated learning:
+Improving convergence and preventing client inference attacks}, Tables 10, 12, and 13.
+
+\end{document}

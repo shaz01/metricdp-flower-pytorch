@@ -1,0 +1,106 @@
+\documentclass[10pt,a4paper,landscape]{article}
+\usepackage[margin=13mm]{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{caption}
+\pagestyle{plain}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.20}
+\begin{document}
+\begin{center}
+{\LARGE\bfseries CIFAR-10 noise-ratio sweep and 48-client validation}\\[4pt]
+{\small IN-replace \quad non-IID \quad FedAvg \quad seed 42 \quad 20 rounds \quad 5 local epochs \quad clipping norm 5.0}
+\end{center}
+
+\begin{table}[h]
+\centering
+\caption*{\bfseries Recorded configuration}
+\begin{tabular}{lcc}
+\toprule
+& 3-client sweep & 48-client validation \\
+\midrule
+Active / canonical clients & 3 / 4 & 48 / 49 \\
+Dataset / server test & 4-class CIFAR-10 / 2,000 examples & 4-class CIFAR-10 / 2,000 examples \\
+Privacy modes & Vanilla, Global-DP, Metric-privacy & Vanilla, Global-DP, Metric-privacy \\
+Noise ratios & 0.002500, 0.003333, 0.006250 & 0.002500, 0.003333, 0.006250 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption*{\bfseries Noise calibration: ratio = noise multiplier / active clients; sigma = ratio $\times$ 5}
+\begin{tabular}{rrrr}
+\toprule
+Ratio & 3-client multiplier & 48-client multiplier & Applied sigma \\
+\midrule
+0.002500 & 0.007500 & 0.120000 & 0.012500 \\
+0.003333 & 0.009999 & 0.159984 & 0.016665 \\
+0.006250 & 0.018750 & 0.300000 & 0.031250 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption*{\bfseries Final server-test metrics: 3 active clients}
+\scriptsize
+\begin{tabular}{llrrrrrrl}
+\toprule
+Privacy & Ratio & Multiplier & Accuracy & Macro F1 & Log loss & Macro OVR AUC & Accuracy at rounds 1 / 5 / 10 / 15 / 20 \\
+\midrule
+Vanilla & -- & 0.010000 & 0.8135 & 0.8129 & 1.0808 & 0.9544 & 0.6690 / 0.8155 / 0.8160 / 0.8160 / 0.8135 \\
+Global-DP & 0.002500 & 0.007500 & 0.8140 & 0.8146 & 0.8537 & 0.9535 & 0.4795 / 0.8100 / 0.8070 / 0.8230 / 0.8140 \\
+Metric-privacy & 0.002500 & 0.007500 & 0.8185 & 0.8189 & 0.9047 & 0.9539 & 0.4445 / 0.8130 / 0.8320 / 0.8250 / 0.8185 \\
+Global-DP & 0.003333 & 0.009999 & 0.8120 & 0.8132 & 0.8052 & 0.9519 & 0.4340 / 0.7900 / 0.7980 / 0.8260 / 0.8120 \\
+Metric-privacy & 0.003333 & 0.009999 & 0.8225 & 0.8224 & 0.8547 & 0.9524 & 0.4630 / 0.8200 / 0.8115 / 0.8230 / 0.8225 \\
+Global-DP & 0.006250 & 0.018750 & 0.6885 & 0.6943 & 1.2711 & 0.9095 & 0.2560 / 0.6890 / 0.6800 / 0.7880 / 0.6885 \\
+Metric-privacy & 0.006250 & 0.018750 & 0.8225 & 0.8230 & 0.7941 & 0.9553 & 0.4765 / 0.8025 / 0.8115 / 0.8260 / 0.8225 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+\begin{table}[h]
+\centering
+\caption*{\bfseries Final server-test metrics: 48 active clients}
+\scriptsize
+\begin{tabular}{llrrrrrrl}
+\toprule
+Privacy & Ratio & Multiplier & Accuracy & Macro F1 & Log loss & Macro OVR AUC & Accuracy at rounds 1 / 5 / 10 / 15 / 20 \\
+\midrule
+Vanilla & -- & 0.010000 & 0.8025 & 0.8016 & 0.5363 & 0.9503 & 0.4305 / 0.6435 / 0.7640 / 0.7940 / 0.8025 \\
+Global-DP & 0.002500 & 0.120000 & 0.7855 & 0.7870 & 0.5967 & 0.9434 & 0.4670 / 0.6715 / 0.7235 / 0.7685 / 0.7855 \\
+Metric-privacy & 0.002500 & 0.120000 & 0.7820 & 0.7826 & 0.6357 & 0.9391 & 0.4660 / 0.6575 / 0.7050 / 0.7580 / 0.7820 \\
+Global-DP & 0.003333 & 0.159984 & 0.7775 & 0.7790 & 0.6516 & 0.9378 & 0.4195 / 0.6580 / 0.6810 / 0.7575 / 0.7775 \\
+Metric-privacy & 0.003333 & 0.159984 & 0.7550 & 0.7565 & 0.7367 & 0.9288 & 0.4205 / 0.6445 / 0.6525 / 0.7470 / 0.7550 \\
+Global-DP & 0.006250 & 0.300000 & 0.6635 & 0.6619 & 1.0295 & 0.8898 & 0.3360 / 0.6230 / 0.4955 / 0.6335 / 0.6635 \\
+Metric-privacy & 0.006250 & 0.300000 & 0.6505 & 0.6457 & 1.0472 & 0.8778 & 0.3390 / 0.5900 / 0.5000 / 0.6570 / 0.6505 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+\begin{center}
+\includegraphics[width=0.75\textwidth]{cifar-noise-sweep-48-validation-accuracy.png}
+\end{center}
+
+\begin{table}[h]
+\centering
+\caption*{\bfseries Final-accuracy difference from vanilla (DP accuracy minus vanilla accuracy)}
+\begin{tabular}{lrrrr}
+\toprule
+Ratio & 3-client Global-DP & 3-client Metric-privacy & 48-client Global-DP & 48-client Metric-privacy \\
+\midrule
+0.002500 & +0.0005 & +0.0050 & -0.0170 & -0.0205 \\
+0.003333 & -0.0015 & +0.0090 & -0.0250 & -0.0475 \\
+0.006250 & -0.1250 & +0.0090 & -0.1390 & -0.1520 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vfill
+\begin{center}\small Source: \texttt{results/planned\_runs/cifar/noise\_sweep/} and \texttt{results/planned\_runs/cifar/validation\_48/}\end{center}
+\end{document}

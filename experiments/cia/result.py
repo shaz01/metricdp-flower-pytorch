@@ -9,6 +9,8 @@ from experiments.reproduce.matrix import Combo
 
 @dataclass(frozen=True)
 class CiaResult:
+    run_name: str
+    seed: int
     partition_mode: str
     num_clients: int
     privacy: str
@@ -16,13 +18,12 @@ class CiaResult:
     noise_multiplier: float
     server_round: int
     aggregated_test_loss: float
-    target_shadow_loss: float
+    target_clean_shadow_loss: float
+    target_noisy_shadow_loss: float
     shadow_fraction: float
     shadow_size: int
-    difference_pct: float
-    in_scores: list[float] | None = None
-    out_scores: list[float] | None = None
-    attack_auc: float | None = None
+    clean_difference_pct: float
+    noisy_difference_pct: float
 
 
 def relative_difference(aggregated_loss: float, target_loss: float) -> float:
@@ -37,14 +38,14 @@ def make_cia_result(
     combo: Combo,
     server_round: int,
     aggregated_test_loss: float,
-    target_shadow_loss: float,
+    target_clean_shadow_loss: float,
+    target_noisy_shadow_loss: float,
     shadow_fraction: float,
     shadow_size: int,
-    in_scores: list[float] | None = None,
-    out_scores: list[float] | None = None,
-    attack_auc: float | None = None,
 ) -> CiaResult:
     return CiaResult(
+        run_name=combo.run_name(),
+        seed=combo.seed,
         partition_mode=combo.partition,
         num_clients=combo.num_clients,
         privacy=combo.privacy,
@@ -52,11 +53,14 @@ def make_cia_result(
         noise_multiplier=combo.noise_multiplier,
         server_round=server_round,
         aggregated_test_loss=aggregated_test_loss,
-        target_shadow_loss=target_shadow_loss,
+        target_clean_shadow_loss=target_clean_shadow_loss,
+        target_noisy_shadow_loss=target_noisy_shadow_loss,
         shadow_fraction=shadow_fraction,
         shadow_size=shadow_size,
-        difference_pct=relative_difference(aggregated_test_loss, target_shadow_loss),
-        in_scores=in_scores,
-        out_scores=out_scores,
-        attack_auc=attack_auc,
+        clean_difference_pct=relative_difference(
+            aggregated_test_loss, target_clean_shadow_loss
+        ),
+        noisy_difference_pct=relative_difference(
+            aggregated_test_loss, target_noisy_shadow_loss
+        ),
     )
