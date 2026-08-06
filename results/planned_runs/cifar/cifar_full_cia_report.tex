@@ -1,0 +1,89 @@
+\documentclass[10pt,a4paper,landscape]{article}
+\usepackage[margin=17mm]{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.22}
+\begin{document}
+\begin{center}
+{\LARGE\bfseries CIFAR-10 full replacement CIA results}\\[4pt]
+{\small IN-replace / OUT-replace \quad non-IID \quad FedAvg \quad seeds 42, 43, 44 \quad 20 rounds \quad 5 local epochs}
+\end{center}
+\begin{table}[h]
+\centering
+\caption*{\bfseries Recorded coverage}
+\begin{tabular}{lccc}
+\toprule
+Active clients & 3 & 8 & 16 \\
+\midrule
+Variants per client count & Vanilla + 3 Global-DP + 3 Metric-privacy & Vanilla + 3 Global-DP + 3 Metric-privacy & Vanilla + 3 Global-DP + 3 Metric-privacy \\
+Noise ratios (DP) & 0.002500, 0.003333, 0.006250 & 0.002500, 0.003333, 0.006250 & 0.002500, 0.003333, 0.006250 \\
+Completed IN/OUT trajectories & 42 / 42 & 42 / 42 & 42 / 42 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\section*{3 active clients}
+\begin{table}[h]
+\centering
+\caption{Pooled 60 IN versus 60 OUT raw-loss ROC AUC; utility is the mean over rounds 16--20 and seeds 42--44.}
+\begin{tabular}{lllrrrrrr}
+\toprule
+Approach & Ratio & Noise multiplier & Clean AUC & Noisy AUC & Acc. IN & Acc. OUT & F1 IN & F1 OUT \\
+\midrule
+Vanilla & -- &  & 0.957 & 0.851 & 0.800 & 0.808 & 0.800 & 0.808 \\
+Global-DP & 0.002500 & 0.007500 & 0.882 & 0.759 & 0.800 & 0.808 & 0.799 & 0.808 \\
+Metric-privacy & 0.002500 & 0.007500 & 0.884 & 0.761 & 0.809 & 0.813 & 0.809 & 0.812 \\
+Global-DP & 0.003333 & 0.009999 & 0.886 & 0.703 & 0.799 & 0.798 & 0.799 & 0.798 \\
+Metric-privacy & 0.003333 & 0.009999 & 0.882 & 0.742 & 0.803 & 0.811 & 0.803 & 0.811 \\
+Global-DP & 0.006250 & 0.018750 & 0.892 & 0.559 & 0.734 & 0.736 & 0.731 & 0.735 \\
+Metric-privacy & 0.006250 & 0.018750 & 0.880 & 0.646 & 0.794 & 0.801 & 0.794 & 0.801 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\clearpage
+\section*{8 active clients}
+\begin{table}[h]
+\centering
+\caption{Pooled 60 IN versus 60 OUT raw-loss ROC AUC; utility is the mean over rounds 16--20 and seeds 42--44.}
+\begin{tabular}{lllrrrrrr}
+\toprule
+Approach & Ratio & Noise multiplier & Clean AUC & Noisy AUC & Acc. IN & Acc. OUT & F1 IN & F1 OUT \\
+\midrule
+Vanilla & -- &  & 0.892 & 0.728 & 0.822 & 0.815 & 0.822 & 0.815 \\
+Global-DP & 0.002500 & 0.020000 & 0.822 & 0.616 & 0.810 & 0.808 & 0.809 & 0.808 \\
+Metric-privacy & 0.002500 & 0.020000 & 0.827 & 0.592 & 0.814 & 0.818 & 0.814 & 0.818 \\
+Global-DP & 0.003333 & 0.026664 & 0.820 & 0.616 & 0.796 & 0.795 & 0.796 & 0.795 \\
+Metric-privacy & 0.003333 & 0.026664 & 0.815 & 0.598 & 0.808 & 0.811 & 0.807 & 0.811 \\
+Global-DP & 0.006250 & 0.050000 & 0.745 & 0.600 & 0.726 & 0.723 & 0.726 & 0.720 \\
+Metric-privacy & 0.006250 & 0.050000 & 0.814 & 0.618 & 0.776 & 0.781 & 0.776 & 0.780 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\clearpage
+\section*{16 active clients}
+\begin{table}[h]
+\centering
+\caption{Pooled 60 IN versus 60 OUT raw-loss ROC AUC; utility is the mean over rounds 16--20 and seeds 42--44.}
+\begin{tabular}{lllrrrrrr}
+\toprule
+Approach & Ratio & Noise multiplier & Clean AUC & Noisy AUC & Acc. IN & Acc. OUT & F1 IN & F1 OUT \\
+\midrule
+Vanilla & -- &  & 0.823 & 0.706 & 0.821 & 0.819 & 0.821 & 0.819 \\
+Global-DP & 0.002500 & 0.040000 & 0.804 & 0.467 & 0.801 & 0.804 & 0.801 & 0.804 \\
+Metric-privacy & 0.002500 & 0.040000 & 0.823 & 0.582 & 0.805 & 0.807 & 0.805 & 0.807 \\
+Global-DP & 0.003333 & 0.053328 & 0.759 & 0.501 & 0.788 & 0.790 & 0.788 & 0.790 \\
+Metric-privacy & 0.003333 & 0.053328 & 0.786 & 0.500 & 0.797 & 0.799 & 0.797 & 0.799 \\
+Global-DP & 0.006250 & 0.100000 & 0.652 & 0.583 & 0.711 & 0.702 & 0.707 & 0.697 \\
+Metric-privacy & 0.006250 & 0.100000 & 0.705 & 0.550 & 0.743 & 0.741 & 0.742 & 0.738 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\clearpage
+\begin{center}\includegraphics[width=0.94\textwidth]{results/planned_runs/cifar/cifar-full-pooled-auc.png}\end{center}
+\clearpage
+\begin{center}\includegraphics[width=0.94\textwidth]{results/planned_runs/cifar/cifar-full-metric-dp-distance.png}\end{center}
+\vfill
+\begin{center}\small Source: \texttt{results/planned\_runs/cifar/full/}\end{center}
+\end{document}
