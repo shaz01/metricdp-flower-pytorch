@@ -1,8 +1,8 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-08-05, CUDA workstation (fedyogi leg done too — redo's full matrix now
-complete) — see `git log` for anything more recent
+**Last updated:** 2026-08-06, CUDA workstation (`feature/scale-controlled-redo` merged and
+closed) — see `git log` for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -15,95 +15,19 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-`feature/scale-controlled-redo` (not yet merged) is redoing Phase 1 Part 1 (the constant-compute
-control sweep — `docs/RESEARCH_ROADMAP.md`) from scratch on CUDA hardware, now that two things
-changed since the last attempt:
-
-1. **A genuine non-determinism source was found and fixed on master**: Flower's own weighted
-   aggregation (`aggregate_arrayrecords`/`aggregate_metricrecords`) summed client replies in
-   network-arrival order, not a deterministic order — floating-point addition isn't associative,
-   so run-to-run arrival jitter produced small numeric drift that compounds over rounds. Fixed via
-   a `DeterministicReplyOrderMixin` (`metricdp_pytorch/strategy_factory.py`) and a matching fix in
-   `metricdp_pytorch/metrics.py`, sorting by the already-present per-reply `client-id` metric
-   before aggregating.
-2. Runs are moving off this Mac's MPS backend entirely, which has its own separate, unfixable
-   non-determinism (see `metricdp_pytorch/utils/device.py:resolve_device()`'s docstring) — onto
-   CUDA hardware instead.
-
-The old MPS-era v1 (rounds-fixed)/v2 (epoch-scaled) sweep attempts are archived at
-`results/archive/scale_controlled_mps_v1v2/` (see its `README.md`) rather than deleted, and
-`reports/archive/constant_compute_scaling_mps_v1v2.md` is the write-up they supported — both
-superseded, kept for historical comparison only.
-
-`sweep_scale_controlled.py`/`sweep_scale_controlled_epochs.py` gained `--client-counts` and
-`--aggregation-methods` override flags so the redo can be split across multiple machines instead
-of running the whole matrix sequentially on one box.
-
-**CUDA laptop (Windows, RTX 5070) dropped out of this redo** — first time this pipeline has been
-run on native Windows, and it hit a stack of platform issues, most not fixable in place:
-- `uv` wasn't installed; installed fine.
-- PyPI's default Windows `torch` wheel is CPU-only (unlike Linux) — fixed for good via a
-  `[tool.uv.sources]` override routing Windows to the PyTorch cu128 index (`pyproject.toml`/
-  `uv.lock`).
-- `sweep_scale_controlled.py`/`sweep_scale_controlled_epochs.py` were both silently broken since
-  the `feature/scaling-diagnosis` merge (missing `runner.py` args `5e22567` made required) — fixed
-  for every machine, not just this one.
-- `runner.py`'s `_launch_isolated` hardcoded a POSIX venv layout (`bin/python`) — fixed for good to
-  derive the interpreter path cross-platform.
-- **Not fixable without a full Windows reset, which is off the table on this machine**: (1) Ray has
-  no published wheel for Windows + Python 3.13 (`flwr[simulation]`'s own metadata already excludes
-  that combination) and (2) Windows' Smart App Control is Enforced on this machine and blocks the
-  unsigned `pyarrow`/`scipy` native DLLs the pipeline needs for dataset loading and evaluation —
-  by design, Microsoft doesn't allow disabling Smart App Control once Enforced except via a reset.
-  WSL2 (untested here) would likely route around both, since it's Linux underneath, but that's a
-  separate, not-yet-started effort, not this redo.
-
-The four fixes above are genuine and stay regardless; only the fedyogi leg itself didn't happen
-here. fedyogi at n=4/n=8 has since finished on the CUDA workstation (see below) — the redo's full
-matrix (fedavg n=4/8/48 + fedyogi n=4/8) is now complete.
-
-Along the way, the CUDA workstation independently hit and fixed the same
-`sweep_scale_controlled(_epochs)` missing-required-args bug the laptop found (both machines were
-bringing this branch up in parallel) — no functional difference, same fix landed either way.
-
-The CUDA workstation's fedavg matrix (client counts 4/8/48) finished clean: 24/24 combinations, 0
-failures, ~5h21m wall-clock. Result highlights vs the archived MPS baseline: 0 invalid-distance/
-collapsed-aggregation rounds anywhere (MPS had up to 239/240 invalid and 7-23 collapsed rounds per
-combo), smooth monotonic convergence at every client count instead of MPS's stuck-at-random-ish
-plateaus, and determinism confirmed directly (v1 and v2's n=4 combos, which share identical
-hyperparameters, produced bit-identical results from two independently-launched subprocesses).
-Also traced two apparent anomalies back to MPS's own non-determinism rather than a new-run problem:
-MPS's archived v1/v2 n=4 results disagree with each other despite identical config (diverging
-already at round 0, before any client aggregation), and the deterministic-reply-order fix
-(`DeterministicReplyOrderMixin`) turned out to cover every aggregation method including global-dp,
-not just metric-privacy — explaining why global-dp's own numbers jumped too. Not yet merged to
-`master` or written up in `reports/` — results are in `results/scale_controlled(_epochs)/` pending
-review.
-
-Picking up fedyogi also surfaced a second bug, this time in one of the laptop's own cross-platform
-fixes: `_launch_isolated`'s new venv-relative interpreter path (`aa72c2e`) `.resolve()`d both
-`sys.executable` and `sys.prefix` before computing the relative path, which works on a normal venv
-but not on `uv`-managed ones here — `uv` symlinks `.venv/bin/python` straight through to a shared
-interpreter store outside the project (`~/.local/share/uv/python/...`), so resolving follows that
-symlink past `sys.prefix` entirely and `relative_to()` raises `ValueError`. Every isolated-worker
-run failed instantly (exit=1) on first use, not caught by `aa72c2e`'s own `--dry-run` verification
-since `main()` returns before ever reaching `_launch_isolated` on a dry run. Fixed by dropping the
-`.resolve()` calls — `sys.executable` is already venv-relative as reported, on both platforms this
-matters for. Worth knowing on any other machine with a similarly `uv`-managed venv.
-
-fedyogi finished clean afterward: 16/16 combinations (n=4/n=8 only, both sweeps), 0 failures,
-~49m wall-clock total. Combined with the fedavg matrix: **40/40 combinations across both sweeps,
-0 failures.** Not yet merged to `master` or written up in `reports/` — results are in
-`results/scale_controlled(_epochs)/` pending review.
+Nothing currently running. `feature/scale-controlled-redo` (Phase 1 items 1 and 2 of
+`docs/RESEARCH_ROADMAP.md`) merged into `master` 2026-08-06 and was deleted — see "What's
+established" below for what it left behind. The natural next steps, not yet started: `fedyogi` at
+`n=48` (the redo's matrix only covers `n=4/8` for `fedyogi`), and Phase 1's remaining item (NaN/
+failure-mode logging in `runner.py`, motivated directly by the zero-norm-update crashes found
+during the redo). After that, Phase 2 (mechanism redesign) is the next major phase.
 
 ### Currently running
 
-Nothing currently running on this redo — the full matrix (fedavg n=4/8/48 + fedyogi n=4/8,
-`sweep_scale_controlled(_epochs)`) finished on the CUDA workstation with 0 failures across 40/40
-combinations. Results pending review before merge; not yet in `reports/`. Update this table
-whenever a machine picks up new work: edit the Status column in place (e.g. `running` -> `done`)
-and leave a finished row for one update cycle before removing it, so machine-to-results
-provenance isn't lost; see `AGENTS.md`'s "Working across machines" section.
+Nothing. Update this table whenever a machine picks up new work: add a row, edit the Status column
+in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
+it, so machine-to-results provenance isn't lost; see `AGENTS.md`'s "Working across machines"
+section.
 
 ## What's established on `master`
 
@@ -119,6 +43,31 @@ provenance isn't lost; see `AGENTS.md`'s "Working across machines" section.
   round-by-round history survives instead of being discarded on one bad round. Richer per-round
   diagnostics also landed: full pairwise client-model distance distribution, per-pair client IDs,
   min/median/mean/count, not just the single max used for calibration.
+  `LoggedGlobalDPServerSideFixedClipping` (`metricdp_pytorch/globaldp_strategy.py`) has the same
+  zero-norm-update guard as of the scale-controlled redo — it never had one before, and 12/96 runs
+  in `results/noise_by_clients/` hit exactly this crash before the fix landed.
+- **A genuine client-reply-ordering non-determinism was found and fixed**: Flower's own weighted
+  aggregation summed replies in network-arrival order, not deterministically — floating-point
+  addition isn't associative, so this compounded into real numeric drift over rounds. Fixed via
+  `DeterministicReplyOrderMixin` (`metricdp_pytorch/strategy_factory.py`, covers every aggregation
+  method, not just metric-privacy) and a matching fix in `metricdp_pytorch/metrics.py`.
+- **Phase 1 items 1 and 2 of `docs/RESEARCH_ROADMAP.md` are done**, redone on CUDA hardware (moved
+  off this project's original Mac MPS backend, whose own non-determinism made every earlier result
+  on these questions untrustworthy — see `reports/archive/constant_compute_scaling_mps_v1v2.md`).
+  - **Constant-compute client-count scaling** (`reports/constant_compute_scaling.md`/`.tex`):
+    `fedavg` at `n=4/8/48` + `fedyogi` at `n=4/8` — 40/40 combinations, 0 failures, 0
+    invalid-distance/collapsed-aggregation rounds anywhere. The metric-privacy-vs-global-dp
+    advantage shrinks from `n=4` to `n=48` but converges toward parity (`fedavg`: -2.5pp to
+    +0.6pp at `n=48`), not the large reversal the MPS-era attempt found (which never survived its
+    own noise-floor check). `fedyogi` at `n=48` not yet run.
+  - **Noise-multiplier x client-count sweep** (`reports/noise_by_clients.md`): `n ∈ {8,16,32,48}` x
+    6 noise multipliers, `fedavg` only — 96/96, 0 failures. The noise ceiling genuinely shifts up
+    with client count (a fixed `noise_multiplier` is relatively less noisy at higher `n`, since
+    `compute_stdv` divides by `num_sampled_clients`) — `nm=0.1` collapses training at `n=8` but
+    stays healthy through `n=48`. Separately, metric-privacy's own calibrated noise goes unstable
+    right at each client count's collapse boundary and underperforms global-dp there by as much as
+    -18pp, worse at higher `n` — a real, more precisely localized version of the original
+    `results/48client_scaling` scaling concern, and a lead for Phase 2's mechanism redesign.
 - `reports/first_round_cia.md` is stale — says "no result data yet," but `results/cia_client_scaling/`
   has real trained models and partial attack scores. Needs a rewrite, not done yet. The Flower-1.32
   port-equivalence check (`reports/port_equivalence.md`) still has no committed result data.
