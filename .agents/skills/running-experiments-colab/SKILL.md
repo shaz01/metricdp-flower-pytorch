@@ -83,6 +83,12 @@ actively stopped or recovered the session.
 
 ## Monitor
 
+After a run has passed the five-minute launch watchdog with real round
+advancement and a non-idle GPU sample, use a roughly four-minute monitoring
+cadence. Keep the foreground controller attached, but do not poll an otherwise
+healthy worker every minute; reserve tighter checks for the startup window,
+completion/collection, or an observed anomaly.
+
 Run this from another terminal whenever a progress or GPU check is needed:
 
 ```bash
