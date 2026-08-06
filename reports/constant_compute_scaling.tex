@@ -1,0 +1,383 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{longtable}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!50!black,
+    urlcolor=blue!50!black,
+    citecolor=blue!50!black,
+}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\pp}{\,\text{pp}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Constant-Compute Scaling --- CUDA Redo}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\title{\textbf{Constant-Compute Client-Count Scaling}\\[0.2em]
+\large CUDA Redo --- Findings for Supervisor Review}
+\author{Federated Learning + Differential Privacy Research Project}
+\date{August 6, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+This report presents the results of redoing Phase 1's constant-compute client-count scaling
+diagnosis on CUDA hardware, after fixing a genuine floating-point non-determinism source in
+aggregation (client replies were being summed in network-arrival order rather than a deterministic
+order) and moving off this project's original MPS backend, whose own documented non-determinism had
+made every prior result on this question untrustworthy. Two experimental designs (\code{v1},
+round-scaled; \code{v2}, epoch-scaled) were each run to completion across the \code{fedavg} matrix
+($n \in \{4,8,48\}$) plus \code{fedyogi} at $n \in \{4,8\}$: \textbf{40 of 40 combinations
+completed, 0 run failures, 0 invalid-distance or collapsed-aggregation rounds anywhere.}
+Determinism was confirmed directly, not just inferred. The central question this diagnosis exists
+to answer --- whether the metric-privacy-vs-global-dp accuracy advantage's collapse at scale is a
+genuine mechanism failure or a measurement artifact --- now has a trustworthy answer for
+\code{fedavg}: the advantage does shrink from $n{=}4$ to $n{=}48$, but converges toward parity, not
+the large reversal the earlier MPS-era attempt reported (and which never survived its own
+noise-floor check). \code{fedyogi} at $n{=}48$ is the immediate next step, not yet run.
+\end{abstract}
+
+\tableofcontents
+
+% =====================================================================
+\section{Background and What Changed}
+% =====================================================================
+
+\code{results/48client\_scaling} (fixed 20-round budget) found the metric-privacy-vs-global-dp
+accuracy advantage shrinking or reversing at 48 clients compared to 8. This raised the question this
+diagnosis was built to answer: is that a genuine mechanism failure at scale, or an artifact of
+holding the round budget fixed while each client's per-round data shrinks roughly as $1/n$? An
+earlier attempt at this diagnosis ran on this project's original Mac (MPS backend) and was
+superseded --- \code{reports/archive/constant\_compute\_scaling\_mps\_v1v2.md} documents that its
+own \emph{identical}, same-seed configuration produced accuracy deltas of over $50\pp$ across two
+runs, proving the measurement platform itself had a noise floor comparable to the effect sizes in
+question. No result from that attempt should be cited as established.
+
+Two things changed for this redo:
+\begin{enumerate}[leftmargin=1.4em]
+    \item \textbf{A genuine non-determinism source was found and fixed.} Flower's own weighted
+    aggregation summed client replies in network-arrival order rather than a deterministic order;
+    floating-point addition is not associative, so run-to-run arrival jitter produced numeric drift
+    that compounded over rounds. Fixed via \code{DeterministicReplyOrderMixin}
+    (\code{metricdp\_pytorch/strategy\_factory.py}) and a matching fix in \code{metricdp\_pytorch/metrics.py},
+    sorting by the already-present per-reply \code{client-id} before aggregating.
+    \item \textbf{Training moved onto CUDA hardware}, off the MPS backend entirely.
+\end{enumerate}
+
+\subsection*{Experimental designs}
+\begin{itemize}[leftmargin=1.4em]
+    \item \textbf{v1 (round-scaled)}: $\text{rounds}(n) = \text{round}(20 \cdot n / 4)$,
+    \code{local-epochs}/\code{batch-size} held fixed (5, 32). Total local gradient steps per client
+    stay roughly constant across $n$, at the cost of scaling aggregation frequency 12$\times$ from
+    $n{=}4$ to $n{=}48$.
+    \item \textbf{v2 (epoch-scaled)}: $\text{rounds}(n) = 20$ (fixed),
+    $\text{local\_epochs}(n) = \text{round}(5 \cdot n / 4)$ instead --- the corrected design,
+    targeting aggregation-frequency parity directly.
+\end{itemize}
+Matrix: \code{global-dp}/\code{metric-privacy} $\times$ \code{homogeneous}/\code{non-iid} $\times$
+$n \in \{4,8,48\}$, $\text{noise\_multiplier}=0.05$, seed 42, clipping norm 5.0 --- plus
+\code{fedyogi} at $n \in \{4,8\}$ (not yet run at $n{=}48$).
+
+% =====================================================================
+\section{Results: v1 (round-scaled)}
+\label{sec:v1}
+% =====================================================================
+
+\begin{table}[h]
+\centering
+\footnotesize
+\begin{tabular}{llrlrrrrr}
+\toprule
+Partition & Privacy & Agg. & $n$ & Rounds & Accuracy & Loss & Invalid & Collapsed \\
+\midrule
+homogeneous & global-dp      & fedavg  & 4  & 20  & 49.53\% & 1.0489 & n/a & n/a \\
+homogeneous & global-dp      & fedavg  & 8  & 40  & 79.69\% & 0.6015 & n/a & n/a \\
+homogeneous & global-dp      & fedavg  & 48 & 240 & 97.50\% & 1.1434 & n/a & n/a \\
+homogeneous & global-dp      & fedyogi & 4  & 20  & 49.53\% & 1.3536 & n/a & n/a \\
+homogeneous & global-dp      & fedyogi & 8  & 40  & 74.69\% & 0.8036 & n/a & n/a \\
+homogeneous & metric-privacy & fedavg  & 4  & 20  & 63.44\% & 1.5078 & 0 & 0 \\
+homogeneous & metric-privacy & fedavg  & 8  & 40  & 90.47\% & 0.4030 & 0 & 0 \\
+homogeneous & metric-privacy & fedavg  & 48 & 240 & 95.63\% & 1.2058 & 0 & 0 \\
+homogeneous & metric-privacy & fedyogi & 4  & 20  & 61.09\% & 5.6919 & 0 & 0 \\
+homogeneous & metric-privacy & fedyogi & 8  & 40  & 72.19\% & 0.8431 & 0 & 0 \\
+non-IID     & global-dp      & fedavg  & 4  & 20  & 49.53\% & 1.0506 & n/a & n/a \\
+non-IID     & global-dp      & fedavg  & 8  & 40  & 79.37\% & 0.6802 & n/a & n/a \\
+non-IID     & global-dp      & fedavg  & 48 & 240 & 93.59\% & 0.6606 & n/a & n/a \\
+non-IID     & global-dp      & fedyogi & 4  & 20  & 49.53\% & 1.1039 & n/a & n/a \\
+non-IID     & global-dp      & fedyogi & 8  & 40  & 78.59\% & 1.1930 & n/a & n/a \\
+non-IID     & metric-privacy & fedavg  & 4  & 20  & 83.44\% & 0.7186 & 0 & 0 \\
+non-IID     & metric-privacy & fedavg  & 8  & 40  & 92.50\% & 0.3386 & 0 & 0 \\
+non-IID     & metric-privacy & fedavg  & 48 & 240 & 91.09\% & 0.6775 & 0 & 0 \\
+non-IID     & metric-privacy & fedyogi & 4  & 20  & 86.41\% & 1.2186 & 0 & 0 \\
+non-IID     & metric-privacy & fedyogi & 8  & 40  & 85.94\% & 1.0073 & 0 & 0 \\
+\bottomrule
+\end{tabular}
+\caption{v1 (round-scaled) constant-compute sweep, $\text{noise\_multiplier}=0.05$, seed 42.
+Accuracy/loss are training-time recorded values from the last completed round. Invalid/collapsed
+counts come from \code{train\_metrics}' per-round distance-validity flags (metric-privacy only).
+Source: \code{results/scale\_controlled/}.}
+\label{tab:v1}
+\end{table}
+
+\noindent Every combination completed its full round budget with zero invalid-distance or
+collapsed-aggregation rounds. \code{fedyogi} was only run at $n \in \{4,8\}$ in this design;
+$n{=}48$ is the planned next run (\S\ref{sec:next}). Wall-clock: $n{=}4$ combos 118--151s;
+$n{=}8$ combos 237--262s; $n{=}48$ combos 2447--3817s. Total v1 wall-clock across all 20
+combinations: $\approx 4.34$h.
+
+% =====================================================================
+\section{Results: v2 (epoch-scaled)}
+\label{sec:v2}
+% =====================================================================
+
+\begin{table}[h]
+\centering
+\footnotesize
+\begin{tabular}{llrlrrrrr}
+\toprule
+Partition & Privacy & Agg. & $n$ & Local epochs & Accuracy & Loss & Invalid & Collapsed \\
+\midrule
+homogeneous & global-dp      & fedavg  & 4  & 5  & 49.53\% & 1.0489 & n/a & n/a \\
+homogeneous & global-dp      & fedavg  & 8  & 10 & 80.00\% & 0.7190 & n/a & n/a \\
+homogeneous & global-dp      & fedavg  & 48 & 60 & 77.81\% & 0.8219 & n/a & n/a \\
+homogeneous & global-dp      & fedyogi & 4  & 5  & 49.53\% & 1.3536 & n/a & n/a \\
+homogeneous & global-dp      & fedyogi & 8  & 10 & 85.62\% & 1.0896 & n/a & n/a \\
+homogeneous & metric-privacy & fedavg  & 4  & 5  & 63.44\% & 1.5078 & 0 & 0 \\
+homogeneous & metric-privacy & fedavg  & 8  & 10 & 87.19\% & 0.5687 & 0 & 0 \\
+homogeneous & metric-privacy & fedavg  & 48 & 60 & 77.97\% & 0.9069 & 0 & 0 \\
+homogeneous & metric-privacy & fedyogi & 4  & 5  & 61.09\% & 5.6919 & 0 & 0 \\
+homogeneous & metric-privacy & fedyogi & 8  & 10 & 92.19\% & 0.7650 & 0 & 0 \\
+non-IID     & global-dp      & fedavg  & 4  & 5  & 49.53\% & 1.0506 & n/a & n/a \\
+non-IID     & global-dp      & fedavg  & 8  & 10 & 74.06\% & 0.9658 & n/a & n/a \\
+non-IID     & global-dp      & fedavg  & 48 & 60 & 78.44\% & 0.7476 & n/a & n/a \\
+non-IID     & global-dp      & fedyogi & 4  & 5  & 49.53\% & 1.1039 & n/a & n/a \\
+non-IID     & global-dp      & fedyogi & 8  & 10 & 87.97\% & 0.7390 & n/a & n/a \\
+non-IID     & metric-privacy & fedavg  & 4  & 5  & 83.44\% & 0.7186 & 0 & 0 \\
+non-IID     & metric-privacy & fedavg  & 8  & 10 & 90.16\% & 0.3710 & 0 & 0 \\
+non-IID     & metric-privacy & fedavg  & 48 & 60 & 79.06\% & 0.7584 & 0 & 0 \\
+non-IID     & metric-privacy & fedyogi & 4  & 5  & 86.41\% & 1.2186 & 0 & 0 \\
+non-IID     & metric-privacy & fedyogi & 8  & 10 & 94.53\% & 0.6252 & 0 & 0 \\
+\bottomrule
+\end{tabular}
+\caption{v2 (epoch-scaled, corrected control) constant-compute sweep, rounds fixed at 20 throughout,
+$\text{noise\_multiplier}=0.05$, seed 42. Column definitions as Table~\ref{tab:v1}.
+Source: \code{results/scale\_controlled\_epochs/}.}
+\label{tab:v2}
+\end{table}
+
+\noindent Same result: zero invalid/collapsed rounds across all 20 combinations. Wall-clock:
+$n{=}4$ combos 118--151s; $n{=}8$ combos 190--211s; $n{=}48$ combos 913--1041s. Total v2 wall-clock:
+$\approx 1.83$h --- substantially cheaper than v1 at $n{=}48$, since rounds stay fixed at 20 instead
+of scaling to 240.
+
+% =====================================================================
+\section{Comparison Against the Archived MPS Baseline}
+\label{sec:mpscomp}
+% =====================================================================
+
+Same \code{fedavg} matrix, same seed and hyperparameters, run previously on this project's original
+MPS backend without the aggregation-order fix.
+
+\begin{table}[h]
+\centering
+\footnotesize
+\begin{tabular}{llrrrrr}
+\toprule
+Partition & Privacy & $n$ & MPS Acc. & CUDA Acc. & MPS Inv./Col. & CUDA Inv./Col. \\
+\midrule
+homogeneous & global-dp      & 4  & 49.53\% & 49.53\% & --- & --- \\
+homogeneous & global-dp      & 8  & 14.06\% & 79.69\% & --- & --- \\
+homogeneous & global-dp      & 48 & 33.44\% & 97.50\% & --- & --- \\
+homogeneous & metric-privacy & 4  & 70.94\% & 63.44\% & 0/0   & 0/0 \\
+homogeneous & metric-privacy & 8  & 19.69\% & 90.47\% & 7/14  & \textbf{0/0} \\
+homogeneous & metric-privacy & 48 & 14.53\% & 95.63\% & 0/0   & 0/0 \\
+non-IID     & global-dp      & 4  & 49.53\% & 49.53\% & --- & --- \\
+non-IID     & global-dp      & 8  & 25.31\% & 79.37\% & --- & --- \\
+non-IID     & global-dp      & 48 & 17.19\% & 93.59\% & --- & --- \\
+non-IID     & metric-privacy & 4  & 85.47\% & 83.44\% & 0/0    & 0/0 \\
+non-IID     & metric-privacy & 8  & 32.66\% & 92.50\% & 23/23  & \textbf{0/0} \\
+non-IID     & metric-privacy & 48 & 20.31\% & 91.09\% & 239/240 & \textbf{0/0} \\
+\bottomrule
+\end{tabular}
+\caption{v1 vs.\ archived MPS baseline. ``Inv./Col.'' = invalid-distance rounds / collapsed-aggregation
+rounds, out of total rounds for that combination. Source (MPS): \code{results/archive/scale\_controlled\_mps\_v1v2/}.}
+\label{tab:mpscomp-v1}
+\end{table}
+
+\begin{table}[h]
+\centering
+\footnotesize
+\begin{tabular}{llrrrrr}
+\toprule
+Partition & Privacy & $n$ & MPS Acc. & CUDA Acc. & MPS Inv./Col. & CUDA Inv./Col. \\
+\midrule
+homogeneous & global-dp      & 4  & 35.78\% & 49.53\% & --- & --- \\
+homogeneous & global-dp      & 8  & 39.38\% & 80.00\% & --- & --- \\
+homogeneous & global-dp      & 48 & 35.47\% & 77.81\% & --- & --- \\
+homogeneous & metric-privacy & 4  & 30.31\% & 63.44\% & 0/0  & 0/0 \\
+homogeneous & metric-privacy & 8  & 24.22\% & 87.19\% & 0/5  & \textbf{0/0} \\
+homogeneous & metric-privacy & 48 & 34.53\% & 77.97\% & 0/0  & 0/0 \\
+non-IID     & global-dp      & 4  & 31.87\% & 49.53\% & --- & --- \\
+non-IID     & global-dp      & 8  & 38.44\% & 74.06\% & --- & --- \\
+non-IID     & global-dp      & 48 & 33.44\% & 78.44\% & --- & --- \\
+non-IID     & metric-privacy & 4  & 32.19\% & 83.44\% & 0/0  & 0/0 \\
+non-IID     & metric-privacy & 8  & 24.84\% & 90.16\% & 0/7  & \textbf{0/0} \\
+non-IID     & metric-privacy & 48 & 37.81\% & 79.06\% & 19/0 & \textbf{0/0} \\
+\bottomrule
+\end{tabular}
+\caption{v2 vs.\ archived MPS baseline. Column definitions as Table~\ref{tab:mpscomp-v1}.}
+\label{tab:mpscomp-v2}
+\end{table}
+
+\noindent Every combination at $n \geq 8$ improved substantially under CUDA, and every
+metric-privacy combination that had invalid-distance or collapsed-aggregation rounds under MPS has
+zero under CUDA. \S\ref{sec:findings} explains why this is expected, not suspicious: the
+aggregation-order fix applies to \emph{every} aggregation method (not just metric-privacy), and MPS's
+own non-determinism was independently proven to diverge on an identical configuration.
+
+% =====================================================================
+\section{Cross-Cutting Findings}
+\label{sec:findings}
+% =====================================================================
+
+\subsection{The central question now has a trustworthy answer for fedavg}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llrrr}
+\toprule
+Design & Partition & $\Delta$ at $n{=}4$ & $\Delta$ at $n{=}8$ & $\Delta$ at $n{=}48$ \\
+\midrule
+v1 & homogeneous & $+13.91\pp$ & $+10.78\pp$ & $-1.87\pp$ \\
+v1 & non-IID     & $+33.91\pp$ & $+13.13\pp$ & $-2.50\pp$ \\
+v2 & homogeneous & $+13.91\pp$ & $+7.19\pp$  & $+0.16\pp$ \\
+v2 & non-IID     & $+33.91\pp$ & $+16.10\pp$ & $+0.62\pp$ \\
+\bottomrule
+\end{tabular}
+\caption{Metric-privacy $-$ global-dp accuracy delta, \code{fedavg}, by client count.}
+\label{tab:deltas}
+\end{table}
+
+\noindent The advantage shrinks steadily from $n{=}4$ to $n{=}48$ in both designs, landing close to
+zero rather than reversing sharply. Compare the archived MPS report's v1/homogeneous trajectory:
+$+21.41\pp \to +5.62\pp \to \mathbf{-18.91\pp}$ --- a reversal that later failed its own direct
+noise-floor check and was never established as real. This redo's $n{=}48$ deltas ($-2.50$ to
+$+0.62\pp$) are an order of magnitude smaller and agree in direction between v1 and v2 (near-zero,
+not a reversal). This is the first time this question has been asked on a platform confirmed not to
+have a noise floor comparable to the effect size.
+
+\subsection{Determinism confirmed directly}
+
+v1 and v2's $n{=}4$ combinations share identical hyperparameters by construction. Every pair ---
+\code{fedavg} and \code{fedyogi}, both partitions --- produced \textbf{bit-identical} accuracy and
+loss from two independently-launched subprocesses, verified directly against the raw result JSONs.
+The archived MPS report's equivalent check found the opposite: MPS's v1/v2 $n{=}4$ results
+\emph{disagreed} with each other on an identical configuration, diverging already at round 0 ---
+before any client aggregation ---proving MPS's own model-initialization non-determinism, distinct
+from and larger than the aggregation-order bug this redo fixes.
+
+\subsection{The aggregation-order fix covers every aggregation method}
+
+\code{DeterministicReplyOrderMixin} wraps \code{FedAvg}, \code{FedYogi}, \code{FedAvgM},
+\code{FedMedian}, and \code{FedProx} uniformly in
+\code{strategy\_factory.make\_base\_strategy} --- this is why \code{global-dp}'s own numbers
+improved as dramatically as metric-privacy's (e.g.\ v1 homogeneous/global-dp/$n{=}48$:
+$33.44\% \to 97.50\%$). The archived MPS \code{fedavg}/\code{global-dp}/$n{=}48$ trajectory
+plateaued at 15--42\% accuracy for all 240 rounds without ever really learning, despite no loss
+spikes --- a distinct failure mode from metric-privacy's collapsed-round pathology, traceable to
+the same root cause.
+
+\subsection{fedyogi at $n{=}8$: one combination worth watching}
+
+v1's \code{homogeneous}/\code{fedyogi} delta goes \emph{negative} already at $n{=}8$
+($+11.56\pp \to \mathbf{-2.50\pp}$) --- the only $n \leq 8$ combination across both designs and
+both aggregation methods where metric-privacy underperforms global-dp. v2's
+\code{homogeneous}/\code{fedyogi} delta stays positive at $n{=}8$ ($+11.56\pp \to +6.57\pp$). Both
+designs agree \code{non-iid}/\code{fedyogi} shrinks but stays positive at $n{=}8$ (v1:
+$+36.88\pp \to +7.35\pp$; v2: $+36.88\pp \to +6.56\pp$). This is the specific combination
+$n{=}48$ \code{fedyogi} data (\S\ref{sec:next}) will resolve.
+
+% =====================================================================
+\section{Known Gaps and Caveats}
+% =====================================================================
+
+\begin{itemize}[leftmargin=1.4em]
+    \item \textbf{\code{fedyogi} at $n{=}48$ has not been run yet.} \S\ref{sec:findings}'s delta
+    table and the fedyogi observation above are therefore only established for \code{fedavg} at
+    $n{=}48$.
+    \item \textbf{Single seed (42) for every run.} The determinism fix guarantees a given seed
+    reproduces exactly, not that a different seed would land the same deltas.
+    \item \textbf{Reduced matrix.} \code{vanilla}, \code{fedavgm}, \code{fedprox},
+    \code{fedmedian}, and $n{=}16$ remain out of scope.
+    \item \textbf{The fixed-20-round $n{=}48$ baseline was not rerun on CUDA} --- still MPS-era
+    data; the round-fragmentation explanation for why constant-compute accuracy under-performs it
+    is unchanged from the archived report.
+    \item \textbf{Not yet merged to \code{master}.} Code and results live on
+    \code{feature/scale-controlled-redo}.
+\end{itemize}
+
+% =====================================================================
+\section{Planned Next Steps}
+\label{sec:next}
+% =====================================================================
+
+\subsection{Immediate}
+\begin{enumerate}[leftmargin=1.4em]
+    \item Run \code{fedyogi} at $n{=}48$ on both designs, completing the matrix this redo set out
+    to run and resolving whether \S\ref{sec:findings}'s \code{homogeneous}/\code{fedyogi} $n{=}8$
+    reversal continues or corrects at scale.
+    \item Revisit whether the central question is fully answered or needs the wider $n{=}16$
+    interpolation point.
+    \item Decide on merging \code{feature/scale-controlled-redo} into \code{master} per the
+    project's git workflow (merge, run test suite, delete branch) once the above is settled.
+\end{enumerate}
+
+\subsection{Currently in progress: Phase 1 item 2 --- noise-multiplier re-sweep}
+The 8-client $\text{noise\_multiplier}=0.05$ sweet spot used throughout this report was never
+re-checked at other client counts --- it could be a genuine property of the mechanism, or the sweet
+spot itself could simply move as $n$ grows, independent of the scaling question this report
+answers. A 96-combination sweep ($n \in \{8,16,32,48\} \times$ partition $\times$ privacy $\times$
+six noise multipliers, \code{fedavg} only, fixed 20 rounds) is running now on the CUDA workstation
+to test this directly. One concrete finding already surfaced: \code{global-dp} crashes with a
+\code{ZeroDivisionError} at high noise multipliers ($\geq 0.25$) whenever a client's update collapses
+to exactly zero norm --- \code{metricdp\_pytorch/metricdp\_strategy.py} already has a graceful
+fallback for this exact situation, but \code{globaldp\_strategy.py} was never given the equivalent
+fix. The sweep tolerates this (logs the failure, continues), and the fix will be applied and the
+affected combinations rerun once the full sweep completes.
+
+\subsection{Remaining Phase 1 work}
+Two more items from \code{docs/RESEARCH\_ROADMAP.md}'s Phase 1 remain before this diagnosis phase
+is closed out:
+\begin{itemize}[leftmargin=1.4em]
+    \item \textbf{Failure-mode/NaN logging in \code{runner.py}} before high-noise regimes ---
+    motivated directly by the \code{ZeroDivisionError} failures above; not yet implemented.
+    \item \emph{(Already done, for reference)}: instrumenting the raw pairwise-distance statistic
+    is already on \code{master} --- \code{metricdp\_strategy.py} logs the full pairwise-distance
+    distribution (median/mean/count), not just the single max used for calibration.
+\end{itemize}
+
+\subsection{Phase 2: mechanism redesign}
+Once Phase 1 is fully closed out, the roadmap's core novel contribution begins: refactoring
+\code{MetricPrivacyServerSideFixedClipping} to accept a swappable distance function, and ablating
+candidates (normalize-by-$n$, robust/median statistic, EMA-smoothed distance, subsampled pairwise
+distance) against this report's constant-compute control across multiple $n$. A mechanism is
+declared ``working'' only if it recovers/preserves the metric-privacy advantage across client
+counts, not just at one $n$.
+
+\end{document}

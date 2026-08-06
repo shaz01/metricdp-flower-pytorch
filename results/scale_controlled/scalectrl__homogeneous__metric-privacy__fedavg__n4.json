@@ -2,6 +2,7 @@
   "metadata": {
     "run_name": "scalectrl__homogeneous__metric-privacy__fedavg__n4",
     "data_module": "experiments.reproduce.dataset.alzheimer:create_data_module",
+    "model_module": "experiments.reproduce.paper_cnn:create_model",
     "partition_mode": "homogeneous",
     "partition_profile": "auto",
     "privacy": "metric-privacy",
@@ -19,459 +20,2453 @@
     "clipping_norm": 5.0,
     "initialization_pretrained": false,
     "initialization_epochs": 0,
-    "initialization_final_loss": null
+    "initialization_final_loss": null,
+    "python_version": "3.13.14",
+    "platform": "Linux-6.8.0-45-generic-x86_64-with-glibc2.35",
+    "library_versions": {
+      "flwr": "1.32.1",
+      "numpy": "2.5.1",
+      "scikit-learn": "1.9.0",
+      "torch": "2.10.0",
+      "torchvision": "0.25.0"
+    },
+    "device": "cuda:0",
+    "device_name": "NVIDIA RTX 5000 Ada Generation",
+    "git_commit": "5628d84272184e77eb57984c9f2c0731fb4c3781",
+    "git_dirty": true,
+    "python_executable": "/tmp/paper-reproduction-tzmbio3v/venv/bin/python"
   },
   "train_metrics": {
     "1": {
-      "train_loss": 0.9801586512476206,
-      "train_loss_mean": 1.0339924429543317,
-      "metric-dp-distance": 1.7405741071949403,
-      "metric-dp-distance-mean": 1.6291819834797125,
-      "metric-dp-distance-median": 1.6463775093046327,
+      "train_loss": 0.986541151534766,
+      "train_loss_mean": 1.038267719000578,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.9791384171694517,
+        0.9498872049152851,
+        1.0132605284452438,
+        1.0038784556090832
+      ],
+      "per-client-train_loss_mean": [
+        1.03252462297678,
+        1.0182322427630424,
+        1.0444250140339135,
+        1.0578889962285758
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        13.488250790415787,
+        13.859085729179258,
+        13.792163229366398,
+        14.068605044494001
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.6143972314118098,
+        1.6209611534917105,
+        1.5743549823140104,
+        1.69235135257865,
+        1.6836668812126543,
+        1.6156840140465647
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.5743549823140104,
+      "metric-dp-distance-median": 1.6183225837691375,
+      "metric-dp-distance-mean": 1.6335692691758998,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.69235135257865,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.03590769260650627
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 3.5275333966078866,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 94.28209078325197,
+      "dp-noise-to-signal-ratio": 26.72748353677236,
+      "dp-noise-percent-of-signal": 2672.748353677236,
+      "metric-dp-noise-stdv": 0.036930865393151505
     },
     "2": {
-      "train_loss": 0.9522354518994689,
-      "train_loss_mean": 1.001373239979148,
-      "metric-dp-distance": 1.6543614350569744,
-      "metric-dp-distance-mean": 1.5266797573098705,
-      "metric-dp-distance-median": 1.4999985687900335,
+      "train_loss": 0.9493791675195098,
+      "train_loss_mean": 1.0054540732875465,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.97069769538939,
+        0.8920236155390739,
+        0.9862912259995937,
+        0.9485041331499815
+      ],
+      "per-client-train_loss_mean": [
+        1.014698727801442,
+        0.9797582291066647,
+        1.0181230627000333,
+        1.0092362735420466
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        12.42079533087698,
+        11.471520366680641,
+        11.352304383276472,
+        9.580600199409174
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.6864300852951903,
+        1.6403443259963144,
+        1.5753825246356428,
+        1.5947859679193546,
+        1.5072096606406074,
+        1.458361831959337
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.458361831959337,
+      "metric-dp-distance-median": 1.5850842462774986,
+      "metric-dp-distance-mean": 1.5770857327410743,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.6864300852951903,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.037778927068526334
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.9358918215386893,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 94.6131270144239,
+      "dp-noise-to-signal-ratio": 32.2263668982318,
+      "dp-noise-percent-of-signal": 3222.6366898231804,
+      "metric-dp-noise-stdv": 0.0370605342877645
     },
     "3": {
-      "train_loss": 0.9059019954875112,
-      "train_loss_mean": 0.9699034954421222,
-      "metric-dp-distance": 1.8573068221254896,
-      "metric-dp-distance-mean": 1.8382603642013338,
-      "metric-dp-distance-median": 1.8348263264633715,
+      "train_loss": 0.8841941668651998,
+      "train_loss_mean": 0.9534833607263864,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.8960968907922506,
+        0.8727254159748554,
+        0.891050236299634,
+        0.8769041243940592
+      ],
+      "per-client-train_loss_mean": [
+        0.9660163369029761,
+        0.9348871156573295,
+        0.9695517376065255,
+        0.9434782527387142
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        10.620852558128124,
+        11.081752673224935,
+        12.17978939361671,
+        12.402043663334764
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.5616114760438602,
+        1.6433585641595225,
+        1.678486556513235,
+        1.6653023419591289,
+        1.7079440344435473,
+        1.7688622234078746
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.5616114760438602,
+      "metric-dp-distance-median": 1.671894449236182,
+      "metric-dp-distance-mean": 1.670927532754528,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.7688622234078746,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.03365087515722115
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.9486160449925984,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 90.20398635320261,
+      "dp-noise-to-signal-ratio": 30.591974328563026,
+      "dp-noise-percent-of-signal": 3059.197432856303,
+      "metric-dp-noise-stdv": 0.03533344721421437
     },
     "4": {
-      "train_loss": 0.8155411772895604,
-      "train_loss_mean": 0.9137336469721049,
-      "metric-dp-distance": 2.1083918913112334,
-      "metric-dp-distance-mean": 1.976197306972204,
-      "metric-dp-distance-median": 1.9774200364093608,
+      "train_loss": 0.8208257821388543,
+      "train_loss_mean": 0.9154535110108555,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.8457830175757408,
+        0.7358023133128881,
+        0.8274030238389969,
+        0.8743147738277912
+      ],
+      "per-client-train_loss_mean": [
+        0.9232088968157768,
+        0.8637512926012277,
+        0.9165005560964345,
+        0.9583532985299825
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        13.447720305595956,
+        11.442274231200232,
+        12.074699711334736,
+        12.054889515077233
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.781395899752776,
+        1.8023411254398525,
+        1.8532782109299053,
+        1.7065600516895454,
+        1.7633064078787963,
+        1.7623933148570359
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.7065600516895454,
+      "metric-dp-distance-median": 1.7723511538157861,
+      "metric-dp-distance-mean": 1.7782125017579853,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.8532782109299053,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.029643445441791434
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.9071848799221245,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 86.09523541579821,
+      "dp-noise-to-signal-ratio": 29.614640613466754,
+      "dp-noise-percent-of-signal": 2961.4640613466754,
+      "metric-dp-noise-stdv": 0.03372402461292622
     },
     "5": {
-      "train_loss": 0.688473877729848,
-      "train_loss_mean": 0.8337906954344362,
-      "metric-dp-distance": 1.8310483846968661,
-      "metric-dp-distance-mean": 1.7989948614655684,
-      "metric-dp-distance-median": 1.7932334871729836,
+      "train_loss": 0.7248976530972868,
+      "train_loss_mean": 0.8497634481173009,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.7193890400230885,
+        0.660271042957902,
+        0.7669996777549386,
+        0.7529308516532183
+      ],
+      "per-client-train_loss_mean": [
+        0.8593641739338637,
+        0.7945991322398186,
+        0.8805688513442874,
+        0.8645216349512339
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        11.200691932060616,
+        11.764374160141882,
+        11.44556756974203,
+        10.48946068956353
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.7218341225137312,
+        1.7084302566945553,
+        1.6614167590936024,
+        1.7569678793661296,
+        1.6614862515901525,
+        1.6328573421342298
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.6328573421342298,
+      "metric-dp-distance-median": 1.6849582541423538,
+      "metric-dp-distance-mean": 1.6904987685654003,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.7569678793661296,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.03413345082650397
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.9541810127836166,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 90.81465047530878,
+      "dp-noise-to-signal-ratio": 30.741058209475614,
+      "dp-noise-percent-of-signal": 3074.1058209475614,
+      "metric-dp-noise-stdv": 0.03557264804553425
     },
     "6": {
-      "train_loss": 0.5486370526487008,
-      "train_loss_mean": 0.7405473458813503,
-      "metric-dp-distance": 1.8980108917846035,
-      "metric-dp-distance-mean": 1.8580501913481082,
-      "metric-dp-distance-median": 1.8512986348941922,
+      "train_loss": 0.5442535988986492,
+      "train_loss_mean": 0.7246594226919115,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.49208635464310646,
+        0.5384620353579521,
+        0.5935826571658254,
+        0.5528833484277129
+      ],
+      "per-client-train_loss_mean": [
+        0.6988200357183814,
+        0.6957748837769031,
+        0.7633168010041118,
+        0.7407259702682495
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        13.145577757723709,
+        11.62084834025925,
+        11.04441789381736,
+        10.9047083069601
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.7636690765308838,
+        1.77694145978118,
+        1.7650210880674422,
+        1.672447559113304,
+        1.6611141990870237,
+        1.6606693067587912
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.6606693067587912,
+      "metric-dp-distance-median": 1.7180583178220938,
+      "metric-dp-distance-mean": 1.7166437815564375,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.77694145978118,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.03292921040154539
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 3.0992806193714033,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 89.79385504383934,
+      "dp-noise-to-signal-ratio": 28.972482995764143,
+      "dp-noise-percent-of-signal": 2897.248299576414,
+      "metric-dp-noise-stdv": 0.0351727962989262
     },
     "7": {
-      "train_loss": 0.4745002731215209,
-      "train_loss_mean": 0.6885126926470547,
-      "metric-dp-distance": 1.856518662146603,
-      "metric-dp-distance-mean": 1.8066203006310388,
-      "metric-dp-distance-median": 1.808503143644581,
+      "train_loss": 0.469573131762445,
+      "train_loss_mean": 0.6778078030329198,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.46718581579625607,
+        0.470023681409657,
+        0.42511206213384867,
+        0.5159709677100182
+      ],
+      "per-client-train_loss_mean": [
+        0.6969295782968402,
+        0.6711917610839009,
+        0.6373254185542464,
+        0.7057844541966916
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        11.814919483286367,
+        11.44429345337896,
+        11.787004623177841,
+        11.96915888254355
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.7361943158321083,
+        1.789720193327715,
+        1.826906063593924,
+        1.7116916176552575,
+        1.7651901498126488,
+        1.8112692205856245
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.7116916176552575,
+      "metric-dp-distance-median": 1.7774551715701818,
+      "metric-dp-distance-mean": 1.7734952601345462,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.826906063593924,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.03366516118277759
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.8456812977881447,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 87.33805587523926,
+      "dp-noise-to-signal-ratio": 30.691439671450308,
+      "dp-noise-percent-of-signal": 3069.1439671450307,
+      "metric-dp-noise-stdv": 0.03421084490630505
     },
     "8": {
-      "train_loss": 0.3086658947286196,
-      "train_loss_mean": 0.5465240854886361,
-      "metric-dp-distance": 1.8260662026392918,
-      "metric-dp-distance-mean": 1.7195055302387725,
-      "metric-dp-distance-median": 1.7118770332696536,
+      "train_loss": 0.35082862188573927,
+      "train_loss_mean": 0.5715975649422035,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.3844889821484685,
+        0.3242410495877266,
+        0.35940055549144745,
+        0.33518390031531453
+      ],
+      "per-client-train_loss_mean": [
+        0.603928733151406,
+        0.5260939002968371,
+        0.5821988306939602,
+        0.5741687956266105
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        11.956120805853113,
+        12.057868830939126,
+        12.272254798927891,
+        11.602484525529627
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.7913946982783575,
+        1.8105098656378686,
+        1.7616787385195494,
+        1.8248869200857978,
+        1.7831088622721534,
+        1.7821249492311229
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.7616787385195494,
+      "metric-dp-distance-median": 1.7872517802752554,
+      "metric-dp-distance-mean": 1.7922840056708083,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.8248869200857978,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.03422657946884186
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.951661336819296,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 87.43469094155041,
+      "dp-noise-to-signal-ratio": 29.622196100508553,
+      "dp-noise-percent-of-signal": 2962.2196100508554,
+      "metric-dp-noise-stdv": 0.03424869744644865
     },
     "9": {
-      "train_loss": 0.27005470980657265,
-      "train_loss_mean": 0.4818890925613232,
-      "metric-dp-distance": 1.8400828070783366,
-      "metric-dp-distance-mean": 1.6917281630319645,
-      "metric-dp-distance-median": 1.6832285120229549,
+      "train_loss": 0.27855009282939136,
+      "train_loss_mean": 0.4973341781180352,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.2583238328807056,
+        0.2856585783883929,
+        0.26888173003681004,
+        0.3013362300116569
+      ],
+      "per-client-train_loss_mean": [
+        0.4867134985513985,
+        0.5057842316105962,
+        0.4991686308290809,
+        0.49767035148106514
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        11.572634352663234,
+        10.89604606649952,
+        12.132888239067798,
+        11.083757585956072
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.6981505531196792,
+        1.7786512129629652,
+        1.703887911979109,
+        1.7076711181240778,
+        1.6597216928688188,
+        1.7256442041446765
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.6597216928688188,
+      "metric-dp-distance-median": 1.7057795150515935,
+      "metric-dp-distance-mean": 1.7122877821998879,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.7786512129629652,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.033965862709861856
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.8748904113158567,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 89.70753945354987,
+      "dp-noise-to-signal-ratio": 31.203811839384212,
+      "dp-noise-percent-of-signal": 3120.381183938421,
+      "metric-dp-noise-stdv": 0.03513898595997605
     },
     "10": {
-      "train_loss": 0.24755577347241342,
-      "train_loss_mean": 0.472766062617302,
-      "metric-dp-distance": 1.7176814059882115,
-      "metric-dp-distance-mean": 1.6687404201527698,
-      "metric-dp-distance-median": 1.6713038825352364,
+      "train_loss": 0.2591520514397416,
+      "train_loss_mean": 0.4707994617230724,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.32138280710205436,
+        0.1733441554242745,
+        0.29367196653038263,
+        0.248209276702255
+      ],
+      "per-client-train_loss_mean": [
+        0.5316838080063462,
+        0.39712007420603185,
+        0.5258774353191257,
+        0.4285165293607861
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        11.585300261477085,
+        11.069077713486564,
+        11.921167534291278,
+        10.93507045985605
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.6809394713491201,
+        1.742601956318443,
+        1.696188293863088,
+        1.7296690728204946,
+        1.6479189456440508,
+        1.732247631220768
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.6479189456440508,
+      "metric-dp-distance-median": 1.7129286833417914,
+      "metric-dp-distance-mean": 1.7049275618693274,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.742601956318443,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.036386258698563885
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.8430793153510443,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 91.5633218948492,
+      "dp-noise-to-signal-ratio": 32.205686770839726,
+      "dp-noise-percent-of-signal": 3220.5686770839725,
+      "metric-dp-noise-stdv": 0.03586590717024236
     },
     "11": {
-      "train_loss": 0.2715411430108361,
-      "train_loss_mean": 0.5215471507166511,
-      "metric-dp-distance": 1.7513511716388166,
-      "metric-dp-distance-mean": 1.6192523932808802,
-      "metric-dp-distance-median": 1.6254365326991924,
+      "train_loss": 0.2491266153374454,
+      "train_loss_mean": 0.45292668036127,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.21773079107515514,
+        0.1853405949077569,
+        0.299947825493291,
+        0.29348724987357855
+      ],
+      "per-client-train_loss_mean": [
+        0.44381834655068814,
+        0.3420459975372069,
+        0.5402162861544639,
+        0.485626091202721
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        10.805229103771788,
+        11.09464482719374,
+        12.683497358396915,
+        10.363189260836519
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.633434113425513,
+        1.7803788303087156,
+        1.6066800526653726,
+        1.7797431298531592,
+        1.6173512587944667,
+        1.7385410610586405
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.6066800526653726,
+      "metric-dp-distance-median": 1.6859875872420766,
+      "metric-dp-distance-mean": 1.692688074350978,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.7803788303087156,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.03568673205700716
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.8436495789304748,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 89.62049039490785,
+      "dp-noise-to-signal-ratio": 31.516010643131008,
+      "dp-noise-percent-of-signal": 3151.601064313101,
+      "metric-dp-noise-stdv": 0.03510488831703451
     },
     "12": {
-      "train_loss": 0.2539056662353687,
-      "train_loss_mean": 0.4569218381308019,
-      "metric-dp-distance": 1.456322636610518,
-      "metric-dp-distance-mean": 1.4245426362742564,
-      "metric-dp-distance-median": 1.4214115418338527,
+      "train_loss": 0.23591301147826016,
+      "train_loss_mean": 0.4438207912491634,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.2586792861111462,
+        0.18592033069580793,
+        0.2559241757262498,
+        0.24312825337983668
+      ],
+      "per-client-train_loss_mean": [
+        0.4411519169807434,
+        0.37866460280492903,
+        0.4797769255470484,
+        0.4756897196639329
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        9.288749295982646,
+        9.973311916397995,
+        9.866748335051842,
+        9.941879878411203
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.4708527074350666,
+        1.4834448415786028,
+        1.4860712617325287,
+        1.5173187176696956,
+        1.5362307384299736,
+        1.5348862457710009
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.4708527074350666,
+      "metric-dp-distance-median": 1.5016949897011123,
+      "metric-dp-distance-mean": 1.5048007521028115,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.5362307384299736,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.04291631430344589
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.8555994363127044,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 103.86357977971987,
+      "dp-noise-to-signal-ratio": 36.371900925234044,
+      "dp-noise-percent-of-signal": 3637.1900925234045,
+      "metric-dp-noise-stdv": 0.04068399260379007
     },
     "13": {
-      "train_loss": 0.2838213371578604,
-      "train_loss_mean": 0.47958957620430737,
-      "metric-dp-distance": 1.5819976405861478,
-      "metric-dp-distance-mean": 1.5522725962930253,
-      "metric-dp-distance-median": 1.5569544125658772,
+      "train_loss": 0.23531684803310782,
+      "train_loss_mean": 0.4330589143559337,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.25094502605497837,
+        0.22419100301340222,
+        0.21451371535658836,
+        0.2516176477074623
+      ],
+      "per-client-train_loss_mean": [
+        0.4447938008699566,
+        0.40037862583994865,
+        0.43233575229533017,
+        0.45472747841849925
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        10.417945417260242,
+        9.793256225132868,
+        11.627013461897828,
+        11.042533486724347
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.5581671458979447,
+        1.6737826184059184,
+        1.6005815705284476,
+        1.6380641440240045,
+        1.6298687762270372,
+        1.712500072394808
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.5581671458979447,
+      "metric-dp-distance-median": 1.6339664601255208,
+      "metric-dp-distance-mean": 1.6354940545796934,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.712500072394808,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.03950701214500109
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.819187547217716,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 93.17279831576799,
+      "dp-noise-to-signal-ratio": 33.049521096147416,
+      "dp-noise-percent-of-signal": 3304.952109614742,
+      "metric-dp-noise-stdv": 0.03649634882210443
     },
     "14": {
-      "train_loss": 0.29445524915354326,
-      "train_loss_mean": 0.5593672215938568,
-      "metric-dp-distance": 1.9715963588096201,
-      "metric-dp-distance-mean": 1.8520975397485826,
-      "metric-dp-distance-median": 1.855464659864083,
+      "train_loss": 0.29872643790440634,
+      "train_loss_mean": 0.5008691070717759,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.20343082398176193,
+        0.2944882233859971,
+        0.49397769570350647,
+        0.20300900854635984
+      ],
+      "per-client-train_loss_mean": [
+        0.4273551968857646,
+        0.4864848163211718,
+        0.6658100226894021,
+        0.42382639239076525
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        10.677371759318811,
+        10.244352644846082,
+        12.371054614552287,
+        10.076275945622013
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.5708639140551288,
+        1.746403203656276,
+        1.5256956735781084,
+        1.7375398778046172,
+        1.538021869957447,
+        1.7272624025742214
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.5256956735781084,
+      "metric-dp-distance-median": 1.649063158314675,
+      "metric-dp-distance-mean": 1.6409644902709664,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.746403203656276,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.03170020056120173
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.7576589027542786,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 91.36402379870091,
+      "dp-noise-to-signal-ratio": 33.13100967906106,
+      "dp-noise-percent-of-signal": 3313.1009679061062,
+      "metric-dp-noise-stdv": 0.03578784090017115
     },
     "15": {
-      "train_loss": 0.1967064504569862,
-      "train_loss_mean": 0.39869594218325805,
-      "metric-dp-distance": 1.6135764775875334,
-      "metric-dp-distance-mean": 1.558959918937439,
-      "metric-dp-distance-median": 1.552609019272495,
+      "train_loss": 0.2513515055179596,
+      "train_loss_mean": 0.46539145298302176,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.19932515127584338,
+        0.22251723264344037,
+        0.3487081457860768,
+        0.23485549236647785
+      ],
+      "per-client-train_loss_mean": [
+        0.4144930414389819,
+        0.45766543690115213,
+        0.5287980169057847,
+        0.46060931668616834
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        9.574271865825205,
+        10.564878557326704,
+        10.2328064836375,
+        10.6703318300157
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.5217577981141706,
+        1.5001778108999133,
+        1.5046708543474476,
+        1.5787000592487554,
+        1.5877268694651623,
+        1.5586503075125318
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.5001778108999133,
+      "metric-dp-distance-median": 1.5402040528133512,
+      "metric-dp-distance-mean": 1.5419472832646635,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.5877268694651623,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.038733831874795344
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.8231157054440748,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 100.49488166357479,
+      "dp-noise-to-signal-ratio": 35.59715298589471,
+      "dp-noise-percent-of-signal": 3559.7152985894704,
+      "metric-dp-noise-stdv": 0.03936445317011836
     },
     "16": {
-      "train_loss": 0.3903645832906477,
-      "train_loss_mean": 0.6327420153538696,
-      "metric-dp-distance": 1.677721906453371,
-      "metric-dp-distance-mean": 1.5943653972353786,
-      "metric-dp-distance-median": 1.5876334966160357,
+      "train_loss": 0.3094367195153609,
+      "train_loss_mean": 0.5612708584754729,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.27567632403224707,
+        0.3323612785898149,
+        0.31555660208687186,
+        0.31415267335250974
+      ],
+      "per-client-train_loss_mean": [
+        0.521473923092708,
+        0.5035787357017398,
+        0.5867346133105457,
+        0.6332961617968976
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        9.455113841499546,
+        9.843134452051839,
+        11.420277335831834,
+        11.518503781533704
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.455689885187894,
+        1.5910685697260003,
+        1.5957098786408703,
+        1.5806467027092974,
+        1.6023000759693484,
+        1.6906033561875422
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.455689885187894,
+      "metric-dp-distance-median": 1.5933892241834353,
+      "metric-dp-distance-mean": 1.586003078070159,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.6906033561875422,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.037252896179988615
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.8433494617277684,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 94.37957358655532,
+      "dp-noise-to-signal-ratio": 33.193096682954106,
+      "dp-noise-percent-of-signal": 3319.3096682954106,
+      "metric-dp-noise-stdv": 0.036969049997004
     },
     "17": {
-      "train_loss": 0.30120955978054553,
-      "train_loss_mean": 0.587639580364339,
-      "metric-dp-distance": 1.6923913221495848,
-      "metric-dp-distance-mean": 1.640134214578817,
-      "metric-dp-distance-median": 1.6479393035794296,
+      "train_loss": 0.25505250768037513,
+      "train_loss_mean": 0.4524947884085122,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.1938239943701774,
+        0.19747437967453152,
+        0.34891239437274635,
+        0.27999926230404526
+      ],
+      "per-client-train_loss_mean": [
+        0.4165403979131952,
+        0.4276034443406388,
+        0.4782485609874129,
+        0.4875867503928021
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        10.969477914824127,
+        10.128661361115201,
+        10.209112299794999,
+        10.059131809546129
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.5723682691653569,
+        1.5885282799911995,
+        1.565233075991273,
+        1.551099562086165,
+        1.5071591700737674,
+        1.5587524242388706
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.5071591700737674,
+      "metric-dp-distance-median": 1.5619927501150719,
+      "metric-dp-distance-mean": 1.557190130257772,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.5885282799911995,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.036929993188936854
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.7510186198011883,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 100.44418212174574,
+      "dp-noise-to-signal-ratio": 36.51163296343108,
+      "dp-noise-percent-of-signal": 3651.163296343108,
+      "metric-dp-noise-stdv": 0.03934459385283733
     },
     "18": {
-      "train_loss": 0.2382824631931726,
-      "train_loss_mean": 0.45667462862911634,
-      "metric-dp-distance": 1.684214286506176,
-      "metric-dp-distance-mean": 1.6008415631949902,
-      "metric-dp-distance-median": 1.60469926497899,
+      "train_loss": 0.25693379854783416,
+      "train_loss_mean": 0.48341641387669365,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.2876157145947218,
+        0.2450038178358227,
+        0.2411293745972216,
+        0.2539862871635705
+      ],
+      "per-client-train_loss_mean": [
+        0.5170730370096862,
+        0.48368708686903117,
+        0.4755839661695063,
+        0.45732156545855107
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        8.945751025051113,
+        11.0322658967452,
+        10.292436968410772,
+        10.764990436861781
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.5633035471352439,
+        1.4912795494310558,
+        1.5400634980760515,
+        1.60756313521415,
+        1.6669867221886914,
+        1.6202825255071123
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.4912795494310558,
+      "metric-dp-distance-median": 1.585433341174697,
+      "metric-dp-distance-mean": 1.581579829592051,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.6669867221886914,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.03710929214931037
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.7311191596783844,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 95.7166735266405,
+      "dp-noise-to-signal-ratio": 35.046685234309614,
+      "dp-noise-percent-of-signal": 3504.6685234309607,
+      "metric-dp-noise-stdv": 0.03749280013336869
     },
     "19": {
-      "train_loss": 0.2723782905668486,
-      "train_loss_mean": 0.5210016120399814,
-      "metric-dp-distance": 1.578947148596247,
-      "metric-dp-distance-mean": 1.492579612441154,
-      "metric-dp-distance-median": 1.4843157188345988,
+      "train_loss": 0.30335839540930465,
+      "train_loss_mean": 0.48790182595839726,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.28336292039602995,
+        0.30883421562612057,
+        0.22950605512596667,
+        0.3917303904891014
+      ],
+      "per-client-train_loss_mean": [
+        0.39175809919834137,
+        0.5273949676193297,
+        0.4109624192584306,
+        0.6214918177574873
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        8.706607366135184,
+        9.399267347066882,
+        10.720289978864917,
+        9.518415689983359
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.4039768688380718,
+        1.4732198627510418,
+        1.4059856838236253,
+        1.5096697627256315,
+        1.4350449467698734,
+        1.5326946970696251
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.4039768688380718,
+      "metric-dp-distance-median": 1.4541324047604576,
+      "metric-dp-distance-mean": 1.4600986369963114,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.5326946970696251,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.039583338844219856
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.8132229916271227,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 104.10320083056395,
+      "dp-noise-to-signal-ratio": 37.004958775184875,
+      "dp-noise-percent-of-signal": 3700.4958775184878,
+      "metric-dp-noise-stdv": 0.04077785361918092
     },
     "20": {
-      "train_loss": 0.25743183933082037,
-      "train_loss_mean": 0.4580912406410789,
-      "metric-dp-distance": 1.6215476483727496,
-      "metric-dp-distance-mean": 1.5098736517959173,
-      "metric-dp-distance-median": 1.512353123165667,
+      "train_loss": 0.2733938006858807,
+      "train_loss_mean": 0.4721316214418039,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-num-examples": [
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "per-client-train_loss": [
+        0.264410181902349,
+        0.3349525285884738,
+        0.27735108719207346,
+        0.21686140506062657
+      ],
+      "per-client-train_loss_mean": [
+        0.4971200956963003,
+        0.4909546623006463,
+        0.44428374592680486,
+        0.4561679818434641
+      ],
+      "dp-client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "dp-update-norms-before-clipping": [
+        9.470758256660416,
+        11.10761402919829,
+        10.786146489089317,
+        11.23521867311628
+      ],
+      "dp-client-clipped": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "dp-num-clients-clipped": 4,
+      "dp-fraction-clipped": 1.0,
+      "metric-dp-pairwise-distances": [
+        1.5488515809799235,
+        1.5368574267874162,
+        1.5403915873418252,
+        1.611491662915796,
+        1.6352968305970232,
+        1.616988276752333
+      ],
+      "metric-dp-pairwise-client-i": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        2
+      ],
+      "metric-dp-pairwise-client-j": [
+        1,
+        2,
+        3,
+        2,
+        3,
+        3
+      ],
+      "metric-dp-distance-min": 1.5368574267874162,
+      "metric-dp-distance-median": 1.5801716219478599,
+      "metric-dp-distance-mean": 1.5816462275623862,
       "metric-dp-distance-count": 6,
+      "metric-dp-distance": 1.6352968305970232,
       "metric-dp-distance-invalid": 0.0,
-      "metric-dp-noise-stdv": 0.038543424895790025
+      "metric-dp-aggregation-collapsed": 0.0,
+      "dp-signal-update-norm": 2.790972971607382,
+      "dp-parameter-count": 6517476,
+      "dp-expected-noise-l2-norm": 97.57153617348298,
+      "dp-noise-to-signal-ratio": 34.95968508691412,
+      "dp-noise-percent-of-signal": 3495.968508691412,
+      "metric-dp-noise-stdv": 0.038219361054581236
     }
   },
   "client_evaluate_metrics": {
     "1": {
-      "eval_loss": 1.1455466449260712,
-      "eval_acc": 0.5
+      "eval_loss": 1.146983165293932,
+      "eval_acc": 0.5,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.5,
+        0.5,
+        0.5,
+        0.5
+      ],
+      "per-client-eval_loss": [
+        1.1446635127067566,
+        1.147104173898697,
+        1.1477015018463135,
+        1.1484634727239609
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "2": {
-      "eval_loss": 1.2750394828617573,
-      "eval_acc": 0.34765625
+      "eval_loss": 1.1471187472343445,
+      "eval_acc": 0.34765625,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.34765625,
+        0.34765625,
+        0.34765625,
+        0.34765625
+      ],
+      "per-client-eval_loss": [
+        1.1430956721305847,
+        1.1472996771335602,
+        1.149407833814621,
+        1.148671805858612
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "3": {
-      "eval_loss": 1.118262868374586,
-      "eval_acc": 0.48828125
+      "eval_loss": 1.1559129618108273,
+      "eval_acc": 0.5,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.5,
+        0.5,
+        0.5,
+        0.5
+      ],
+      "per-client-eval_loss": [
+        1.1549828201532364,
+        1.1536617875099182,
+        1.1548947840929031,
+        1.1601124554872513
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "4": {
-      "eval_loss": 1.0301777496933937,
-      "eval_acc": 0.544921875
+      "eval_loss": 1.0491123870015144,
+      "eval_acc": 0.5205078125,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.51953125,
+        0.5078125,
+        0.53515625,
+        0.51953125
+      ],
+      "per-client-eval_loss": [
+        1.0424709767103195,
+        1.054570958018303,
+        1.0510281026363373,
+        1.048379510641098
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "5": {
-      "eval_loss": 1.0204976852983236,
-      "eval_acc": 0.5498046875
+      "eval_loss": 1.0377770569175482,
+      "eval_acc": 0.4990234375,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.45703125,
+        0.50390625,
+        0.4921875,
+        0.54296875
+      ],
+      "per-client-eval_loss": [
+        1.0346286073327065,
+        1.0342437475919724,
+        1.0484828501939774,
+        1.0337530225515366
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "6": {
-      "eval_loss": 0.9920941796153784,
-      "eval_acc": 0.560546875
+      "eval_loss": 1.0116667710244656,
+      "eval_acc": 0.4912109375,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.48046875,
+        0.51171875,
+        0.5078125,
+        0.46484375
+      ],
+      "per-client-eval_loss": [
+        1.014522023499012,
+        0.98420799523592,
+        1.0263088718056679,
+        1.0216281935572624
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "7": {
-      "eval_loss": 0.8990122154355049,
-      "eval_acc": 0.572265625
+      "eval_loss": 0.8160015121102333,
+      "eval_acc": 0.5849609375,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.5703125,
+        0.5703125,
+        0.6015625,
+        0.59765625
+      ],
+      "per-client-eval_loss": [
+        0.8437028974294662,
+        0.8066681697964668,
+        0.8204951584339142,
+        0.793139822781086
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "8": {
-      "eval_loss": 0.8758836667984724,
-      "eval_acc": 0.5986328125
+      "eval_loss": 0.8877628911286592,
+      "eval_acc": 0.5888671875,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.5859375,
+        0.59765625,
+        0.57421875,
+        0.59765625
+      ],
+      "per-client-eval_loss": [
+        0.9024340212345123,
+        0.9033490642905235,
+        0.9013065099716187,
+        0.8439619690179825
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "9": {
-      "eval_loss": 1.042694916948676,
-      "eval_acc": 0.6015625
+      "eval_loss": 0.8814905527979136,
+      "eval_acc": 0.6015625,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.56640625,
+        0.60546875,
+        0.60546875,
+        0.62890625
+      ],
+      "per-client-eval_loss": [
+        0.9287219867110252,
+        0.8612140789628029,
+        0.9108196869492531,
+        0.825206458568573
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "10": {
-      "eval_loss": 0.8523572059348226,
-      "eval_acc": 0.681640625
+      "eval_loss": 0.8410975523293018,
+      "eval_acc": 0.6376953125,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.61328125,
+        0.625,
+        0.6328125,
+        0.6796875
+      ],
+      "per-client-eval_loss": [
+        0.9159391298890114,
+        0.8235958591103554,
+        0.8496871143579483,
+        0.7751681059598923
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "11": {
-      "eval_loss": 0.6905679553747177,
-      "eval_acc": 0.7158203125
+      "eval_loss": 0.9381226766854525,
+      "eval_acc": 0.658203125,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.61328125,
+        0.66015625,
+        0.6640625,
+        0.6953125
+      ],
+      "per-client-eval_loss": [
+        0.9968307167291641,
+        0.9020505324006081,
+        0.9153946712613106,
+        0.9382147863507271
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "12": {
-      "eval_loss": 1.0420516431331635,
-      "eval_acc": 0.5810546875
+      "eval_loss": 0.8364016246050596,
+      "eval_acc": 0.6611328125,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.68359375,
+        0.640625,
+        0.65234375,
+        0.66796875
+      ],
+      "per-client-eval_loss": [
+        0.8515032529830933,
+        0.8610571995377541,
+        0.8444129899144173,
+        0.7886330559849739
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "13": {
-      "eval_loss": 1.614915806800127,
-      "eval_acc": 0.4794921875
+      "eval_loss": 0.7071039034053683,
+      "eval_acc": 0.71484375,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.73828125,
+        0.69921875,
+        0.7109375,
+        0.7109375
+      ],
+      "per-client-eval_loss": [
+        0.6863708794116974,
+        0.7314662672579288,
+        0.7103056311607361,
+        0.700272835791111
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "14": {
-      "eval_loss": 0.7833864185959101,
-      "eval_acc": 0.67578125
+      "eval_loss": 0.6983742844313383,
+      "eval_acc": 0.7236328125,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.7421875,
+        0.73046875,
+        0.6875,
+        0.734375
+      ],
+      "per-client-eval_loss": [
+        0.7069839797914028,
+        0.6414791196584702,
+        0.7940746396780014,
+        0.6509593985974789
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "15": {
-      "eval_loss": 1.1748141311109066,
-      "eval_acc": 0.6767578125
+      "eval_loss": 1.5618333965539932,
+      "eval_acc": 0.560546875,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.56640625,
+        0.5546875,
+        0.5546875,
+        0.56640625
+      ],
+      "per-client-eval_loss": [
+        1.448627546429634,
+        1.5113060027360916,
+        1.7666778266429901,
+        1.520722210407257
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "16": {
-      "eval_loss": 0.822478897869587,
-      "eval_acc": 0.669921875
+      "eval_loss": 0.8528196718543768,
+      "eval_acc": 0.67578125,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.66015625,
+        0.69921875,
+        0.62109375,
+        0.72265625
+      ],
+      "per-client-eval_loss": [
+        0.8361053764820099,
+        0.8379536718130112,
+        0.9765408337116241,
+        0.760678805410862
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "17": {
-      "eval_loss": 1.0681839305907488,
-      "eval_acc": 0.568359375
+      "eval_loss": 1.0803439319133759,
+      "eval_acc": 0.607421875,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.62890625,
+        0.609375,
+        0.58984375,
+        0.6015625
+      ],
+      "per-client-eval_loss": [
+        1.046658307313919,
+        1.0486256033182144,
+        1.1798884868621826,
+        1.0462033301591873
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "18": {
-      "eval_loss": 2.0982112362980843,
-      "eval_acc": 0.65234375
+      "eval_loss": 1.3830279428511858,
+      "eval_acc": 0.6259765625,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.6328125,
+        0.640625,
+        0.59765625,
+        0.6328125
+      ],
+      "per-client-eval_loss": [
+        1.3383818566799164,
+        1.3275351524353027,
+        1.650688797235489,
+        1.2155059650540352
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "19": {
-      "eval_loss": 1.219862456433475,
-      "eval_acc": 0.69140625
+      "eval_loss": 2.2546067275106907,
+      "eval_acc": 0.5966796875,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.5859375,
+        0.609375,
+        0.578125,
+        0.61328125
+      ],
+      "per-client-eval_loss": [
+        2.5639778524637222,
+        2.3002385944128036,
+        2.2286655008792877,
+        1.9255449622869492
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     },
     "20": {
-      "eval_loss": 1.0671836510300636,
-      "eval_acc": 0.7197265625
+      "eval_loss": 1.3526779860258102,
+      "eval_acc": 0.6357421875,
+      "client-ids": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "per-client-eval_acc": [
+        0.640625,
+        0.62890625,
+        0.62890625,
+        0.64453125
+      ],
+      "per-client-eval_loss": [
+        1.4845125377178192,
+        1.2736817300319672,
+        1.4423656165599823,
+        1.2101520597934723
+      ],
+      "per-client-num-examples": [
+        256,
+        256,
+        256,
+        256
+      ]
     }
   },
   "server_evaluate_metrics": {
     "0": {
-      "loss": 1.4405663669109345,
+      "loss": 1.4405660927295685,
       "accuracy": 0.0109375,
       "f1": 0.0002366692426584235,
       "precision": 0.00011962890624999998,
-      "auc": 0.22917846679687504,
+      "auc": 0.22919148763020836,
       "diverged": 0.0
     },
     "1": {
-      "loss": 1.1431235790252685,
+      "loss": 1.1425581753253937,
       "accuracy": 0.4953125,
       "f1": 0.3281380616509927,
       "precision": 0.24533447265625,
-      "auc": 0.8044942220052084,
+      "auc": 0.7943570963541666,
       "diverged": 0.0
     },
     "2": {
-      "loss": 1.258708518743515,
+      "loss": 1.1341474294662475,
       "accuracy": 0.359375,
       "f1": 0.19001436781609196,
       "precision": 0.129150390625,
-      "auc": 0.7356380208333333,
+      "auc": 0.7597497558593749,
       "diverged": 0.0
     },
     "3": {
-      "loss": 1.1120834231376648,
-      "accuracy": 0.5046875,
-      "f1": 0.37569340718612565,
-      "precision": 0.46328125,
-      "auc": 0.7987117513020834,
+      "loss": 1.1525901794433593,
+      "accuracy": 0.4953125,
+      "f1": 0.32916994234800845,
+      "precision": 0.2464898940345369,
+      "auc": 0.7942073567708333,
       "diverged": 0.0
     },
     "4": {
-      "loss": 1.0140397191047668,
-      "accuracy": 0.55625,
-      "f1": 0.5198444937163991,
-      "precision": 0.5318715527767253,
-      "auc": 0.8293448893229165,
+      "loss": 1.039632961153984,
+      "accuracy": 0.525,
+      "f1": 0.4966070267855132,
+      "precision": 0.6287367929501284,
+      "auc": 0.8248274739583333,
       "diverged": 0.0
     },
     "5": {
-      "loss": 1.016787987947464,
-      "accuracy": 0.5453125,
-      "f1": 0.5053190342007606,
-      "precision": 0.4714962121212121,
-      "auc": 0.8307804361979165,
+      "loss": 1.0276642471551896,
+      "accuracy": 0.534375,
+      "f1": 0.5158418971616271,
+      "precision": 0.6017035603715171,
+      "auc": 0.8232486979166667,
       "diverged": 0.0
     },
     "6": {
-      "loss": 0.9759344220161438,
-      "accuracy": 0.5859375,
-      "f1": 0.5623610008818343,
-      "precision": 0.6597174104678216,
-      "auc": 0.84440673828125,
+      "loss": 0.9832309991121292,
+      "accuracy": 0.5234375,
+      "f1": 0.48534827993697477,
+      "precision": 0.6968547656047657,
+      "auc": 0.8208951822916667,
       "diverged": 0.0
     },
     "7": {
-      "loss": 0.8922392010688782,
-      "accuracy": 0.58125,
-      "f1": 0.5067808131076574,
-      "precision": 0.6097751580417524,
-      "auc": 0.8565551757812498,
+      "loss": 0.8257375806570053,
+      "accuracy": 0.5765625,
+      "f1": 0.5102876170006885,
+      "precision": 0.6144659226121713,
+      "auc": 0.8700724283854168,
       "diverged": 0.0
     },
     "8": {
-      "loss": 0.9019453644752502,
-      "accuracy": 0.6,
-      "f1": 0.5208652009499748,
-      "precision": 0.6252852735921954,
-      "auc": 0.8585286458333333,
+      "loss": 0.9246659070253372,
+      "accuracy": 0.5875,
+      "f1": 0.4926760975167193,
+      "precision": 0.6533913249963987,
+      "auc": 0.8567854817708332,
       "diverged": 0.0
     },
     "9": {
-      "loss": 1.0831755816936492,
-      "accuracy": 0.5734375,
-      "f1": 0.48932928517408103,
-      "precision": 0.5695103576015315,
-      "auc": 0.8599251302083334,
+      "loss": 0.8913867354393006,
+      "accuracy": 0.5984375,
+      "f1": 0.5252394470617623,
+      "precision": 0.6433492231638418,
+      "auc": 0.8672070312499999,
       "diverged": 0.0
     },
     "10": {
-      "loss": 0.8869143217802048,
-      "accuracy": 0.678125,
-      "f1": 0.6615889644209958,
-      "precision": 0.6629399417004727,
-      "auc": 0.8911067708333331,
+      "loss": 0.8922183096408844,
+      "accuracy": 0.628125,
+      "f1": 0.5767202113793998,
+      "precision": 0.6502415866612312,
+      "auc": 0.8730183919270833,
       "diverged": 0.0
     },
     "11": {
-      "loss": 0.7119483381509781,
-      "accuracy": 0.71875,
-      "f1": 0.7000643901704506,
-      "precision": 0.7001210169896049,
-      "auc": 0.9169930013020832,
+      "loss": 0.9162927955389023,
+      "accuracy": 0.6703125,
+      "f1": 0.6310003778052009,
+      "precision": 0.6869500353656262,
+      "auc": 0.8945882161458334,
       "diverged": 0.0
     },
     "12": {
-      "loss": 1.0280908942222595,
-      "accuracy": 0.609375,
-      "f1": 0.611838536461763,
-      "precision": 0.6865627813170023,
-      "auc": 0.8556095377604166,
+      "loss": 0.8658249750733376,
+      "accuracy": 0.6515625,
+      "f1": 0.642008537481707,
+      "precision": 0.7079400562461956,
+      "auc": 0.89223876953125,
       "diverged": 0.0
     },
     "13": {
-      "loss": 1.5576442241668702,
-      "accuracy": 0.5078125,
-      "f1": 0.45212705088725347,
-      "precision": 0.7220304686543456,
-      "auc": 0.8052490234374998,
+      "loss": 0.6788304656744003,
+      "accuracy": 0.734375,
+      "f1": 0.7296090736388066,
+      "precision": 0.7289245408700264,
+      "auc": 0.92429443359375,
       "diverged": 0.0
     },
     "14": {
-      "loss": 0.8189053416252137,
-      "accuracy": 0.6609375,
-      "f1": 0.6469268327399132,
-      "precision": 0.6544668682420631,
-      "auc": 0.9024251302083334,
+      "loss": 0.785663066804409,
+      "accuracy": 0.728125,
+      "f1": 0.7242970070386635,
+      "precision": 0.7495986205315764,
+      "auc": 0.9124186197916666,
       "diverged": 0.0
     },
     "15": {
-      "loss": 1.0282663106918335,
-      "accuracy": 0.696875,
-      "f1": 0.6823436790374112,
-      "precision": 0.7141144402472527,
-      "auc": 0.9171891276041666,
+      "loss": 1.3850500673055648,
+      "accuracy": 0.584375,
+      "f1": 0.5580871353827803,
+      "precision": 0.7379064799202942,
+      "auc": 0.8468050130208334,
       "diverged": 0.0
     },
     "16": {
-      "loss": 0.8223297774791718,
-      "accuracy": 0.6953125,
-      "f1": 0.6913716024862996,
-      "precision": 0.6884976274373799,
-      "auc": 0.8914632161458333,
+      "loss": 0.9135336428880692,
+      "accuracy": 0.665625,
+      "f1": 0.6644883049143306,
+      "precision": 0.6941656595370399,
+      "auc": 0.8828116861979167,
       "diverged": 0.0
     },
     "17": {
-      "loss": 1.0401838153600693,
-      "accuracy": 0.5640625,
-      "f1": 0.5604181848051587,
-      "precision": 0.5897836941239503,
-      "auc": 0.8366927083333333,
+      "loss": 0.9727436423301696,
+      "accuracy": 0.646875,
+      "f1": 0.6414795039231352,
+      "precision": 0.7194792383061045,
+      "auc": 0.8875952148437499,
       "diverged": 0.0
     },
     "18": {
-      "loss": 2.06373735666275,
-      "accuracy": 0.678125,
-      "f1": 0.6404900293287296,
-      "precision": 0.7021054900690157,
-      "auc": 0.8985990397135417,
+      "loss": 1.3669575989246368,
+      "accuracy": 0.609375,
+      "f1": 0.5981380816778497,
+      "precision": 0.7194868378552971,
+      "auc": 0.8649584960937499,
       "diverged": 0.0
     },
     "19": {
-      "loss": 1.325696974992752,
-      "accuracy": 0.684375,
-      "f1": 0.6498042626363694,
-      "precision": 0.6810348855001227,
-      "auc": 0.8992183430989583,
+      "loss": 2.5044292330741884,
+      "accuracy": 0.59375,
+      "f1": 0.5181398369332664,
+      "precision": 0.6832738427386094,
+      "auc": 0.8761181640625,
       "diverged": 0.0
     },
     "20": {
-      "loss": 1.1314046084880829,
-      "accuracy": 0.709375,
-      "f1": 0.6912930437411001,
-      "precision": 0.6985488846912953,
-      "auc": 0.9179760742187499,
+      "loss": 1.507770413160324,
+      "accuracy": 0.634375,
+      "f1": 0.579243976918887,
+      "precision": 0.6948211883176023,
+      "auc": 0.8815922037760417,
       "diverged": 0.0
     }
   }

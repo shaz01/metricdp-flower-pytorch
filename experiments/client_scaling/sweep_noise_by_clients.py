@@ -37,10 +37,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
 from pathlib import Path
+
+from experiments.reproduce.matrix import Combo, Hyperparams
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PARTITION_MODES = ("homogeneous", "non-iid")
@@ -52,6 +55,18 @@ EXPECTED_ROUNDS = 20  # paper default (pyproject.toml num-server-rounds)
 MAX_PARALLEL_CLIENTS = 4
 OUTPUT_DIR = PROJECT_ROOT / "results" / "noise_by_clients"
 LOG_PATH = OUTPUT_DIR / "sweep_progress.log"
+
+# Paper-default hyperparameters held fixed across the whole sweep -- same
+# values as sweep_noise_multiplier.py / pyproject.toml's
+# [tool.flwr.app.config] defaults.
+SEED = 42
+CLIPPING_NORM = 5.0
+LOCAL_EPOCHS = 5
+BATCH_SIZE = 32
+LEARNING_RATE = 0.001
+INITIALIZATION_EPOCHS = 20
+DATA_MODULE = "experiments.reproduce.dataset.alzheimer:create_data_module"
+MODEL_MODULE = "experiments.reproduce.paper_cnn:create_model"
 
 
 def _log(message: str) -> None:
@@ -99,6 +114,30 @@ def is_complete(path: Path, *, expected_rounds: int = EXPECTED_ROUNDS) -> bool:
     return len(completed_rounds) >= expected_rounds
 
 
+def runner_args_with_name(
+    combo: Combo, *, name: str, max_parallel_clients: int
+) -> tuple[str, ...]:
+    """Build this combo's runner.py CLI args under this sweep's own run name.
+
+    Delegates to ``Combo.runner_args()`` so every arg runner.py requires
+    (--local-epochs/--seed/--clipping-norm/--model-module, missing here
+    before this fix -- same bug as the one fixed in
+    sweep_scale_controlled.py/sweep_scale_controlled_epochs.py, this script
+    just wasn't part of that fix) is included and stays in sync with the
+    sibling sweeps. Swaps Combo's trailing ``--run-name`` pair for this
+    sweep's own naming (``noisebyclients__...``, no seed/clip/rounds/epochs
+    baked in, since those are fixed per sweep here) so
+    ``result_path()``/``is_complete()`` keep matching what lands on disk.
+    """
+    args = combo.runner_args(
+        output_dir=OUTPUT_DIR,
+        max_parallel_clients=max_parallel_clients,
+        client_cpus=1.0,
+    )
+    assert args[-2] == "--run-name"
+    return (*args[:-1], name)
+
+
 def run_one_combo(
     partition: str,
     privacy: str,
@@ -116,30 +155,41 @@ def run_one_combo(
         _log(f"SKIP  {name} (already complete)")
         return True
 
+    combo = Combo(
+        name_prefix="noisebyclients",
+        num_clients=num_clients,
+        partition=partition,
+        privacy=privacy,
+        aggregation=aggregation,
+        seed=SEED,
+        noise_multiplier=noise_multiplier,
+        hyperparams=Hyperparams(
+            clipping_norm=CLIPPING_NORM,
+            rounds=EXPECTED_ROUNDS,
+            local_epochs=LOCAL_EPOCHS,
+            batch_size=BATCH_SIZE,
+            learning_rate=LEARNING_RATE,
+            initialization_epochs=INITIALIZATION_EPOCHS,
+        ),
+        data_module=DATA_MODULE,
+        model_module=MODEL_MODULE,
+    )
     command = [
         sys.executable,
         "-m",
         "experiments.reproduce.runner",
-        "--num-clients",
-        str(num_clients),
-        "--partition",
-        partition,
-        "--privacy",
-        privacy,
-        "--aggregation",
-        aggregation,
-        "--noise-multiplier",
-        str(noise_multiplier),
-        "--max-parallel-clients",
-        str(max_parallel_clients),
-        "--output-dir",
-        str(OUTPUT_DIR),
-        "--run-name",
-        name,
+        *runner_args_with_name(
+            combo, name=name, max_parallel_clients=max_parallel_clients
+        ),
     ]
     _log(f"START {name}")
     started = time.monotonic()
-    result = subprocess.run(command, cwd=PROJECT_ROOT)
+    child_env = os.environ.copy()
+    # Same determinism env vars experiments/reproduce/matrix/run_combo.py
+    # sets for the sibling sweeps.
+    child_env.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+    child_env.setdefault("PYTHONHASHSEED", "0")
+    result = subprocess.run(command, cwd=PROJECT_ROOT, env=child_env)
     elapsed = time.monotonic() - started
     if result.returncode == 0:
         _log(f"DONE  {name} ({elapsed:.1f}s)")

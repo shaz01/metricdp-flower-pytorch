@@ -20,6 +20,26 @@ dependencies = [
 [dependency-groups]
 dev = ["pytest>=8.0"]
 
+# PyPI's default Windows torch wheel is CPU-only (unlike Linux, where the
+# default PyPI wheel bundles CUDA) -- `uv sync` on a Windows CUDA machine
+# silently gets a working-but-CPU-only torch with no error. Route Windows
+# to the PyTorch CUDA index instead; other platforms keep the default PyPI
+# wheel unchanged. cu128 was chosen for RTX 50-series (Blackwell, sm_120)
+# support; it also covers older Windows CUDA GPUs via the driver's backward
+# compatibility.
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu128", marker = "sys_platform == 'win32'" },
+]
+torchvision = [
+    { index = "pytorch-cu128", marker = "sys_platform == 'win32'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
 [tool.pytest.ini_options]
 addopts = "-m 'not reproducibility'"
 markers = [

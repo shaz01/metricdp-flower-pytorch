@@ -1,8 +1,8 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-08-05, commit `8617c05` (cross-machine workflow docs) — see `git log`
-for anything more recent
+**Last updated:** 2026-08-05, CUDA workstation (fedyogi leg done too — redo's full matrix now
+complete) — see `git log` for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -39,17 +39,71 @@ superseded, kept for historical comparison only.
 `--aggregation-methods` override flags so the redo can be split across multiple machines instead
 of running the whole matrix sequentially on one box.
 
+**CUDA laptop (Windows, RTX 5070) dropped out of this redo** — first time this pipeline has been
+run on native Windows, and it hit a stack of platform issues, most not fixable in place:
+- `uv` wasn't installed; installed fine.
+- PyPI's default Windows `torch` wheel is CPU-only (unlike Linux) — fixed for good via a
+  `[tool.uv.sources]` override routing Windows to the PyTorch cu128 index (`pyproject.toml`/
+  `uv.lock`).
+- `sweep_scale_controlled.py`/`sweep_scale_controlled_epochs.py` were both silently broken since
+  the `feature/scaling-diagnosis` merge (missing `runner.py` args `5e22567` made required) — fixed
+  for every machine, not just this one.
+- `runner.py`'s `_launch_isolated` hardcoded a POSIX venv layout (`bin/python`) — fixed for good to
+  derive the interpreter path cross-platform.
+- **Not fixable without a full Windows reset, which is off the table on this machine**: (1) Ray has
+  no published wheel for Windows + Python 3.13 (`flwr[simulation]`'s own metadata already excludes
+  that combination) and (2) Windows' Smart App Control is Enforced on this machine and blocks the
+  unsigned `pyarrow`/`scipy` native DLLs the pipeline needs for dataset loading and evaluation —
+  by design, Microsoft doesn't allow disabling Smart App Control once Enforced except via a reset.
+  WSL2 (untested here) would likely route around both, since it's Linux underneath, but that's a
+  separate, not-yet-started effort, not this redo.
+
+The four fixes above are genuine and stay regardless; only the fedyogi leg itself didn't happen
+here. fedyogi at n=4/n=8 has since finished on the CUDA workstation (see below) — the redo's full
+matrix (fedavg n=4/8/48 + fedyogi n=4/8) is now complete.
+
+Along the way, the CUDA workstation independently hit and fixed the same
+`sweep_scale_controlled(_epochs)` missing-required-args bug the laptop found (both machines were
+bringing this branch up in parallel) — no functional difference, same fix landed either way.
+
+The CUDA workstation's fedavg matrix (client counts 4/8/48) finished clean: 24/24 combinations, 0
+failures, ~5h21m wall-clock. Result highlights vs the archived MPS baseline: 0 invalid-distance/
+collapsed-aggregation rounds anywhere (MPS had up to 239/240 invalid and 7-23 collapsed rounds per
+combo), smooth monotonic convergence at every client count instead of MPS's stuck-at-random-ish
+plateaus, and determinism confirmed directly (v1 and v2's n=4 combos, which share identical
+hyperparameters, produced bit-identical results from two independently-launched subprocesses).
+Also traced two apparent anomalies back to MPS's own non-determinism rather than a new-run problem:
+MPS's archived v1/v2 n=4 results disagree with each other despite identical config (diverging
+already at round 0, before any client aggregation), and the deterministic-reply-order fix
+(`DeterministicReplyOrderMixin`) turned out to cover every aggregation method including global-dp,
+not just metric-privacy — explaining why global-dp's own numbers jumped too. Not yet merged to
+`master` or written up in `reports/` — results are in `results/scale_controlled(_epochs)/` pending
+review.
+
+Picking up fedyogi also surfaced a second bug, this time in one of the laptop's own cross-platform
+fixes: `_launch_isolated`'s new venv-relative interpreter path (`aa72c2e`) `.resolve()`d both
+`sys.executable` and `sys.prefix` before computing the relative path, which works on a normal venv
+but not on `uv`-managed ones here — `uv` symlinks `.venv/bin/python` straight through to a shared
+interpreter store outside the project (`~/.local/share/uv/python/...`), so resolving follows that
+symlink past `sys.prefix` entirely and `relative_to()` raises `ValueError`. Every isolated-worker
+run failed instantly (exit=1) on first use, not caught by `aa72c2e`'s own `--dry-run` verification
+since `main()` returns before ever reaching `_launch_isolated` on a dry run. Fixed by dropping the
+`.resolve()` calls — `sys.executable` is already venv-relative as reported, on both platforms this
+matters for. Worth knowing on any other machine with a similarly `uv`-managed venv.
+
+fedyogi finished clean afterward: 16/16 combinations (n=4/n=8 only, both sweeps), 0 failures,
+~49m wall-clock total. Combined with the fedavg matrix: **40/40 combinations across both sweeps,
+0 failures.** Not yet merged to `master` or written up in `reports/` — results are in
+`results/scale_controlled(_epochs)/` pending review.
+
 ### Currently running
 
-| Machine role | Task | Status |
-|---|---|---|
-| CUDA workstation | fedavg matrix (client counts 4/8/48), `sweep_scale_controlled(_epochs)` | running |
-| CUDA laptop | fedyogi at n=4/n=8, `sweep_scale_controlled(_epochs)` | running |
-
-Neither finished yet — don't treat `results/scale_controlled*/` as complete. Update this table
-whenever what's running changes: edit the Status column in place (e.g. `running` -> `done`) and
-leave a finished row for one update cycle before removing it, so machine-to-results provenance
-isn't lost; see `AGENTS.md`'s "Working across machines" section.
+Nothing currently running on this redo — the full matrix (fedavg n=4/8/48 + fedyogi n=4/8,
+`sweep_scale_controlled(_epochs)`) finished on the CUDA workstation with 0 failures across 40/40
+combinations. Results pending review before merge; not yet in `reports/`. Update this table
+whenever a machine picks up new work: edit the Status column in place (e.g. `running` -> `done`)
+and leave a finished row for one update cycle before removing it, so machine-to-results
+provenance isn't lost; see `AGENTS.md`'s "Working across machines" section.
 
 ## What's established on `master`
 
