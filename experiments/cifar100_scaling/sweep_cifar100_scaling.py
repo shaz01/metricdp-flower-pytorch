@@ -9,10 +9,10 @@ partitioning, on fedavg only: 4 * 3 * 3 * 2 * 1 = 72 combinations.
 Unlike every other dataset plugin used by the sibling sweeps in
 experiments/client_scaling/ (all reduced to a four-class subset), this uses
 the full 100-class experiments.reproduce.dataset.cifar100 plugin -- a
-genuinely harder task, so noise_multiplier is fixed at 0.05 rather than the
-paper's 0.01 (this repo's own prior sweeps found 0.01 produces no visible
-vanilla/global-dp/metric-privacy separation; see
-docs/RESEARCH_ROADMAP.md and reports/client_count_scaling.md).
+genuinely harder task with a much larger model, so noise_multiplier is
+recalibrated to 0.0025 rather than the paper's 0.01 or this sweep's own v1
+value of 0.05; see the NOISE_MULTIPLIER constant below for the actual
+derivation.
 
 Reuses experiments.reproduce.runner unmodified via subprocess, exactly like
 the sibling sweep scripts: resumable (skips combinations whose result JSON
@@ -41,7 +41,12 @@ PRIVACY_MODES_SWEPT = ("vanilla", "global-dp", "metric-privacy")
 AGGREGATION_METHODS_SWEPT = ("fedavg",)
 CLIENT_COUNTS = (8, 64, 128, 256)
 ROUND_COUNTS = (20, 60, 120)
-NOISE_MULTIPLIER = 0.05
+NOISE_MULTIPLIER = 0.0025  # recalibrated for the v2 model's ~2.76M params;
+# see docs/superpowers/specs/2026-08-07-cifar100-v2-accuracy-design.md for
+# the derivation (target noise-to-signal ratio ~1 at n=8, using
+# noise_l2_norm ~= stdv * sqrt(param_count) and stdv = noise_multiplier *
+# clipping_norm / num_sampled_clients). v1 used 0.05, which produced a
+# ~22x noise-to-signal ratio and crushed global-dp to ~4% accuracy at n=8.
 MAX_PARALLEL_CLIENTS = 16
 OUTPUT_DIR = PROJECT_ROOT / "results" / "cifar100_scaling"
 LOG_PATH = OUTPUT_DIR / "sweep_progress.log"
@@ -54,6 +59,8 @@ LOCAL_EPOCHS = 5
 BATCH_SIZE = 32
 LEARNING_RATE = 0.001
 INITIALIZATION_EPOCHS = 20
+WEIGHT_DECAY = 5e-4
+LR_SCHEDULE = "cosine"
 DATA_MODULE = "experiments.reproduce.dataset.cifar100:create_data_module"
 MODEL_MODULE = "experiments.reproduce.cifar100_cnn:create_model"
 
@@ -240,6 +247,8 @@ def run_one_combo(
             batch_size=BATCH_SIZE,
             learning_rate=LEARNING_RATE,
             initialization_epochs=INITIALIZATION_EPOCHS,
+            weight_decay=WEIGHT_DECAY,
+            lr_schedule=LR_SCHEDULE,
         ),
         data_module=DATA_MODULE,
         model_module=MODEL_MODULE,
