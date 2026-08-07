@@ -19,18 +19,19 @@ from datasets import Dataset as HuggingFaceDataset
 from datasets import DatasetDict
 from PIL import Image
 from torch.utils.data import DataLoader
-from torchvision.transforms import ToTensor
+from torchvision.transforms import RandomCrop, RandomHorizontalFlip, ToTensor
 
 from experiments.reproduce.dataset.common import PartitionMode, load_hf_dataset_cached
 from metricdp_pytorch.utils.data import (
     RecordImageDataset,
+    cap_indices,
     labels_from_records,
-    make_client_loaders,
-    make_server_loaders,
+    make_indexed_loader,
 )
 from metricdp_pytorch.utils.split_data import (
     balanced_stratified_partitions,
     quantity_skewed_partitions,
+    split_stratified,
 )
 
 DATASET_ID = "uoft-cs/cifar100"
@@ -64,9 +65,10 @@ def derive_class_names(train_split: HuggingFaceDataset) -> tuple[str, ...]:
 
 @dataclass(frozen=True)
 class RGBImageTransform:
-    """Pickle-safe validated RGB tensor transform."""
+    """Pickle-safe validated RGB tensor transform, optionally augmented."""
 
     image_size: tuple[int, int]
+    augment: bool = False
 
     def __call__(self, image: Any) -> torch.Tensor:
         if not isinstance(image, Image.Image):
@@ -77,19 +79,23 @@ class RGBImageTransform:
                 f"Expected {self.image_size[0]}×{self.image_size[1]} images, "
                 f"got {rgb.size}."
             )
+        if self.augment:
+            rgb = RandomCrop(self.image_size, padding=4)(rgb)
+            rgb = RandomHorizontalFlip(0.5)(rgb)
         return _TO_TENSOR(rgb)
 
 
-_CIFAR100_IMAGE_TRANSFORM = RGBImageTransform(IMAGE_SIZE)
+_CIFAR100_TRAIN_TRANSFORM = RGBImageTransform(IMAGE_SIZE, augment=True)
+_CIFAR100_EVAL_TRANSFORM = RGBImageTransform(IMAGE_SIZE, augment=False)
 
 
 class Cifar100Dataset(RecordImageDataset):
     """PyTorch view over Hugging Face CIFAR-100 records."""
 
-    def __init__(self, dataset: HuggingFaceDataset) -> None:
+    def __init__(self, dataset: HuggingFaceDataset, *, augment: bool = False) -> None:
         super().__init__(
             dataset,
-            transform=_CIFAR100_IMAGE_TRANSFORM,
+            transform=_CIFAR100_TRAIN_TRANSFORM if augment else _CIFAR100_EVAL_TRANSFORM,
             image_column=IMAGE_COLUMN,
             label_column=LABEL_COLUMN,
         )
@@ -179,15 +185,27 @@ class Cifar100DataModule:
         )
         if not 0 <= partition_id < len(partitions):
             raise ValueError("partition_id must be in [0, num_partitions).")
-        return make_client_loaders(
-            Cifar100Dataset(split),
-            labels,
-            partitions[partition_id],
-            batch_size=batch_size,
-            seed=seed + partition_id,
-            train_fraction=self.train_fraction,
-            max_samples=max_samples,
+
+        loader_seed = seed + partition_id
+        selected = cap_indices(partitions[partition_id], max_samples)
+        train_indices, test_indices = split_stratified(
+            labels, selected, self.train_fraction, seed=loader_seed
         )
+        train_loader = make_indexed_loader(
+            Cifar100Dataset(split, augment=True),
+            train_indices,
+            batch_size=batch_size,
+            shuffle=True,
+            seed=loader_seed,
+        )
+        eval_loader = make_indexed_loader(
+            Cifar100Dataset(split, augment=False),
+            test_indices,
+            batch_size=batch_size,
+            shuffle=False,
+            seed=loader_seed,
+        )
+        return train_loader, eval_loader
 
     def server_loaders(
         self,
@@ -197,14 +215,25 @@ class Cifar100DataModule:
         max_samples: int = 0,
     ) -> tuple[DataLoader, DataLoader]:
         split = self.dataset["test"]
-        return make_server_loaders(
-            Cifar100Dataset(split),
-            labels_from_records(split, label_column=LABEL_COLUMN),
-            batch_size=batch_size,
-            seed=seed,
-            validation_fraction=0.5,
-            max_samples=max_samples,
+        labels = labels_from_records(split, label_column=LABEL_COLUMN)
+        validation_indices, test_indices = split_stratified(
+            labels, list(range(len(labels))), 0.5, seed=seed
         )
+        validation_loader = make_indexed_loader(
+            Cifar100Dataset(split, augment=False),
+            validation_indices,
+            batch_size=batch_size,
+            shuffle=False,
+            seed=seed,
+        )
+        test_loader = make_indexed_loader(
+            Cifar100Dataset(split, augment=False),
+            test_indices,
+            batch_size=batch_size,
+            shuffle=False,
+            seed=seed,
+        )
+        return validation_loader, test_loader
 
 
 def create_data_module(config: Mapping[str, Any]) -> Cifar100DataModule:
