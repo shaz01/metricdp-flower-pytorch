@@ -216,14 +216,26 @@ class Cifar100DataModule:
     ) -> tuple[DataLoader, DataLoader]:
         split = self.dataset["test"]
         labels = labels_from_records(split, label_column=LABEL_COLUMN)
+        all_indices = list(range(len(labels)))
+        if max_samples < 0:
+            raise ValueError("max_samples must be non-negative.")
+        if 0 < max_samples < len(all_indices):
+            selected, _ = split_stratified(
+                labels,
+                all_indices,
+                max_samples / len(all_indices),
+                seed=seed,
+            )
+        else:
+            selected = all_indices
         validation_indices, test_indices = split_stratified(
-            labels, list(range(len(labels))), 0.5, seed=seed
+            labels, selected, 0.5, seed=seed
         )
         validation_loader = make_indexed_loader(
             Cifar100Dataset(split, augment=False),
             validation_indices,
             batch_size=batch_size,
-            shuffle=False,
+            shuffle=True,
             seed=seed,
         )
         test_loader = make_indexed_loader(
