@@ -9,7 +9,11 @@ from flwr.app import ArrayRecord, Context, Message, MetricRecord, RecordDict
 from flwr.clientapp import ClientApp
 
 from experiments.reproduce.paper_loss import evaluate_model
-from experiments.reproduce.paper_training import seed_training, train_with_adam
+from experiments.reproduce.paper_training import (
+    cosine_decayed_lr,
+    seed_training,
+    train_with_adam,
+)
 from metricdp_pytorch.data_module import load_data_module
 from metricdp_pytorch.model_module import load_model
 from metricdp_pytorch.utils.device import release_device_cache, resolve_device
@@ -90,11 +94,25 @@ def train(msg: Message, context: Context) -> Message:
     trainloader, _ = _client_data(context)
     _reseed_loader(trainloader, round_seed)
     device = resolve_device()
+    base_learning_rate = float(train_config["lr"])
+    lr_schedule = str(run_config.get("lr-schedule", "none"))
+    if lr_schedule == "cosine":
+        effective_learning_rate = cosine_decayed_lr(
+            base_learning_rate,
+            int(train_config["server-round"]),
+            int(run_config["num-server-rounds"]),
+        )
+    elif lr_schedule == "none":
+        effective_learning_rate = base_learning_rate
+    else:
+        raise ValueError(f"Unknown lr-schedule {lr_schedule!r}; choose 'none' or 'cosine'.")
+
     epoch_losses = train_with_adam(
         model,
         trainloader,
         epochs=int(run_config.get("local-epochs", 5)),
-        learning_rate=float(train_config["lr"]),
+        learning_rate=effective_learning_rate,
+        weight_decay=float(run_config.get("weight-decay", 0.0)),
         device=device,
         proximal_mu=float(train_config.get("proximal-mu", 0.0)),
     )
