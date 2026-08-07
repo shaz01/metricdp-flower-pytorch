@@ -1,6 +1,6 @@
 # Project Status
 
-**Branch:** `master`
+**Branch:** `feature/cifar100-scaling`
 **Last updated:** 2026-08-07, CUDA workstation (`feature/cifar100-scaling` active — dataset/model
 plugins and sweep script added, smoke-verified, sweep not yet run) — see `git log` for anything
 more recent

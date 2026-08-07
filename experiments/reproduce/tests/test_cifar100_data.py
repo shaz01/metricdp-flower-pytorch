@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datasets import Dataset, DatasetDict
+from datasets import ClassLabel, Dataset, DatasetDict, Features
 from PIL import Image
 
 from experiments.reproduce.dataset import cifar100
@@ -33,6 +33,19 @@ def test_derive_class_names_falls_back_to_synthesized_names() -> None:
     names = cifar100.derive_class_names(train_split)
 
     assert names == ("class_0", "class_1", "class_2")
+
+
+def test_derive_class_names_uses_classlabel_feature_names() -> None:
+    features = Features(
+        {
+            "fine_label": ClassLabel(names=["apple", "aquarium_fish", "baby"]),
+        }
+    )
+    train_split = Dataset.from_dict({"fine_label": [0, 1, 2]}, features=features)
+
+    names = cifar100.derive_class_names(train_split)
+
+    assert names == ("apple", "aquarium_fish", "baby")
 
 
 def test_cifar100_adapter_returns_rgb_tensor() -> None:
