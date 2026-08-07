@@ -1,8 +1,9 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-08-06, CUDA workstation (`feature/scale-controlled-redo` merged and
-closed) — see `git log` for anything more recent
+**Last updated:** 2026-08-07, CUDA workstation (`feature/cifar100-scaling` active — dataset/model
+plugins and sweep script added, smoke-verified, sweep not yet run) — see `git log` for anything
+more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -15,12 +16,24 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-Nothing currently running. `feature/scale-controlled-redo` (Phase 1 items 1 and 2 of
-`docs/RESEARCH_ROADMAP.md`) merged into `master` 2026-08-06 and was deleted — see "What's
-established" below for what it left behind. The natural next steps, not yet started: `fedyogi` at
-`n=48` (the redo's matrix only covers `n=4/8` for `fedyogi`), and Phase 1's remaining item (NaN/
-failure-mode logging in `runner.py`, motivated directly by the zero-norm-update crashes found
-during the redo). After that, Phase 2 (mechanism redesign) is the next major phase.
+`feature/cifar100-scaling` (not yet merged) adds a CIFAR-100 dataset/model plugin pair and a
+client-count/round-budget sweep script: `experiments/reproduce/dataset/cifar100.py` (full
+100-class CIFAR-100 data plugin — unlike every other dataset plugin in this repo, which subsets to
+4 classes), `experiments/reproduce/cifar100_cnn.py` (matching 100-class CNN, no BatchNorm), and
+`experiments/cifar100_scaling/sweep_cifar100_scaling.py` (resumable sweep: client counts
+8/64/128/256 x rounds 20/60/120 x privacy vanilla/global-dp/metric-privacy x partition
+homogeneous/non-iid x `fedavg` = 72 combos, `noise_multiplier=0.05`, `clipping_norm=5.0`). An
+end-to-end `--smoke` run through the real pipeline passed with no bugs found, so the tooling is
+verified, but none of the 72 sweep combos have actually been run yet. Next step: launch the
+72-combo sweep (`uv run python -m experiments.cifar100_scaling.sweep_cifar100_scaling`) — a
+separate, multi-day action, not started.
+
+Separately, on `master`: nothing currently running. `feature/scale-controlled-redo` (Phase 1 items
+1 and 2 of `docs/RESEARCH_ROADMAP.md`) merged into `master` 2026-08-06 and was deleted — see
+"What's established" below for what it left behind. The natural next steps there, not yet started:
+`fedyogi` at `n=48` (the redo's matrix only covers `n=4/8` for `fedyogi`), and Phase 1's remaining
+item (NaN/failure-mode logging in `runner.py`, motivated directly by the zero-norm-update crashes
+found during the redo). After that, Phase 2 (mechanism redesign) is the next major phase.
 
 ### Currently running
 
