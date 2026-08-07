@@ -1,9 +1,4 @@
-"""Full ten-class CIFAR-10 data plugin for reproduction experiments.
-
-The four-class variant used by the original reproduction runs lives in
-``experiments.reproduce.dataset.cifar4``. Pair this plugin with
-``experiments.reproduce.cifar10_cnn:create_model``.
-"""
+"""Four-class CIFAR-10 data plugin for reproduction experiments."""
 
 from __future__ import annotations
 
@@ -35,25 +30,19 @@ from metricdp_pytorch.utils.split_data import (
 DATASET_ID = "uoft-cs/cifar10"
 IMAGE_SIZE = (32, 32)
 IMAGE_COLUMN = "img"
-CLASS_NAMES = (
-    "airplane",
-    "automobile",
-    "bird",
-    "cat",
-    "deer",
-    "dog",
-    "frog",
-    "horse",
-    "ship",
-    "truck",
-)
+CLASS_NAMES = ("airplane", "automobile", "bird", "cat")
 CLASS_IDS = tuple(range(len(CLASS_NAMES)))
 _TO_TENSOR = ToTensor()
 
 
-def load_cifar10_dataset(cache_dir: str | Path | None = None) -> DatasetDict:
-    """Return the unfiltered ten-class CIFAR-10 dataset."""
-    return load_hf_dataset_cached(DATASET_ID, cache_dir)
+def load_cifar4_dataset(cache_dir: str | Path | None = None) -> DatasetDict:
+    """Return CIFAR-10 filtered to the first four classes."""
+    dataset = load_hf_dataset_cached(DATASET_ID, cache_dir)
+    return dataset.filter(
+        lambda label: label in CLASS_IDS,
+        input_columns=["label"],
+        desc="Filtering CIFAR-10 to four classes",
+    )
 
 
 @dataclass(frozen=True)
@@ -74,16 +63,16 @@ class RGBImageTransform:
         return _TO_TENSOR(rgb)
 
 
-_CIFAR10_IMAGE_TRANSFORM = RGBImageTransform(IMAGE_SIZE)
+_CIFAR4_IMAGE_TRANSFORM = RGBImageTransform(IMAGE_SIZE)
 
 
-class Cifar10Dataset(RecordImageDataset):
+class Cifar4Dataset(RecordImageDataset):
     """PyTorch view over Hugging Face CIFAR-10 records."""
 
     def __init__(self, dataset: HuggingFaceDataset) -> None:
         super().__init__(
             dataset,
-            transform=_CIFAR10_IMAGE_TRANSFORM,
+            transform=_CIFAR4_IMAGE_TRANSFORM,
             image_column=IMAGE_COLUMN,
         )
 
@@ -120,8 +109,8 @@ def create_partitions(
     )
 
 
-class Cifar10DataModule:
-    """Federated data module for the full ten-class ``uoft-cs/cifar10``."""
+class Cifar4DataModule:
+    """Federated data module for four-class ``uoft-cs/cifar10``."""
 
     def __init__(
         self,
@@ -139,7 +128,7 @@ class Cifar10DataModule:
     @property
     def dataset(self) -> DatasetDict:
         if self._dataset is None:
-            self._dataset = load_cifar10_dataset(self.cache_dir)
+            self._dataset = load_cifar4_dataset(self.cache_dir)
         return self._dataset
 
     def client_loaders(
@@ -167,7 +156,7 @@ class Cifar10DataModule:
         if not 0 <= partition_id < len(partitions):
             raise ValueError("partition_id must be in [0, num_partitions).")
         return make_client_loaders(
-            Cifar10Dataset(split),
+            Cifar4Dataset(split),
             labels,
             partitions[partition_id],
             batch_size=batch_size,
@@ -185,7 +174,7 @@ class Cifar10DataModule:
     ) -> tuple[DataLoader, DataLoader]:
         split = self.dataset["test"]
         return make_server_loaders(
-            Cifar10Dataset(split),
+            Cifar4Dataset(split),
             labels_from_records(split),
             batch_size=batch_size,
             seed=seed,
@@ -194,10 +183,10 @@ class Cifar10DataModule:
         )
 
 
-def create_data_module(config: Mapping[str, Any]) -> Cifar10DataModule:
+def create_data_module(config: Mapping[str, Any]) -> Cifar4DataModule:
     """Factory used by the configurable ClientApp and ServerApp."""
     cache_dir = str(config.get("data-cache-dir", "")).strip() or None
-    return Cifar10DataModule(
+    return Cifar4DataModule(
         cache_dir=cache_dir,
         train_fraction=float(config.get("train-fraction", 0.8)),
     )

@@ -17,7 +17,7 @@ from experiments.cia.datasets.partitions import (
 )
 from experiments.cia.result import CiaResult
 from experiments.cia.shadow_dataset import clean_shadow_dataset, noisy_shadow_dataset
-from experiments.reproduce.dataset.cifar10 import Cifar10DataModule
+from experiments.reproduce.dataset.cifar4 import Cifar4DataModule
 from experiments.reproduce.matrix import Combo, Hyperparams, is_complete, run_combos
 from metricdp_pytorch.utils.device import resolve_device
 
@@ -50,7 +50,7 @@ def _cache_dir(config: Mapping[str, Any]) -> str | None:
 def create_cifar_out_remove_all(config: Mapping[str, Any]) -> PartitionViewDataModule:
     """Partition all filtered CIFAR records among three canonical clients."""
     return out_remove(
-        Cifar10DataModule(cache_dir=_cache_dir(config)),
+        Cifar4DataModule(cache_dir=_cache_dir(config)),
         canonical_num_partitions=3,
         target_partition_id=TARGET_PARTITION_ID,
     )
@@ -68,7 +68,7 @@ def create_cifar_in_replace(config: Mapping[str, Any]) -> PartitionViewDataModul
     """Create an IN-replace view with one excluded replacement partition."""
     canonical_clients, replacement_id = _replacement_ids(config)
     return in_replace(
-        Cifar10DataModule(cache_dir=_cache_dir(config)),
+        Cifar4DataModule(cache_dir=_cache_dir(config)),
         canonical_num_partitions=canonical_clients,
         target_partition_id=TARGET_PARTITION_ID,
         replacement_partition_id=replacement_id,
@@ -79,7 +79,7 @@ def create_cifar_out_replace(config: Mapping[str, Any]) -> PartitionViewDataModu
     """Create an OUT-replace view with the target swapped for its replacement."""
     canonical_clients, replacement_id = _replacement_ids(config)
     return out_replace(
-        Cifar10DataModule(cache_dir=_cache_dir(config)),
+        Cifar4DataModule(cache_dir=_cache_dir(config)),
         canonical_num_partitions=canonical_clients,
         target_partition_id=TARGET_PARTITION_ID,
         replacement_partition_id=replacement_id,
@@ -162,7 +162,7 @@ def build_combos(
             noise_multiplier=noise_multiplier,
             hyperparams=HYPERPARAMS,
             data_module=_data_module(task, adjacency),
-            model_module="experiments.reproduce.cifar10_cnn:create_model",
+            model_module="experiments.reproduce.cifar4_cnn:create_model",
         )
         for privacy in privacy_modes
     ]

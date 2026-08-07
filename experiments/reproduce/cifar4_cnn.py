@@ -1,21 +1,13 @@
-"""CNN model plugin for full ten-class CIFAR-10 runs.
-
-The four-class variant used by the original reproduction runs lives in
-``experiments.reproduce.cifar4_cnn`` and pairs with
-``experiments.reproduce.dataset.cifar4``. This model pairs with the unfiltered
-ten-class plugin ``experiments.reproduce.dataset.cifar10``.
-"""
+"""CNN model plugin for four-class CIFAR-10 runs."""
 
 from __future__ import annotations
 
 import torch
 from torch import nn
 
-NUM_CLASSES = 10
 
-
-class Cifar10CNN(nn.Module):
-    """Ten-class CNN for RGB 32×32 CIFAR-10 images."""
+class Cifar4CNN(nn.Module):
+    """Four-class CNN for RGB 32×32 CIFAR-10 images."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -31,21 +23,21 @@ class Cifar10CNN(nn.Module):
             nn.Flatten(),
         )
         self.classifier = nn.Sequential(
-            nn.Linear(128 * 4 * 4, 128),
+            nn.Linear(128 * 4 * 4, 64),
             nn.ReLU(),
             nn.Dropout(p=0.1),
-            nn.Linear(128, 64),
+            nn.Linear(64, 32),
             nn.ReLU(),
             nn.Dropout(p=0.1),
-            nn.Linear(64, NUM_CLASSES),
+            nn.Linear(32, 4),
             nn.Softmax(dim=1),
         )
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        """Return ten-class probabilities for RGB 32×32 images."""
+        """Return four-class probabilities for RGB 32×32 images."""
         return self.classifier(self.features(inputs))
 
 
-def create_model() -> Cifar10CNN:
-    """Create the ten-class CIFAR-10 model."""
-    return Cifar10CNN()
+def create_model() -> Cifar4CNN:
+    """Create the four-class CIFAR-10 model."""
+    return Cifar4CNN()

@@ -25,12 +25,21 @@ def test_fashion_mnist_model_matches_dataset_shape_and_classes() -> None:
     assert torch.allclose(probabilities.sum(dim=1), torch.ones(2))
 
 
-def test_cifar10_model_matches_dataset_shape_and_classes() -> None:
-    model = load_model("experiments.reproduce.cifar10_cnn:create_model")
+def test_cifar4_model_matches_dataset_shape_and_classes() -> None:
+    model = load_model("experiments.reproduce.cifar4_cnn:create_model")
 
     probabilities = model(torch.randn(2, 3, 32, 32))
 
     assert probabilities.shape == (2, 4)
+    assert torch.allclose(probabilities.sum(dim=1), torch.ones(2))
+
+
+def test_cifar10_model_outputs_ten_classes() -> None:
+    model = load_model("experiments.reproduce.cifar10_cnn:create_model")
+
+    probabilities = model(torch.randn(2, 3, 32, 32))
+
+    assert probabilities.shape == (2, 10)
     assert torch.allclose(probabilities.sum(dim=1), torch.ones(2))
 
 

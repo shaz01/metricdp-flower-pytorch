@@ -29,7 +29,7 @@ from experiments.cia.datasets.partitions import (
 from experiments.cia.result import CiaResult
 from experiments.cia.shadow_dataset import clean_shadow_dataset, noisy_shadow_dataset
 from experiments.reproduce.dataset.alzheimer import create_data_module as alzheimer
-from experiments.reproduce.dataset.cifar10 import Cifar10DataModule, Cifar10Dataset
+from experiments.reproduce.dataset.cifar4 import Cifar4DataModule, Cifar4Dataset
 from experiments.reproduce.dataset.fashion_mnist import (
     FashionMNISTDataModule,
     FashionMNISTDataset,
@@ -102,7 +102,7 @@ class FashionTable9DataModule(FashionMNISTDataModule):
         )
 
 
-class CifarTable9DataModule(Cifar10DataModule):
+class CifarTable9DataModule(Cifar4DataModule):
     """Four-class CIFAR-10 with the paper CIA's exact client counts."""
 
     def client_loaders(
@@ -131,7 +131,7 @@ class CifarTable9DataModule(Cifar10DataModule):
             labels, PAPER_CIA_CLIENT_COUNTS, seed=seed
         )
         return make_client_loaders(
-            Cifar10Dataset(split),
+            Cifar4Dataset(split),
             labels,
             partitions[partition_id],
             batch_size=batch_size,
@@ -261,7 +261,7 @@ CIA_GROUPS = (
         PAPER_CIA_NUM_CLIENTS,
         _matrix(
             data_module="experiments.cia.scripts.planned_runs:create_cifar_in",
-            model_module="experiments.reproduce.cifar10_cnn:create_model",
+            model_module="experiments.reproduce.cifar4_cnn:create_model",
         ),
     ),
     (
@@ -269,7 +269,7 @@ CIA_GROUPS = (
         PAPER_CIA_NUM_CLIENTS - 1,
         _matrix(
             data_module="experiments.cia.scripts.planned_runs:create_cifar_out",
-            model_module="experiments.reproduce.cifar10_cnn:create_model",
+            model_module="experiments.reproduce.cifar4_cnn:create_model",
         ),
     ),
 )
