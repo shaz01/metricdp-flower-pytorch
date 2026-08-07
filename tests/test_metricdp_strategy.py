@@ -6,6 +6,7 @@ from flwr.app import Array, ArrayRecord, Message, MetricRecord, RecordDict
 from flwr.serverapp.strategy import FedAvg
 
 from metricdp_pytorch.metricdp_strategy import (
+    MAX_CLIENTS_FOR_PAIRWISE_LOGGING,
     MetricPrivacyServerSideFixedClipping,
     maximum_pairwise_model_distance,
     pairwise_model_distances,
@@ -103,6 +104,53 @@ def test_modern_strategy_aggregates_message_replies() -> None:
     assert metrics["dp-fraction-clipped"] == 0.0
     assert metrics["dp-parameter-count"] == 2
     assert metrics["dp-expected-noise-l2-norm"] == 0.0
+
+
+def test_pairwise_lists_omitted_above_client_count_threshold() -> None:
+    """Full pairwise-distance/client-id lists must be dropped past the
+    threshold to bound run-JSON size, while every summary statistic that
+    the calibration itself relies on stays present and correct.
+
+    Grows as C(num_clients, 2); at high client counts (measured at 256
+    clients / 120 rounds during the CIFAR-100 client-scaling experiment) the
+    raw lists alone balloon a single run's JSON past GitHub's 100MB push
+    limit. Only the diagnostic verbosity is gated here -- the calibration
+    math (``raw_distance = max(distances)``) is unaffected either way.
+    """
+    num_clients = MAX_CLIENTS_FOR_PAIRWISE_LOGGING + 1
+    strategy = MetricPrivacyServerSideFixedClipping(
+        strategy=FedAvg(),
+        noise_multiplier=0.0,
+        clipping_norm=10.0,
+        num_sampled_clients=num_clients,
+    )
+    strategy.current_arrays = model(np.zeros(num_clients))
+
+    replies = []
+    for node_id in range(1, num_clients + 1):
+        values = np.zeros(num_clients)
+        values[node_id - 1] = float(node_id)
+        request = Message(
+            content=RecordDict(), message_type="train", dst_node_id=node_id
+        )
+        content = RecordDict(
+            {
+                "arrays": model(values),
+                "metrics": MetricRecord({"num-examples": 1}),
+            }
+        )
+        replies.append(Message(content=content, reply_to=request))
+
+    _arrays, metrics = strategy.aggregate_train(1, replies)
+
+    assert metrics is not None
+    assert "metric-dp-pairwise-distances" not in metrics
+    assert "metric-dp-pairwise-client-i" not in metrics
+    assert "metric-dp-pairwise-client-j" not in metrics
+    expected_pair_count = num_clients * (num_clients - 1) // 2
+    assert metrics["metric-dp-distance-count"] == expected_pair_count
+    assert metrics["metric-dp-distance-min"] > 0.0
+    assert metrics["metric-dp-distance-invalid"] == 0.0
 
 
 def test_diverged_models_fall_back_instead_of_raising() -> None:
