@@ -1,9 +1,10 @@
 # Project Status
 
 **Branch:** `feature/cifar100-scaling`
-**Last updated:** 2026-08-07, CUDA workstation (`feature/cifar100-scaling` active — dataset/model
-plugins and sweep script added, smoke-verified, sweep not yet run) — see `git log` for anything
-more recent
+**Last updated:** 2026-08-07, CUDA workstation (`feature/cifar100-scaling` active — v2 model
+(GroupNorm + 4th conv block), retuned noise_multiplier, augmentation/weight-decay added, cosine LR
+schedule tried and dropped, 12/72 v1 combos already run and superseded) — see `git log` for
+anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -19,14 +20,26 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 `feature/cifar100-scaling` (not yet merged) adds a CIFAR-100 dataset/model plugin pair and a
 client-count/round-budget sweep script: `experiments/reproduce/dataset/cifar100.py` (full
 100-class CIFAR-100 data plugin — unlike every other dataset plugin in this repo, which subsets to
-4 classes), `experiments/reproduce/cifar100_cnn.py` (matching 100-class CNN, no BatchNorm), and
-`experiments/cifar100_scaling/sweep_cifar100_scaling.py` (resumable sweep: client counts
-8/64/128/256 x rounds 20/60/120 x privacy vanilla/global-dp/metric-privacy x partition
-homogeneous/non-iid x `fedavg` = 72 combos, `noise_multiplier=0.05`, `clipping_norm=5.0`). An
-end-to-end `--smoke` run through the real pipeline passed with no bugs found, so the tooling is
-verified, but none of the 72 sweep combos have actually been run yet. Next step: launch the
-72-combo sweep (`uv run python -m experiments.cifar100_scaling.sweep_cifar100_scaling`) — a
-separate, multi-day action, not started.
+4 classes — now with train-only data augmentation, random crop + horizontal flip), and
+`experiments/reproduce/cifar100_cnn.py`, now on its v2 architecture: GroupNorm after each conv plus
+a 4th conv block (~2.76M params, up from v1's ~2.6M, 3 blocks, no normalization). GroupNorm has no
+running-stats buffers — unlike BatchNorm — so it still needs no `metricdp_pytorch/metricdp_strategy.py`
+changes, same as v1's "no normalization at all" workaround. Training now also supports weight decay
+(`WEIGHT_DECAY = 5e-4` in the sweep) and an opt-in cosine LR schedule; the schedule was tried for
+this sweep and dropped — a decaying LR eventually drops client updates below `clipping_norm`, so
+clipping stops binding late in each run and the DP noise-to-signal ratio drifts back up against the
+retuned `noise_multiplier`, fighting the whole point of retuning it — so the sweep uses a fixed LR
+instead (see `experiments/cifar100_scaling/sweep_cifar100_scaling.py`'s docstring/comments). For the
+new v2 model, `noise_multiplier` was recalibrated from v1's `0.05` down to `0.0025`, verified via a
+smoke run (`clipping_norm=5.0` unchanged). `experiments/cifar100_scaling/sweep_cifar100_scaling.py`
+is the resumable sweep script: client counts 8/64/128/256 x rounds 20/60/120 x privacy
+vanilla/global-dp/metric-privacy x partition homogeneous/non-iid x `fedavg` = 72 combos. 12 of
+those 72 combos were actually run under the earlier v1 model/`noise_multiplier=0.05`, and their
+(now-superseded) result files sit in `results/cifar100_scaling/` under the same run names;
+`is_complete()` treats them as done, so relaunching the sweep on v2 requires `--force` to overwrite
+them. Next step: launch (or relaunch with `--force`) the full 72-combo sweep
+(`uv run python -m experiments.cifar100_scaling.sweep_cifar100_scaling`) — a separate, multi-day
+action, not started.
 
 Separately, on `master`: nothing currently running. `feature/scale-controlled-redo` (Phase 1 items
 1 and 2 of `docs/RESEARCH_ROADMAP.md`) merged into `master` 2026-08-06 and was deleted — see

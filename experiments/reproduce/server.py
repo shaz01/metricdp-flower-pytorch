@@ -230,6 +230,8 @@ def main(grid: Grid, context: Context) -> None:
             "rounds": int(config["num-server-rounds"]),
             "local_epochs": int(config.get("local-epochs", 5)),
             "batch_size": int(config.get("batch-size", 32)),
+            "weight_decay": float(config.get("weight-decay", 0.0)),
+            "lr_schedule": str(config.get("lr-schedule", "none")),
             "initialization_batch_size": int(
                 config.get("initialization-batch-size", 32)
             ),

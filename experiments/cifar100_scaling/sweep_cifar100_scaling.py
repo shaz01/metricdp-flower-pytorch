@@ -19,6 +19,12 @@ the sibling sweep scripts: resumable (skips combinations whose result JSON
 already reports the target round count as completed), continues past a
 failing combination rather than aborting the whole multi-day sweep, and
 supports --force to ignore existing results and rerun everything.
+
+results/cifar100_scaling/ already holds 12 result files from an earlier "v1"
+version of this sweep, under the same run names (v1 used noise_multiplier=0.05
+and an earlier model architecture) -- is_complete() will treat those as
+complete and SKIP them, so relaunching this sweep on the current model and
+hyperparameters requires passing --force to actually overwrite them.
 """
 
 from __future__ import annotations
@@ -60,7 +66,12 @@ BATCH_SIZE = 32
 LEARNING_RATE = 0.001
 INITIALIZATION_EPOCHS = 20
 WEIGHT_DECAY = 5e-4
-LR_SCHEDULE = "cosine"
+# Fixed LR, not cosine: DP noise is constant all run, but a decaying LR drops
+# client updates below clipping_norm late in each run (~round 16/20, 45/60,
+# 90/120), so clipping stops binding and the noise-to-signal ratio drifts back
+# up toward ~19x in the final ~25% of the round budget -- fighting the whole
+# point of retuning NOISE_MULTIPLIER above. See the review that flagged this.
+LR_SCHEDULE = "none"
 DATA_MODULE = "experiments.reproduce.dataset.cifar100:create_data_module"
 MODEL_MODULE = "experiments.reproduce.cifar100_cnn:create_model"
 

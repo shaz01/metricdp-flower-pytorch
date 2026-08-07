@@ -39,6 +39,8 @@ IMAGE_SIZE = (32, 32)
 IMAGE_COLUMN = "img"
 LABEL_COLUMN = "fine_label"
 _TO_TENSOR = ToTensor()
+_RANDOM_CROP = RandomCrop(IMAGE_SIZE, padding=4)
+_RANDOM_HORIZONTAL_FLIP = RandomHorizontalFlip(0.5)
 
 
 def load_cifar100_dataset(cache_dir: str | Path | None = None) -> DatasetDict:
@@ -80,8 +82,8 @@ class RGBImageTransform:
                 f"got {rgb.size}."
             )
         if self.augment:
-            rgb = RandomCrop(self.image_size, padding=4)(rgb)
-            rgb = RandomHorizontalFlip(0.5)(rgb)
+            rgb = _RANDOM_CROP(rgb)
+            rgb = _RANDOM_HORIZONTAL_FLIP(rgb)
         return _TO_TENSOR(rgb)
 
 
