@@ -1,10 +1,19 @@
-"""Sweep client count x round budget on full 100-class CIFAR-100.
+"""Sweep client count on full 100-class CIFAR-100, at a single 250-round
+budget.
 
-Standalone client-count/round-budget scaling study -- not gated on
+Standalone client-count scaling study -- not gated on
 docs/RESEARCH_ROADMAP.md's Phase 1-5 sequencing. Grids num_clients in
-{8, 64, 128, 256} against rounds in {20, 60, 120}, for each of
-vanilla/global-dp/metric-privacy and each of homogeneous/non-iid
-partitioning, on fedavg only: 4 * 3 * 3 * 2 * 1 = 72 combinations.
+{8, 64, 128, 256}, for each of vanilla/global-dp/metric-privacy and each of
+homogeneous/non-iid partitioning, on fedavg only, all at 250 rounds:
+4 * 1 * 3 * 2 * 1 = 24 combinations. As of 2026-08-08 this replaces an
+earlier 20/60/120 round-count grid -- the project owner judged those too
+short and asked for one longer run per setting instead of a round-budget
+comparison. Two combinations already completed under the earlier grid
+(homogeneous/vanilla and homogeneous/global-dp, both at n=8/r20) remain in
+results/cifar100_scaling/ under their own r20 filenames -- still valid
+data, just outside the current grid; not deleted, since this is the same
+model run for longer, not an incompatible architecture change like the
+v1-v3-to-DenseNet+SELU replacement described below.
 
 Unlike every other dataset plugin used by the sibling sweeps in
 experiments/client_scaling/ (all reduced to a four-class subset), this uses
@@ -15,6 +24,16 @@ sibling cifar10_cnn's 226,596. noise_multiplier is recalibrated to 0.0097
 for this model, after an initial relaunch briefly ran with a stale value
 carried over from an earlier, since-replaced CNN architecture; see the
 NOISE_MULTIPLIER constant below for the measured numbers and derivation.
+
+Caveat carried over unresolved from the shorter-round design: NOISE_MULTIPLIER
+was calibrated from a signal-update-norm measured early in training (round
+1 of a 3-round run). Client update magnitude typically shrinks as training
+converges, which would drift the realized noise-to-signal ratio upward
+over a 250-round run (constant noise against a shrinking signal). Not
+re-measured at round 250 before this launch (that would require the very
+run this sweep performs); worth revisiting if 250-round
+global-dp/metric-privacy results look worse, relative to vanilla, than the
+r20 results already on record.
 
 Reuses experiments.reproduce.runner unmodified via subprocess, exactly like
 the sibling sweep scripts: resumable (skips combinations whose result JSON
@@ -51,7 +70,7 @@ PARTITION_MODES = ("homogeneous", "non-iid")
 PRIVACY_MODES_SWEPT = ("vanilla", "global-dp", "metric-privacy")
 AGGREGATION_METHODS_SWEPT = ("fedavg",)
 CLIENT_COUNTS = (8, 64, 128, 256)
-ROUND_COUNTS = (20, 60, 120)
+ROUND_COUNTS = (250,)
 NOISE_MULTIPLIER = 0.0097  # recalibrated for the DenseNet+SELU model's
 # 553,220 params (see docs/superpowers/specs/2026-08-08-cifar100-densenet-
 # selu-design.md). Derivation: target noise-to-signal ratio ~1 at n=8, using
