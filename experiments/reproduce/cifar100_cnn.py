@@ -106,8 +106,11 @@ class Cifar100CNN(nn.Module):
     SmoothNets-inspired (arXiv 2205.04095) design: concatenative
     (DenseNet-style) skip connections, GroupNorm(8), SELU activation with
     LeCun-normal init and AlphaDropout, and width over depth (3 dense
-    blocks x 4 layers, growth_rate=32 -- deliberately shallow given the
-    depth finding above). See
+    blocks x 4 layers, growth_rate=32 -- deliberately shallow *for a
+    DenseNet*, not shallow in absolute layer count; it is the concatenative
+    skip connections specifically that make this depth tolerable, unlike
+    the old plain CNN's added 4th block above, which had no skip
+    connections at all to cushion its update magnitude). See
     docs/superpowers/specs/2026-08-08-cifar100-densenet-selu-design.md for
     the full design and verification record.
     """

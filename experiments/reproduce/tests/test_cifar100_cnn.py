@@ -78,3 +78,12 @@ def test_cifar100_cnn_forward_returns_probabilities() -> None:
 
     assert probabilities.shape == (2, 100)
     assert torch.allclose(probabilities.sum(dim=1), torch.ones(2), atol=1e-5)
+
+
+def test_cifar100_cnn_has_no_buffers() -> None:
+    """GroupNorm has no running-stats buffers -- unlike BatchNorm, this keeps the
+    model's full state_dict() safe to transport through the DP noise path (weights
+    only, no non-float/running-stat buffers to poison it)."""
+    model = Cifar100CNN()
+
+    assert list(model.buffers()) == []

@@ -1,9 +1,9 @@
 # Project Status
 
 **Branch:** `feature/cifar100-scaling`
-**Last updated:** 2026-08-07, CUDA workstation (`feature/cifar100-scaling` active — v2 model
-(GroupNorm + 4th conv block), retuned noise_multiplier, augmentation/weight-decay added, cosine LR
-schedule tried and dropped, 12/72 v1 combos already run and superseded) — see `git log` for
+**Last updated:** 2026-08-08, CUDA workstation (`feature/cifar100-scaling` active — model replaced
+with v4 DenseNet+SELU architecture (553,220 params, 0 buffers), results/ cleared, 72-combo sweep
+relaunched and currently running with a known-un-recalibrated `noise_multiplier`) — see `git log` for
 anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -21,25 +21,31 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 client-count/round-budget sweep script: `experiments/reproduce/dataset/cifar100.py` (full
 100-class CIFAR-100 data plugin — unlike every other dataset plugin in this repo, which subsets to
 4 classes — now with train-only data augmentation, random crop + horizontal flip), and
-`experiments/reproduce/cifar100_cnn.py`, now on its v2 architecture: GroupNorm after each conv plus
-a 4th conv block (~2.76M params, up from v1's ~2.6M, 3 blocks, no normalization). GroupNorm has no
-running-stats buffers — unlike BatchNorm — so it still needs no `metricdp_pytorch/metricdp_strategy.py`
-changes, same as v1's "no normalization at all" workaround. Training now also supports weight decay
-(`WEIGHT_DECAY = 5e-4` in the sweep) and an opt-in cosine LR schedule; the schedule was tried for
-this sweep and dropped — a decaying LR eventually drops client updates below `clipping_norm`, so
-clipping stops binding late in each run and the DP noise-to-signal ratio drifts back up against the
-retuned `noise_multiplier`, fighting the whole point of retuning it — so the sweep uses a fixed LR
-instead (see `experiments/cifar100_scaling/sweep_cifar100_scaling.py`'s docstring/comments). For the
-new v2 model, `noise_multiplier` was recalibrated from v1's `0.05` down to `0.0025`, verified via a
-smoke run (`clipping_norm=5.0` unchanged). `experiments/cifar100_scaling/sweep_cifar100_scaling.py`
-is the resumable sweep script: client counts 8/64/128/256 x rounds 20/60/120 x privacy
-vanilla/global-dp/metric-privacy x partition homogeneous/non-iid x `fedavg` = 72 combos. 12 of
-those 72 combos were actually run under the earlier v1 model/`noise_multiplier=0.05`, and their
-(now-superseded) result files sit in `results/cifar100_scaling/` under the same run names;
-`is_complete()` treats them as done, so relaunching the sweep on v2 requires `--force` to overwrite
-them. Next step: launch (or relaunch with `--force`) the full 72-combo sweep
-(`uv run python -m experiments.cifar100_scaling.sweep_cifar100_scaling`) — a separate, multi-day
-action, not started.
+`experiments/reproduce/cifar100_cnn.py`, now on a v4 DenseNet+SELU architecture that replaces the
+earlier plain-CNN line entirely (553,220 params, 0 buffers): concatenative (DenseNet-style) skip
+connections, GroupNorm(8), SELU activation with LeCun-normal init and AlphaDropout. It replaced the
+old v1/v2/v3 plain CNN after two separate clipping-related freeze modes were found in that line — see
+`docs/superpowers/specs/2026-08-08-cifar100-densenet-selu-design.md` for the full account, not
+reproduced here. GroupNorm has no running-stats buffers — unlike BatchNorm — so it still needs no
+`metricdp_pytorch/metricdp_strategy.py` changes, same as v1's "no normalization at all" workaround.
+Training now also supports weight decay (`WEIGHT_DECAY = 5e-4` in the sweep) and an opt-in cosine LR
+schedule; the schedule was tried for the sweep and dropped — a decaying LR eventually drops client
+updates below `clipping_norm`, so clipping stops binding late in each run and the DP noise-to-signal
+ratio drifts back up against `noise_multiplier`, fighting the whole point of tuning it — so the sweep
+uses a fixed LR instead (see `experiments/cifar100_scaling/sweep_cifar100_scaling.py`'s
+docstring/comments). `noise_multiplier=0.0025` is carried over unchanged from calibration work done
+against the old, now-replaced model and is known to be miscalibrated for the new one: measured
+noise-to-signal ratio 0.257 at n=8 vs. a ~1 target, a ~3.9x mismatch from the ~0.0097 value that would
+hit that target (see the `NOISE_MULTIPLIER` comment in
+`experiments/cifar100_scaling/sweep_cifar100_scaling.py` for the full derivation). This was found and
+reported to the project owner but deliberately left un-recalibrated pending an owner decision — keep
+it in mind when interpreting `global-dp`/`metric-privacy` results from the running sweep below.
+`experiments/cifar100_scaling/sweep_cifar100_scaling.py` is the resumable sweep script: client counts
+8/64/128/256 x rounds 20/60/120 x privacy vanilla/global-dp/metric-privacy x partition
+homogeneous/non-iid x `fedavg` = 72 combos. `results/cifar100_scaling/` was cleared (143 old files
+deleted, all previously untracked) before this relaunch, so the sweep started with an empty output
+directory and did not need `--force`. It was launched 2026-08-08 and is currently running — see
+"Currently running" below.
 
 Separately, on `master`: nothing currently running. `feature/scale-controlled-redo` (Phase 1 items
 1 and 2 of `docs/RESEARCH_ROADMAP.md`) merged into `master` 2026-08-06 and was deleted — see
@@ -50,10 +56,14 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Nothing. Update this table whenever a machine picks up new work: add a row, edit the Status column
+Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
 it, so machine-to-results provenance isn't lost; see `AGENTS.md`'s "Working across machines"
 section.
+
+| Command | What | Status |
+| --- | --- | --- |
+| `experiments.cifar100_scaling.sweep_cifar100_scaling` (tmux session `cifar100sweep`, `CUDA_VISIBLE_DEVICES=1`) | 72-combo CIFAR-100 client-count/round-budget scaling sweep on the new DenseNet+SELU model | running, started 2026-08-08 |
 
 ## What's established on `master`
 
