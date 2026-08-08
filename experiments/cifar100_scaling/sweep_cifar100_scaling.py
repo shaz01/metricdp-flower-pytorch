@@ -20,11 +20,13 @@ already reports the target round count as completed), continues past a
 failing combination rather than aborting the whole multi-day sweep, and
 supports --force to ignore existing results and rerun everything.
 
-results/cifar100_scaling/ already holds 12 result files from an earlier "v1"
-version of this sweep, under the same run names (v1 used noise_multiplier=0.05
-and an earlier model architecture) -- is_complete() will treat those as
-complete and SKIP them, so relaunching this sweep on the current model and
-hyperparameters requires passing --force to actually overwrite them.
+results/cifar100_scaling/ was cleared on 2026-08-08 when the model was
+replaced with a DenseNet+SELU architecture (see
+docs/superpowers/specs/2026-08-08-cifar100-densenet-selu-design.md) --
+the v1/v2/v3 3-block-CNN results it held are not comparable to this
+architecture and were discarded rather than kept alongside it. Starts
+empty; --force is not required for this launch, but remains available for
+any future re-launch that needs to overwrite completed results.
 """
 
 from __future__ import annotations
