@@ -11,7 +11,7 @@ Federated learning + differential privacy research repo built on Flower and PyTo
 - Install with `uv sync`. Python is pinned via `.python-version` (3.13; `pyproject.toml` requires `>=3.11,<3.14`).
 - Run everything through `uv run <cmd>` (e.g. `uv run pytest`, `uv run python -m ...`).
 - Device selection is automatic: CUDA → MPS → CPU, via `metricdp_pytorch/utils/device.py:resolve_device()`.
-- Known inconsistency: `experiments/cia/runner.py` uses a narrower inline device check that skips MPS, so it falls back to CPU on Apple Silicon instead of using `resolve_device()`. (`experiments/reproduce/detailed_evaluation.py` had the same issue; fixed 2026-08-01 after it caused a real failure — its postprocessed-vs-recorded accuracy consistency check compares against a training-time evaluation that runs on MPS via `resolve_device()`, so evaluating on CPU there could diverge enough on borderline/near-random-accuracy models to fail that check outright.)
+- `experiments/reproduce/detailed_evaluation.py` used to have a narrower inline device check that skipped MPS; fixed 2026-08-01 after it caused a real failure — its postprocessed-vs-recorded accuracy consistency check compares against a training-time evaluation that runs on MPS via `resolve_device()`, so evaluating on CPU there could diverge enough on borderline/near-random-accuracy models to fail that check outright. `experiments/cia/runner.py` had the same issue but no longer exists (refactored away 2026-08-03 into `experiments/cia/attack_runner.py` and `experiments/cia/scripts/*.py`); every current entry point under `experiments/cia/scripts/` now imports and uses `resolve_device()` directly, so this inconsistency no longer applies anywhere in the repo.
 
 ## Testing
 
@@ -46,3 +46,11 @@ See `README.md` and each experiment's own `README.md` (where present) for full f
 - Once an experiment is finished: merge its branch into `master` (organizing its code into `experiments/<name>/` and its results into `results/<name>/` if not already structured that way), run the test suite to confirm the merge is clean, then delete the branch both locally and on `origin` (`git branch -d`, `git push origin --delete`). Don't leave fully-merged branches lying around.
 - Prefer a real `git merge` over rebase/squash for finished experiment branches — it preserves each experiment's actual commit history.
 - **Never add a `Co-Authored-By` trailer to commits.** This is a strict, explicit rule from the project owner.
+
+## Working across machines
+
+- This project runs across multiple machines (this repo has no built-in cross-machine session sync — each machine's Claude Code install is independent, keyed by its own local project path). Compensate with a habit, not a tool.
+- **Session start**: before making any changes, read `STATUS.md` and skim recent history (`git log --oneline -10`) to pick up state left by other machines/sessions.
+- **Session end**: when a meaningful chunk of work wraps up (same granularity as "worth a commit" — not every message), update `STATUS.md`'s Active work section — current state, what's running where (the Currently running table), next steps — refresh the "Last updated" line, then commit and push. This Active-work-section update is more frequent than `STATUS.md`'s own top-level "whenever a branch merges into master" rule, which still governs the rest of the file.
+- `docs/RESEARCH_ROADMAP.md` is gitignored and doesn't travel via `git pull`; if it changes, copy it to other machines manually.
+- Track "what's running where" in `STATUS.md`'s Currently running table using generic machine-role labels (e.g. "CUDA workstation", "CUDA laptop") — never hostnames, IPs, or usernames, in this or any other committed doc.
