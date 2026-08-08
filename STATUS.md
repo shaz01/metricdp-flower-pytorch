@@ -3,8 +3,9 @@
 **Branch:** `feature/cifar100-scaling`
 **Last updated:** 2026-08-08, CUDA workstation (`feature/cifar100-scaling` active — model replaced
 with v4 DenseNet+SELU architecture (553,220 params, 0 buffers), results/ cleared, 72-combo sweep
-relaunched and currently running with a known-un-recalibrated `noise_multiplier`) — see `git log` for
-anything more recent
+launched, briefly paused to recalibrate `noise_multiplier` (0.0025 -> 0.0097, confirmed via a short
+verification run: noise-to-signal ratio 0.998 at n=8, matching the ~1 target), relaunched and
+currently running) — see `git log` for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -33,19 +34,20 @@ schedule; the schedule was tried for the sweep and dropped — a decaying LR eve
 updates below `clipping_norm`, so clipping stops binding late in each run and the DP noise-to-signal
 ratio drifts back up against `noise_multiplier`, fighting the whole point of tuning it — so the sweep
 uses a fixed LR instead (see `experiments/cifar100_scaling/sweep_cifar100_scaling.py`'s
-docstring/comments). `noise_multiplier=0.0025` is carried over unchanged from calibration work done
-against the old, now-replaced model and is known to be miscalibrated for the new one: measured
-noise-to-signal ratio 0.257 at n=8 vs. a ~1 target, a ~3.9x mismatch from the ~0.0097 value that would
-hit that target (see the `NOISE_MULTIPLIER` comment in
-`experiments/cifar100_scaling/sweep_cifar100_scaling.py` for the full derivation). This was found and
-reported to the project owner but deliberately left un-recalibrated pending an owner decision — keep
-it in mind when interpreting `global-dp`/`metric-privacy` results from the running sweep below.
-`experiments/cifar100_scaling/sweep_cifar100_scaling.py` is the resumable sweep script: client counts
-8/64/128/256 x rounds 20/60/120 x privacy vanilla/global-dp/metric-privacy x partition
-homogeneous/non-iid x `fedavg` = 72 combos. `results/cifar100_scaling/` was cleared (143 old files
-deleted, all previously untracked) before this relaunch, so the sweep started with an empty output
-directory and did not need `--force`. It was launched 2026-08-08 and is currently running — see
-"Currently running" below.
+docstring/comments). `noise_multiplier` was carried over unchanged (0.0025) from calibration work
+done against the old, now-replaced model on the sweep's first launch, and was found to be
+miscalibrated for the new one: measured noise-to-signal ratio 0.257 at n=8 vs. a ~1 target, a ~3.9x
+mismatch. Recalibrated to 0.0097 (see the `NOISE_MULTIPLIER` comment in
+`experiments/cifar100_scaling/sweep_cifar100_scaling.py` for the full derivation), confirmed via a
+short verification run (n=8, homogeneous, global-dp, 3 rounds): noise-to-signal ratio 0.998, and
+normal learning (no freeze) under the new noise level. `experiments/cifar100_scaling/sweep_cifar100_scaling.py`
+is the resumable sweep script: client counts 8/64/128/256 x rounds 20/60/120 x privacy
+vanilla/global-dp/metric-privacy x partition homogeneous/non-iid x `fedavg` = 72 combos.
+`results/cifar100_scaling/` was cleared (143 old files deleted, all previously untracked) before the
+first launch. The sweep briefly ran with the uncalibrated `noise_multiplier` (0.0025) and completed
+exactly 1/72 combos (`homogeneous/vanilla/n8/r20`, unaffected by `noise_multiplier`) before being
+stopped and relaunched with the recalibrated value (0.0097); the resume logic correctly skipped
+re-running that already-complete combo. It is currently running — see "Currently running" below.
 
 Separately, on `master`: nothing currently running. `feature/scale-controlled-redo` (Phase 1 items
 1 and 2 of `docs/RESEARCH_ROADMAP.md`) merged into `master` 2026-08-06 and was deleted — see
