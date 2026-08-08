@@ -40,15 +40,6 @@ def test_cifar100_model_matches_dataset_shape_and_classes() -> None:
     probabilities = model(torch.randn(2, 3, 32, 32))
 
     assert probabilities.shape == (2, 100)
-    assert torch.allclose(probabilities.sum(dim=1), torch.ones(2), atol=1e-5)
-
-
-def test_cifar100_supervisor_model_matches_dataset_shape_and_classes() -> None:
-    model = load_model("experiments.reproduce.cifar100_cnn_supervisor:create_model")
-
-    probabilities = model(torch.randn(2, 3, 32, 32))
-
-    assert probabilities.shape == (2, 100)
     assert torch.allclose(probabilities.sum(dim=1), torch.ones(2), atol=1e-4)
 
 

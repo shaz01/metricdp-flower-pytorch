@@ -1,54 +1,55 @@
-"""Sweep client count on full 100-class CIFAR-100, at a single 250-round
-budget.
+"""Train every setting at a fixed 100 clients and 250 rounds on full
+100-class CIFAR-100.
 
-Standalone client-count scaling study -- not gated on
-docs/RESEARCH_ROADMAP.md's Phase 1-5 sequencing. Grids num_clients in
-{8, 64, 128, 256}, for each of vanilla/global-dp/metric-privacy and each of
-homogeneous/non-iid partitioning, on fedavg only, all at 250 rounds:
-4 * 1 * 3 * 2 * 1 = 24 combinations. As of 2026-08-08 this replaces an
-earlier 20/60/120 round-count grid -- the project owner judged those too
-short and asked for one longer run per setting instead of a round-budget
-comparison. Two combinations already completed under the earlier grid
-(homogeneous/vanilla and homogeneous/global-dp, both at n=8/r20) remain in
-results/cifar100_scaling/ under their own r20 filenames -- still valid
-data, just outside the current grid; not deleted, since this is the same
-model run for longer, not an incompatible architecture change like the
-v1-v3-to-DenseNet+SELU replacement described below.
+Standalone client-count/privacy/partition study -- not gated on
+docs/RESEARCH_ROADMAP.md's Phase 1-5 sequencing. Scoped to a single client
+count (100, per project-owner direction) and a single round budget (250,
+per project-owner direction -- shorter round-count grids tried earlier
+were judged too short, and this replaced them with one longer run per
+setting instead of a round-budget comparison): 1 * 1 * 3 * 2 * 1 = 6
+combinations (privacy x partition x fedavg).
 
-Unlike every other dataset plugin used by the sibling sweeps in
-experiments/client_scaling/ (all reduced to a four-class subset), this uses
-the full 100-class experiments.reproduce.dataset.cifar100 plugin -- a
-genuinely harder task, but not a dramatically larger model than its
-siblings': the DenseNet+SELU Cifar100CNN is 553,220 params, only ~2.4x the
-sibling cifar10_cnn's 226,596. noise_multiplier is recalibrated to 0.0097
-for this model, after an initial relaunch briefly ran with a stale value
-carried over from an earlier, since-replaced CNN architecture; see the
-NOISE_MULTIPLIER constant below for the measured numbers and derivation.
+Model history: this sweep went through three model architectures before
+settling on the current one. v1-v3 was a plain 3-block CNN (v2 briefly
+added a 4th conv block, reverted after its natural per-round update
+magnitude, ~29-30, exceeded clipping_norm=5.0 and froze every clipping
+privacy mode). It was then replaced with a DenseNet+SELU architecture
+(concatenative skip connections, GroupNorm(8), SELU with LeCun-normal init
+and AlphaDropout, 553,220 params), built and verified specifically for
+robustness to that kind of weight-space update-magnitude sensitivity --
+including a second, independent freeze mode found in that generation:
+*vanilla* (no DP mechanism at all) froze at n=128/homogeneous, because 128
+highly-correlated client updates reinforced rather than averaged out (no
+1/sqrt(n) reduction), producing a combined step too large for the model to
+absorb on round 1. Per project-owner direction, that DenseNet+SELU
+architecture was itself replaced with the current model: an adaptation of
+the project supervisor's own CNNCIFAR100 reference architecture (3 blocks
+of 2x[Conv3x3-GroupNorm-ReLU], channels 128/256/512, global-average-pooled
+classifier, 4,631,268 params -- see experiments/reproduce/cifar100_cnn.py's
+docstring for the adaptation record), now this project's one CIFAR-100
+model. results/cifar100_scaling/ was cleared of all prior results on
+2026-08-08 as part of this consolidation -- every earlier result (v1-v3's
+plain-CNN runs, the DenseNet+SELU architecture's runs, and the supervisor
+model's own earlier narrower client-count/round-count grid, formerly under
+results/cifar100_scaling_supervisor/) described a model, grid, or
+directory layout this sweep no longer uses, and none were kept. Starts
+empty; --force is not required for this launch.
 
-Caveat carried over unresolved from the shorter-round design: NOISE_MULTIPLIER
-was calibrated from a signal-update-norm measured early in training (round
-1 of a 3-round run). Client update magnitude typically shrinks as training
-converges, which would drift the realized noise-to-signal ratio upward
-over a 250-round run (constant noise against a shrinking signal). Not
-re-measured at round 250 before this launch (that would require the very
-run this sweep performs); worth revisiting if 250-round
-global-dp/metric-privacy results look worse, relative to vanilla, than the
-r20 results already on record.
+Caveat carried over unresolved from the shorter-round design:
+NOISE_MULTIPLIER below was calibrated from a signal-update-norm measured
+early in training (round 1 of a 3-round run). Client update magnitude
+typically shrinks as training converges, which would drift the realized
+noise-to-signal ratio upward over a 250-round run (constant noise against
+a shrinking signal). Not re-measured at round 250 before this launch (that
+would require the very run this sweep performs); worth revisiting if
+250-round global-dp/metric-privacy results look worse, relative to
+vanilla, than the r20 results already on record.
 
 Reuses experiments.reproduce.runner unmodified via subprocess, exactly like
 the sibling sweep scripts: resumable (skips combinations whose result JSON
 already reports the target round count as completed), continues past a
-failing combination rather than aborting the whole multi-day sweep, and
-supports --force to ignore existing results and rerun everything.
-
-results/cifar100_scaling/ was cleared on 2026-08-08 when the model was
-replaced with a DenseNet+SELU architecture (see
-docs/superpowers/specs/2026-08-08-cifar100-densenet-selu-design.md) --
-the v1-v3 CNN results it held (3-block for v1 and the reverted v3 state,
-4-block for v2) are not comparable to this architecture and were discarded
-rather than kept alongside it. Starts empty; --force is not required for
-this launch, but remains available for any future re-launch that needs to
-overwrite completed results.
+failing combination rather than aborting the whole sweep, and supports
+--force to ignore existing results and rerun everything.
 """
 
 from __future__ import annotations
@@ -69,35 +70,39 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PARTITION_MODES = ("homogeneous", "non-iid")
 PRIVACY_MODES_SWEPT = ("vanilla", "global-dp", "metric-privacy")
 AGGREGATION_METHODS_SWEPT = ("fedavg",)
-CLIENT_COUNTS = (8, 64, 128, 256)
+CLIENT_COUNTS = (100,)
 ROUND_COUNTS = (250,)
-NOISE_MULTIPLIER = 0.0097  # recalibrated for the DenseNet+SELU model's
-# 553,220 params (see docs/superpowers/specs/2026-08-08-cifar100-densenet-
-# selu-design.md). Derivation: target noise-to-signal ratio ~1 at n=8, using
-# noise_l2_norm ~= stdv * sqrt(param_count) and stdv = noise_multiplier *
-# clipping_norm / num_sampled_clients. Measured directly on this model (n=8,
-# homogeneous, global-dp, 3 rounds): signal update norm (post-clip,
-# post-aggregation, pre-noise) = 4.52, param_count = 553,220, giving
+NOISE_MULTIPLIER = 0.0182  # calibrated for this model's 4,631,268 params,
+# at n=100 (the only client count this sweep runs -- calibrating at the
+# client count it actually uses is more correct than calibrating at an
+# arbitrary different point).
+# Derivation: target noise-to-signal ratio ~1, using noise_l2_norm ~= stdv *
+# sqrt(param_count) and stdv = noise_multiplier * clipping_norm /
+# num_sampled_clients. Measured directly on this model (n=100, homogeneous,
+# global-dp, 3 rounds): signal update norm (post-clip, post-aggregation,
+# pre-noise) = 1.956, param_count = 4,631,268, giving
 # target_noise_multiplier = signal_norm * num_sampled_clients /
-# (clipping_norm * sqrt(param_count)) = 4.52 * 8 / (5.0 * sqrt(553220)) ~=
-# 0.00972, rounded here to 0.0097.
+# (clipping_norm * sqrt(param_count)) = 1.956 * 100 / (5.0 * sqrt(4631268))
+# ~= 0.0182. Confirmed via a follow-up run at this value: measured
+# noise-to-signal ratio 1.001.
 #
-# History: the sweep first launched 2026-08-08 with 0.0025 -- a value
-# carried over unchanged from calibration work done against the old,
-# since-replaced ~2.76M-param 4-block CNN (see
-# docs/superpowers/specs/2026-08-07-cifar100-v2-accuracy-design.md), giving
-# a noise-to-signal ratio of only 0.257 on the new (~5x smaller) model, a
-# 3.9x mismatch from the ~1 target. That run completed exactly 1/72 combos
-# (the homogeneous/vanilla/n8/r20 baseline, which noise_multiplier doesn't
-# affect) before being stopped and relaunched with this corrected value.
-# v1 used 0.05 (on the original 3-block model), which produced a ~22x
-# noise-to-signal ratio and crushed global-dp to ~4% accuracy at n=8.
+# Verification note: at this calibrated noise level, a 20-round real run
+# (n=100, homogeneous, global-dp) was checked before launch for the
+# clipping/magnitude freeze pattern found twice in this sweep's earlier
+# DenseNet+SELU generation (see module docstring). Loss dropped for the
+# first 2 rounds (4.72 -> 4.61), held close to ln(100)=4.605 for rounds 3-6
+# (a slow warm-up, not the earlier freezes' pattern of staying flat for the
+# entire run with no recovery), then broke free from round 7 onward and
+# improved steadily through round 20 (loss 4.7154 -> 4.3958, accuracy
+# 1.10% -> 2.74%). This model is simply slower to warm up than its
+# predecessor (4.6M params, no skip connections, heavy 50% dropout, 100-way
+# thin client splits) -- not frozen.
 MAX_PARALLEL_CLIENTS = 16
 OUTPUT_DIR = PROJECT_ROOT / "results" / "cifar100_scaling"
 LOG_PATH = OUTPUT_DIR / "sweep_progress.log"
 
-# Fixed hyperparameters across the whole sweep -- paper defaults except
-# noise_multiplier (see module docstring). Only --rounds/--num-clients vary.
+# Fixed hyperparameters across the whole sweep. Only --round-counts varies
+# (num_clients is fixed at 100).
 SEED = 42
 CLIPPING_NORM = 5.0
 LOCAL_EPOCHS = 5
@@ -105,11 +110,9 @@ BATCH_SIZE = 32
 LEARNING_RATE = 0.001
 INITIALIZATION_EPOCHS = 20
 WEIGHT_DECAY = 5e-4
-# Fixed LR, not cosine: DP noise is constant all run, but a decaying LR drops
-# client updates below clipping_norm late in each run (~round 16/20, 45/60,
-# 90/120), so clipping stops binding and the noise-to-signal ratio drifts back
-# up toward ~19x in the final ~25% of the round budget -- fighting the whole
-# point of retuning NOISE_MULTIPLIER above. See the review that flagged this.
+# Fixed LR, not cosine: a decaying LR would drop client updates below
+# clipping_norm late in each run, drifting the noise-to-signal ratio back
+# up and fighting the point of calibrating NOISE_MULTIPLIER above.
 LR_SCHEDULE = "none"
 DATA_MODULE = "experiments.reproduce.dataset.cifar100:create_data_module"
 MODEL_MODULE = "experiments.reproduce.cifar100_cnn:create_model"
@@ -127,8 +130,7 @@ def cleanup_orphaned_shm_managers() -> int:
 
     Copied from sweep_scale_controlled.py (see that file's docstring for the
     full rationale) rather than shared -- matches this repo's existing
-    convention of duplicating this helper per sweep script
-    (sweep_scale_controlled_epochs.py does the same).
+    convention of duplicating this helper per sweep script.
     """
     try:
         output = subprocess.run(
@@ -181,7 +183,7 @@ def result_path(
 def is_complete(path: Path, *, expected_rounds: int) -> bool:
     """Return whether ``path`` holds a valid, fully-completed result.
 
-    Same contract as sweep_scale_controlled.py's is_complete: a missing,
+    Same contract as the sibling sweep scripts' is_complete: a missing,
     unparseable, or short-of-rounds file is incomplete, and the post-hoc
     evaluation artifact (<run>.evaluation.json) must also exist.
     """
@@ -339,16 +341,6 @@ def _parser() -> argparse.ArgumentParser:
         help="cap simultaneous Ray actors to control memory use",
     )
     parser.add_argument(
-        "--client-counts",
-        type=int,
-        nargs="+",
-        default=list(CLIENT_COUNTS),
-        help=(
-            "subset of client counts to run (default: all of "
-            f"{CLIENT_COUNTS}); lets one sweep be split across machines"
-        ),
-    )
-    parser.add_argument(
         "--round-counts",
         type=int,
         nargs="+",
@@ -370,20 +362,19 @@ def _parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = _parser().parse_args()
-    client_counts = tuple(args.client_counts)
     round_counts = tuple(args.round_counts)
     aggregation_methods = tuple(args.aggregation_methods)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     cleanup_orphaned_shm_managers()
     total = (
-        len(client_counts)
+        len(CLIENT_COUNTS)
         * len(round_counts)
         * len(PARTITION_MODES)
         * len(PRIVACY_MODES_SWEPT)
         * len(aggregation_methods)
     )
     _log(
-        f"Sweep starting: {total} combinations, client_counts={client_counts}, "
+        f"Sweep starting: {total} combinations, client_counts={CLIENT_COUNTS}, "
         f"round_counts={round_counts}, aggregation_methods={aggregation_methods}, "
         f"noise_multiplier={NOISE_MULTIPLIER}, "
         f"max_parallel_clients={args.max_parallel_clients}, force={args.force}"
@@ -391,7 +382,7 @@ def main() -> None:
 
     completed = 0
     failed: list[str] = []
-    for num_clients in client_counts:
+    for num_clients in CLIENT_COUNTS:
         for rounds in round_counts:
             for partition in PARTITION_MODES:
                 for privacy in PRIVACY_MODES_SWEPT:
