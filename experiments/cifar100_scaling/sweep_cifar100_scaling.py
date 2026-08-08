@@ -11,11 +11,10 @@ experiments/client_scaling/ (all reduced to a four-class subset), this uses
 the full 100-class experiments.reproduce.dataset.cifar100 plugin -- a
 genuinely harder task, but not a dramatically larger model than its
 siblings': the DenseNet+SELU Cifar100CNN is 553,220 params, only ~2.4x the
-sibling cifar10_cnn's 226,596. noise_multiplier is currently 0.0025, a value
-carried over unchanged from calibration work done against an earlier,
-since-replaced CNN architecture, and is now known to be miscalibrated for
-this model; see the NOISE_MULTIPLIER constant below for the measured
-numbers and current status.
+sibling cifar10_cnn's 226,596. noise_multiplier is recalibrated to 0.0097
+for this model, after an initial relaunch briefly ran with a stale value
+carried over from an earlier, since-replaced CNN architecture; see the
+NOISE_MULTIPLIER constant below for the measured numbers and derivation.
 
 Reuses experiments.reproduce.runner unmodified via subprocess, exactly like
 the sibling sweep scripts: resumable (skips combinations whose result JSON
@@ -53,25 +52,27 @@ PRIVACY_MODES_SWEPT = ("vanilla", "global-dp", "metric-privacy")
 AGGREGATION_METHODS_SWEPT = ("fedavg",)
 CLIENT_COUNTS = (8, 64, 128, 256)
 ROUND_COUNTS = (20, 60, 120)
-NOISE_MULTIPLIER = 0.0025  # KNOWN MISCALIBRATED for the current DenseNet+SELU
-# model. This value was calibrated for the old, since-replaced ~2.76M-param
-# 4-block CNN (see
-# docs/superpowers/specs/2026-08-07-cifar100-v2-accuracy-design.md for that
-# derivation: target noise-to-signal ratio ~1 at n=8, using noise_l2_norm ~=
-# stdv * sqrt(param_count) and stdv = noise_multiplier * clipping_norm /
-# num_sampled_clients). Measured directly on the new 553,220-param model
-# (n=8, homogeneous, global-dp, 3 rounds; see
-# docs/superpowers/specs/2026-08-08-cifar100-densenet-selu-design.md):
-# signal update norm (post-clip, post-aggregation, pre-noise) = 4.52, and
-# the noise-to-signal ratio at this NOISE_MULTIPLIER = 0.257 -- a 3.9x
-# mismatch from the ~0.0097 value that would hit the ~1 target ratio on
-# this model. This mismatch was found and reported to the project owner but
-# deliberately NOT corrected here: recalibrating NOISE_MULTIPLIER is out of
-# scope for the model-file-only change that produced the new architecture,
-# and is the owner's call to make. The sweep is currently running with this
-# un-recalibrated value pending that decision. v1 used 0.05 (on the old
-# model), which produced a ~22x noise-to-signal ratio and crushed global-dp
-# to ~4% accuracy at n=8.
+NOISE_MULTIPLIER = 0.0097  # recalibrated for the DenseNet+SELU model's
+# 553,220 params (see docs/superpowers/specs/2026-08-08-cifar100-densenet-
+# selu-design.md). Derivation: target noise-to-signal ratio ~1 at n=8, using
+# noise_l2_norm ~= stdv * sqrt(param_count) and stdv = noise_multiplier *
+# clipping_norm / num_sampled_clients. Measured directly on this model (n=8,
+# homogeneous, global-dp, 3 rounds): signal update norm (post-clip,
+# post-aggregation, pre-noise) = 4.52, param_count = 553,220, giving
+# target_noise_multiplier = signal_norm * num_sampled_clients /
+# (clipping_norm * sqrt(param_count)) = 4.52 * 8 / (5.0 * sqrt(553220)) ~=
+# 0.00972, rounded here to 0.0097.
+#
+# History: the sweep first launched 2026-08-08 with 0.0025 -- a value
+# carried over unchanged from calibration work done against the old,
+# since-replaced ~2.76M-param 4-block CNN (see
+# docs/superpowers/specs/2026-08-07-cifar100-v2-accuracy-design.md), giving
+# a noise-to-signal ratio of only 0.257 on the new (~5x smaller) model, a
+# 3.9x mismatch from the ~1 target. That run completed exactly 1/72 combos
+# (the homogeneous/vanilla/n8/r20 baseline, which noise_multiplier doesn't
+# affect) before being stopped and relaunched with this corrected value.
+# v1 used 0.05 (on the original 3-block model), which produced a ~22x
+# noise-to-signal ratio and crushed global-dp to ~4% accuracy at n=8.
 MAX_PARALLEL_CLIENTS = 16
 OUTPUT_DIR = PROJECT_ROOT / "results" / "cifar100_scaling"
 LOG_PATH = OUTPUT_DIR / "sweep_progress.log"
