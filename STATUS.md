@@ -1,11 +1,12 @@
 # Project Status
 
 **Branch:** `feature/cifar100-scaling`
-**Last updated:** 2026-08-08, CUDA workstation (`feature/cifar100-scaling` active — model replaced
-with v4 DenseNet+SELU architecture (553,220 params, 0 buffers), results/ cleared, 72-combo sweep
-launched, briefly paused to recalibrate `noise_multiplier` (0.0025 -> 0.0097, confirmed via a short
-verification run: noise-to-signal ratio 0.998 at n=8, matching the ~1 target), relaunched and
-currently running) — see `git log` for anything more recent
+**Last updated:** 2026-08-08, CUDA workstation (`feature/cifar100-scaling` active — consolidated on a
+single CIFAR-100 model, adapted from the project supervisor's own CNNCIFAR100 reference architecture
+(4,631,268 params, 0 buffers); the earlier DenseNet+SELU model/sweep and its own separate
+`feature/cifar100-scaling-supervisor` branch were both removed/merged away, all past CIFAR-100
+results cleared, sweep now scoped to a single 100-client/250-round setting per project-owner
+direction and relaunched) — see `git log` for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -19,35 +20,45 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 ## Active work
 
 `feature/cifar100-scaling` (not yet merged) adds a CIFAR-100 dataset/model plugin pair and a
-client-count/round-budget sweep script: `experiments/reproduce/dataset/cifar100.py` (full
-100-class CIFAR-100 data plugin — unlike every other dataset plugin in this repo, which subsets to
-4 classes — now with train-only data augmentation, random crop + horizontal flip), and
-`experiments/reproduce/cifar100_cnn.py`, now on a v4 DenseNet+SELU architecture that replaces the
-earlier plain-CNN line entirely (553,220 params, 0 buffers): concatenative (DenseNet-style) skip
-connections, GroupNorm(8), SELU activation with LeCun-normal init and AlphaDropout. It replaced the
-old v1/v2/v3 plain CNN after two separate clipping-related freeze modes were found in that line — see
-`docs/superpowers/specs/2026-08-08-cifar100-densenet-selu-design.md` for the full account, not
-reproduced here. GroupNorm has no running-stats buffers — unlike BatchNorm — so it still needs no
+sweep script: `experiments/reproduce/dataset/cifar100.py` (full 100-class CIFAR-100 data plugin —
+unlike every other dataset plugin in this repo, which subsets to 4 classes — with train-only data
+augmentation, random crop + horizontal flip), and `experiments/reproduce/cifar100_cnn.py`.
+
+**Model history** (this repo went through several CIFAR-100 architectures before settling):
+v1-v3 was a plain 3-block CNN (v2 briefly added a 4th conv block, reverted after its natural
+per-round update magnitude exceeded `clipping_norm=5.0` and froze every clipping privacy mode).
+v4 replaced it with a DenseNet+SELU architecture (553,220 params, concatenative skip connections,
+GroupNorm(8), SELU with LeCun-normal init and AlphaDropout), built and verified for robustness to
+that clipping-related freeze — and a second, independent freeze mode was found and fixed in that
+generation too (`vanilla`, no DP at all, froze at n=128/homogeneous from many highly-correlated
+client updates reinforcing rather than averaging out). **Per project-owner direction, v4 was itself
+replaced** with the current model (v5): an adaptation of the project supervisor's own `CNNCIFAR100`
+reference architecture (3 blocks of 2x[Conv3x3-GroupNorm-ReLU], channels 128/256/512,
+global-average-pooled classifier, 4,631,268 params, 0 buffers — see
+`experiments/cifar100_scaling/sweep_cifar100_scaling.py`'s docstring for the full model-history
+record and `experiments/reproduce/cifar100_cnn.py`'s docstring for the adaptation details). This
+consolidation also removed the separate `feature/cifar100-scaling-supervisor` branch/worktree that
+had briefly held this model in isolation (merged into this branch, then deleted) and cleared every
+prior CIFAR-100 result (v1-v4 sweep data, the supervisor model's own earlier narrower grid) —
+none were kept, since all described a model, grid, or directory layout no longer in use.
+
+GroupNorm has no running-stats buffers — unlike BatchNorm — so this still needs no
 `metricdp_pytorch/metricdp_strategy.py` changes, same as v1's "no normalization at all" workaround.
-Training now also supports weight decay (`WEIGHT_DECAY = 5e-4` in the sweep) and an opt-in cosine LR
-schedule; the schedule was tried for the sweep and dropped — a decaying LR eventually drops client
-updates below `clipping_norm`, so clipping stops binding late in each run and the DP noise-to-signal
-ratio drifts back up against `noise_multiplier`, fighting the whole point of tuning it — so the sweep
-uses a fixed LR instead (see `experiments/cifar100_scaling/sweep_cifar100_scaling.py`'s
-docstring/comments). `noise_multiplier` was carried over unchanged (0.0025) from calibration work
-done against the old, now-replaced model on the sweep's first launch, and was found to be
-miscalibrated for the new one: measured noise-to-signal ratio 0.257 at n=8 vs. a ~1 target, a ~3.9x
-mismatch. Recalibrated to 0.0097 (see the `NOISE_MULTIPLIER` comment in
+Training supports weight decay (`WEIGHT_DECAY = 5e-4`) and an opt-in cosine LR schedule; the
+schedule was tried and dropped — a decaying LR eventually drops client updates below
+`clipping_norm`, so clipping stops binding late in each run and the DP noise-to-signal ratio drifts
+back up against `noise_multiplier`, fighting the whole point of tuning it — so the sweep uses a
+fixed LR instead. `noise_multiplier=0.0182`, calibrated specifically for this model at n=100 (the
+only client count this sweep runs — see the `NOISE_MULTIPLIER` comment in
 `experiments/cifar100_scaling/sweep_cifar100_scaling.py` for the full derivation), confirmed via a
-short verification run (n=8, homogeneous, global-dp, 3 rounds): noise-to-signal ratio 0.998, and
-normal learning (no freeze) under the new noise level. `experiments/cifar100_scaling/sweep_cifar100_scaling.py`
-is the resumable sweep script: client counts 8/64/128/256 x rounds 20/60/120 x privacy
-vanilla/global-dp/metric-privacy x partition homogeneous/non-iid x `fedavg` = 72 combos.
-`results/cifar100_scaling/` was cleared (143 old files deleted, all previously untracked) before the
-first launch. The sweep briefly ran with the uncalibrated `noise_multiplier` (0.0025) and completed
-exactly 1/72 combos (`homogeneous/vanilla/n8/r20`, unaffected by `noise_multiplier`) before being
-stopped and relaunched with the recalibrated value (0.0097); the resume logic correctly skipped
-re-running that already-complete combo. It is currently running — see "Currently running" below.
+verification run: noise-to-signal ratio 1.001 at n=100.
+
+`experiments/cifar100_scaling/sweep_cifar100_scaling.py` is the resumable sweep script: a single
+client count (100) and round budget (250) — narrowed from earlier client-count/round-count grids
+per project-owner direction, judged too short — x privacy vanilla/global-dp/metric-privacy x
+partition homogeneous/non-iid x `fedavg` = 6 combos. `results/cifar100_scaling/` starts empty
+(cleared per the consolidation above); `--force` is not required for this launch. Currently
+running — see "Currently running" below.
 
 Separately, on `master`: nothing currently running. `feature/scale-controlled-redo` (Phase 1 items
 1 and 2 of `docs/RESEARCH_ROADMAP.md`) merged into `master` 2026-08-06 and was deleted — see
@@ -65,7 +76,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `experiments.cifar100_scaling.sweep_cifar100_scaling` (tmux session `cifar100sweep`, `CUDA_VISIBLE_DEVICES=1`) | 72-combo CIFAR-100 client-count/round-budget scaling sweep on the new DenseNet+SELU model | running, started 2026-08-08 |
+| `experiments.cifar100_scaling.sweep_cifar100_scaling` (tmux session `cifar100sweep`, `CUDA_VISIBLE_DEVICES=1`) | 6-combo CIFAR-100 sweep (n=100, r=250, 3 privacy modes x 2 partitions) on the current (supervisor-derived) model | starting, 2026-08-08 |
 
 ## What's established on `master`
 
