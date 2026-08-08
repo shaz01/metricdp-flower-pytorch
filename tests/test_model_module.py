@@ -34,6 +34,15 @@ def test_cifar10_model_matches_dataset_shape_and_classes() -> None:
     assert torch.allclose(probabilities.sum(dim=1), torch.ones(2))
 
 
+def test_cifar100_model_matches_dataset_shape_and_classes() -> None:
+    model = load_model("experiments.reproduce.cifar100_cnn:create_model")
+
+    probabilities = model(torch.randn(2, 3, 32, 32))
+
+    assert probabilities.shape == (2, 100)
+    assert torch.allclose(probabilities.sum(dim=1), torch.ones(2), atol=1e-5)
+
+
 def test_load_model_rejects_non_model_factory() -> None:
     with pytest.raises(TypeError, match="did not return a torch.nn.Module"):
         load_model("experiments.reproduce.dataset.common:hf_offline")
