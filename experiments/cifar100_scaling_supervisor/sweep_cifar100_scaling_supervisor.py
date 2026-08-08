@@ -1,13 +1,32 @@
-"""Sweep round budget at a fixed 100 clients on full 100-class CIFAR-100,
-using the supervisor-reference CNNCIFAR100 architecture.
+"""Train every setting at a fixed 100 clients and 250 rounds on full
+100-class CIFAR-100, using the supervisor-reference CNNCIFAR100
+architecture.
 
 A second, independent sweep alongside (not instead of) the DenseNet+SELU
 sweep in experiments/cifar100_scaling/sweep_cifar100_scaling.py -- run on
 its own branch (feature/cifar100-scaling-supervisor) and its own results
-directory. Unlike that sweep's full 4-client-count x 3-round-count grid,
-this one is scoped to a single client count (100, per project-owner
-direction) against three round budgets: 20 * 3 * 3 * 2 * 1 = 18 combinations
-(round_counts x privacy x partition x fedavg).
+directory. Scoped to a single client count (100, per project-owner
+direction) and, as of 2026-08-08, a single round budget (250, replacing an
+earlier 20/40/80 round-count grid -- the project owner judged those too
+short and asked for one longer run per setting instead of a round-budget
+comparison): 1 * 1 * 3 * 2 * 1 = 6 combinations (privacy x partition x
+fedavg). Two results from the earlier 20-round grid
+(homogeneous/vanilla and homogeneous/global-dp) remain in
+results/cifar100_scaling_supervisor/ under their own r20 filenames --
+still valid data, just outside the current grid; not deleted, since
+unlike the earlier model-architecture replacement this is the same model
+run for longer, not an incompatible change.
+
+Caveat carried over unresolved from the shorter-round design: NOISE_MULTIPLIER
+below was calibrated from a signal-update-norm measured early in training
+(round 1 of a 3-round run). Client update magnitude typically shrinks as
+training converges, which would drift the realized noise-to-signal ratio
+upward over a 250-round run (constant noise against a shrinking signal) --
+the same limitation the sibling DenseNet+SELU sweep's own calibration has,
+not something newly introduced here. Not re-measured at round 250 before
+this launch (that would require the very run this sweep performs); worth
+revisiting if 250-round global-dp/metric-privacy results look worse,
+relative to vanilla, than the r20 results already on record.
 
 The supervisor's CNNCIFAR100 (experiments/reproduce/cifar100_cnn_supervisor.py)
 is considerably larger than either prior CIFAR-100 model in this repo:
@@ -45,7 +64,7 @@ PARTITION_MODES = ("homogeneous", "non-iid")
 PRIVACY_MODES_SWEPT = ("vanilla", "global-dp", "metric-privacy")
 AGGREGATION_METHODS_SWEPT = ("fedavg",)
 CLIENT_COUNTS = (100,)
-ROUND_COUNTS = (20, 40, 80)
+ROUND_COUNTS = (250,)
 NOISE_MULTIPLIER = 0.0182  # calibrated for the supervisor CNNCIFAR100
 # model's 4,631,268 params, at n=100 (the only client count this sweep
 # runs; see docs/superpowers/specs/2026-08-08-cifar100-supervisor-cnn-design.md).
