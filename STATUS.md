@@ -79,6 +79,17 @@ per-class ROC, 230-400MB each) and `.predictions.npz` artifacts stay local-only,
 Next up, per project-owner direction: a CIA (Client Inference Attack) experiment on CIFAR-100,
 building on `experiments/cia/` against this sweep's trained models.
 
+This plan adds two new scripts under `experiments/cia/scripts/` to execute that CIA experiment:
+`cifar100_scaling.py` orchestrates the attack—building federated-learning model groups (in-group
+and out-group) for each privacy mode and partition, training and evaluating them against the
+CIFAR-100 sweep's trained models, and producing attack ROC/AUC scores. `cifar100_scaling_analysis.py`
+aggregates and visualizes those scores per privacy mode. Both scripts are ready to launch (not yet
+run). Execution is two-group: `uv run python -m experiments.cia.scripts.cifar100_scaling --group in`
+and `--group out`, intended to run concurrently (e.g. on separate GPUs or tmux sessions). Expected
+wall-clock per group is roughly the sweep's own ~18h; run concurrently, the total time should land
+somewhere between that single-group duration and half of it, depending on hardware contention
+(no guaranteed 2x speedup).
+
 Separately, on `master`: nothing currently running. `feature/scale-controlled-redo` (Phase 1 items
 1 and 2 of `docs/RESEARCH_ROADMAP.md`) merged into `master` 2026-08-06 and was deleted — see
 "What's established" below for what it left behind. The natural next steps there, not yet started:
