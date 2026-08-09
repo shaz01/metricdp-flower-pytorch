@@ -93,5 +93,77 @@ def create_cifar100_out(config: Mapping[str, Any]) -> PartitionViewDataModule:
     )
 
 
+def build_combos(group: str) -> list[Combo]:
+    """Build the 6 (partition x privacy) trajectories for one group."""
+    if group not in ("in", "out"):
+        raise ValueError('group must be "in" or "out".')
+    data_module = f"experiments.cia.scripts.cifar100_scaling:create_cifar100_{group}"
+    active_clients = NUM_CLIENTS if group == "in" else NUM_CLIENTS - 1
+    return [
+        Combo(
+            name_prefix=f"cifar100-{group}-remove",
+            num_clients=active_clients,
+            partition=partition,
+            privacy=privacy,
+            aggregation=AGGREGATION,
+            seed=SEED,
+            noise_multiplier=NOISE_MULTIPLIER,
+            hyperparams=HYPERPARAMS,
+            data_module=data_module,
+            model_module=MODEL_MODULE,
+        )
+        for partition in PARTITION_MODES
+        for privacy in PRIVACY_MODES
+    ]
+
+
+def _clean_shadow(combo: Combo) -> Any:
+    return clean_shadow_dataset(
+        combo,
+        target_partition_id=TARGET_PARTITION_ID,
+        shadow_fraction=SHADOW_FRACTION,
+    )
+
+
+def _noisy_shadow(combo: Combo) -> Any:
+    return noisy_shadow_dataset(
+        combo,
+        target_partition_id=TARGET_PARTITION_ID,
+        shadow_fraction=SHADOW_FRACTION,
+        std_fraction=NOISE_STD_FRACTION,
+    )
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--group", choices=("in", "out"), required=True)
+    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--max-parallel-clients", type=int, default=16)
+    parser.add_argument("--force", action="store_true")
+    return parser
+
+
+def main() -> None:
+    args = _parser().parse_args()
+    output_dir = args.output_dir.resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    combos = build_combos(args.group)
+    run_attack(
+        combos=combos,
+        output_dir=output_dir,
+        log_path=output_dir / f"progress_{args.group}.log",
+        max_parallel_clients=args.max_parallel_clients,
+        force=args.force,
+        start_message=(
+            f"Starting cifar100 {args.group}-remove group: {len(combos)} trajectories"
+        ),
+        clean_data_module_factory=_clean_shadow,
+        noisy_data_module_factory=_noisy_shadow,
+        device=resolve_device(),
+        checkpoint_rounds=CHECKPOINT_ROUNDS,
+        report_name=f"cia_{args.group}.json",
+    )
+
+
 if __name__ == "__main__":
-    raise SystemExit("cifar100_scaling.py's CLI is added in Task 2.")
+    main()
