@@ -65,6 +65,19 @@ def test_combos_share_the_sweep_hyperparameters() -> None:
         assert combo.model_module == "experiments.reproduce.cifar100_cnn:create_model"
 
 
+def test_combos_wire_the_correct_data_module_per_group() -> None:
+    for combo in build_combos("in"):
+        assert (
+            combo.data_module
+            == "experiments.cia.scripts.cifar100_scaling:create_cifar100_in"
+        )
+    for combo in build_combos("out"):
+        assert (
+            combo.data_module
+            == "experiments.cia.scripts.cifar100_scaling:create_cifar100_out"
+        )
+
+
 def test_build_combos_rejects_unknown_group() -> None:
     with pytest.raises(ValueError, match='"in" or "out"'):
         build_combos("sideways")

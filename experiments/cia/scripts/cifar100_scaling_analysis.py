@@ -21,7 +21,6 @@ import numpy as np
 
 from experiments.cia.reports.build_alzheimer_cia_report import (
     attack_scores,
-    auc,
     bootstrap_auc,
 )
 
@@ -71,21 +70,48 @@ def build_summary(
     in_groups: dict[tuple[str, str], list[dict]],
     out_groups: dict[tuple[str, str], list[dict]],
 ) -> list[dict]:
+    """Build the round-matched AUC summary, tolerating partial/interrupted combos.
+
+    `run_attack` is explicitly built to continue past training failures ("N attempted, M
+    failed"), so a single combo with a partial or mismatched IN/OUT trajectory is an expected,
+    real outcome -- it must not abort the whole analysis. Any combo that can't be scored (missing
+    from one side entirely, or whose IN/OUT rounds don't line up) is warned about by name and
+    skipped; every other combo is still reported.
+    """
     summary = []
+    only_in = sorted(set(in_groups) - set(out_groups))
+    only_out = sorted(set(out_groups) - set(in_groups))
+    for partition, privacy in only_in:
+        print(
+            f"WARNING: combo partition={partition!r} privacy={privacy!r} has IN rows but no "
+            "OUT rows -- skipping."
+        )
+    for partition, privacy in only_out:
+        print(
+            f"WARNING: combo partition={partition!r} privacy={privacy!r} has OUT rows but no "
+            "IN rows -- skipping."
+        )
     for combo_key in sorted(set(in_groups) & set(out_groups)):
         partition, privacy = combo_key
         in_rows = in_groups[combo_key]
         out_rows = out_groups[combo_key]
         entry: dict = {"partition_mode": partition, "privacy": privacy}
-        for score_key in SCORE_KEYS:
-            in_scores = attack_scores(in_rows, score_key)
-            out_scores = attack_scores(out_rows, score_key)
-            pooled, low, high = bootstrap_auc(in_scores, out_scores, seed=SEED)
-            entry[score_key] = {
-                "round_matched_auc": round_matched_auc(in_rows, out_rows, score_key),
-                "pooled_auc": pooled,
-                "pooled_auc_ci95": [low, high],
-            }
+        try:
+            for score_key in SCORE_KEYS:
+                in_scores = attack_scores(in_rows, score_key)
+                out_scores = attack_scores(out_rows, score_key)
+                pooled, low, high = bootstrap_auc(in_scores, out_scores, seed=SEED)
+                entry[score_key] = {
+                    "round_matched_auc": round_matched_auc(in_rows, out_rows, score_key),
+                    "pooled_auc": pooled,
+                    "pooled_auc_ci95": [low, high],
+                }
+        except ValueError as error:
+            print(
+                f"WARNING: combo partition={partition!r} privacy={privacy!r} could not be "
+                f"scored ({error}) -- skipping."
+            )
+            continue
         summary.append(entry)
     return summary
 
