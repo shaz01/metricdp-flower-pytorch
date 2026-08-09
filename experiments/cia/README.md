@@ -63,17 +63,22 @@ against the 20 OUT scores, and its 95% interval is a stratified percentile
 bootstrap. Accuracy and weighted F1 are the aggregated client-test metrics,
 reported as mean and population standard deviation over rounds 16-20.
 
-```bash
-uv run python -m experiments.cia.scripts.multi_round
-```
-
-Outputs go to `results/cia/multi_round/`. The runner caches evaluated
-trajectories, atomically resumes completed privacy modes, and deletes the 20
-large model checkpoints after extracting each trajectory.
+No `scripts/multi_round.py` runner has ever existed in this repo (verified against every
+branch's history) -- the paragraphs above describe the intended protocol, and the AUC-scoring
+math they refer to is real and implemented in
+`experiments/cia/reports/build_alzheimer_cia_report.py` (`auc`, `pooled_auc`,
+`round_matched_auc`, `attack_scores`), but nothing ever wired it to an actual
+training/checkpointing runner until `experiments/cia/scripts/cifar100_scaling.py` (see "CIFAR-100
+multi-round CIA" below), which is scoped to a single seed rather than this section's three.
 
 ## 48-client checkpoint comparison
 
-The scalable CIA experiment now lives in `experiments/cia/scripts/client_scaling.py`.
+The scalable CIA experiment originally lived in `experiments/cia/client_scaling.py`; that file
+was deleted 2026-08-03 during the `experiments/cia/scripts/` reorganization and never replaced,
+though its result data (`results/cia_client_scaling/`) is still committed. Its protocol -- one
+trajectory per combo (target participates), shadow-vs-test loss compared at "first-round" and
+"post-convergence" checkpoints -- is reconstructed here from that data rather than from surviving
+code.
 It trains each 48-client trajectory once for 20 rounds with the concluded
 client-scaling settings (`local-epochs=5`, `noise-multiplier=0.05`) and
 retains checkpoints at rounds 1 and 20. Both attacks therefore evaluate the
@@ -152,3 +157,30 @@ uv pip install \
   --reinstall \
   "jupyter-kernel-client @ git+https://github.com/googlecolab/jupyter-kernel-client.git"
 ```
+
+## CIFAR-100 multi-round CIA
+
+`experiments/cia/scripts/cifar100_scaling.py` attacks all 6 combos from the 100-client/250-round
+CIFAR-100 sweep (`results/cifar100_scaling/`): a matched IN-remove (target participates, 100
+clients) and OUT-remove (target excluded, 99 clients) trajectory per combo, checkpointed at round
+1 and every 10th round through 250. Single seed (42, matching the sweep), not the three-seed
+protocol used elsewhere in this file.
+
+Run each group separately -- required, not optional: `run_attack` isn't safe to call twice
+concurrently against the same report file, so each group writes its own
+(`cia_in.json`/`cia_out.json`), which also happens to make it safe to run both at once on the
+same GPU:
+
+```bash
+uv run python -m experiments.cia.scripts.cifar100_scaling --group in
+uv run python -m experiments.cia.scripts.cifar100_scaling --group out
+```
+
+Outputs go to `results/cia_cifar100_scaling/`. After both groups finish, merge them into
+round-matched AUC per combo:
+
+```bash
+uv run python -m experiments.cia.scripts.cifar100_scaling_analysis
+```
+
+Writes `results/cia_cifar100_scaling/cia_analysis.json`.
