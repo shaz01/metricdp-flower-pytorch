@@ -2,9 +2,10 @@
 
 **Branch:** `feature/cifar100-scaling`
 **Last updated:** 2026-08-09, CUDA workstation (`feature/cifar100-scaling` active — the 6-combo
-100-client/250-round sweep on the supervisor-derived model finished: 6/6 attempted, 0 failed, total
-wall clock ~18h20m 2026-08-08 17:46 to 2026-08-09 12:05. Results committed. Next up: a CIA attack
-experiment on CIFAR-100) — see `git log` for anything more recent
+100-client/250-round accuracy sweep finished 2026-08-09 12:05, 6/6 attempted, 0 failed, results
+committed. The follow-on CIA (Client Inference Attack) experiment against those same 6 combos is
+now running: both IN-remove and OUT-remove groups launched 2026-08-09 14:04, concurrently on GPU 1)
+— see `git log` for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -85,12 +86,14 @@ This plan adds two new scripts under `experiments/cia/scripts/` to execute that 
 `cifar100_scaling.py` trains fresh federated-learning IN/OUT trajectories for each privacy mode
 and partition combo, collecting per-checkpoint loss values for the attack. `cifar100_scaling_analysis.py`
 reads the loss records from both groups, computes round-matched AUC and bootstrap confidence
-intervals per (partition, privacy) combo, and writes the results to a JSON summary. Both scripts
-are ready to launch (not yet run). Execution is two-group: `uv run python -m experiments.cia.scripts.cifar100_scaling --group in`
-and `--group out`, intended to run concurrently (e.g. on separate GPUs or tmux sessions). Expected
-wall-clock per group is roughly the sweep's own ~18h; run concurrently, the total time should land
-somewhere between that single-group duration and half of it, depending on hardware contention
-(no guaranteed 2x speedup).
+intervals per (partition, privacy) combo, and writes the results to a JSON summary. **Both groups
+launched 2026-08-09 14:04**, concurrently on GPU 1 (`CUDA_VISIBLE_DEVICES=1` for both, tmux
+sessions `cia-cifar100-in`/`cia-cifar100-out`) — memory checked at launch, ~27GB/32.76GB combined,
+comfortably fits (GPU 0 stays off-limits, occupied by another user's job). Expected wall-clock per
+group is roughly the sweep's own ~18h; run concurrently, the total time should land somewhere
+between that single-group duration and half of it, depending on hardware contention (no guaranteed
+2x speedup). Once both finish: `uv run python -m experiments.cia.scripts.cifar100_scaling_analysis`
+merges `cia_in.json`/`cia_out.json` into round-matched AUC per combo.
 
 Separately, on `master`: nothing currently running. `feature/scale-controlled-redo` (Phase 1 items
 1 and 2 of `docs/RESEARCH_ROADMAP.md`) merged into `master` 2026-08-06 and was deleted — see
@@ -108,7 +111,8 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `experiments.cifar100_scaling.sweep_cifar100_scaling` (tmux session `cifar100sweep`, `CUDA_VISIBLE_DEVICES=1`) | 6-combo CIFAR-100 sweep (n=100, r=250, 3 privacy modes x 2 partitions) on the current (supervisor-derived) model | done, 2026-08-09 |
+| `experiments.cia.scripts.cifar100_scaling --group in` (tmux session `cia-cifar100-in`, `CUDA_VISIBLE_DEVICES=1`) | CIA IN-remove group: 6 trajectories (100 clients, target participates), 250 rounds, checkpointed at round 1 + every 10th round | running, started 2026-08-09 14:04 |
+| `experiments.cia.scripts.cifar100_scaling --group out` (tmux session `cia-cifar100-out`, `CUDA_VISIBLE_DEVICES=1`) | CIA OUT-remove group: 6 trajectories (99 clients, target excluded), same schedule, concurrent with the IN group on the same GPU (~27GB/32.76GB combined, confirmed fits) | running, started 2026-08-09 14:04 |
 
 ## What's established on `master`
 
