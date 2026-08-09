@@ -1,12 +1,10 @@
 # Project Status
 
 **Branch:** `feature/cifar100-scaling`
-**Last updated:** 2026-08-08, CUDA workstation (`feature/cifar100-scaling` active — consolidated on a
-single CIFAR-100 model, adapted from the project supervisor's own CNNCIFAR100 reference architecture
-(4,631,268 params, 0 buffers); the earlier DenseNet+SELU model/sweep and its own separate
-`feature/cifar100-scaling-supervisor` branch were both removed/merged away, all past CIFAR-100
-results cleared, sweep now scoped to a single 100-client/250-round setting per project-owner
-direction and relaunched) — see `git log` for anything more recent
+**Last updated:** 2026-08-09, CUDA workstation (`feature/cifar100-scaling` active — the 6-combo
+100-client/250-round sweep on the supervisor-derived model finished: 6/6 attempted, 0 failed, total
+wall clock ~18h20m 2026-08-08 17:46 to 2026-08-09 12:05. Results committed. Next up: a CIA attack
+experiment on CIFAR-100) — see `git log` for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -56,9 +54,30 @@ verification run: noise-to-signal ratio 1.001 at n=100.
 `experiments/cifar100_scaling/sweep_cifar100_scaling.py` is the resumable sweep script: a single
 client count (100) and round budget (250) — narrowed from earlier client-count/round-count grids
 per project-owner direction, judged too short — x privacy vanilla/global-dp/metric-privacy x
-partition homogeneous/non-iid x `fedavg` = 6 combos. `results/cifar100_scaling/` starts empty
-(cleared per the consolidation above); `--force` is not required for this launch. Currently
-running — see "Currently running" below.
+partition homogeneous/non-iid x `fedavg` = 6 combos. **Finished 2026-08-09, 12:05, 6/6 attempted, 0
+failed.** Final-round (250) server-side accuracy/loss (100-class task, so ~1% is random-baseline):
+
+| Partition | Privacy | Accuracy | Loss | F1 | AUC |
+| --- | --- | --- | --- | --- | --- |
+| homogeneous | vanilla | 29.14% | 2.8118 | 0.2688 | 0.9249 |
+| homogeneous | global-dp | 21.42% | 3.2273 | 0.1882 | 0.8919 |
+| homogeneous | metric-privacy | 22.00% | 3.2137 | 0.1952 | 0.8929 |
+| non-IID | vanilla | 28.28% | 2.8552 | 0.2593 | 0.9225 |
+| non-IID | global-dp | 21.40% | 3.1908 | 0.1904 | 0.8960 |
+| non-IID | metric-privacy | 21.44% | 3.1939 | 0.1888 | 0.8956 |
+
+Metric-privacy roughly ties global-dp here (+0.58pp homogeneous, +0.04pp non-IID) rather than
+beating it, both DP modes ~7-8pp below vanilla; homogeneous vs. non-IID partitioning barely moves
+the numbers at this scale. Notably lower absolute accuracy than the Alzheimer-dataset scaling
+sweeps (77-98%) — expected, since CIFAR-100 is a much harder 100-way task and this budget may be
+short of what full convergence needs; not yet interpreted/written up, no report exists for this
+experiment yet — see `AGENTS.md`'s "don't decide unilaterally an experiment is finished" rule.
+Run-result JSONs are committed at `results/cifar100_scaling/*.json`; the `.evaluation.json` (full
+per-class ROC, 230-400MB each) and `.predictions.npz` artifacts stay local-only, gitignored (see
+`.gitignore` comment) since they blow past GitHub's 100MB push limit.
+
+Next up, per project-owner direction: a CIA (Client Inference Attack) experiment on CIFAR-100,
+building on `experiments/cia/` against this sweep's trained models.
 
 Separately, on `master`: nothing currently running. `feature/scale-controlled-redo` (Phase 1 items
 1 and 2 of `docs/RESEARCH_ROADMAP.md`) merged into `master` 2026-08-06 and was deleted — see
@@ -76,7 +95,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `experiments.cifar100_scaling.sweep_cifar100_scaling` (tmux session `cifar100sweep`, `CUDA_VISIBLE_DEVICES=1`) | 6-combo CIFAR-100 sweep (n=100, r=250, 3 privacy modes x 2 partitions) on the current (supervisor-derived) model | starting, 2026-08-08 |
+| `experiments.cifar100_scaling.sweep_cifar100_scaling` (tmux session `cifar100sweep`, `CUDA_VISIBLE_DEVICES=1`) | 6-combo CIFAR-100 sweep (n=100, r=250, 3 privacy modes x 2 partitions) on the current (supervisor-derived) model | done, 2026-08-09 |
 
 ## What's established on `master`
 
