@@ -146,9 +146,25 @@ def build_combos(
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--adjacency", choices=ADJACENCIES, nargs="+", default=list(ADJACENCIES))
-    parser.add_argument("--privacy", choices=PRIVACY_MODES, nargs="+", default=list(PRIVACY_MODES))
+    parser.add_argument(
+        "--privacy",
+        choices=PRIVACY_MODES,
+        required=True,
+        help="Exactly one privacy mode per session (keeps Colab chunks small).",
+    )
+    parser.add_argument(
+        "--adjacency",
+        choices=ADJACENCIES,
+        nargs="+",
+        default=list(ADJACENCIES),
+        help="Defaults to both views; pass one to split a session further.",
+    )
     parser.add_argument("--seed", type=int, nargs="+", default=list(SEEDS))
+    parser.add_argument(
+        "--max-parallel-clients",
+        type=int,
+        default=min(CANONICAL_NUM_CLIENTS, 8),  # TODO: tune per machine.
+    )
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--force", action="store_true")
     return parser
@@ -160,23 +176,26 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     combos = build_combos(
         adjacencies=args.adjacency,
-        privacy_modes=args.privacy,
+        privacy_modes=(args.privacy,),
         seeds=args.seed,
     )
     results = run_attack(
         combos=combos,
         output_dir=output_dir / "runs",
         log_path=output_dir / "runs" / "progress.log",
-        max_parallel_clients=min(CANONICAL_NUM_CLIENTS, 8),
+        max_parallel_clients=args.max_parallel_clients,
         force=args.force,
-        start_message=f"CIFAR-10 removal CIA starting: {len(combos)} trajectories",
+        start_message=(
+            f"CIFAR-10 removal CIA chunk ({args.privacy}): "
+            f"{len(combos)} trajectories"
+        ),
         clean_data_module_factory=_clean_shadow,
         noisy_data_module_factory=_noisy_shadow,
         device=resolve_device(),
         checkpoint_rounds=CHECKPOINT_ROUNDS,
         report_name="cia.json",
     )
-    for result in results:
+    for result in sorted(results, key=lambda r: (r.run_name, r.server_round)):
         print(
             f"round={result.server_round:2d} {result.partition_mode:12s} "
             f"{result.privacy:15s} clients={result.num_clients:2d} "
