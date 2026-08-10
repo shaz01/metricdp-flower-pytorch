@@ -1,11 +1,13 @@
 # Project Status
 
 **Branch:** `feature/cifar100-scaling`
-**Last updated:** 2026-08-09, CUDA workstation (`feature/cifar100-scaling` active — the 6-combo
-100-client/250-round accuracy sweep finished 2026-08-09 12:05, 6/6 attempted, 0 failed, results
-committed. The follow-on CIA (Client Inference Attack) experiment against those same 6 combos is
-now running: both IN-remove and OUT-remove groups launched 2026-08-09 14:04, concurrently on GPU 1)
-— see `git log` for anything more recent
+**Last updated:** 2026-08-10, CUDA workstation (`feature/cifar100-scaling` active — the 6-combo
+100-client/250-round accuracy sweep finished 2026-08-09 12:05, 6/6 attempted, 0 failed. The
+follow-on CIA (Client Inference Attack) experiment against those same 6 combos finished
+2026-08-10 14:59, 6/6 trajectories in both IN-remove and OUT-remove groups, 0 failures.
+Round-matched AUC computed; every combo's 95% CI includes 0.5 — no statistically significant
+result at this sample size, a known limitation of the single-seed/26-checkpoint design. Results
+committed) — see `git log` for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -87,13 +89,36 @@ This plan adds two new scripts under `experiments/cia/scripts/` to execute that 
 and partition combo, collecting per-checkpoint loss values for the attack. `cifar100_scaling_analysis.py`
 reads the loss records from both groups, computes round-matched AUC and bootstrap confidence
 intervals per (partition, privacy) combo, and writes the results to a JSON summary. **Both groups
-launched 2026-08-09 14:04**, concurrently on GPU 1 (`CUDA_VISIBLE_DEVICES=1` for both, tmux
-sessions `cia-cifar100-in`/`cia-cifar100-out`) — memory checked at launch, ~27GB/32.76GB combined,
-comfortably fits (GPU 0 stays off-limits, occupied by another user's job). Expected wall-clock per
-group is roughly the sweep's own ~18h; run concurrently, the total time should land somewhere
-between that single-group duration and half of it, depending on hardware contention (no guaranteed
-2x speedup). Once both finish: `uv run python -m experiments.cia.scripts.cifar100_scaling_analysis`
-merges `cia_in.json`/`cia_out.json` into round-matched AUC per combo.
+launched 2026-08-09 14:04, finished 2026-08-10 14:59 — 6/6 trajectories each, 0 failures,
+~24h55m total.** GPU 1 the whole time (`CUDA_VISIBLE_DEVICES=1` for both, tmux sessions
+`cia-cifar100-in`/`cia-cifar100-out`), ~27GB/32.76GB combined, no contention issues; GPU 0 stayed
+off-limits throughout (another user's job). Round-matched AUC per combo (`target_clean_shadow_loss`,
+26 paired checkpoints: round 1 + every 10th through 250; 0.5 = no membership signal, 1.0 = perfect
+separation):
+
+| Partition | Privacy | Clean AUC | Clean 95% CI | Noisy AUC | Noisy 95% CI |
+| --- | --- | --- | --- | --- | --- |
+| homogeneous | vanilla | 0.846 | 0.41-0.73 | 0.423 | 0.22-0.53 |
+| homogeneous | global-dp | 0.731 | 0.40-0.71 | 0.731 | 0.47-0.78 |
+| homogeneous | metric-privacy | 0.615 | 0.36-0.67 | 0.654 | 0.48-0.78 |
+| non-IID | vanilla | 0.500 | 0.35-0.67 | 0.385 | 0.26-0.58 |
+| non-IID | global-dp | 0.692 | 0.37-0.68 | 0.654 | 0.50-0.80 |
+| non-IID | metric-privacy | 0.654 | 0.37-0.68 | 0.615 | 0.43-0.75 |
+
+**Every single 95% CI (pooled bootstrap, seed 42) includes 0.5** — none of these point estimates
+are statistically significant at this sample size. This is the known, documented limitation from
+this plan's design: a single seed and a small per-client shadow set (100 clients over 50k train
+images → ~500 samples/client before an 80/20 split, smaller still under non-IID skew) leaves only
+26 round-matched pairs per combo, far short of the 60 pairs (20 rounds x 3 seeds) the existing
+Alzheimer/CIFAR-10/Fashion-MNIST CIA protocols use. Point estimates are directionally interesting
+(vanilla's homogeneous clean-AUC of 0.846 is the highest of the six, consistent with no DP
+protection at all; non-IID/vanilla's 0.500 is the only exact null) but none should be treated as a
+finding without more seeds or a coarser/wider round grid to shrink the CIs — not yet
+interpreted/written up, no report exists for this experiment yet, see `AGENTS.md`'s "don't decide
+unilaterally an experiment is finished" rule. Raw results committed at
+`results/cia_cifar100_scaling/` (`cia_in.json`, `cia_out.json`, `cia_analysis.json`, 12 per-trajectory
+run JSONs); `.evaluation.json`/`.predictions.npz` stay local-only, gitignored, same as the
+accuracy sweep.
 
 Separately, on `master`: nothing currently running. `feature/scale-controlled-redo` (Phase 1 items
 1 and 2 of `docs/RESEARCH_ROADMAP.md`) merged into `master` 2026-08-06 and was deleted — see
@@ -111,8 +136,8 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `experiments.cia.scripts.cifar100_scaling --group in` (tmux session `cia-cifar100-in`, `CUDA_VISIBLE_DEVICES=1`) | CIA IN-remove group: 6 trajectories (100 clients, target participates), 250 rounds, checkpointed at round 1 + every 10th round | running, started 2026-08-09 14:04 |
-| `experiments.cia.scripts.cifar100_scaling --group out` (tmux session `cia-cifar100-out`, `CUDA_VISIBLE_DEVICES=1`) | CIA OUT-remove group: 6 trajectories (99 clients, target excluded), same schedule, concurrent with the IN group on the same GPU (~27GB/32.76GB combined, confirmed fits) | running, started 2026-08-09 14:04 |
+| `experiments.cia.scripts.cifar100_scaling --group in` (tmux session `cia-cifar100-in`, `CUDA_VISIBLE_DEVICES=1`) | CIA IN-remove group: 6 trajectories (100 clients, target participates), 250 rounds, checkpointed at round 1 + every 10th round | done, 2026-08-10 |
+| `experiments.cia.scripts.cifar100_scaling --group out` (tmux session `cia-cifar100-out`, `CUDA_VISIBLE_DEVICES=1`) | CIA OUT-remove group: 6 trajectories (99 clients, target excluded), same schedule, concurrent with the IN group on the same GPU | done, 2026-08-10 |
 
 ## What's established on `master`
 
