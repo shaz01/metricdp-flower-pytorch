@@ -5,7 +5,11 @@ experiments.cia.scripts.cifar100_scaling --group in|out, so the two runs never r
 shared report file), pairs each (partition, privacy) combo's IN and OUT trajectories at their
 shared checkpoint rounds, and reports round-matched AUC plus a bootstrap 95% interval -- same
 scoring primitives as the existing Alzheimer/CIFAR-10/Fashion-MNIST CIA reports
-(experiments/cia/reports/build_alzheimer_cia_report.py), not reimplemented.
+(experiments/cia/reports/build_alzheimer_cia_report.py), not reimplemented. Since
+experiments/cia/scripts/cifar100_scaling.py now trains 3 seeds (42, 43, 44) per combo, this pools
+all 3 seeds' round-matched pairs per combo (78 pairs total: 3 seeds x 26 checkpoint rounds),
+reusing build_alzheimer_cia_report.py's pooled_rows/round_matched_auc directly -- both already
+hard-loop over exactly (42, 43, 44), which now matches this experiment's seeds exactly.
 
 Usage:
     uv run python -m experiments.cia.scripts.cifar100_scaling_analysis
@@ -17,16 +21,18 @@ import argparse
 import json
 from pathlib import Path
 
-import numpy as np
-
 from experiments.cia.reports.build_alzheimer_cia_report import (
     attack_scores,
     bootstrap_auc,
+    pooled_rows,
+    round_matched_auc,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_RESULTS_DIR = PROJECT_ROOT / "results" / "cia_cifar100_scaling"
-SEED = 42
+BOOTSTRAP_SEED = 42  # RNG seed for the percentile bootstrap resampling -- unrelated to the
+# experiment's own training seeds (42, 43, 44), which pooled_rows/round_matched_auc already
+# hard-code internally.
 SCORE_KEYS = ("target_clean_shadow_loss", "target_noisy_shadow_loss")
 
 
@@ -34,82 +40,84 @@ def load_results(path: Path) -> list[dict]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def group_by_combo(rows: list[dict]) -> dict[tuple[str, str], list[dict]]:
-    """Group CIA result rows by (partition_mode, privacy), sorted by server_round."""
-    groups: dict[tuple[str, str], list[dict]] = {}
+def group_by_combo(rows: list[dict]) -> dict[tuple[str, int], list[dict]]:
+    """Group CIA result rows by (mechanism, seed), sorted by server_round.
+
+    mechanism is f"{partition_mode}:{privacy}" -- a formatted string, matching the
+    mechanism: str type build_alzheimer_cia_report.py's pooled_rows/round_matched_auc expect
+    (a tuple would work at runtime as a dict key but violate that contract).
+    """
+    groups: dict[tuple[str, int], list[dict]] = {}
     for row in rows:
-        key = (row["partition_mode"], row["privacy"])
+        mechanism = f"{row['partition_mode']}:{row['privacy']}"
+        key = (mechanism, row["seed"])
         groups.setdefault(key, []).append(row)
     for group_rows in groups.values():
         group_rows.sort(key=lambda row: row["server_round"])
     return groups
 
 
-def round_matched_auc(
-    in_rows: list[dict], out_rows: list[dict], score_key: str
-) -> float:
-    """Round-matched AUC: pair IN/OUT scores at identical checkpoint rounds.
+def _validate_round_alignment(
+    in_groups: dict[tuple[str, int], list[dict]],
+    out_groups: dict[tuple[str, int], list[dict]],
+    mechanism: str,
+) -> None:
+    """Raise ValueError if any seed's IN/OUT checkpoint rounds don't match exactly.
 
-    Single-seed equivalent of build_alzheimer_cia_report.round_matched_auc, which hard-loops
-    over that report's three fixed seeds -- this experiment uses one seed (matching the sweep).
+    round_matched_auc pairs IN/OUT scores positionally per seed via zip(strict=True), which only
+    catches a *length* mismatch -- two same-length round lists with different values would be
+    silently mispaired without this check. Raises a plain KeyError (uncaught here, handled by the
+    caller) if a seed's group is missing entirely for this mechanism on either side.
     """
-    in_rounds = [row["server_round"] for row in in_rows]
-    out_rounds = [row["server_round"] for row in out_rows]
-    if in_rounds != out_rounds:
-        raise ValueError("IN and OUT rows must share identical checkpoint rounds.")
-    in_scores = attack_scores(in_rows, score_key)
-    out_scores = attack_scores(out_rows, score_key)
-    outcomes = [
-        1.0 if in_score > out_score else 0.5 if in_score == out_score else 0.0
-        for in_score, out_score in zip(in_scores, out_scores, strict=True)
-    ]
-    return float(np.mean(outcomes))
+    for seed in (42, 43, 44):
+        in_rounds = [row["server_round"] for row in in_groups[(mechanism, seed)]]
+        out_rounds = [row["server_round"] for row in out_groups[(mechanism, seed)]]
+        if in_rounds != out_rounds:
+            raise ValueError(f"seed {seed} IN/OUT rounds differ: {in_rounds} vs {out_rounds}")
 
 
 def build_summary(
-    in_groups: dict[tuple[str, str], list[dict]],
-    out_groups: dict[tuple[str, str], list[dict]],
+    in_groups: dict[tuple[str, int], list[dict]],
+    out_groups: dict[tuple[str, int], list[dict]],
 ) -> list[dict]:
     """Build the round-matched AUC summary, tolerating partial/interrupted combos.
 
     `run_attack` is explicitly built to continue past training failures ("N attempted, M
-    failed"), so a single combo with a partial or mismatched IN/OUT trajectory is an expected,
-    real outcome -- it must not abort the whole analysis. Any combo that can't be scored (missing
-    from one side entirely, or whose IN/OUT rounds don't line up) is warned about by name and
-    skipped; every other combo is still reported.
+    failed"), so a single combo (or a single seed within a combo) can end up with a partial or
+    mismatched IN/OUT trajectory -- an expected, real outcome that must not abort the whole
+    analysis. Any mechanism that can't be scored (missing from one side entirely, missing an
+    entire seed's group -- a plain KeyError from pooled_rows/round_matched_auc -- or whose IN/OUT
+    rounds don't line up within some seed -- a ValueError from round_matched_auc's zip(strict=True)
+    -- is warned about by name and skipped; every other mechanism is still reported.
     """
     summary = []
-    only_in = sorted(set(in_groups) - set(out_groups))
-    only_out = sorted(set(out_groups) - set(in_groups))
-    for partition, privacy in only_in:
-        print(
-            f"WARNING: combo partition={partition!r} privacy={privacy!r} has IN rows but no "
-            "OUT rows -- skipping."
-        )
-    for partition, privacy in only_out:
-        print(
-            f"WARNING: combo partition={partition!r} privacy={privacy!r} has OUT rows but no "
-            "IN rows -- skipping."
-        )
-    for combo_key in sorted(set(in_groups) & set(out_groups)):
-        partition, privacy = combo_key
-        in_rows = in_groups[combo_key]
-        out_rows = out_groups[combo_key]
-        entry: dict = {"partition_mode": partition, "privacy": privacy}
+    in_mechanisms = {mechanism for mechanism, _seed in in_groups}
+    out_mechanisms = {mechanism for mechanism, _seed in out_groups}
+    only_in = sorted(in_mechanisms - out_mechanisms)
+    only_out = sorted(out_mechanisms - in_mechanisms)
+    for mechanism in only_in:
+        print(f"WARNING: mechanism {mechanism!r} has IN rows but no OUT rows -- skipping.")
+    for mechanism in only_out:
+        print(f"WARNING: mechanism {mechanism!r} has OUT rows but no IN rows -- skipping.")
+    for mechanism in sorted(in_mechanisms & out_mechanisms):
+        partition_mode, privacy = mechanism.split(":", 1)
+        entry: dict = {"partition_mode": partition_mode, "privacy": privacy}
         try:
+            _validate_round_alignment(in_groups, out_groups, mechanism)
             for score_key in SCORE_KEYS:
-                in_scores = attack_scores(in_rows, score_key)
-                out_scores = attack_scores(out_rows, score_key)
-                pooled, low, high = bootstrap_auc(in_scores, out_scores, seed=SEED)
+                in_scores = attack_scores(pooled_rows(in_groups, mechanism), score_key)
+                out_scores = attack_scores(pooled_rows(out_groups, mechanism), score_key)
+                pooled, low, high = bootstrap_auc(in_scores, out_scores, seed=BOOTSTRAP_SEED)
                 entry[score_key] = {
-                    "round_matched_auc": round_matched_auc(in_rows, out_rows, score_key),
+                    "round_matched_auc": round_matched_auc(
+                        in_groups, out_groups, mechanism, score_key
+                    ),
                     "pooled_auc": pooled,
                     "pooled_auc_ci95": [low, high],
                 }
-        except ValueError as error:
+        except (ValueError, KeyError) as error:
             print(
-                f"WARNING: combo partition={partition!r} privacy={privacy!r} could not be "
-                f"scored ({error}) -- skipping."
+                f"WARNING: mechanism {mechanism!r} could not be scored ({error!r}) -- skipping."
             )
             continue
         summary.append(entry)
