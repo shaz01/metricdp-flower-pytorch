@@ -1,7 +1,8 @@
 """Multi-round CIA (IN vs OUT) against the CIFAR-100 100-client/250-round sweep.
 
 Attacks all 6 combos from results/cifar100_scaling/ ({homogeneous, non-iid} x {vanilla,
-global-dp, metric-privacy} x fedavg, n=100, r=250): a matched IN-remove (target participates,
+global-dp, metric-privacy} x fedavg, n=100, r=250) across 3 seeds (42, 43, 44) -- 18 trajectories
+per group. A matched IN-remove (target participates,
 100 clients) and OUT-remove (target excluded, 99 clients) trajectory per combo, checkpointed at
 round 1 and every 10th round through 250. Reuses experiments.cia.attack_runner.run_attack
 unmodified -- core CIA code is dataset/class-count-agnostic, no changes needed there.
@@ -47,7 +48,11 @@ PRIVACY_MODES = ("vanilla", "global-dp", "metric-privacy")
 AGGREGATION = "fedavg"
 NUM_CLIENTS = 100
 TARGET_PARTITION_ID = 0
-SEED = 42
+SEEDS = (42, 43, 44)  # matches this repo's standard 3-seed CIA convention (planned_runs.py,
+# cifar_chunks.py). Seed 42 was already run as part of the single-seed pilot
+# (docs/superpowers/specs/2026-08-09-cia-cifar100-design.md) -- pointing this script at the
+# same report files lets run_attack's existing resumability skip those 6 already-complete
+# combos per group and only train the 12 new seed-43/44 combos.
 NOISE_MULTIPLIER = 0.0182  # same calibration as results/cifar100_scaling/, reused for both
 # the 100-client IN trajectory and the 99-client OUT trajectory -- matches existing precedent
 # (planned_runs.py's alzheimer-in/out-remove groups do the same across a +-1 client difference).
@@ -94,7 +99,7 @@ def create_cifar100_out(config: Mapping[str, Any]) -> PartitionViewDataModule:
 
 
 def build_combos(group: str) -> list[Combo]:
-    """Build the 6 (partition x privacy) trajectories for one group."""
+    """Build the 18 (partition x privacy x seed) trajectories for one group."""
     if group not in ("in", "out"):
         raise ValueError('group must be "in" or "out".')
     data_module = f"experiments.cia.scripts.cifar100_scaling:create_cifar100_{group}"
@@ -106,7 +111,7 @@ def build_combos(group: str) -> list[Combo]:
             partition=partition,
             privacy=privacy,
             aggregation=AGGREGATION,
-            seed=SEED,
+            seed=seed,
             noise_multiplier=NOISE_MULTIPLIER,
             hyperparams=HYPERPARAMS,
             data_module=data_module,
@@ -114,6 +119,7 @@ def build_combos(group: str) -> list[Combo]:
         )
         for partition in PARTITION_MODES
         for privacy in PRIVACY_MODES
+        for seed in SEEDS
     ]
 
 

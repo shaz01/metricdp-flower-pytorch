@@ -8,6 +8,7 @@ from experiments.cia.scripts.cifar100_scaling import (
     NUM_CLIENTS,
     PARTITION_MODES,
     PRIVACY_MODES,
+    SEEDS,
     TARGET_PARTITION_ID,
     build_combos,
     create_cifar100_in,
@@ -36,15 +37,6 @@ def test_out_view_excludes_only_the_target() -> None:
     )
 
 
-def test_build_combos_returns_one_per_partition_privacy_pair() -> None:
-    combos = build_combos("in")
-
-    assert len(combos) == len(PARTITION_MODES) * len(PRIVACY_MODES)
-    assert {(combo.partition, combo.privacy) for combo in combos} == {
-        (partition, privacy) for partition in PARTITION_MODES for privacy in PRIVACY_MODES
-    }
-
-
 def test_in_group_uses_all_clients_out_group_excludes_target() -> None:
     in_combos = build_combos("in")
     out_combos = build_combos("out")
@@ -53,9 +45,28 @@ def test_in_group_uses_all_clients_out_group_excludes_target() -> None:
     assert {combo.num_clients for combo in out_combos} == {NUM_CLIENTS - 1}
 
 
+def test_build_combos_returns_one_per_partition_privacy_seed_triple() -> None:
+    combos = build_combos("in")
+
+    assert len(combos) == len(PARTITION_MODES) * len(PRIVACY_MODES) * len(SEEDS)
+    assert {(combo.partition, combo.privacy, combo.seed) for combo in combos} == {
+        (partition, privacy, seed)
+        for partition in PARTITION_MODES
+        for privacy in PRIVACY_MODES
+        for seed in SEEDS
+    }
+
+
+def test_build_combos_covers_every_seed() -> None:
+    combos = build_combos("out")
+
+    assert {combo.seed for combo in combos} == set(SEEDS)
+    assert SEEDS == (42, 43, 44)
+
+
 def test_combos_share_the_sweep_hyperparameters() -> None:
     for combo in build_combos("in"):
-        assert combo.seed == 42
+        assert combo.seed in SEEDS
         assert combo.noise_multiplier == pytest.approx(0.0182)
         assert combo.hyperparams.rounds == 250
         assert combo.hyperparams.clipping_norm == 5.0
