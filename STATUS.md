@@ -7,7 +7,8 @@ follow-on CIA (Client Inference Attack) experiment against those same 6 combos f
 2026-08-10 14:59, 6/6 trajectories in both IN-remove and OUT-remove groups, 0 failures.
 Round-matched AUC computed; every combo's 95% CI includes 0.5 — no statistically significant
 result at this sample size, a known limitation of the single-seed/26-checkpoint design. Results
-committed) — see `git log` for anything more recent
+committed. Multi-seed (42, 43, 44) rerun code is now ready to launch — not yet started) — see
+`git log` for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -105,7 +106,7 @@ separation):
 | non-IID | global-dp | 0.692 | 0.37-0.68 | 0.654 | 0.50-0.80 |
 | non-IID | metric-privacy | 0.654 | 0.37-0.68 | 0.615 | 0.43-0.75 |
 
-**Multi-seed rerun ready to launch.** Tasks 1-2 of this plan (`docs/superpowers/plans/2026-08-10-cia-cifar100-multiseed.md` — gitignored, local-only) extended the CIA experiment to train across 3 seeds (42, 43, 44) instead of the current 1. The seed loop now lives inside `build_combos()` within the training script, not as a CLI flag; the launch commands remain unchanged (`uv run python -m experiments.cia.scripts.cifar100_scaling --group in` and `--group out`). The resumability mechanism will automatically skip seed 42 (already in `results/cia_cifar100_scaling/cia_in.json` and `cia_out.json`), training only seeds 43 and 44 — expected ~50h wall-clock (2 new seeds, both IN/OUT groups still concurrent on GPU 1, same as the seed-42 single-seed run). Code is tested (full suite passes); not yet launched.
+**Multi-seed rerun ready to launch.** Tasks 1-2 of this plan (`docs/superpowers/plans/2026-08-10-cia-cifar100-multiseed.md` — gitignored, local-only) extended the CIA experiment to train across 3 seeds (42, 43, 44) instead of the current 1. The seed loop now lives inside `build_combos()` within the training script, not as a CLI flag; the launch commands remain unchanged (`uv run python -m experiments.cia.scripts.cifar100_scaling --group in` and `--group out`). The resumability mechanism will automatically skip seed 42 (already in `results/cia_cifar100_scaling/cia_in.json` and `cia_out.json`), training only seeds 43 and 44 — expected ~50h wall-clock (2 new seeds, both IN/OUT groups still concurrent on GPU 1, same as the seed-42 single-seed run). Code is tested (full suite passes); not yet launched. Don't re-run `cifar100_scaling_analysis.py` until this rerun finishes — every mechanism will fail to score with only seed 42 present, and `main()` now refuses (rather than silently overwriting) when that would wipe the existing non-empty `cia_analysis.json`, but there's no reason to hit that guard on purpose before the rerun is done.
 
 **Every single 95% CI (pooled bootstrap, seed 42) includes 0.5** — none of these point estimates
 are statistically significant at this sample size. This is the known, documented limitation from

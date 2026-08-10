@@ -87,8 +87,10 @@ def build_summary(
     mismatched IN/OUT trajectory -- an expected, real outcome that must not abort the whole
     analysis. Any mechanism that can't be scored (missing from one side entirely, missing an
     entire seed's group -- a plain KeyError from pooled_rows/round_matched_auc -- or whose IN/OUT
-    rounds don't line up within some seed -- a ValueError from round_matched_auc's zip(strict=True)
-    -- is warned about by name and skipped; every other mechanism is still reported.
+    rounds don't line up within some seed -- a ValueError from this module's own
+    _validate_round_alignment, not from round_matched_auc's own zip(strict=True) check, which only
+    catches length mismatches -- is warned about by name and skipped; every other mechanism is
+    still reported.
     """
     summary = []
     in_mechanisms = {mechanism for mechanism, _seed in in_groups}
@@ -130,6 +132,28 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _should_refuse_overwrite(summary: list[dict], output_path: Path) -> bool:
+    """True if writing `summary` to `output_path` would destroy real existing data.
+
+    `build_summary` returns [] whenever every mechanism failed to score -- e.g. right now,
+    before seeds 43/44 have finished training, every mechanism is missing those seeds' groups
+    entirely (see `_validate_round_alignment`'s KeyError path) and gets skipped-and-warned. If
+    `output_path` already holds a non-empty result from a prior (e.g. single-seed) run, writing
+    an empty summary over it would silently discard real committed data. Refuse only that
+    specific case; an empty summary is fine to write if there's nothing real to lose (no file
+    yet, or the existing file is already empty).
+    """
+    if summary:
+        return False
+    if not output_path.exists():
+        return False
+    try:
+        existing = json.loads(output_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return False
+    return bool(existing)
+
+
 def main() -> None:
     args = _parser().parse_args()
     results_dir = args.results_dir.resolve()
@@ -137,6 +161,13 @@ def main() -> None:
     out_groups = group_by_combo(load_results(results_dir / "cia_out.json"))
     summary = build_summary(in_groups, out_groups)
     output_path = results_dir / "cia_analysis.json"
+    if _should_refuse_overwrite(summary, output_path):
+        print(
+            f"WARNING: no mechanism could be scored -- likely because seeds 43/44 haven't "
+            f"finished training yet -- refusing to overwrite the existing non-empty "
+            f"{output_path}."
+        )
+        raise SystemExit(1)
     output_path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     print(f"Wrote {len(summary)} combo(s) to {output_path}")
 

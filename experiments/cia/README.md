@@ -81,7 +81,7 @@ math they refer to is real and implemented in
 `experiments/cia/reports/build_alzheimer_cia_report.py` (`auc`, `pooled_auc`,
 `round_matched_auc`, `attack_scores`), but nothing ever wired it to an actual
 training/checkpointing runner until `experiments/cia/scripts/cifar100_scaling.py` (see "CIFAR-100
-multi-round CIA" below), which is scoped to a single seed rather than this section's three.
+multi-round CIA" below), which now trains three seeds (42, 43, 44) matching this section's protocol.
 
 ## 48-client checkpoint comparison
 
@@ -179,7 +179,7 @@ uv pip install \
 `experiments/cia/scripts/cifar100_scaling.py` attacks all 6 combos from the 100-client/250-round
 CIFAR-100 sweep (`results/cifar100_scaling/`): a matched IN-remove (target participates, 100
 clients) and OUT-remove (target excluded, 99 clients) trajectory per combo, checkpointed at round
-1 and every 10th round through 250. Single seed (42, matching the sweep), not the three-seed
+1 and every 10th round through 250. Three seeds (42, 43, 44), matching the three-seed
 protocol used elsewhere in this file.
 
 Run each group separately -- required, not optional: `run_attack` isn't safe to call twice
