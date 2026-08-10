@@ -105,6 +105,8 @@ separation):
 | non-IID | global-dp | 0.692 | 0.37-0.68 | 0.654 | 0.50-0.80 |
 | non-IID | metric-privacy | 0.654 | 0.37-0.68 | 0.615 | 0.43-0.75 |
 
+**Multi-seed rerun ready to launch.** Tasks 1-2 of this plan (`docs/superpowers/plans/2026-08-10-cia-cifar100-multiseed.md` — gitignored, local-only) extended the CIA experiment to train across 3 seeds (42, 43, 44) instead of the current 1. The seed loop now lives inside `build_combos()` within the training script, not as a CLI flag; the launch commands remain unchanged (`uv run python -m experiments.cia.scripts.cifar100_scaling --group in` and `--group out`). The resumability mechanism will automatically skip seed 42 (already in `results/cia_cifar100_scaling/cia_in.json` and `cia_out.json`), training only seeds 43 and 44 — expected ~50h wall-clock (2 new seeds, both IN/OUT groups still concurrent on GPU 1, same as the seed-42 single-seed run). Code is tested (full suite passes); not yet launched.
+
 **Every single 95% CI (pooled bootstrap, seed 42) includes 0.5** — none of these point estimates
 are statistically significant at this sample size. This is the known, documented limitation from
 this plan's design: a single seed and a small per-client shadow set (100 clients over 50k train
