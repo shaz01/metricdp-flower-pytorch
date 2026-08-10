@@ -7,8 +7,10 @@ follow-on CIA (Client Inference Attack) experiment against those same 6 combos f
 2026-08-10 14:59, 6/6 trajectories in both IN-remove and OUT-remove groups, 0 failures.
 Round-matched AUC computed; every combo's 95% CI includes 0.5 — no statistically significant
 result at this sample size, a known limitation of the single-seed/26-checkpoint design. Results
-committed. Multi-seed (42, 43, 44) rerun code is now ready to launch — not yet started) — see
-`git log` for anything more recent
+committed. Multi-seed (42, 43, 44) rerun launched 2026-08-10 20:08 — seed 42 auto-skipped
+(already complete), training seeds 43/44 now, `--max-parallel-clients 7` instead of the default 16
+since GPU 1 is currently shared with another user's jobs) — see `git log` for anything more
+recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -141,6 +143,8 @@ section.
 | --- | --- | --- |
 | `experiments.cia.scripts.cifar100_scaling --group in` (tmux session `cia-cifar100-in`, `CUDA_VISIBLE_DEVICES=1`) | CIA IN-remove group: 6 trajectories (100 clients, target participates), 250 rounds, checkpointed at round 1 + every 10th round | done, 2026-08-10 |
 | `experiments.cia.scripts.cifar100_scaling --group out` (tmux session `cia-cifar100-out`, `CUDA_VISIBLE_DEVICES=1`) | CIA OUT-remove group: 6 trajectories (99 clients, target excluded), same schedule, concurrent with the IN group on the same GPU | done, 2026-08-10 |
+| `experiments.cia.scripts.cifar100_scaling --group in --max-parallel-clients 7` (tmux session `cia-cifar100-in-ms`, `CUDA_VISIBLE_DEVICES=1`) | Multi-seed rerun, IN-remove group: 12 new trajectories (seeds 43/44 x 6 combos; seed 42's 6 auto-skipped, already complete). `--max-parallel-clients` dropped from the default 16 to 7 because GPU 1 is now shared with another user's jobs (~14GB already in use) — confirmed both groups together settle around 25.6GB/32.76GB, ~7GB headroom | running, started 2026-08-10 20:08 |
+| `experiments.cia.scripts.cifar100_scaling --group out --max-parallel-clients 7` (tmux session `cia-cifar100-out-ms`, `CUDA_VISIBLE_DEVICES=1`) | Multi-seed rerun, OUT-remove group: 12 new trajectories (seeds 43/44 x 6 combos), same schedule, concurrent with the IN-ms group | running, started 2026-08-10 20:08 |
 
 ## What's established on `master`
 
