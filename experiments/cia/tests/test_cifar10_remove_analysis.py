@@ -29,10 +29,29 @@ def _row(server_round: int, clean: float, noisy: float, aggregated: float = 2.0)
     }
 
 
-def _write_chunk(root, clients: int, adjacency: str, privacy: str, rows: list[dict]) -> None:
+def _write_chunk(
+    root,
+    clients: int,
+    adjacency: str,
+    privacy: str,
+    rows: list[dict],
+    *,
+    accuracy: float = 0.7,
+    with_run_json: bool = True,
+) -> None:
     path = root / f"clients-{clients}" / adjacency / privacy / "runs"
     path.mkdir(parents=True)
     (path / "cia.json").write_text(json.dumps(rows), encoding="utf-8")
+    if not with_run_json:
+        return
+    run = {
+        "server_evaluate_metrics": {
+            str(r): {"accuracy": accuracy, "f1": accuracy - 0.01, "loss": 1.0}
+            for r in range(1, 21)
+        }
+    }
+    (path / "run.json").write_text(json.dumps(run), encoding="utf-8")
+    (path / "run.evaluation.json").write_text("{}", encoding="utf-8")
 
 
 def test_perfect_separation_scores_auc_one() -> None:
@@ -101,6 +120,48 @@ def test_build_summary_reads_the_chunk_layout(tmp_path) -> None:
     assert len(summary) == 1
     assert summary[0]["privacy"] == "vanilla"
     assert summary[0]["multi_round"]["clean"]["pooled_auc"] == 1.0
+
+
+def test_last_five_utility_averages_only_the_final_five_rounds(tmp_path) -> None:
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    (runs / "cia.json").write_text("[]", encoding="utf-8")
+    (runs / "run.evaluation.json").write_text("{}", encoding="utf-8")
+    metrics = {str(r): {"accuracy": 0.1, "f1": 0.1} for r in range(1, 16)}
+    metrics.update({str(r): {"accuracy": 0.8, "f1": 0.7} for r in range(16, 21)})
+    (runs / "run.json").write_text(
+        json.dumps({"server_evaluate_metrics": metrics}), encoding="utf-8"
+    )
+
+    utility = analysis.last_five_utility(runs)
+
+    assert utility["accuracy_mean"] == pytest.approx(0.8)
+    assert utility["f1_mean"] == pytest.approx(0.7)
+    assert utility["accuracy_std"] == pytest.approx(0.0)
+    assert utility["rounds"] == [16, 20]
+
+
+def test_last_five_utility_ignores_evaluation_and_cia_files(tmp_path) -> None:
+    """Only the run JSON counts; the sidecar artifacts must not be mistaken for it."""
+    _write_chunk(tmp_path, 8, "in-remove", "vanilla", [_row(1, 0.1, 0.2)], accuracy=0.55)
+
+    utility = analysis.last_five_utility(
+        analysis.chunk_dir(tmp_path, 8, "in-remove", "vanilla")
+    )
+
+    assert utility["accuracy_mean"] == pytest.approx(0.55)
+
+
+def test_build_summary_reports_utility_for_both_views(tmp_path) -> None:
+    in_rows = [_row(r, clean=0.1, noisy=0.2) for r in range(1, 21)]
+    out_rows = [_row(r, clean=1.0, noisy=1.2) for r in range(1, 21)]
+    _write_chunk(tmp_path, 8, "in-remove", "vanilla", in_rows, accuracy=0.71)
+    _write_chunk(tmp_path, 8, "out-remove", "vanilla", out_rows, accuracy=0.69)
+
+    utility = analysis.build_summary(tmp_path, [8])[0]["utility"]
+
+    assert utility["in"]["accuracy_mean"] == pytest.approx(0.71)
+    assert utility["out"]["accuracy_mean"] == pytest.approx(0.69)
 
 
 def test_build_summary_skips_a_combo_missing_its_out_side(tmp_path, capsys) -> None:

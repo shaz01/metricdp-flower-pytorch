@@ -11,7 +11,9 @@ reproduces both of Sáinz-Pardo Díaz et al. (2026)'s CIA tables:
 * **Table 13 (multi-round attack)** -- an AUC ranking the IN trajectory's
   per-round scores against the OUT trajectory's, where a round's score is the
   negated mean shadow loss, with a 95% stratified percentile bootstrap
-  interval.
+  interval, reported next to the utility each trajectory achieved (server-side
+  accuracy and weighted F1, mean +/- standard deviation over rounds 16-20 --
+  the same last-five-round window ``build_alzheimer_cia_report`` uses).
 
 Alongside the paper's pooled AUC this also reports the two confound-free
 variants this repo already uses for its Alzheimer/CIFAR/Fashion reports: a
@@ -42,6 +44,7 @@ from experiments.cia.reports.build_alzheimer_cia_report import (
     attack_scores,
     auc,
     bootstrap_auc,
+    mean_std,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -49,6 +52,7 @@ DEFAULT_RESULTS_DIR = PROJECT_ROOT / "results" / "cia" / "cifar10_remove"
 DEFAULT_OUTPUT_NAME = "cia_analysis.json"
 SEED = 42
 PRIVACY_ORDER = ("vanilla", "global-dp", "metric-privacy")
+UTILITY_ROUNDS = range(16, 21)  # last five rounds, as in build_alzheimer_cia_report
 
 
 def load_chunk(results_dir: Path, clients: int, adjacency: str, privacy: str) -> list[dict]:
@@ -69,6 +73,49 @@ def discover_client_counts(results_dir: Path) -> list[int]:
             except ValueError:
                 continue
     return sorted(counts)
+
+
+def chunk_dir(results_dir: Path, clients: int, adjacency: str, privacy: str) -> Path:
+    """Return the directory holding one chunk's run artifacts."""
+    return results_dir / f"clients-{clients}" / adjacency / privacy / "runs"
+
+
+def last_five_utility(runs_dir: Path) -> dict:
+    """Server-side accuracy/F1 over rounds 16-20 for one chunk's trajectory.
+
+    Mirrors build_alzheimer_cia_report.last_five_utility, which pools the same
+    round window over that experiment's three seeds; these chunks hold one
+    trajectory each, so the window alone supplies the five samples.
+    """
+    candidates = [
+        path
+        for path in sorted(runs_dir.glob("*.json"))
+        if not path.name.endswith((".evaluation.json", "cia.json"))
+    ]
+    if len(candidates) != 1:
+        raise ValueError(
+            f"expected exactly one run JSON in {runs_dir}, found {len(candidates)}"
+        )
+    metrics = json.loads(candidates[0].read_text(encoding="utf-8"))[
+        "server_evaluate_metrics"
+    ]
+    accuracies: list[float] = []
+    f1_scores: list[float] = []
+    for round_number in UTILITY_ROUNDS:
+        row = metrics.get(str(round_number))
+        if row is None:
+            raise ValueError(f"missing round {round_number} in {candidates[0].name}")
+        accuracies.append(float(row["accuracy"]))
+        f1_scores.append(float(row["f1"]))
+    accuracy_mean, accuracy_std = mean_std(accuracies)
+    f1_mean, f1_std = mean_std(f1_scores)
+    return {
+        "accuracy_mean": accuracy_mean,
+        "accuracy_std": accuracy_std,
+        "f1_mean": f1_mean,
+        "f1_std": f1_std,
+        "rounds": [min(UTILITY_ROUNDS), max(UTILITY_ROUNDS)],
+    }
 
 
 def round_matched_auc(
@@ -155,6 +202,14 @@ def build_summary(results_dir: Path, client_counts: list[int]) -> list[dict]:
                     "noise_multiplier": float(in_rows[0]["noise_multiplier"]),
                     "first_round": first_round_entry(in_rows),
                     "multi_round": multi_round_entry(in_rows, out_rows),
+                    "utility": {
+                        "in": last_five_utility(
+                            chunk_dir(results_dir, clients, "in-remove", privacy)
+                        ),
+                        "out": last_five_utility(
+                            chunk_dir(results_dir, clients, "out-remove", privacy)
+                        ),
+                    },
                 }
             except (ValueError, StopIteration) as error:
                 print(
@@ -201,6 +256,24 @@ def format_tables(summary: list[dict]) -> str:
                 f"{scores['round_matched_auc']:13.3f} "
                 f"{scores['aggregate_referenced_auc']:14.3f}"
             )
+
+    lines += [
+        "",
+        "Utility: server-side accuracy and weighted F1, mean +/- std over rounds 16-20",
+        f"{'n':>4}  {'privacy':15s} {'acc IN':>15} {'acc OUT':>15} "
+        f"{'F1 IN':>15} {'F1 OUT':>15}",
+    ]
+    for entry in summary:
+        in_utility = entry["utility"]["in"]
+        out_utility = entry["utility"]["out"]
+        cells = "".join(
+            f"{utility[key + '_mean']:.3f} +/-{utility[key + '_std']:.3f} ".rjust(16)
+            for key in ("accuracy", "f1")
+            for utility in (in_utility, out_utility)
+        )
+        lines.append(
+            f"{entry['num_clients_canonical']:4d}  {entry['privacy']:15s} {cells}"
+        )
     return "\n".join(lines)
 
 
