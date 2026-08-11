@@ -1,0 +1,1454 @@
+2026-08-11 13:52:27 CIFAR-10 removal CIA chunk (global-dp, clients=8): 1 trajectories
+2026-08-11 13:52:27 START cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn 
+{
+  "partition-mode": "non-iid",
+  "partition-profile": "auto",
+  "client-weights": "",
+  "data-module": "experiments.cia.scripts.cifar10_remove:create_in_remove",
+  "model-module": "experiments.reproduce.cifar10_cnn:create_model",
+  "data-cache-dir": "",
+  "privacy": "global-dp",
+  "aggregation": "fedavg",
+  "seed": 42,
+  "num-server-rounds": 20,
+  "num-clients": 8,
+  "fraction-evaluate": 1.0,
+  "local-epochs": 5,
+  "learning-rate": 0.001,
+  "batch-size": 32,
+  "initialization-batch-size": 32,
+  "initialization-epochs": 20,
+  "initialization-learning-rate": 0.001,
+  "max-client-samples": 0,
+  "max-test-samples": 0,
+  "noise-multiplier": 0.0182,
+  "clipping-norm": 5.0,
+  "output-dir": "/content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs",
+  "run-name": "cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn",
+  "save-model": false,
+  "checkpoint-rounds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20
+  ]
+}
+2026-08-11 13:52:32.043638: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2026-08-11 13:52:32.111698: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+[93mWARNING [0m:   DEPRECATED FEATURE: The `run_simulation` function is deprecated and will be removed in a future version of Flower. Please use `flwr run` in the CLI instead to run your simulation. Refer to the Flower Tutorials for more details: https://flower.ai/docs/framework/tutorial-quickstart-pytorch.html
+
+            This is a deprecated feature. It will be removed
+            entirely in future versions of Flower.
+        
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Generating train split:   0%|          | 0/50000 [00:00<?, ? examples/s]Generating train split:  25%|██▍       | 12300/50000 [00:00<00:00, 122169.98 examples/s]Generating train split:  68%|██████▊   | 33800/50000 [00:00<00:00, 176098.56 examples/s]Generating train split: 100%|██████████| 50000/50000 [00:00<00:00, 186932.44 examples/s]
+Generating test split:   0%|          | 0/10000 [00:00<?, ? examples/s]Generating test split: 100%|██████████| 10000/10000 [00:00<00:00, 227875.76 examples/s]
+[92mINFO [0m:      Starting LoggedGlobalDPServerSideFixedClipping strategy:
+[92mINFO [0m:      	├── Number of rounds: 20
+[92mINFO [0m:      	├── ArrayRecord (1.39 MB)
+[92mINFO [0m:      	├── ConfigRecord (train): {'lr': 0.001}
+[92mINFO [0m:      	├── ConfigRecord (evaluate): (empty!)
+[92mINFO [0m:      	├──> DP settings:
+[92mINFO [0m:      	│	├── Noise multiplier: 0.0182
+[92mINFO [0m:      	│	└── Clipping norm: 5.0
+[92mINFO [0m:      	├──> Sampling:
+[92mINFO [0m:      	│	├──Fraction: train (1.00) | evaluate ( 1.00)
+[92mINFO [0m:      	│	├──Minimum nodes: train (8) | evaluate (8)
+[92mINFO [0m:      	│	└──Minimum available nodes: 8
+[92mINFO [0m:      	└──> Keys in records:
+[92mINFO [0m:      		├── Weighted by: 'num-examples'
+[92mINFO [0m:      		├── ArrayRecord key: 'arrays'
+[92mINFO [0m:      		└── ConfigRecord key: 'config'
+[92mINFO [0m:      
+/usr/local/lib/python3.12/dist-packages/ray/_private/worker.py:2051: FutureWarning: Tip: In future versions of Ray, Ray will no longer override accelerator visible devices env var if num_gpus=0 or num_gpus=None (default). To enable this behavior and turn off this error message, set RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO=0
+  warnings.warn(
+[92mINFO [0m:      Initial global evaluation results: {'loss': 2.304148851776123, 'accuracy': 0.1, 'f1': 0.01818181818181818, 'precision': 0.01, 'auc': 0.5009091888888889, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 1/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[36m(ClientAppActor pid=4024)[0m Using the latest cached version of the dataset since uoft-cs/cifar10 couldn't be found on the Hugging Face Hub (offline mode is enabled).
+[36m(ClientAppActor pid=4024)[0m Found the latest cached dataset configuration 'plain_text' at /root/.cache/huggingface/datasets/uoft-cs___cifar10/plain_text/0.0.0/0b2714987fa478483af9968de7c934580d0bb9a2 (last modified on Tue Aug 11 13:52:47 2026).
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 1.546582181882831, 'train_loss_mean': 1.7753540133390944, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [1.5574624563197135, 1.6014561502039213, 1.6449282406861896, 1.4479874610900878, 1.4600053218404703, 1.7305946573823774, 1.4664253951446728, 1.8828697595596313], 'per-client-train_loss_mean': [1.7801721956557242, 1.8327567068724044, 1.8523502035171806, 1.6946715032577515, 1.70453689210508, 1.915157470649698, 1.7205313674874407, 2.013863438606262], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.128491770261245, 13.953869508966854, 11.639339347895111, 15.044604181771048, 15.794103244723539, 9.961406372450613, 15.044700664674547, 7.473723611733322], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 2.282286959180951, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 3.0087481322151275, 'dp-noise-percent-of-signal': 300.87481322151274, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 2.299714679326175, 'eval_acc': 0.09997000899730081, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.09273840769903761, 0.10898379970544919, 0.0968783638320775, 0.0975, 0.10358342665173573, 0.0937062937062937, 0.09987277353689568, 0.104], 'per-client-eval_loss': [2.3010250101565064, 2.2985850995700035, 2.3000118758116397, 2.3000771560668944, 2.2989700206316597, 2.3009182349785227, 2.2999961036458876, 2.297839141845703], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 2.299745267486572, 'accuracy': 0.1, 'f1': 0.01818181818181818, 'precision': 0.01, 'auc': 0.5393499844444445, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 2/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 1.3611917908341837, 'train_loss_mean': 1.5855507254812136, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [1.3585306604746734, 1.3850522007938686, 1.4608759273427367, 1.260814754009247, 1.3090998357907406, 1.4923959419506938, 1.333000086600001, 1.6061906776428223], 'per-client-train_loss_mean': [1.5800189442145331, 1.5926345553921704, 1.687172509716221, 1.5130267294883728, 1.5281648171677336, 1.6889448975314614, 1.5636719125134657, 1.8064134914398196], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [14.77978647833518, 15.526665549977897, 12.74252648714731, 19.28040903000671, 17.320146577458672, 11.331337583945642, 16.746653179666755, 9.642600138954391], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 3.353154286624871, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 2.047870762465409, 'dp-noise-percent-of-signal': 204.78707624654092, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 2.209679984693633, 'eval_acc': 0.24272718184544637, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.23009623797025372, 0.24153166421207659, 0.25403659849300325, 0.231, 0.23908174692049272, 0.25314685314685315, 0.255089058524173, 0.26], 'per-client-eval_loss': [2.212210901348818, 2.2112333426946043, 2.20751740678391, 2.210083122253418, 2.2103190042937855, 2.2081880902910567, 2.208114500264175, 2.2068536224365234], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 2.2091032485961914, 'accuracy': 0.2448, 'f1': 0.18552424140124207, 'precision': 0.3520488825861288, 'auc': 0.7413823488888889, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 3/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 1.19998935771578, 'train_loss_mean': 1.4087573662028807, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [1.218017624598628, 1.2142923277972284, 1.2879517043734598, 1.1128246734142304, 1.1701010795729712, 1.3249965772575356, 1.1651643324391465, 1.3429534702301025], 'per-client-train_loss_mean': [1.4210696625777341, 1.4187759762576335, 1.4683489426657534, 1.3445947751045226, 1.374221489223532, 1.5028699433436246, 1.390848932262442, 1.544645290184021], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [14.395722429677843, 15.510118355588348, 12.390094982034489, 19.900118526421316, 17.73742958383034, 10.693993233262411, 16.433826823460468, 9.05246981724938], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 3.5734674751952555, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 1.9216144188466202, 'dp-noise-percent-of-signal': 192.161441884662, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 2.0089902468446517, 'eval_acc': 0.3930820753773868, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.39282589676290464, 0.37776141384388806, 0.41119483315392896, 0.388, 0.38689809630459127, 0.3888111888111888, 0.4039440203562341, 0.416], 'per-client-eval_loss': [2.0124471869681453, 2.0178012047319593, 2.0044818562249964, 2.008807646751404, 2.0124117476408854, 2.004259373591496, 2.00085179011027, 2.0063949661254883], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 2.0051756443023683, 'accuracy': 0.395, 'f1': 0.35799168456384134, 'precision': 0.5089207902041428, 'auc': 0.8314920066666667, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 4/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 1.0568606717203768, 'train_loss_mean': 1.262627246287935, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [1.0997450331112302, 1.067040821780329, 1.119269278271582, 1.0047819194793701, 1.0284540179262105, 1.1389258892930187, 1.0082250950634242, 1.1607442960739136], 'per-client-train_loss_mean': [1.2870413440996644, 1.2729812383651733, 1.3078797822173205, 1.2135428348064423, 1.2340269889765456, 1.3280738801181484, 1.247813961490716, 1.3462705513000488], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.573566293983625, 15.085480046636606, 11.717626833065266, 18.67537740897481, 17.56600779100873, 10.167710999825378, 17.141450989012103, 8.649787627688223], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 3.3694821062764633, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 2.0379472004981207, 'dp-noise-percent-of-signal': 203.79472004981207, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.7746016927972907, 'eval_acc': 0.4168749375187444, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.42082239720035, 0.38365243004418265, 0.42734122712594186, 0.4135, 0.4087346024636058, 0.41818181818181815, 0.44147582697201015, 0.442], 'per-client-eval_loss': [1.7794080919481012, 1.7933348752613096, 1.7702083669771291, 1.7743269443511962, 1.7767639117438476, 1.7694597204248388, 1.760749557546077, 1.7651774215698242], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.7668629348754883, 'accuracy': 0.4298, 'f1': 0.4199505146439845, 'precision': 0.5318235754006808, 'auc': 0.8563661799999999, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 5/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.9180196095985881, 'train_loss_mean': 1.1333286579964794, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.946953397145602, 0.9416179995195956, 0.9885767107056108, 0.8734901683330536, 0.8763362566379711, 0.9898038322852105, 0.8915694146850514, 0.9644225988388061], 'per-client-train_loss_mean': [1.1582555989054928, 1.1407834229789064, 1.1782720095121417, 1.0949479633808135, 1.1117022192980517, 1.1813978880727325, 1.1179199444877788, 1.1832067245483397], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.302449026812111, 15.257298309470203, 11.94123497185475, 18.083141165042978, 17.212761610465666, 10.37142620373569, 16.007966218755513, 8.60961377674133], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 3.1409488002027226, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 2.1862268576843507, 'dp-noise-percent-of-signal': 218.62268576843508, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.565103571128693, 'eval_acc': 0.44716585024492655, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.45144356955380577, 0.40942562592047127, 0.4747039827771798, 0.4525, 0.4316909294512878, 0.43776223776223777, 0.4688295165394402, 0.468], 'per-client-eval_loss': [1.5748291849985732, 1.5951246295305346, 1.5554258303698734, 1.5652624740600587, 1.5600557295232176, 1.5666113499994878, 1.5451309556572794, 1.5573479232788086], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.5552274370193482, 'accuracy': 0.4574, 'f1': 0.45810246529175563, 'precision': 0.5654142312682833, 'auc': 0.8710023755555556, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 6/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.7871508419559898, 'train_loss_mean': 1.015237783528353, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.7967067372092166, 0.7964851923435158, 0.8533774798893453, 0.7539382899999618, 0.7635580208577579, 0.8275616474512244, 0.7730822980261646, 0.8206102871894836], 'per-client-train_loss_mean': [1.031035251516765, 1.0239961002623237, 1.0414818367283385, 0.9910746942281723, 0.9988117653733122, 1.0453682645028377, 1.0044554565743786, 1.052802408695221], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [14.090111012886737, 14.770622895666959, 12.2214259317637, 18.430873482919274, 17.02467728429306, 10.664220371693355, 16.0402123705385, 8.867043204608459], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 2.896301235120741, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 2.3708951756630268, 'dp-noise-percent-of-signal': 237.08951756630265, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.3184466217322839, 'eval_acc': 0.5385384384684595, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.537182852143482, 0.5132547864506627, 0.5565123789020452, 0.54, 0.5408734602463606, 0.5244755244755245, 0.5502544529262087, 0.546], 'per-client-eval_loss': [1.329590481201599, 1.3618707137185098, 1.3018035865574273, 1.3200419816970825, 1.3173956577348014, 1.3077516062276346, 1.2928967469824484, 1.298949966430664], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.3071838354110719, 'accuracy': 0.5394, 'f1': 0.5386940622303142, 'precision': 0.5954539222472139, 'auc': 0.9097401733333333, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 7/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.6746512935257382, 'train_loss_mean': 0.9113216804852375, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.670852585254574, 0.70433300970755, 0.7138697349325457, 0.6697035170793534, 0.6704143828393097, 0.68626524053034, 0.6341851538007185, 0.6754517779350281], 'per-client-train_loss_mean': [0.920258833534789, 0.9182403448494199, 0.9386330507220736, 0.8973367122888565, 0.9097413041553928, 0.9236781824703645, 0.89185522579445, 0.926513783454895], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.69649541843324, 14.860898463683638, 12.241758088380365, 18.125812897264733, 17.340399726730702, 10.692757982545322, 16.07423227573102, 9.141281816529727], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 2.6905977687233933, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 2.552156515342957, 'dp-noise-percent-of-signal': 255.21565153429566, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.1729324057044286, 'eval_acc': 0.5883235029491152, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.5800524934383202, 0.569219440353461, 0.6092572658772875, 0.5945, 0.58006718924972, 0.5832167832167832, 0.5973282442748091, 0.604], 'per-client-eval_loss': [1.1897971152424918, 1.2251726369619018, 1.1465879274518165, 1.1709461574554443, 1.1683003499286306, 1.1600182113113937, 1.1540636503666108, 1.1437246131896972], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.1620113445281983, 'accuracy': 0.5924, 'f1': 0.5924452743393461, 'precision': 0.6216375794561514, 'auc': 0.9263918200000001, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 8/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.5718836101681946, 'train_loss_mean': 0.8210512726633932, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.5673046136640454, 0.5580755291656264, 0.5971516073231551, 0.5710812713503838, 0.5874318438852666, 0.5890594196586716, 0.5506605767501946, 0.5627465329170227], 'per-client-train_loss_mean': [0.8198978775141146, 0.8233330651953015, 0.849694863659885, 0.811906246292591, 0.828140673144398, 0.8366341292357244, 0.8017097941123975, 0.8140920126914978], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.562756632448728, 14.525335862042581, 12.159850596340625, 18.040513447339283, 17.036783060795443, 10.612395150943618, 16.2878362744104, 9.125046869649559], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 2.5135043763212708, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 2.731973212501352, 'dp-noise-percent-of-signal': 273.1973212501352, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.04336316797908, 'eval_acc': 0.6329101269619114, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.6325459317585301, 0.6089837997054491, 0.6620021528525296, 0.635, 0.6248600223964166, 0.6139860139860139, 0.6393129770992366, 0.672], 'per-client-eval_loss': [1.0620256091874625, 1.1021197632240443, 1.0049873912552587, 1.0408550543785096, 1.041506058157892, 1.0343457068596686, 1.026306449001982, 0.9956074523925781], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.027703973197937, 'accuracy': 0.636, 'f1': 0.6311088762805169, 'precision': 0.6421557425107154, 'auc': 0.941203491111111, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 9/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.4926147665199311, 'train_loss_mean': 0.744654397875794, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.49052875084601616, 0.489505342903081, 0.5312236616800212, 0.5191319345831871, 0.4954288075943379, 0.46470745930484697, 0.4618497559734062, 0.4545362731218338], 'per-client-train_loss_mean': [0.7484268305938527, 0.7377605544176713, 0.7776801592698968, 0.7498686284303664, 0.750494791639714, 0.7310926935085061, 0.7246246365905282, 0.734007305264473], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.811637518810056, 14.923369328923142, 12.537917536744791, 17.98329053582331, 16.925706813401035, 11.064092333142332, 16.239809512944632, 9.330415894947018], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 2.360758267867046, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 2.9087377217231283, 'dp-noise-percent-of-signal': 290.8737721723128, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.0031282357557958, 'eval_acc': 0.6494051784464661, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.6342957130358705, 0.6303387334315169, 0.673842841765339, 0.66, 0.6522956326987682, 0.6461538461538462, 0.6393129770992366, 0.674], 'per-client-eval_loss': [1.0376356713936605, 1.0414364516998427, 0.9646631169370481, 0.9901248836517333, 1.0012048452191498, 1.0076530156435666, 0.9961435843363367, 0.9660403823852539], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.9885634344100952, 'accuracy': 0.648, 'f1': 0.6457980534177329, 'precision': 0.6479352446980263, 'auc': 0.9450741866666666, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 10/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.41921911512454946, 'train_loss_mean': 0.6725960820740448, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.4007007216395343, 0.3998203107163409, 0.46701583945115666, 0.43363487935066225, 0.42612279815348725, 0.4121432492212087, 0.41682025319826255, 0.3607559407949448], 'per-client-train_loss_mean': [0.6714710576480547, 0.6722531833276207, 0.7170641572406745, 0.6675722762346268, 0.6696412836551566, 0.6840637118375602, 0.6599899614881501, 0.6474079815626144], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.651414346601236, 14.808488872989187, 12.384689466685852, 17.811711426977794, 16.823199397276298, 10.815692416752535, 16.322683939554338, 9.31150184784273], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 2.2616248210756758, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 3.0362359670020886, 'dp-noise-percent-of-signal': 303.62359670020885, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.003831322486551, 'eval_acc': 0.6548035589323203, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.6552930883639545, 0.6347569955817378, 0.6856835306781486, 0.665, 0.6500559910414334, 0.6321678321678321, 0.6450381679389313, 0.69], 'per-client-eval_loss': [1.0419628196709634, 1.0470327396982724, 0.9451416243264699, 0.9823490915298462, 1.007229162090169, 1.0270534788811958, 0.9975679336310039, 0.9686493816375732], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.9854304634094239, 'accuracy': 0.6552, 'f1': 0.6502150438206445, 'precision': 0.6552328330100278, 'auc': 0.9466955288888889, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 11/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.3585839591258901, 'train_loss_mean': 0.611954692063336, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.3695594442279301, 0.35350499775977196, 0.33798550792323306, 0.3660217491388321, 0.3788462330292674, 0.37550350372530833, 0.34476170936271894, 0.3026925518512726], 'per-client-train_loss_mean': [0.6179915122184156, 0.613952072837727, 0.6195548024479909, 0.6089599259972572, 0.615081587619897, 0.6268263304684343, 0.599280208915401, 0.5980274636268617], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.63182842365118, 14.93730333396448, 12.51999948511893, 17.838520079008855, 16.996432132876325, 10.638019469444853, 15.91990096539153, 9.377253433529326], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 2.1766119854078974, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 3.154823492496659, 'dp-noise-percent-of-signal': 315.4823492496659, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.0088970243936775, 'eval_acc': 0.661701489553134, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.6517935258092739, 0.6413843888070693, 0.682454251883746, 0.6675, 0.6657334826427772, 0.6587412587412588, 0.6552162849872774, 0.688], 'per-client-eval_loss': [1.0624944047769327, 1.0662789365855514, 0.9540683883127021, 0.9762903847694397, 1.0125964785209562, 1.0132801122598716, 1.0038024062722086, 0.9593575172424317], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.994919496011734, 'accuracy': 0.6614, 'f1': 0.6546224365577916, 'precision': 0.6607495973214385, 'auc': 0.94810804, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 12/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.31233408002402513, 'train_loss_mean': 0.5616380844075498, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.31194915959713, 0.2841149121852332, 0.29647845283399427, 0.3265626894533634, 0.3325171969829947, 0.29441547594150574, 0.3322191542543489, 0.2533450177907944], 'per-client-train_loss_mean': [0.5596580340542279, 0.560838259698366, 0.5799502044017429, 0.56177573235631, 0.5577129966239209, 0.5723751583687064, 0.5557308894315217, 0.5510272847414017], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.814603980311958, 14.659138484301083, 12.283655418004871, 18.280476251652438, 16.154110365113294, 10.772774179491385, 16.331214006865636, 9.332018233057699], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 2.1165025811527274, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 3.2444215692261036, 'dp-noise-percent-of-signal': 324.4421569226103, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.999363570967448, 'eval_acc': 0.6692992102369291, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.6710411198600175, 0.6450662739322534, 0.6942949407965554, 0.6775, 0.673572228443449, 0.6517482517482518, 0.6615776081424937, 0.686], 'per-client-eval_loss': [1.03461954412185, 1.060052722824164, 0.940715479132177, 0.9643870706558227, 0.9993647621300026, 1.0556719286458476, 0.9994064341974622, 0.9221508674621582], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.9887552722930908, 'accuracy': 0.6668, 'f1': 0.6643423900803951, 'precision': 0.6727742195552255, 'auc': 0.9503962466666667, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 13/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.26482969245666366, 'train_loss_mean': 0.516226223172117, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.24786021879089137, 0.23883209152966628, 0.26188758418453467, 0.2869966946095228, 0.27399205552351735, 0.2656782084152478, 0.27897774830828037, 0.21257107388973237], 'per-client-train_loss_mean': [0.5079464702579078, 0.5030574114360438, 0.547543568620042, 0.5153145483821631, 0.5132090682596966, 0.5327884194229832, 0.5144087377302022, 0.5092165426969528], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.56790630240966, 14.88936441298482, 12.060499050262306, 17.97105405170357, 16.53767631974722, 11.04738912670197, 15.556963876638784, 9.186446247616587], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 2.067112741588497, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 3.3219410279178754, 'dp-noise-percent-of-signal': 332.19410279178754, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.0084715512148514, 'eval_acc': 0.6770968709387184, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.6780402449693789, 0.6487481590574374, 0.697524219590958, 0.672, 0.6808510638297872, 0.6601398601398601, 0.6876590330788804, 0.712], 'per-client-eval_loss': [1.0402299825913637, 1.0888601627546488, 0.9338292901687909, 0.9841381514072418, 1.0175324116415299, 1.0608003436268627, 0.9854857982266647, 0.9186268692016601], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.9839496116638183, 'accuracy': 0.6836, 'f1': 0.6798784388490008, 'precision': 0.6817954633473555, 'auc': 0.951938091111111, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 14/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.23211113914413717, 'train_loss_mean': 0.47977087879966274, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.2169724325921441, 0.22019831893324587, 0.23330546982032707, 0.26444332757592204, 0.2322305272677925, 0.2021883299120334, 0.23267226614170636, 0.20803545653820038], 'per-client-train_loss_mean': [0.47968043285943407, 0.47428699583583833, 0.4948280930756323, 0.4838045767366886, 0.47535806274474146, 0.4867856103165143, 0.46954712085431777, 0.48863630797863006], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.628789000646824, 14.561845320471857, 12.080978413333881, 17.41719603705336, 16.466144111906875, 10.920643161244003, 15.969050466477938, 9.2457233454913], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 2.0371385687836763, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 3.3708196049297903, 'dp-noise-percent-of-signal': 337.081960492979, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.0364408170320054, 'eval_acc': 0.670698790362891, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.668416447944007, 0.6362297496318114, 0.7007534983853606, 0.671, 0.6741321388577828, 0.6559440559440559, 0.6749363867684478, 0.708], 'per-client-eval_loss': [1.096890113276551, 1.1221386603297823, 0.9573956949975185, 1.0038838176727294, 1.034360582323918, 1.0914040895608754, 1.0189161224826297, 0.9265229759216309], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.0174323002576828, 'accuracy': 0.6706, 'f1': 0.6710941047329361, 'precision': 0.6771246741887832, 'auc': 0.9504788288888888, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 15/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.21150376240207983, 'train_loss_mean': 0.4417736564289289, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.20149666599699506, 0.2179017359982454, 0.2002088527947937, 0.2239019133001566, 0.23410753680889335, 0.19374881797477977, 0.1972423087061637, 0.17783422303199767], 'per-client-train_loss_mean': [0.4404808714141525, 0.4471980122065579, 0.44120332291388636, 0.4352508315891027, 0.444673190288737, 0.45670101015674636, 0.43207543538834436, 0.4559617370128632], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.835862704829715, 14.81016673399565, 11.772391226902885, 17.74858959029022, 16.679729576756284, 10.641217417700439, 15.612157095185202, 9.166811547681057], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 1.9902844757763882, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 3.4501734345970596, 'dp-noise-percent-of-signal': 345.01734345970596, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.094520554901373, 'eval_acc': 0.6625012496251125, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.6561679790026247, 0.6435935198821797, 0.6889128094725512, 0.6625, 0.6511758118701008, 0.6629370629370629, 0.6692111959287532, 0.698], 'per-client-eval_loss': [1.1346228925783386, 1.1788648540738405, 1.0168644267789, 1.0690727715492248, 1.107260059002132, 1.1376727477653876, 1.0624877666395736, 1.0133416557312012], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.0717858784675598, 'accuracy': 0.6714, 'f1': 0.6693246012566131, 'precision': 0.6772913432253552, 'auc': 0.9476471, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 16/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.18559222203191633, 'train_loss_mean': 0.4165754693620005, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.19053314320516518, 0.16255652769444703, 0.17747261730302577, 0.21657500137388705, 0.19210908225349363, 0.16608158925271668, 0.18317025946831078, 0.14016284441947938], 'per-client-train_loss_mean': [0.42897444161266785, 0.40759398727049784, 0.43283647866380504, 0.41329388513863086, 0.4105355969588329, 0.42852558677791713, 0.40749384697079183, 0.4285886382818222], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.502632548223891, 14.622898937992645, 12.142478466070596, 17.140786931458837, 16.243025045535443, 10.707277505867701, 15.449476692949917, 9.083017100197626], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 1.968446809386591, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 3.4884491635079926, 'dp-noise-percent-of-signal': 348.8449163507992, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.075193916143661, 'eval_acc': 0.6816954913525942, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.6806649168853893, 0.658321060382916, 0.71259418729817, 0.6845, 0.6702127659574468, 0.6727272727272727, 0.6902035623409669, 0.706], 'per-client-eval_loss': [1.1361829902869196, 1.1536905797135322, 0.9913068425924837, 1.0309245624542236, 1.0954878669303048, 1.1605724801550379, 1.0339264578491676, 0.9906791019439697], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.046317440032959, 'accuracy': 0.6904, 'f1': 0.6921659021054064, 'precision': 0.6967352088308116, 'auc': 0.9525526866666667, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 17/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.1837210311677619, 'train_loss_mean': 0.3918419935830677, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.16389869919910235, 0.19698599087418928, 0.17937361698559554, 0.2110218175202608, 0.1892703165573081, 0.13809146009990814, 0.1859405556816664, 0.1302587718963623], 'per-client-train_loss_mean': [0.3920547604417415, 0.40162716354837114, 0.41936126264464413, 0.38365669826865195, 0.3848325423440495, 0.3956358593343353, 0.3785286188234672, 0.40789055724143986], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.358209603201423, 14.604149548763122, 12.169812665051655, 17.142212457501138, 16.040206786943717, 10.803013815747004, 15.301506174243034, 8.997109140830718], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 1.948111190367037, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 3.5248638063214837, 'dp-noise-percent-of-signal': 352.4863806321483, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.0812684057129034, 'eval_acc': 0.6805958212536238, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.6745406824146981, 0.6634756995581738, 0.7029063509149623, 0.6865, 0.6696528555431132, 0.676923076923077, 0.6863867684478372, 0.702], 'per-client-eval_loss': [1.1306700159975653, 1.139695741993338, 1.0296176310760983, 1.0390291209220885, 1.1106328814721187, 1.1819191926009172, 1.0441338178765682, 0.9425025691986084], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.0564594874382018, 'accuracy': 0.684, 'f1': 0.686857139488088, 'precision': 0.6928094922593049, 'auc': 0.9511325044444444, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 18/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.17425269252224165, 'train_loss_mean': 0.3653750873925587, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.16899338932155755, 0.15631539499223804, 0.15528263173562082, 0.21352008520811797, 0.1723185846839952, 0.17007670340751732, 0.16794747370239657, 0.1457976163625717], 'per-client-train_loss_mean': [0.3756328027485967, 0.3674791634500071, 0.379382556190058, 0.3560095964387059, 0.3567409807049759, 0.3784899979245429, 0.35175413714198717, 0.40258316674232486], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.463375370943487, 14.1682832791299, 11.730167269171183, 17.523703359437572, 16.210622905288666, 10.753901738132955, 15.31907534441129, 8.768669892144556], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 1.930896953521978, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 3.5562884974723588, 'dp-noise-percent-of-signal': 355.62884974723585, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.0971646188295305, 'eval_acc': 0.6823952814155754, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.6710411198600175, 0.6671575846833578, 0.7007534983853606, 0.681, 0.6690929451287794, 0.6853146853146853, 0.7016539440203562, 0.704], 'per-client-eval_loss': [1.1668490996406669, 1.1682245327552043, 1.037636874951382, 1.0643087782859801, 1.118229498654971, 1.1610008753263032, 1.0554926010185222, 0.9513803062438965], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.0740371910333633, 'accuracy': 0.6864, 'f1': 0.6875502911055777, 'precision': 0.6908360100036297, 'auc': 0.9522376622222221, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 19/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.1555367058736689, 'train_loss_mean': 0.34483946330295334, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.13738041495799602, 0.1460831473329617, 0.13658152757775224, 0.16285994996502995, 0.18747988410920413, 0.1210671893688811, 0.17874021615029898, 0.09081703382730484], 'per-client-train_loss_mean': [0.3454162116832192, 0.34746481032167714, 0.3552933022444634, 0.3372346207521856, 0.3336119695439993, 0.3762852454218878, 0.3402085047035627, 0.35714990885257725], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.30545377629454, 14.339717379323432, 12.01581321591169, 17.359404672714465, 16.22916813413496, 10.42505184493096, 15.461956707070518, 8.607604083007985], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 1.9167324942471375, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 3.58256910978692, 'dp-noise-percent-of-signal': 358.25691097869196, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.1328219052232482, 'eval_acc': 0.6909927021893433, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.6745406824146981, 0.6767304860088366, 0.721205597416577, 0.6965, 0.6780515117581187, 0.6853146853146853, 0.693384223918575, 0.736], 'per-client-eval_loss': [1.203914714923368, 1.2290231777747356, 1.0806994938619428, 1.091991129398346, 1.138062561479421, 1.20247808469759, 1.0988825131918638, 0.9575651173591614], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.1144106044769286, 'accuracy': 0.6942, 'f1': 0.6948814799444966, 'precision': 0.6969302620548309, 'auc': 0.9541290422222223, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 20/20]
+[92mINFO [0m:      configure_train: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_fit: parameters are clipped by value: 5.0000.
+[92mINFO [0m:      aggregate_train: Received 8 results and 0 failures
+[92mINFO [0m:      aggregate_fit: central DP noise with 0.0114 stdev added
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.15428655711675, 'train_loss_mean': 0.32877352315986347, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-num-examples': [4571, 5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.1350988780896686, 0.1528568791064956, 0.18202216690330975, 0.14428458665311336, 0.1731508072369436, 0.12219620883172634, 0.166495286470002, 0.13060841418802738], 'per-client-train_loss_mean': [0.3358800668899378, 0.3393514590528667, 0.34426523279278315, 0.311483189868927, 0.31561022961670493, 0.3545978011641683, 0.31608944882640977, 0.37421156531870364], 'dp-client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'dp-update-norms-before-clipping': [13.170207612192334, 14.489411702578256, 12.145497346542241, 16.787050055622206, 16.18331607543433, 10.612189489905804, 15.45584200661162, 8.85480761914137], 'dp-client-clipped': [1, 1, 1, 1, 1, 1, 1, 1], 'dp-num-clients-clipped': 8, 'dp-fraction-clipped': 1.0, 'global-dp-aggregation-collapsed': 0.0, 'dp-signal-update-norm': 1.9105960921643141, 'dp-parameter-count': 364426, 'dp-expected-noise-l2-norm': 6.86682662561463, 'dp-noise-to-signal-ratio': 3.594075510662184, 'dp-noise-percent-of-signal': 359.40755106621833, 'global-dp-noise-stdv': 0.011375}
+[92mINFO [0m:      configure_evaluate: Sampled 8 nodes (out of 8)
+[92mINFO [0m:      aggregate_evaluate: Received 8 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.1379534032098606, 'eval_acc': 0.6948915325402379, 'client-ids': [0, 1, 2, 3, 4, 5, 6, 7], 'per-client-eval_acc': [0.6876640419947506, 0.6782032400589102, 0.7179763186221744, 0.6995, 0.6903695408734603, 0.6797202797202797, 0.69529262086514, 0.732], 'per-client-eval_loss': [1.2374794059746743, 1.2080151637980443, 1.0946142513092418, 1.071110544681549, 1.1387326666649351, 1.2626815602495953, 1.1249045876752937, 0.927925479888916], 'per-client-num-examples': [1143, 1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.1291425117492675, 'accuracy': 0.6916, 'f1': 0.6916526004614137, 'precision': 0.6927282345310865, 'auc': 0.9544807044444445, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      Strategy execution finished in 646.29s
+[92mINFO [0m:      
+[92mINFO [0m:      Final results:
+[92mINFO [0m:      
+[92mINFO [0m:      	Global Arrays:
+[92mINFO [0m:      		ArrayRecord (1.392 MB)
+[92mINFO [0m:      	
+[92mINFO [0m:      	Aggregated ClientApp-side Train Metrics:
+[92mINFO [0m:      	{ 1: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	       'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	       'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	       'dp-noise-percent-of-signal': '3.0087e+02',
+[92mINFO [0m:      	       'dp-noise-to-signal-ratio': '3.0087e+00',
+[92mINFO [0m:      	       'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	       'dp-parameter-count': '364426',
+[92mINFO [0m:      	       'dp-signal-update-norm': '2.2823e+00',
+[92mINFO [0m:      	       'dp-update-norms-before-clipping': "['1.3128e+01', '1.3954e+01', "
+[92mINFO [0m:      	                                          "'1.1639e+01', '1.5045e+01', "
+[92mINFO [0m:      	                                          "'1.5794e+01', '9.9614e+00', "
+[92mINFO [0m:      	                                          "'1.5045e+01', '7.4737e+00']",
+[92mINFO [0m:      	       'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	       'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	       'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                  "'2856', '6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['1.5575e+00', '1.6015e+00', '1.6449e+00', "
+[92mINFO [0m:      	                                "'1.4480e+00', '1.4600e+00', '1.7306e+00', "
+[92mINFO [0m:      	                                "'1.4664e+00', '1.8829e+00']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['1.7802e+00', '1.8328e+00', "
+[92mINFO [0m:      	                                     "'1.8524e+00', '1.6947e+00', "
+[92mINFO [0m:      	                                     "'1.7045e+00', '1.9152e+00', "
+[92mINFO [0m:      	                                     "'1.7205e+00', '2.0139e+00']",
+[92mINFO [0m:      	       'train_loss': '1.5466e+00',
+[92mINFO [0m:      	       'train_loss_mean': '1.7754e+00'},
+[92mINFO [0m:      	  2: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	       'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	       'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	       'dp-noise-percent-of-signal': '2.0479e+02',
+[92mINFO [0m:      	       'dp-noise-to-signal-ratio': '2.0479e+00',
+[92mINFO [0m:      	       'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	       'dp-parameter-count': '364426',
+[92mINFO [0m:      	       'dp-signal-update-norm': '3.3532e+00',
+[92mINFO [0m:      	       'dp-update-norms-before-clipping': "['1.4780e+01', '1.5527e+01', "
+[92mINFO [0m:      	                                          "'1.2743e+01', '1.9280e+01', "
+[92mINFO [0m:      	                                          "'1.7320e+01', '1.1331e+01', "
+[92mINFO [0m:      	                                          "'1.6747e+01', '9.6426e+00']",
+[92mINFO [0m:      	       'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	       'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	       'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                  "'2856', '6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['1.3585e+00', '1.3851e+00', '1.4609e+00', "
+[92mINFO [0m:      	                                "'1.2608e+00', '1.3091e+00', '1.4924e+00', "
+[92mINFO [0m:      	                                "'1.3330e+00', '1.6062e+00']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['1.5800e+00', '1.5926e+00', "
+[92mINFO [0m:      	                                     "'1.6872e+00', '1.5130e+00', "
+[92mINFO [0m:      	                                     "'1.5282e+00', '1.6889e+00', "
+[92mINFO [0m:      	                                     "'1.5637e+00', '1.8064e+00']",
+[92mINFO [0m:      	       'train_loss': '1.3612e+00',
+[92mINFO [0m:      	       'train_loss_mean': '1.5856e+00'},
+[92mINFO [0m:      	  3: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	       'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	       'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	       'dp-noise-percent-of-signal': '1.9216e+02',
+[92mINFO [0m:      	       'dp-noise-to-signal-ratio': '1.9216e+00',
+[92mINFO [0m:      	       'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	       'dp-parameter-count': '364426',
+[92mINFO [0m:      	       'dp-signal-update-norm': '3.5735e+00',
+[92mINFO [0m:      	       'dp-update-norms-before-clipping': "['1.4396e+01', '1.5510e+01', "
+[92mINFO [0m:      	                                          "'1.2390e+01', '1.9900e+01', "
+[92mINFO [0m:      	                                          "'1.7737e+01', '1.0694e+01', "
+[92mINFO [0m:      	                                          "'1.6434e+01', '9.0525e+00']",
+[92mINFO [0m:      	       'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	       'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	       'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                  "'2856', '6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['1.2180e+00', '1.2143e+00', '1.2880e+00', "
+[92mINFO [0m:      	                                "'1.1128e+00', '1.1701e+00', '1.3250e+00', "
+[92mINFO [0m:      	                                "'1.1652e+00', '1.3430e+00']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['1.4211e+00', '1.4188e+00', "
+[92mINFO [0m:      	                                     "'1.4683e+00', '1.3446e+00', "
+[92mINFO [0m:      	                                     "'1.3742e+00', '1.5029e+00', "
+[92mINFO [0m:      	                                     "'1.3908e+00', '1.5446e+00']",
+[92mINFO [0m:      	       'train_loss': '1.2000e+00',
+[92mINFO [0m:      	       'train_loss_mean': '1.4088e+00'},
+[92mINFO [0m:      	  4: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	       'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	       'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	       'dp-noise-percent-of-signal': '2.0379e+02',
+[92mINFO [0m:      	       'dp-noise-to-signal-ratio': '2.0379e+00',
+[92mINFO [0m:      	       'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	       'dp-parameter-count': '364426',
+[92mINFO [0m:      	       'dp-signal-update-norm': '3.3695e+00',
+[92mINFO [0m:      	       'dp-update-norms-before-clipping': "['1.3574e+01', '1.5085e+01', "
+[92mINFO [0m:      	                                          "'1.1718e+01', '1.8675e+01', "
+[92mINFO [0m:      	                                          "'1.7566e+01', '1.0168e+01', "
+[92mINFO [0m:      	                                          "'1.7141e+01', '8.6498e+00']",
+[92mINFO [0m:      	       'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	       'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	       'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                  "'2856', '6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['1.0997e+00', '1.0670e+00', '1.1193e+00', "
+[92mINFO [0m:      	                                "'1.0048e+00', '1.0285e+00', '1.1389e+00', "
+[92mINFO [0m:      	                                "'1.0082e+00', '1.1607e+00']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['1.2870e+00', '1.2730e+00', "
+[92mINFO [0m:      	                                     "'1.3079e+00', '1.2135e+00', "
+[92mINFO [0m:      	                                     "'1.2340e+00', '1.3281e+00', "
+[92mINFO [0m:      	                                     "'1.2478e+00', '1.3463e+00']",
+[92mINFO [0m:      	       'train_loss': '1.0569e+00',
+[92mINFO [0m:      	       'train_loss_mean': '1.2626e+00'},
+[92mINFO [0m:      	  5: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	       'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	       'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	       'dp-noise-percent-of-signal': '2.1862e+02',
+[92mINFO [0m:      	       'dp-noise-to-signal-ratio': '2.1862e+00',
+[92mINFO [0m:      	       'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	       'dp-parameter-count': '364426',
+[92mINFO [0m:      	       'dp-signal-update-norm': '3.1409e+00',
+[92mINFO [0m:      	       'dp-update-norms-before-clipping': "['1.3302e+01', '1.5257e+01', "
+[92mINFO [0m:      	                                          "'1.1941e+01', '1.8083e+01', "
+[92mINFO [0m:      	                                          "'1.7213e+01', '1.0371e+01', "
+[92mINFO [0m:      	                                          "'1.6008e+01', '8.6096e+00']",
+[92mINFO [0m:      	       'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	       'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	       'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                  "'2856', '6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['9.4695e-01', '9.4162e-01', '9.8858e-01', "
+[92mINFO [0m:      	                                "'8.7349e-01', '8.7634e-01', '9.8980e-01', "
+[92mINFO [0m:      	                                "'8.9157e-01', '9.6442e-01']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['1.1583e+00', '1.1408e+00', "
+[92mINFO [0m:      	                                     "'1.1783e+00', '1.0949e+00', "
+[92mINFO [0m:      	                                     "'1.1117e+00', '1.1814e+00', "
+[92mINFO [0m:      	                                     "'1.1179e+00', '1.1832e+00']",
+[92mINFO [0m:      	       'train_loss': '9.1802e-01',
+[92mINFO [0m:      	       'train_loss_mean': '1.1333e+00'},
+[92mINFO [0m:      	  6: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	       'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	       'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	       'dp-noise-percent-of-signal': '2.3709e+02',
+[92mINFO [0m:      	       'dp-noise-to-signal-ratio': '2.3709e+00',
+[92mINFO [0m:      	       'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	       'dp-parameter-count': '364426',
+[92mINFO [0m:      	       'dp-signal-update-norm': '2.8963e+00',
+[92mINFO [0m:      	       'dp-update-norms-before-clipping': "['1.4090e+01', '1.4771e+01', "
+[92mINFO [0m:      	                                          "'1.2221e+01', '1.8431e+01', "
+[92mINFO [0m:      	                                          "'1.7025e+01', '1.0664e+01', "
+[92mINFO [0m:      	                                          "'1.6040e+01', '8.8670e+00']",
+[92mINFO [0m:      	       'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	       'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	       'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                  "'2856', '6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['7.9671e-01', '7.9649e-01', '8.5338e-01', "
+[92mINFO [0m:      	                                "'7.5394e-01', '7.6356e-01', '8.2756e-01', "
+[92mINFO [0m:      	                                "'7.7308e-01', '8.2061e-01']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['1.0310e+00', '1.0240e+00', "
+[92mINFO [0m:      	                                     "'1.0415e+00', '9.9107e-01', "
+[92mINFO [0m:      	                                     "'9.9881e-01', '1.0454e+00', "
+[92mINFO [0m:      	                                     "'1.0045e+00', '1.0528e+00']",
+[92mINFO [0m:      	       'train_loss': '7.8715e-01',
+[92mINFO [0m:      	       'train_loss_mean': '1.0152e+00'},
+[92mINFO [0m:      	  7: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	       'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	       'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	       'dp-noise-percent-of-signal': '2.5522e+02',
+[92mINFO [0m:      	       'dp-noise-to-signal-ratio': '2.5522e+00',
+[92mINFO [0m:      	       'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	       'dp-parameter-count': '364426',
+[92mINFO [0m:      	       'dp-signal-update-norm': '2.6906e+00',
+[92mINFO [0m:      	       'dp-update-norms-before-clipping': "['1.3696e+01', '1.4861e+01', "
+[92mINFO [0m:      	                                          "'1.2242e+01', '1.8126e+01', "
+[92mINFO [0m:      	                                          "'1.7340e+01', '1.0693e+01', "
+[92mINFO [0m:      	                                          "'1.6074e+01', '9.1413e+00']",
+[92mINFO [0m:      	       'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	       'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	       'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                  "'2856', '6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['6.7085e-01', '7.0433e-01', '7.1387e-01', "
+[92mINFO [0m:      	                                "'6.6970e-01', '6.7041e-01', '6.8627e-01', "
+[92mINFO [0m:      	                                "'6.3419e-01', '6.7545e-01']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['9.2026e-01', '9.1824e-01', "
+[92mINFO [0m:      	                                     "'9.3863e-01', '8.9734e-01', "
+[92mINFO [0m:      	                                     "'9.0974e-01', '9.2368e-01', "
+[92mINFO [0m:      	                                     "'8.9186e-01', '9.2651e-01']",
+[92mINFO [0m:      	       'train_loss': '6.7465e-01',
+[92mINFO [0m:      	       'train_loss_mean': '9.1132e-01'},
+[92mINFO [0m:      	  8: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	       'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	       'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	       'dp-noise-percent-of-signal': '2.7320e+02',
+[92mINFO [0m:      	       'dp-noise-to-signal-ratio': '2.7320e+00',
+[92mINFO [0m:      	       'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	       'dp-parameter-count': '364426',
+[92mINFO [0m:      	       'dp-signal-update-norm': '2.5135e+00',
+[92mINFO [0m:      	       'dp-update-norms-before-clipping': "['1.3563e+01', '1.4525e+01', "
+[92mINFO [0m:      	                                          "'1.2160e+01', '1.8041e+01', "
+[92mINFO [0m:      	                                          "'1.7037e+01', '1.0612e+01', "
+[92mINFO [0m:      	                                          "'1.6288e+01', '9.1250e+00']",
+[92mINFO [0m:      	       'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	       'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	       'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                  "'2856', '6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['5.6730e-01', '5.5808e-01', '5.9715e-01', "
+[92mINFO [0m:      	                                "'5.7108e-01', '5.8743e-01', '5.8906e-01', "
+[92mINFO [0m:      	                                "'5.5066e-01', '5.6275e-01']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['8.1990e-01', '8.2333e-01', "
+[92mINFO [0m:      	                                     "'8.4969e-01', '8.1191e-01', "
+[92mINFO [0m:      	                                     "'8.2814e-01', '8.3663e-01', "
+[92mINFO [0m:      	                                     "'8.0171e-01', '8.1409e-01']",
+[92mINFO [0m:      	       'train_loss': '5.7188e-01',
+[92mINFO [0m:      	       'train_loss_mean': '8.2105e-01'},
+[92mINFO [0m:      	  9: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	       'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	       'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	       'dp-noise-percent-of-signal': '2.9087e+02',
+[92mINFO [0m:      	       'dp-noise-to-signal-ratio': '2.9087e+00',
+[92mINFO [0m:      	       'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	       'dp-parameter-count': '364426',
+[92mINFO [0m:      	       'dp-signal-update-norm': '2.3608e+00',
+[92mINFO [0m:      	       'dp-update-norms-before-clipping': "['1.3812e+01', '1.4923e+01', "
+[92mINFO [0m:      	                                          "'1.2538e+01', '1.7983e+01', "
+[92mINFO [0m:      	                                          "'1.6926e+01', '1.1064e+01', "
+[92mINFO [0m:      	                                          "'1.6240e+01', '9.3304e+00']",
+[92mINFO [0m:      	       'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	       'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	       'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                  "'2856', '6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['4.9053e-01', '4.8951e-01', '5.3122e-01', "
+[92mINFO [0m:      	                                "'5.1913e-01', '4.9543e-01', '4.6471e-01', "
+[92mINFO [0m:      	                                "'4.6185e-01', '4.5454e-01']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['7.4843e-01', '7.3776e-01', "
+[92mINFO [0m:      	                                     "'7.7768e-01', '7.4987e-01', "
+[92mINFO [0m:      	                                     "'7.5049e-01', '7.3109e-01', "
+[92mINFO [0m:      	                                     "'7.2462e-01', '7.3401e-01']",
+[92mINFO [0m:      	       'train_loss': '4.9261e-01',
+[92mINFO [0m:      	       'train_loss_mean': '7.4465e-01'},
+[92mINFO [0m:      	  10: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	        'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	        'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	        'dp-noise-percent-of-signal': '3.0362e+02',
+[92mINFO [0m:      	        'dp-noise-to-signal-ratio': '3.0362e+00',
+[92mINFO [0m:      	        'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	        'dp-parameter-count': '364426',
+[92mINFO [0m:      	        'dp-signal-update-norm': '2.2616e+00',
+[92mINFO [0m:      	        'dp-update-norms-before-clipping': "['1.3651e+01', '1.4808e+01', "
+[92mINFO [0m:      	                                           "'1.2385e+01', '1.7812e+01', "
+[92mINFO [0m:      	                                           "'1.6823e+01', '1.0816e+01', "
+[92mINFO [0m:      	                                           "'1.6323e+01', '9.3115e+00']",
+[92mINFO [0m:      	        'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	        'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	        'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                   "'2856', '6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['4.0070e-01', '3.9982e-01', '4.6702e-01', "
+[92mINFO [0m:      	                                 "'4.3363e-01', '4.2612e-01', '4.1214e-01', "
+[92mINFO [0m:      	                                 "'4.1682e-01', '3.6076e-01']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['6.7147e-01', '6.7225e-01', "
+[92mINFO [0m:      	                                      "'7.1706e-01', '6.6757e-01', "
+[92mINFO [0m:      	                                      "'6.6964e-01', '6.8406e-01', "
+[92mINFO [0m:      	                                      "'6.5999e-01', '6.4741e-01']",
+[92mINFO [0m:      	        'train_loss': '4.1922e-01',
+[92mINFO [0m:      	        'train_loss_mean': '6.7260e-01'},
+[92mINFO [0m:      	  11: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	        'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	        'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	        'dp-noise-percent-of-signal': '3.1548e+02',
+[92mINFO [0m:      	        'dp-noise-to-signal-ratio': '3.1548e+00',
+[92mINFO [0m:      	        'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	        'dp-parameter-count': '364426',
+[92mINFO [0m:      	        'dp-signal-update-norm': '2.1766e+00',
+[92mINFO [0m:      	        'dp-update-norms-before-clipping': "['1.3632e+01', '1.4937e+01', "
+[92mINFO [0m:      	                                           "'1.2520e+01', '1.7839e+01', "
+[92mINFO [0m:      	                                           "'1.6996e+01', '1.0638e+01', "
+[92mINFO [0m:      	                                           "'1.5920e+01', '9.3773e+00']",
+[92mINFO [0m:      	        'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	        'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	        'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                   "'2856', '6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['3.6956e-01', '3.5350e-01', '3.3799e-01', "
+[92mINFO [0m:      	                                 "'3.6602e-01', '3.7885e-01', '3.7550e-01', "
+[92mINFO [0m:      	                                 "'3.4476e-01', '3.0269e-01']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['6.1799e-01', '6.1395e-01', "
+[92mINFO [0m:      	                                      "'6.1955e-01', '6.0896e-01', "
+[92mINFO [0m:      	                                      "'6.1508e-01', '6.2683e-01', "
+[92mINFO [0m:      	                                      "'5.9928e-01', '5.9803e-01']",
+[92mINFO [0m:      	        'train_loss': '3.5858e-01',
+[92mINFO [0m:      	        'train_loss_mean': '6.1195e-01'},
+[92mINFO [0m:      	  12: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	        'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	        'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	        'dp-noise-percent-of-signal': '3.2444e+02',
+[92mINFO [0m:      	        'dp-noise-to-signal-ratio': '3.2444e+00',
+[92mINFO [0m:      	        'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	        'dp-parameter-count': '364426',
+[92mINFO [0m:      	        'dp-signal-update-norm': '2.1165e+00',
+[92mINFO [0m:      	        'dp-update-norms-before-clipping': "['1.3815e+01', '1.4659e+01', "
+[92mINFO [0m:      	                                           "'1.2284e+01', '1.8280e+01', "
+[92mINFO [0m:      	                                           "'1.6154e+01', '1.0773e+01', "
+[92mINFO [0m:      	                                           "'1.6331e+01', '9.3320e+00']",
+[92mINFO [0m:      	        'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	        'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	        'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                   "'2856', '6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['3.1195e-01', '2.8411e-01', '2.9648e-01', "
+[92mINFO [0m:      	                                 "'3.2656e-01', '3.3252e-01', '2.9442e-01', "
+[92mINFO [0m:      	                                 "'3.3222e-01', '2.5335e-01']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['5.5966e-01', '5.6084e-01', "
+[92mINFO [0m:      	                                      "'5.7995e-01', '5.6178e-01', "
+[92mINFO [0m:      	                                      "'5.5771e-01', '5.7238e-01', "
+[92mINFO [0m:      	                                      "'5.5573e-01', '5.5103e-01']",
+[92mINFO [0m:      	        'train_loss': '3.1233e-01',
+[92mINFO [0m:      	        'train_loss_mean': '5.6164e-01'},
+[92mINFO [0m:      	  13: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	        'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	        'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	        'dp-noise-percent-of-signal': '3.3219e+02',
+[92mINFO [0m:      	        'dp-noise-to-signal-ratio': '3.3219e+00',
+[92mINFO [0m:      	        'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	        'dp-parameter-count': '364426',
+[92mINFO [0m:      	        'dp-signal-update-norm': '2.0671e+00',
+[92mINFO [0m:      	        'dp-update-norms-before-clipping': "['1.3568e+01', '1.4889e+01', "
+[92mINFO [0m:      	                                           "'1.2060e+01', '1.7971e+01', "
+[92mINFO [0m:      	                                           "'1.6538e+01', '1.1047e+01', "
+[92mINFO [0m:      	                                           "'1.5557e+01', '9.1864e+00']",
+[92mINFO [0m:      	        'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	        'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	        'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                   "'2856', '6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['2.4786e-01', '2.3883e-01', '2.6189e-01', "
+[92mINFO [0m:      	                                 "'2.8700e-01', '2.7399e-01', '2.6568e-01', "
+[92mINFO [0m:      	                                 "'2.7898e-01', '2.1257e-01']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['5.0795e-01', '5.0306e-01', "
+[92mINFO [0m:      	                                      "'5.4754e-01', '5.1531e-01', "
+[92mINFO [0m:      	                                      "'5.1321e-01', '5.3279e-01', "
+[92mINFO [0m:      	                                      "'5.1441e-01', '5.0922e-01']",
+[92mINFO [0m:      	        'train_loss': '2.6483e-01',
+[92mINFO [0m:      	        'train_loss_mean': '5.1623e-01'},
+[92mINFO [0m:      	  14: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	        'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	        'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	        'dp-noise-percent-of-signal': '3.3708e+02',
+[92mINFO [0m:      	        'dp-noise-to-signal-ratio': '3.3708e+00',
+[92mINFO [0m:      	        'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	        'dp-parameter-count': '364426',
+[92mINFO [0m:      	        'dp-signal-update-norm': '2.0371e+00',
+[92mINFO [0m:      	        'dp-update-norms-before-clipping': "['1.3629e+01', '1.4562e+01', "
+[92mINFO [0m:      	                                           "'1.2081e+01', '1.7417e+01', "
+[92mINFO [0m:      	                                           "'1.6466e+01', '1.0921e+01', "
+[92mINFO [0m:      	                                           "'1.5969e+01', '9.2457e+00']",
+[92mINFO [0m:      	        'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	        'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	        'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                   "'2856', '6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['2.1697e-01', '2.2020e-01', '2.3331e-01', "
+[92mINFO [0m:      	                                 "'2.6444e-01', '2.3223e-01', '2.0219e-01', "
+[92mINFO [0m:      	                                 "'2.3267e-01', '2.0804e-01']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['4.7968e-01', '4.7429e-01', "
+[92mINFO [0m:      	                                      "'4.9483e-01', '4.8380e-01', "
+[92mINFO [0m:      	                                      "'4.7536e-01', '4.8679e-01', "
+[92mINFO [0m:      	                                      "'4.6955e-01', '4.8864e-01']",
+[92mINFO [0m:      	        'train_loss': '2.3211e-01',
+[92mINFO [0m:      	        'train_loss_mean': '4.7977e-01'},
+[92mINFO [0m:      	  15: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	        'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	        'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	        'dp-noise-percent-of-signal': '3.4502e+02',
+[92mINFO [0m:      	        'dp-noise-to-signal-ratio': '3.4502e+00',
+[92mINFO [0m:      	        'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	        'dp-parameter-count': '364426',
+[92mINFO [0m:      	        'dp-signal-update-norm': '1.9903e+00',
+[92mINFO [0m:      	        'dp-update-norms-before-clipping': "['1.3836e+01', '1.4810e+01', "
+[92mINFO [0m:      	                                           "'1.1772e+01', '1.7749e+01', "
+[92mINFO [0m:      	                                           "'1.6680e+01', '1.0641e+01', "
+[92mINFO [0m:      	                                           "'1.5612e+01', '9.1668e+00']",
+[92mINFO [0m:      	        'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	        'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	        'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                   "'2856', '6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['2.0150e-01', '2.1790e-01', '2.0021e-01', "
+[92mINFO [0m:      	                                 "'2.2390e-01', '2.3411e-01', '1.9375e-01', "
+[92mINFO [0m:      	                                 "'1.9724e-01', '1.7783e-01']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['4.4048e-01', '4.4720e-01', "
+[92mINFO [0m:      	                                      "'4.4120e-01', '4.3525e-01', "
+[92mINFO [0m:      	                                      "'4.4467e-01', '4.5670e-01', "
+[92mINFO [0m:      	                                      "'4.3208e-01', '4.5596e-01']",
+[92mINFO [0m:      	        'train_loss': '2.1150e-01',
+[92mINFO [0m:      	        'train_loss_mean': '4.4177e-01'},
+[92mINFO [0m:      	  16: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	        'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	        'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	        'dp-noise-percent-of-signal': '3.4884e+02',
+[92mINFO [0m:      	        'dp-noise-to-signal-ratio': '3.4884e+00',
+[92mINFO [0m:      	        'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	        'dp-parameter-count': '364426',
+[92mINFO [0m:      	        'dp-signal-update-norm': '1.9684e+00',
+[92mINFO [0m:      	        'dp-update-norms-before-clipping': "['1.3503e+01', '1.4623e+01', "
+[92mINFO [0m:      	                                           "'1.2142e+01', '1.7141e+01', "
+[92mINFO [0m:      	                                           "'1.6243e+01', '1.0707e+01', "
+[92mINFO [0m:      	                                           "'1.5449e+01', '9.0830e+00']",
+[92mINFO [0m:      	        'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	        'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	        'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                   "'2856', '6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['1.9053e-01', '1.6256e-01', '1.7747e-01', "
+[92mINFO [0m:      	                                 "'2.1658e-01', '1.9211e-01', '1.6608e-01', "
+[92mINFO [0m:      	                                 "'1.8317e-01', '1.4016e-01']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['4.2897e-01', '4.0759e-01', "
+[92mINFO [0m:      	                                      "'4.3284e-01', '4.1329e-01', "
+[92mINFO [0m:      	                                      "'4.1054e-01', '4.2853e-01', "
+[92mINFO [0m:      	                                      "'4.0749e-01', '4.2859e-01']",
+[92mINFO [0m:      	        'train_loss': '1.8559e-01',
+[92mINFO [0m:      	        'train_loss_mean': '4.1658e-01'},
+[92mINFO [0m:      	  17: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	        'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	        'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	        'dp-noise-percent-of-signal': '3.5249e+02',
+[92mINFO [0m:      	        'dp-noise-to-signal-ratio': '3.5249e+00',
+[92mINFO [0m:      	        'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	        'dp-parameter-count': '364426',
+[92mINFO [0m:      	        'dp-signal-update-norm': '1.9481e+00',
+[92mINFO [0m:      	        'dp-update-norms-before-clipping': "['1.3358e+01', '1.4604e+01', "
+[92mINFO [0m:      	                                           "'1.2170e+01', '1.7142e+01', "
+[92mINFO [0m:      	                                           "'1.6040e+01', '1.0803e+01', "
+[92mINFO [0m:      	                                           "'1.5302e+01', '8.9971e+00']",
+[92mINFO [0m:      	        'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	        'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	        'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                   "'2856', '6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['1.6390e-01', '1.9699e-01', '1.7937e-01', "
+[92mINFO [0m:      	                                 "'2.1102e-01', '1.8927e-01', '1.3809e-01', "
+[92mINFO [0m:      	                                 "'1.8594e-01', '1.3026e-01']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['3.9205e-01', '4.0163e-01', "
+[92mINFO [0m:      	                                      "'4.1936e-01', '3.8366e-01', "
+[92mINFO [0m:      	                                      "'3.8483e-01', '3.9564e-01', "
+[92mINFO [0m:      	                                      "'3.7853e-01', '4.0789e-01']",
+[92mINFO [0m:      	        'train_loss': '1.8372e-01',
+[92mINFO [0m:      	        'train_loss_mean': '3.9184e-01'},
+[92mINFO [0m:      	  18: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	        'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	        'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	        'dp-noise-percent-of-signal': '3.5563e+02',
+[92mINFO [0m:      	        'dp-noise-to-signal-ratio': '3.5563e+00',
+[92mINFO [0m:      	        'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	        'dp-parameter-count': '364426',
+[92mINFO [0m:      	        'dp-signal-update-norm': '1.9309e+00',
+[92mINFO [0m:      	        'dp-update-norms-before-clipping': "['1.3463e+01', '1.4168e+01', "
+[92mINFO [0m:      	                                           "'1.1730e+01', '1.7524e+01', "
+[92mINFO [0m:      	                                           "'1.6211e+01', '1.0754e+01', "
+[92mINFO [0m:      	                                           "'1.5319e+01', '8.7687e+00']",
+[92mINFO [0m:      	        'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	        'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	        'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                   "'2856', '6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['1.6899e-01', '1.5632e-01', '1.5528e-01', "
+[92mINFO [0m:      	                                 "'2.1352e-01', '1.7232e-01', '1.7008e-01', "
+[92mINFO [0m:      	                                 "'1.6795e-01', '1.4580e-01']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['3.7563e-01', '3.6748e-01', "
+[92mINFO [0m:      	                                      "'3.7938e-01', '3.5601e-01', "
+[92mINFO [0m:      	                                      "'3.5674e-01', '3.7849e-01', "
+[92mINFO [0m:      	                                      "'3.5175e-01', '4.0258e-01']",
+[92mINFO [0m:      	        'train_loss': '1.7425e-01',
+[92mINFO [0m:      	        'train_loss_mean': '3.6538e-01'},
+[92mINFO [0m:      	  19: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	        'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	        'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	        'dp-noise-percent-of-signal': '3.5826e+02',
+[92mINFO [0m:      	        'dp-noise-to-signal-ratio': '3.5826e+00',
+[92mINFO [0m:      	        'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	        'dp-parameter-count': '364426',
+[92mINFO [0m:      	        'dp-signal-update-norm': '1.9167e+00',
+[92mINFO [0m:      	        'dp-update-norms-before-clipping': "['1.3305e+01', '1.4340e+01', "
+[92mINFO [0m:      	                                           "'1.2016e+01', '1.7359e+01', "
+[92mINFO [0m:      	                                           "'1.6229e+01', '1.0425e+01', "
+[92mINFO [0m:      	                                           "'1.5462e+01', '8.6076e+00']",
+[92mINFO [0m:      	        'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	        'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	        'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                   "'2856', '6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['1.3738e-01', '1.4608e-01', '1.3658e-01', "
+[92mINFO [0m:      	                                 "'1.6286e-01', '1.8748e-01', '1.2107e-01', "
+[92mINFO [0m:      	                                 "'1.7874e-01', '9.0817e-02']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['3.4542e-01', '3.4746e-01', "
+[92mINFO [0m:      	                                      "'3.5529e-01', '3.3723e-01', "
+[92mINFO [0m:      	                                      "'3.3361e-01', '3.7629e-01', "
+[92mINFO [0m:      	                                      "'3.4021e-01', '3.5715e-01']",
+[92mINFO [0m:      	        'train_loss': '1.5554e-01',
+[92mINFO [0m:      	        'train_loss_mean': '3.4484e-01'},
+[92mINFO [0m:      	  20: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-client-clipped': "['1', '1', '1', '1', '1', '1', '1', '1']",
+[92mINFO [0m:      	        'dp-client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'dp-expected-noise-l2-norm': '6.8668e+00',
+[92mINFO [0m:      	        'dp-fraction-clipped': '1.0000e+00',
+[92mINFO [0m:      	        'dp-noise-percent-of-signal': '3.5941e+02',
+[92mINFO [0m:      	        'dp-noise-to-signal-ratio': '3.5941e+00',
+[92mINFO [0m:      	        'dp-num-clients-clipped': '8',
+[92mINFO [0m:      	        'dp-parameter-count': '364426',
+[92mINFO [0m:      	        'dp-signal-update-norm': '1.9106e+00',
+[92mINFO [0m:      	        'dp-update-norms-before-clipping': "['1.3170e+01', '1.4489e+01', "
+[92mINFO [0m:      	                                           "'1.2145e+01', '1.6787e+01', "
+[92mINFO [0m:      	                                           "'1.6183e+01', '1.0612e+01', "
+[92mINFO [0m:      	                                           "'1.5456e+01', '8.8548e+00']",
+[92mINFO [0m:      	        'global-dp-aggregation-collapsed': '0.0000e+00',
+[92mINFO [0m:      	        'global-dp-noise-stdv': '1.1375e-02',
+[92mINFO [0m:      	        'per-client-num-examples': "['4571', '5428', '3714', '8000', '7143', "
+[92mINFO [0m:      	                                   "'2856', '6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['1.3510e-01', '1.5286e-01', '1.8202e-01', "
+[92mINFO [0m:      	                                 "'1.4428e-01', '1.7315e-01', '1.2220e-01', "
+[92mINFO [0m:      	                                 "'1.6650e-01', '1.3061e-01']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['3.3588e-01', '3.3935e-01', "
+[92mINFO [0m:      	                                      "'3.4427e-01', '3.1148e-01', "
+[92mINFO [0m:      	                                      "'3.1561e-01', '3.5460e-01', "
+[92mINFO [0m:      	                                      "'3.1609e-01', '3.7421e-01']",
+[92mINFO [0m:      	        'train_loss': '1.5429e-01',
+[92mINFO [0m:      	        'train_loss_mean': '3.2877e-01'}}
+[92mINFO [0m:      	
+[92mINFO [0m:      	Aggregated ClientApp-side Evaluate Metrics:
+[92mINFO [0m:      	{ 1: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'eval_acc': '9.9970e-02',
+[92mINFO [0m:      	       'eval_loss': '2.2997e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['9.2738e-02', '1.0898e-01', '9.6878e-02', "
+[92mINFO [0m:      	                              "'9.7500e-02', '1.0358e-01', '9.3706e-02', "
+[92mINFO [0m:      	                              "'9.9873e-02', '1.0400e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['2.3010e+00', '2.2986e+00', '2.3000e+00', "
+[92mINFO [0m:      	                               "'2.3001e+00', '2.2990e+00', '2.3009e+00', "
+[92mINFO [0m:      	                               "'2.3000e+00', '2.2978e+00']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                  "'715', '1572', '500']"},
+[92mINFO [0m:      	  2: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'eval_acc': '2.4273e-01',
+[92mINFO [0m:      	       'eval_loss': '2.2097e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['2.3010e-01', '2.4153e-01', '2.5404e-01', "
+[92mINFO [0m:      	                              "'2.3100e-01', '2.3908e-01', '2.5315e-01', "
+[92mINFO [0m:      	                              "'2.5509e-01', '2.6000e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['2.2122e+00', '2.2112e+00', '2.2075e+00', "
+[92mINFO [0m:      	                               "'2.2101e+00', '2.2103e+00', '2.2082e+00', "
+[92mINFO [0m:      	                               "'2.2081e+00', '2.2069e+00']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                  "'715', '1572', '500']"},
+[92mINFO [0m:      	  3: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'eval_acc': '3.9308e-01',
+[92mINFO [0m:      	       'eval_loss': '2.0090e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['3.9283e-01', '3.7776e-01', '4.1119e-01', "
+[92mINFO [0m:      	                              "'3.8800e-01', '3.8690e-01', '3.8881e-01', "
+[92mINFO [0m:      	                              "'4.0394e-01', '4.1600e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['2.0124e+00', '2.0178e+00', '2.0045e+00', "
+[92mINFO [0m:      	                               "'2.0088e+00', '2.0124e+00', '2.0043e+00', "
+[92mINFO [0m:      	                               "'2.0009e+00', '2.0064e+00']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                  "'715', '1572', '500']"},
+[92mINFO [0m:      	  4: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'eval_acc': '4.1687e-01',
+[92mINFO [0m:      	       'eval_loss': '1.7746e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['4.2082e-01', '3.8365e-01', '4.2734e-01', "
+[92mINFO [0m:      	                              "'4.1350e-01', '4.0873e-01', '4.1818e-01', "
+[92mINFO [0m:      	                              "'4.4148e-01', '4.4200e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['1.7794e+00', '1.7933e+00', '1.7702e+00', "
+[92mINFO [0m:      	                               "'1.7743e+00', '1.7768e+00', '1.7695e+00', "
+[92mINFO [0m:      	                               "'1.7607e+00', '1.7652e+00']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                  "'715', '1572', '500']"},
+[92mINFO [0m:      	  5: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'eval_acc': '4.4717e-01',
+[92mINFO [0m:      	       'eval_loss': '1.5651e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['4.5144e-01', '4.0943e-01', '4.7470e-01', "
+[92mINFO [0m:      	                              "'4.5250e-01', '4.3169e-01', '4.3776e-01', "
+[92mINFO [0m:      	                              "'4.6883e-01', '4.6800e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['1.5748e+00', '1.5951e+00', '1.5554e+00', "
+[92mINFO [0m:      	                               "'1.5653e+00', '1.5601e+00', '1.5666e+00', "
+[92mINFO [0m:      	                               "'1.5451e+00', '1.5573e+00']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                  "'715', '1572', '500']"},
+[92mINFO [0m:      	  6: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'eval_acc': '5.3854e-01',
+[92mINFO [0m:      	       'eval_loss': '1.3184e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['5.3718e-01', '5.1325e-01', '5.5651e-01', "
+[92mINFO [0m:      	                              "'5.4000e-01', '5.4087e-01', '5.2448e-01', "
+[92mINFO [0m:      	                              "'5.5025e-01', '5.4600e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['1.3296e+00', '1.3619e+00', '1.3018e+00', "
+[92mINFO [0m:      	                               "'1.3200e+00', '1.3174e+00', '1.3078e+00', "
+[92mINFO [0m:      	                               "'1.2929e+00', '1.2989e+00']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                  "'715', '1572', '500']"},
+[92mINFO [0m:      	  7: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'eval_acc': '5.8832e-01',
+[92mINFO [0m:      	       'eval_loss': '1.1729e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['5.8005e-01', '5.6922e-01', '6.0926e-01', "
+[92mINFO [0m:      	                              "'5.9450e-01', '5.8007e-01', '5.8322e-01', "
+[92mINFO [0m:      	                              "'5.9733e-01', '6.0400e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['1.1898e+00', '1.2252e+00', '1.1466e+00', "
+[92mINFO [0m:      	                               "'1.1709e+00', '1.1683e+00', '1.1600e+00', "
+[92mINFO [0m:      	                               "'1.1541e+00', '1.1437e+00']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                  "'715', '1572', '500']"},
+[92mINFO [0m:      	  8: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'eval_acc': '6.3291e-01',
+[92mINFO [0m:      	       'eval_loss': '1.0434e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['6.3255e-01', '6.0898e-01', '6.6200e-01', "
+[92mINFO [0m:      	                              "'6.3500e-01', '6.2486e-01', '6.1399e-01', "
+[92mINFO [0m:      	                              "'6.3931e-01', '6.7200e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['1.0620e+00', '1.1021e+00', '1.0050e+00', "
+[92mINFO [0m:      	                               "'1.0409e+00', '1.0415e+00', '1.0343e+00', "
+[92mINFO [0m:      	                               "'1.0263e+00', '9.9561e-01']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                  "'715', '1572', '500']"},
+[92mINFO [0m:      	  9: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	       'eval_acc': '6.4941e-01',
+[92mINFO [0m:      	       'eval_loss': '1.0031e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['6.3430e-01', '6.3034e-01', '6.7384e-01', "
+[92mINFO [0m:      	                              "'6.6000e-01', '6.5230e-01', '6.4615e-01', "
+[92mINFO [0m:      	                              "'6.3931e-01', '6.7400e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['1.0376e+00', '1.0414e+00', '9.6466e-01', "
+[92mINFO [0m:      	                               "'9.9012e-01', '1.0012e+00', '1.0077e+00', "
+[92mINFO [0m:      	                               "'9.9614e-01', '9.6604e-01']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                  "'715', '1572', '500']"},
+[92mINFO [0m:      	  10: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'eval_acc': '6.5480e-01',
+[92mINFO [0m:      	        'eval_loss': '1.0038e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.5529e-01', '6.3476e-01', '6.8568e-01', "
+[92mINFO [0m:      	                               "'6.6500e-01', '6.5006e-01', '6.3217e-01', "
+[92mINFO [0m:      	                               "'6.4504e-01', '6.9000e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.0420e+00', '1.0470e+00', '9.4514e-01', "
+[92mINFO [0m:      	                                "'9.8235e-01', '1.0072e+00', '1.0271e+00', "
+[92mINFO [0m:      	                                "'9.9757e-01', '9.6865e-01']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                   "'715', '1572', '500']"},
+[92mINFO [0m:      	  11: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'eval_acc': '6.6170e-01',
+[92mINFO [0m:      	        'eval_loss': '1.0089e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.5179e-01', '6.4138e-01', '6.8245e-01', "
+[92mINFO [0m:      	                               "'6.6750e-01', '6.6573e-01', '6.5874e-01', "
+[92mINFO [0m:      	                               "'6.5522e-01', '6.8800e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.0625e+00', '1.0663e+00', '9.5407e-01', "
+[92mINFO [0m:      	                                "'9.7629e-01', '1.0126e+00', '1.0133e+00', "
+[92mINFO [0m:      	                                "'1.0038e+00', '9.5936e-01']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                   "'715', '1572', '500']"},
+[92mINFO [0m:      	  12: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'eval_acc': '6.6930e-01',
+[92mINFO [0m:      	        'eval_loss': '9.9936e-01',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.7104e-01', '6.4507e-01', '6.9429e-01', "
+[92mINFO [0m:      	                               "'6.7750e-01', '6.7357e-01', '6.5175e-01', "
+[92mINFO [0m:      	                               "'6.6158e-01', '6.8600e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.0346e+00', '1.0601e+00', '9.4072e-01', "
+[92mINFO [0m:      	                                "'9.6439e-01', '9.9936e-01', '1.0557e+00', "
+[92mINFO [0m:      	                                "'9.9941e-01', '9.2215e-01']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                   "'715', '1572', '500']"},
+[92mINFO [0m:      	  13: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'eval_acc': '6.7710e-01',
+[92mINFO [0m:      	        'eval_loss': '1.0085e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.7804e-01', '6.4875e-01', '6.9752e-01', "
+[92mINFO [0m:      	                               "'6.7200e-01', '6.8085e-01', '6.6014e-01', "
+[92mINFO [0m:      	                               "'6.8766e-01', '7.1200e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.0402e+00', '1.0889e+00', '9.3383e-01', "
+[92mINFO [0m:      	                                "'9.8414e-01', '1.0175e+00', '1.0608e+00', "
+[92mINFO [0m:      	                                "'9.8549e-01', '9.1863e-01']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                   "'715', '1572', '500']"},
+[92mINFO [0m:      	  14: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'eval_acc': '6.7070e-01',
+[92mINFO [0m:      	        'eval_loss': '1.0364e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.6842e-01', '6.3623e-01', '7.0075e-01', "
+[92mINFO [0m:      	                               "'6.7100e-01', '6.7413e-01', '6.5594e-01', "
+[92mINFO [0m:      	                               "'6.7494e-01', '7.0800e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.0969e+00', '1.1221e+00', '9.5740e-01', "
+[92mINFO [0m:      	                                "'1.0039e+00', '1.0344e+00', '1.0914e+00', "
+[92mINFO [0m:      	                                "'1.0189e+00', '9.2652e-01']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                   "'715', '1572', '500']"},
+[92mINFO [0m:      	  15: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'eval_acc': '6.6250e-01',
+[92mINFO [0m:      	        'eval_loss': '1.0945e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.5617e-01', '6.4359e-01', '6.8891e-01', "
+[92mINFO [0m:      	                               "'6.6250e-01', '6.5118e-01', '6.6294e-01', "
+[92mINFO [0m:      	                               "'6.6921e-01', '6.9800e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.1346e+00', '1.1789e+00', '1.0169e+00', "
+[92mINFO [0m:      	                                "'1.0691e+00', '1.1073e+00', '1.1377e+00', "
+[92mINFO [0m:      	                                "'1.0625e+00', '1.0133e+00']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                   "'715', '1572', '500']"},
+[92mINFO [0m:      	  16: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'eval_acc': '6.8170e-01',
+[92mINFO [0m:      	        'eval_loss': '1.0752e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.8066e-01', '6.5832e-01', '7.1259e-01', "
+[92mINFO [0m:      	                               "'6.8450e-01', '6.7021e-01', '6.7273e-01', "
+[92mINFO [0m:      	                               "'6.9020e-01', '7.0600e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.1362e+00', '1.1537e+00', '9.9131e-01', "
+[92mINFO [0m:      	                                "'1.0309e+00', '1.0955e+00', '1.1606e+00', "
+[92mINFO [0m:      	                                "'1.0339e+00', '9.9068e-01']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                   "'715', '1572', '500']"},
+[92mINFO [0m:      	  17: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'eval_acc': '6.8060e-01',
+[92mINFO [0m:      	        'eval_loss': '1.0813e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.7454e-01', '6.6348e-01', '7.0291e-01', "
+[92mINFO [0m:      	                               "'6.8650e-01', '6.6965e-01', '6.7692e-01', "
+[92mINFO [0m:      	                               "'6.8639e-01', '7.0200e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.1307e+00', '1.1397e+00', '1.0296e+00', "
+[92mINFO [0m:      	                                "'1.0390e+00', '1.1106e+00', '1.1819e+00', "
+[92mINFO [0m:      	                                "'1.0441e+00', '9.4250e-01']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                   "'715', '1572', '500']"},
+[92mINFO [0m:      	  18: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'eval_acc': '6.8240e-01',
+[92mINFO [0m:      	        'eval_loss': '1.0972e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.7104e-01', '6.6716e-01', '7.0075e-01', "
+[92mINFO [0m:      	                               "'6.8100e-01', '6.6909e-01', '6.8531e-01', "
+[92mINFO [0m:      	                               "'7.0165e-01', '7.0400e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.1668e+00', '1.1682e+00', '1.0376e+00', "
+[92mINFO [0m:      	                                "'1.0643e+00', '1.1182e+00', '1.1610e+00', "
+[92mINFO [0m:      	                                "'1.0555e+00', '9.5138e-01']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                   "'715', '1572', '500']"},
+[92mINFO [0m:      	  19: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'eval_acc': '6.9099e-01',
+[92mINFO [0m:      	        'eval_loss': '1.1328e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.7454e-01', '6.7673e-01', '7.2121e-01', "
+[92mINFO [0m:      	                               "'6.9650e-01', '6.7805e-01', '6.8531e-01', "
+[92mINFO [0m:      	                               "'6.9338e-01', '7.3600e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.2039e+00', '1.2290e+00', '1.0807e+00', "
+[92mINFO [0m:      	                                "'1.0920e+00', '1.1381e+00', '1.2025e+00', "
+[92mINFO [0m:      	                                "'1.0989e+00', '9.5757e-01']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                   "'715', '1572', '500']"},
+[92mINFO [0m:      	  20: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6', '7']",
+[92mINFO [0m:      	        'eval_acc': '6.9489e-01',
+[92mINFO [0m:      	        'eval_loss': '1.1380e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.8766e-01', '6.7820e-01', '7.1798e-01', "
+[92mINFO [0m:      	                               "'6.9950e-01', '6.9037e-01', '6.7972e-01', "
+[92mINFO [0m:      	                               "'6.9529e-01', '7.3200e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.2375e+00', '1.2080e+00', '1.0946e+00', "
+[92mINFO [0m:      	                                "'1.0711e+00', '1.1387e+00', '1.2627e+00', "
+[92mINFO [0m:      	                                "'1.1249e+00', '9.2793e-01']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1143', '1358', '929', '2000', '1786', "
+[92mINFO [0m:      	                                   "'715', '1572', '500']"}}
+[92mINFO [0m:      	
+[92mINFO [0m:      	ServerApp-side Evaluate Metrics:
+[92mINFO [0m:      	{ 0: { 'accuracy': '1.0000e-01',
+[92mINFO [0m:      	       'auc': '5.0091e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '1.8182e-02',
+[92mINFO [0m:      	       'loss': '2.3041e+00',
+[92mINFO [0m:      	       'precision': '1.0000e-02'},
+[92mINFO [0m:      	  1: { 'accuracy': '1.0000e-01',
+[92mINFO [0m:      	       'auc': '5.3935e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '1.8182e-02',
+[92mINFO [0m:      	       'loss': '2.2997e+00',
+[92mINFO [0m:      	       'precision': '1.0000e-02'},
+[92mINFO [0m:      	  2: { 'accuracy': '2.4480e-01',
+[92mINFO [0m:      	       'auc': '7.4138e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '1.8552e-01',
+[92mINFO [0m:      	       'loss': '2.2091e+00',
+[92mINFO [0m:      	       'precision': '3.5205e-01'},
+[92mINFO [0m:      	  3: { 'accuracy': '3.9500e-01',
+[92mINFO [0m:      	       'auc': '8.3149e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '3.5799e-01',
+[92mINFO [0m:      	       'loss': '2.0052e+00',
+[92mINFO [0m:      	       'precision': '5.0892e-01'},
+[92mINFO [0m:      	  4: { 'accuracy': '4.2980e-01',
+[92mINFO [0m:      	       'auc': '8.5637e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '4.1995e-01',
+[92mINFO [0m:      	       'loss': '1.7669e+00',
+[92mINFO [0m:      	       'precision': '5.3182e-01'},
+[92mINFO [0m:      	  5: { 'accuracy': '4.5740e-01',
+[92mINFO [0m:      	       'auc': '8.7100e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '4.5810e-01',
+[92mINFO [0m:      	       'loss': '1.5552e+00',
+[92mINFO [0m:      	       'precision': '5.6541e-01'},
+[92mINFO [0m:      	  6: { 'accuracy': '5.3940e-01',
+[92mINFO [0m:      	       'auc': '9.0974e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '5.3869e-01',
+[92mINFO [0m:      	       'loss': '1.3072e+00',
+[92mINFO [0m:      	       'precision': '5.9545e-01'},
+[92mINFO [0m:      	  7: { 'accuracy': '5.9240e-01',
+[92mINFO [0m:      	       'auc': '9.2639e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '5.9245e-01',
+[92mINFO [0m:      	       'loss': '1.1620e+00',
+[92mINFO [0m:      	       'precision': '6.2164e-01'},
+[92mINFO [0m:      	  8: { 'accuracy': '6.3600e-01',
+[92mINFO [0m:      	       'auc': '9.4120e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '6.3111e-01',
+[92mINFO [0m:      	       'loss': '1.0277e+00',
+[92mINFO [0m:      	       'precision': '6.4216e-01'},
+[92mINFO [0m:      	  9: { 'accuracy': '6.4800e-01',
+[92mINFO [0m:      	       'auc': '9.4507e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '6.4580e-01',
+[92mINFO [0m:      	       'loss': '9.8856e-01',
+[92mINFO [0m:      	       'precision': '6.4794e-01'},
+[92mINFO [0m:      	  10: { 'accuracy': '6.5520e-01',
+[92mINFO [0m:      	        'auc': '9.4670e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.5022e-01',
+[92mINFO [0m:      	        'loss': '9.8543e-01',
+[92mINFO [0m:      	        'precision': '6.5523e-01'},
+[92mINFO [0m:      	  11: { 'accuracy': '6.6140e-01',
+[92mINFO [0m:      	        'auc': '9.4811e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.5462e-01',
+[92mINFO [0m:      	        'loss': '9.9492e-01',
+[92mINFO [0m:      	        'precision': '6.6075e-01'},
+[92mINFO [0m:      	  12: { 'accuracy': '6.6680e-01',
+[92mINFO [0m:      	        'auc': '9.5040e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.6434e-01',
+[92mINFO [0m:      	        'loss': '9.8876e-01',
+[92mINFO [0m:      	        'precision': '6.7277e-01'},
+[92mINFO [0m:      	  13: { 'accuracy': '6.8360e-01',
+[92mINFO [0m:      	        'auc': '9.5194e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.7988e-01',
+[92mINFO [0m:      	        'loss': '9.8395e-01',
+[92mINFO [0m:      	        'precision': '6.8180e-01'},
+[92mINFO [0m:      	  14: { 'accuracy': '6.7060e-01',
+[92mINFO [0m:      	        'auc': '9.5048e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.7109e-01',
+[92mINFO [0m:      	        'loss': '1.0174e+00',
+[92mINFO [0m:      	        'precision': '6.7712e-01'},
+[92mINFO [0m:      	  15: { 'accuracy': '6.7140e-01',
+[92mINFO [0m:      	        'auc': '9.4765e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.6932e-01',
+[92mINFO [0m:      	        'loss': '1.0718e+00',
+[92mINFO [0m:      	        'precision': '6.7729e-01'},
+[92mINFO [0m:      	  16: { 'accuracy': '6.9040e-01',
+[92mINFO [0m:      	        'auc': '9.5255e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.9217e-01',
+[92mINFO [0m:      	        'loss': '1.0463e+00',
+[92mINFO [0m:      	        'precision': '6.9674e-01'},
+[92mINFO [0m:      	  17: { 'accuracy': '6.8400e-01',
+[92mINFO [0m:      	        'auc': '9.5113e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.8686e-01',
+[92mINFO [0m:      	        'loss': '1.0565e+00',
+[92mINFO [0m:      	        'precision': '6.9281e-01'},
+[92mINFO [0m:      	  18: { 'accuracy': '6.8640e-01',
+[92mINFO [0m:      	        'auc': '9.5224e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.8755e-01',
+[92mINFO [0m:      	        'loss': '1.0740e+00',
+[92mINFO [0m:      	        'precision': '6.9084e-01'},
+[92mINFO [0m:      	  19: { 'accuracy': '6.9420e-01',
+[92mINFO [0m:      	        'auc': '9.5413e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.9488e-01',
+[92mINFO [0m:      	        'loss': '1.1144e+00',
+[92mINFO [0m:      	        'precision': '6.9693e-01'},
+[92mINFO [0m:      	  20: { 'accuracy': '6.9160e-01',
+[92mINFO [0m:      	        'auc': '9.5448e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.9165e-01',
+[92mINFO [0m:      	        'loss': '1.1291e+00',
+[92mINFO [0m:      	        'precision': '6.9273e-01'}}
+[92mINFO [0m:      
+[36m(ClientAppActor pid=4015)[0m Using the latest cached version of the dataset since uoft-cs/cifar10 couldn't be found on the Hugging Face Hub (offline mode is enabled).[32m [repeated 7x across cluster] (Ray deduplicates logs by default. Set RAY_DEDUP_LOGS=0 to disable log deduplication, or see https://docs.ray.io/en/master/ray-observability/user-guides/configure-logging.html#log-deduplication for more options.)[0m
+[36m(ClientAppActor pid=4015)[0m Found the latest cached dataset configuration 'plain_text' at /root/.cache/huggingface/datasets/uoft-cs___cifar10/plain_text/0.0.0/0b2714987fa478483af9968de7c934580d0bb9a2 (last modified on Tue Aug 11 13:52:47 2026).[32m [repeated 7x across cluster][0m
+Round 1 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-1.pt
+Round 2 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-2.pt
+Round 3 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-3.pt
+Round 4 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-4.pt
+Round 5 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-5.pt
+Round 6 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-6.pt
+Round 7 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-7.pt
+Round 8 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-8.pt
+Round 9 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-9.pt
+Round 10 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-10.pt
+Round 11 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-11.pt
+Round 12 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-12.pt
+Round 13 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-13.pt
+Round 14 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-14.pt
+Round 15 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-15.pt
+Round 16 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-16.pt
+Round 17 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-17.pt
+Round 18 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-18.pt
+Round 19 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-19.pt
+Round 20 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-20.pt
+Experiment result written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.json
+Detailed evaluation written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.evaluation.json and /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.predictions.npz
+Result: /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/in-remove/global-dp/runs/cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.json
+Final server metrics: {'loss': 1.1291425117492675, 'accuracy': 0.6916, 'f1': 0.6916526004614137, 'precision': 0.6927282345310865, 'auc': 0.9544807044444445, 'diverged': 0.0}
+2026-08-11 14:03:54 DONE  cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn (686.7s)
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-08-11 14:04:04 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=1 (checkpoint deleted)
+2026-08-11 14:04:12 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=2 (checkpoint deleted)
+2026-08-11 14:04:19 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=3 (checkpoint deleted)
+2026-08-11 14:04:26 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=4 (checkpoint deleted)
+2026-08-11 14:04:34 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=5 (checkpoint deleted)
+2026-08-11 14:04:41 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=6 (checkpoint deleted)
+2026-08-11 14:04:48 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=7 (checkpoint deleted)
+2026-08-11 14:04:55 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=8 (checkpoint deleted)
+2026-08-11 14:05:03 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=9 (checkpoint deleted)
+2026-08-11 14:05:10 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=10 (checkpoint deleted)
+2026-08-11 14:05:17 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=11 (checkpoint deleted)
+2026-08-11 14:05:24 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=12 (checkpoint deleted)
+2026-08-11 14:05:32 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=13 (checkpoint deleted)
+2026-08-11 14:05:39 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=14 (checkpoint deleted)
+2026-08-11 14:05:46 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=15 (checkpoint deleted)
+2026-08-11 14:05:53 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=16 (checkpoint deleted)
+2026-08-11 14:06:01 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=17 (checkpoint deleted)
+2026-08-11 14:06:08 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=18 (checkpoint deleted)
+2026-08-11 14:06:15 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=19 (checkpoint deleted)
+2026-08-11 14:06:22 EVALUATED cifar10-in-remove__non-iid__global-dp__fedavg__clients-8__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=20 (checkpoint deleted)
+2026-08-11 14:06:22 PROGRESS 1/1 (0 failed so far)
+2026-08-11 14:06:22 Sweep finished: 1/1 attempted, 0 failed
+round= 1 non-iid      global-dp       clients= 8 agg=2.300 clean_diff=0.042% noisy_diff=0.036%
+round= 2 non-iid      global-dp       clients= 8 agg=2.209 clean_diff=0.143% noisy_diff=0.686%
+round= 3 non-iid      global-dp       clients= 8 agg=2.005 clean_diff=0.298% noisy_diff=3.963%
+round= 4 non-iid      global-dp       clients= 8 agg=1.767 clean_diff=0.322% noisy_diff=10.995%
+round= 5 non-iid      global-dp       clients= 8 agg=1.555 clean_diff=-0.066% noisy_diff=15.643%
+round= 6 non-iid      global-dp       clients= 8 agg=1.307 clean_diff=-0.741% noisy_diff=23.650%
+round= 7 non-iid      global-dp       clients= 8 agg=1.162 clean_diff=-1.626% noisy_diff=35.255%
+round= 8 non-iid      global-dp       clients= 8 agg=1.028 clean_diff=-3.626% noisy_diff=49.147%
+round= 9 non-iid      global-dp       clients= 8 agg=0.989 clean_diff=-7.865% noisy_diff=59.975%
+round=10 non-iid      global-dp       clients= 8 agg=0.985 clean_diff=-14.638% noisy_diff=66.577%
+round=11 non-iid      global-dp       clients= 8 agg=0.995 clean_diff=-14.727% noisy_diff=67.607%
+round=12 non-iid      global-dp       clients= 8 agg=0.989 clean_diff=-27.529% noisy_diff=63.547%
+round=13 non-iid      global-dp       clients= 8 agg=0.984 clean_diff=-32.295% noisy_diff=63.708%
+round=14 non-iid      global-dp       clients= 8 agg=1.017 clean_diff=-42.264% noisy_diff=67.574%
+round=15 non-iid      global-dp       clients= 8 agg=1.072 clean_diff=-54.000% noisy_diff=63.063%
+round=16 non-iid      global-dp       clients= 8 agg=1.046 clean_diff=-61.750% noisy_diff=62.230%
+round=17 non-iid      global-dp       clients= 8 agg=1.056 clean_diff=-59.521% noisy_diff=54.508%
+round=18 non-iid      global-dp       clients= 8 agg=1.074 clean_diff=-74.615% noisy_diff=57.706%
+round=19 non-iid      global-dp       clients= 8 agg=1.114 clean_diff=-91.729% noisy_diff=58.053%
+round=20 non-iid      global-dp       clients= 8 agg=1.129 clean_diff=-108.748% noisy_diff=65.562%
