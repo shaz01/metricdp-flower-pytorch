@@ -1,8 +1,8 @@
 # Project Status
 
-**Branch:** `master`
-**Last updated:** 2026-08-06, CUDA workstation (`feature/scale-controlled-redo` merged and
-closed) — see `git log` for anything more recent
+**Branch:** `feature/cifar10-scaling`
+**Last updated:** 2026-08-11, Mac laptop (`cifar10_homogeneous` n=4/n=8 Colab runs collected)
+— see `git log` for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -15,16 +15,40 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-Nothing currently running. `feature/scale-controlled-redo` (Phase 1 items 1 and 2 of
-`docs/RESEARCH_ROADMAP.md`) merged into `master` 2026-08-06 and was deleted — see "What's
-established" below for what it left behind. The natural next steps, not yet started: `fedyogi` at
-`n=48` (the redo's matrix only covers `n=4/8` for `fedyogi`), and Phase 1's remaining item (NaN/
-failure-mode logging in `runner.py`, motivated directly by the zero-norm-update crashes found
-during the redo). After that, Phase 2 (mechanism redesign) is the next major phase.
+On `feature/cifar10-scaling`: the `cifar10_homogeneous` accuracy-only sweep now has real data at
+`n=4` and `n=8` (`results/client_scaling/cifar10_homogeneous/clients-{4,8}/`), 5/5 combos each, 0
+failures, run on Colab A100s 2026-08-11. Final server accuracy:
+
+| n | vanilla | global-dp nm=0.0182 | global-dp nm=0.05 | metric-privacy nm=0.0182 | metric-privacy nm=0.05 |
+|---|---------|---------------------|-------------------|--------------------------|------------------------|
+| 4 | 0.7090  | 0.6366              | 0.1828            | 0.7194                   | 0.6992                 |
+| 8 | 0.7150  | 0.6988              | 0.4958            | 0.7106                   | 0.6968                 |
+
+Metric-privacy beats global-DP at both client counts and both multipliers, with the gap widening
+sharply at `nm=0.05` (+51.6pp at `n=4`, +20.1pp at `n=8`) — global-DP at `n=4`/`nm=0.05` collapses
+to near-random (0.1828). No invalid distances or collapsed aggregations in any run. Not yet
+interpreted into a report — that's the owner's call.
+
+Operational note from this session: running two controllers in parallel raced the `colab` CLI's
+own session store (`~/.config/colab-cli/sessions.json`) — when the first run finished and removed
+its entry, the file was left as `{}`, orphaning the second run's still-live VM (alias unresolvable,
+`status` failing with "Session not found"). The run itself was fine; only local tracking was lost.
+Recovered by rebuilding the `SessionState` from the server-side assignment endpoint/token, then
+`collect --session ...` as usual. Worth staggering parallel launches or checking `sessions.json`
+after each completion.
+
+`feature/scale-controlled-redo` (Phase 1 items 1 and 2 of `docs/RESEARCH_ROADMAP.md`) merged into
+`master` 2026-08-06 and was deleted — see "What's established" below for what it left behind. Still
+not started: `fedyogi` at `n=48`, and Phase 1's remaining item (NaN/failure-mode logging).
 
 ### Currently running
 
-Nothing. Update this table whenever a machine picks up new work: add a row, edit the Status column
+| Machine | Work | Status |
+|---------|------|--------|
+| Colab A100 (via Mac laptop) | `cifar10_homogeneous`, `--clients 4` | done 2026-08-11, pushed `40168d2` |
+| Colab A100 (via Mac laptop) | `cifar10_homogeneous`, `--clients 8` | done 2026-08-11, pushed `5aa78ef` |
+
+Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
 it, so machine-to-results provenance isn't lost; see `AGENTS.md`'s "Working across machines"
 section.
