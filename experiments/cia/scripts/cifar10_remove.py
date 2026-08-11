@@ -1,10 +1,16 @@
-"""Ten-client non-IID CIFAR-10 removal-adjacency CIA runs.
+"""Non-IID CIFAR-10 removal-adjacency CIA runs at a configurable client count.
 
 Covers both removal views (IN keeps the target, OUT drops it) and all three
 privacy modes (vanilla, global-DP, metric-privacy) over the full ten-class
 ``uoft-cs/cifar10``. Homogeneous partitioning is deliberately excluded here --
 it is accuracy-only and lives in
 ``experiments/client_scaling/scripts/cifar10_homogeneous.py``.
+
+``--clients`` sets the *canonical* federation size, i.e. the partition count the
+dataset is split into. The IN view runs all of them; the OUT view runs the same
+partitioning minus the target, so it trains one client fewer. Both views keep
+the same canonical partitioning, which is what makes the target's shadow split
+identical across a matched IN/OUT pair.
 """
 
 from __future__ import annotations
@@ -28,8 +34,9 @@ from metricdp_pytorch.utils.device import resolve_device
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "results" / "cia" / "cifar10_remove"
 
-# Canonical federation size: the IN view runs all 10 clients, the OUT view runs
-# the same partitioning minus the target, i.e. 9 active clients.
+# Default canonical federation size; override with --clients. The IN view runs
+# all canonical clients, the OUT view runs the same partitioning minus the
+# target, i.e. one client fewer.
 CANONICAL_NUM_CLIENTS = 10
 TARGET_PARTITION_ID = 0
 
@@ -44,7 +51,12 @@ CHECKPOINT_ROUNDS = tuple(range(1, ROUNDS + 1))
 SHADOW_FRACTION = 0.10
 
 NOISE_STD_FRACTION = 0.20
-NOISE_MULTIPLIER = 0.01  # TODO: calibrate
+# Matches the calibrated multiplier used by the CIFAR-10 homogeneous scaling
+# sweep (experiments/client_scaling/scripts/cifar10_homogeneous.py), so CIA
+# results here sit at a noise level this repo already has accuracy data for.
+# Applied unchanged to both the IN and the OUT view of a pair, matching the
+# precedent set by the CIFAR-100 removal CIA runs.
+NOISE_MULTIPLIER = 0.0182
 
 # TODO: try increased rounds with lower epochs too
 HYPERPARAMS = Hyperparams(
@@ -61,20 +73,35 @@ def _cache_dir(config: Mapping[str, Any]) -> str | None:
     return str(config.get("data-cache-dir", "")).strip() or None
 
 
+def _canonical_clients(config: Mapping[str, Any], adjacency: str) -> int:
+    """Recover the canonical partition count from the active client count.
+
+    ``config['num-clients']`` is the number of clients actually training, which
+    is the canonical count for the IN view and one less for the OUT view.
+    Deriving it here keeps both views on one canonical partitioning without
+    threading a second client-count argument through the runner.
+    """
+    active_clients = int(config["num-clients"])
+    canonical = active_clients if adjacency == "in-remove" else active_clients + 1
+    if canonical < 2:
+        raise ValueError("Removal adjacency requires at least two canonical clients.")
+    return canonical
+
+
 def create_in_remove(config: Mapping[str, Any]) -> PartitionViewDataModule:
-    """IN view: all ten canonical partitions, target included."""
+    """IN view: every canonical partition, target included."""
     return in_remove(
         Cifar10DataModule(cache_dir=_cache_dir(config)),
-        canonical_num_partitions=CANONICAL_NUM_CLIENTS,
+        canonical_num_partitions=_canonical_clients(config, "in-remove"),
         target_partition_id=TARGET_PARTITION_ID,
     )
 
 
 def create_out_remove(config: Mapping[str, Any]) -> PartitionViewDataModule:
-    """OUT view: the same ten canonical partitions minus the target."""
+    """OUT view: the same canonical partitions minus the target."""
     return out_remove(
         Cifar10DataModule(cache_dir=_cache_dir(config)),
-        canonical_num_partitions=CANONICAL_NUM_CLIENTS,
+        canonical_num_partitions=_canonical_clients(config, "out-remove"),
         target_partition_id=TARGET_PARTITION_ID,
     )
 
@@ -103,11 +130,11 @@ def _data_module(adjacency: str) -> str:
     )
 
 
-def _active_clients(adjacency: str) -> int:
+def _active_clients(adjacency: str, canonical_num_clients: int) -> int:
     return (
-        CANONICAL_NUM_CLIENTS
+        canonical_num_clients
         if adjacency == "in-remove"
-        else CANONICAL_NUM_CLIENTS - 1
+        else canonical_num_clients - 1
     )
 
 
@@ -116,8 +143,11 @@ def build_combos(
     adjacencies: Sequence[str] = ADJACENCIES,
     privacy_modes: Sequence[str] = PRIVACY_MODES,
     seeds: Sequence[int] = SEEDS,
+    canonical_num_clients: int = CANONICAL_NUM_CLIENTS,
 ) -> list[Combo]:
     """Build the full adjacency x privacy x seed trajectory list."""
+    if canonical_num_clients < 2:
+        raise ValueError("canonical_num_clients must be at least 2.")
     for adjacency in adjacencies:
         if adjacency not in ADJACENCIES:
             raise ValueError(f"adjacency must come from {ADJACENCIES}.")
@@ -128,7 +158,7 @@ def build_combos(
     return [
         Combo(
             name_prefix=f"cifar10-{adjacency}",
-            num_clients=_active_clients(adjacency),
+            num_clients=_active_clients(adjacency, canonical_num_clients),
             partition=PARTITION_MODE,
             privacy=privacy,
             aggregation="fedavg",
@@ -161,9 +191,18 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--seed", type=int, nargs="+", default=list(SEEDS))
     parser.add_argument(
+        "--clients",
+        type=int,
+        default=CANONICAL_NUM_CLIENTS,
+        help=(
+            "Canonical federation size; the OUT view trains one client fewer "
+            f"(default: {CANONICAL_NUM_CLIENTS})."
+        ),
+    )
+    parser.add_argument(
         "--max-parallel-clients",
         type=int,
-        default=min(CANONICAL_NUM_CLIENTS, 8),  # TODO: tune per machine.
+        help="Defaults to min(clients, 8).",  # TODO: tune per machine.
     )
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--force", action="store_true")
@@ -178,16 +217,17 @@ def main() -> None:
         adjacencies=args.adjacency,
         privacy_modes=(args.privacy,),
         seeds=args.seed,
+        canonical_num_clients=args.clients,
     )
     results = run_attack(
         combos=combos,
         output_dir=output_dir / "runs",
         log_path=output_dir / "runs" / "progress.log",
-        max_parallel_clients=args.max_parallel_clients,
+        max_parallel_clients=args.max_parallel_clients or min(args.clients, 8),
         force=args.force,
         start_message=(
-            f"CIFAR-10 removal CIA chunk ({args.privacy}): "
-            f"{len(combos)} trajectories"
+            f"CIFAR-10 removal CIA chunk ({args.privacy}, "
+            f"clients={args.clients}): {len(combos)} trajectories"
         ),
         clean_data_module_factory=_clean_shadow,
         noisy_data_module_factory=_noisy_shadow,

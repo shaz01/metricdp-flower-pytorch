@@ -52,10 +52,10 @@ begins. It is best-effort only and never changes the remote job's state.
 
 Treat the first five minutes after every allocation as an attended startup
 window, especially for A100 sessions. The agent must remain in its active task
-loop for the entire five minutes: wait in intervals of no more than 60 seconds,
-then perform the check below at the five-minute deadline. Do not replace this
-with a detached shell, background terminal session, queued watcher, reminder,
-or an instruction for a later agent turn.
+loop for the entire five minutes: wait in intervals of 2.5 minutes (150
+seconds), then perform the check below at the five-minute deadline. Do not
+replace this with a detached shell, background terminal session, queued
+watcher, reminder, or an instruction for a later agent turn.
 
 At the five-minute check:
 
@@ -84,10 +84,10 @@ actively stopped or recovered the session.
 ## Monitor
 
 After a run has passed the five-minute launch watchdog with real round
-advancement and a non-idle GPU sample, use a roughly four-minute monitoring
+advancement and a non-idle GPU sample, use a 4.5-minute (270-second) monitoring
 cadence. Keep the foreground controller attached, but do not poll an otherwise
-healthy worker every minute; reserve tighter checks for the startup window,
-completion/collection, or an observed anomaly.
+healthy worker more often than that; reserve tighter checks for the startup
+window, completion/collection, or an observed anomaly.
 
 Run this from another terminal whenever a progress or GPU check is needed:
 
