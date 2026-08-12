@@ -1,16 +1,18 @@
 # Project Status
 
 **Branch:** `feature/cifar100-scaling`
-**Last updated:** 2026-08-10, CUDA workstation (`feature/cifar100-scaling` active — the 6-combo
+**Last updated:** 2026-08-12, CUDA workstation (`feature/cifar100-scaling` active — the 6-combo
 100-client/250-round accuracy sweep finished 2026-08-09 12:05, 6/6 attempted, 0 failed. The
-follow-on CIA (Client Inference Attack) experiment against those same 6 combos finished
-2026-08-10 14:59, 6/6 trajectories in both IN-remove and OUT-remove groups, 0 failures.
-Round-matched AUC computed; every combo's 95% CI includes 0.5 — no statistically significant
-result at this sample size, a known limitation of the single-seed/26-checkpoint design. Results
-committed. Multi-seed (42, 43, 44) rerun launched 2026-08-10 20:08 — seed 42 auto-skipped
-(already complete), training seeds 43/44 now, `--max-parallel-clients 7` instead of the default 16
-since GPU 1 is currently shared with another user's jobs) — see `git log` for anything more
-recent
+follow-on single-seed CIA experiment finished 2026-08-10 14:59, 6/6, 0 failures, but every combo's
+95% CI included 0.5 (underpowered). The multi-seed (42, 43, 44) rerun launched 2026-08-10 20:08,
+finished its first pass 2026-08-11 21:44 — 18/18 attempted per group but **3 failed per group**
+(6 total), all `global-dp` combos, all from genuine system-RAM OOM crashes on this shared machine
+(not a code bug — verified via traceback) hitting right at process startup during two separate
+RAM-pressure spikes. Since the analysis pools by mechanism across all 3 seeds, both `global-dp`
+mechanisms would have been dropped entirely from the report if left as-is. Retried 2026-08-12
+12:05 — resumability correctly skipped the 15 already-complete combos per group and is retraining
+only the 6 failed ones, now running with the GPU and system RAM both fully idle) — see `git log`
+for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -141,10 +143,8 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `experiments.cia.scripts.cifar100_scaling --group in` (tmux session `cia-cifar100-in`, `CUDA_VISIBLE_DEVICES=1`) | CIA IN-remove group: 6 trajectories (100 clients, target participates), 250 rounds, checkpointed at round 1 + every 10th round | done, 2026-08-10 |
-| `experiments.cia.scripts.cifar100_scaling --group out` (tmux session `cia-cifar100-out`, `CUDA_VISIBLE_DEVICES=1`) | CIA OUT-remove group: 6 trajectories (99 clients, target excluded), same schedule, concurrent with the IN group on the same GPU | done, 2026-08-10 |
-| `experiments.cia.scripts.cifar100_scaling --group in --max-parallel-clients 7` (tmux session `cia-cifar100-in-ms`, `CUDA_VISIBLE_DEVICES=1`) | Multi-seed rerun, IN-remove group: 12 new trajectories (seeds 43/44 x 6 combos; seed 42's 6 auto-skipped, already complete). `--max-parallel-clients` dropped from the default 16 to 7 because GPU 1 is now shared with another user's jobs (~14GB already in use) — confirmed both groups together settle around 25.6GB/32.76GB, ~7GB headroom | running, started 2026-08-10 20:08 |
-| `experiments.cia.scripts.cifar100_scaling --group out --max-parallel-clients 7` (tmux session `cia-cifar100-out-ms`, `CUDA_VISIBLE_DEVICES=1`) | Multi-seed rerun, OUT-remove group: 12 new trajectories (seeds 43/44 x 6 combos), same schedule, concurrent with the IN-ms group | running, started 2026-08-10 20:08 |
+| `experiments.cia.scripts.cifar100_scaling --group in` (tmux session `cia-cifar100-in-ms`, `CUDA_VISIBLE_DEVICES=1`) | Multi-seed rerun, IN-remove group first pass: 18/18 attempted, 3 failed (all `global-dp`, genuine system-RAM OOM on this shared machine, not a code bug). Relaunched at `--max-parallel-clients 16` (GPU/RAM both idle) — resumability skipped the 15 already-complete combos, retraining only the 3 that failed: `homogeneous/global-dp/seed-43`, `homogeneous/global-dp/seed-44`, `non-iid/global-dp/seed-44` | running (retry), started 2026-08-12 12:05 |
+| `experiments.cia.scripts.cifar100_scaling --group out` (tmux session `cia-cifar100-out-ms`, `CUDA_VISIBLE_DEVICES=1`) | Multi-seed rerun, OUT-remove group first pass: 18/18 attempted, 3 failed (same cause). Retrying `homogeneous/global-dp/seed-43`, `homogeneous/global-dp/seed-44`, `non-iid/global-dp/seed-43` | running (retry), started 2026-08-12 12:05 |
 
 ## What's established on `master`
 
