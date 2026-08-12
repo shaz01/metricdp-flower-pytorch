@@ -18,9 +18,9 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 `feature/eurosat-scaling` (branched from `master`) adds an accuracy sweep on EuroSAT (10-class
 satellite land-use imagery), a comparison point for `feature/cifar100-scaling`'s own sweep on a
-genuinely simpler, different-domain dataset. Code is ready; the real 6-combination sweep has not
-been launched yet — that's a separate, subsequent decision, matching how `feature/cifar100-scaling`
-launched its own sweep only after its code was reviewed.
+genuinely simpler, different-domain dataset, plus a CIA (Client Inference Attack) experiment
+against that sweep's trained models. The accuracy sweep has finished (6/6, 0 failed); the CIA
+attack code is built and tested, and both trajectory groups are now running (see below).
 
 - Data plugin (`experiments/reproduce/dataset/eurosat.py`) and model
   (`experiments/reproduce/eurosat_cnn.py`, 289,194 params, no batchnorm/buffers) are done and
