@@ -5,10 +5,14 @@ from __future__ import annotations
 import pytest
 
 from experiments.cia.scripts.eurosat_scaling import (
+    AGGREGATION,
+    DEFAULT_OUTPUT_DIR,
+    NOISE_STD_FRACTION,
     NUM_CLIENTS,
     PARTITION_MODES,
     PRIVACY_MODES,
     SEEDS,
+    SHADOW_FRACTION,
     TARGET_PARTITION_ID,
     build_combos,
     create_eurosat_in,
@@ -75,6 +79,27 @@ def test_combos_share_the_sweep_hyperparameters() -> None:
         assert combo.hyperparams.learning_rate == pytest.approx(0.001)
         assert combo.hyperparams.initialization_epochs == 20
         assert combo.model_module == "experiments.reproduce.eurosat_cnn:create_model"
+        assert combo.aggregation == "fedavg"
+
+
+def test_module_level_shadow_and_noise_std_fractions() -> None:
+    assert SHADOW_FRACTION == 0.10
+    assert NOISE_STD_FRACTION == 0.20
+
+
+def test_module_level_aggregation_is_fedavg() -> None:
+    assert AGGREGATION == "fedavg"
+
+
+def test_combo_name_prefix_matches_group() -> None:
+    for group in ("in", "out"):
+        for combo in build_combos(group):
+            assert combo.name_prefix == f"eurosat-{group}-remove"
+
+
+def test_default_output_dir_targets_results_cia_eurosat_scaling() -> None:
+    assert DEFAULT_OUTPUT_DIR.name == "cia_eurosat_scaling"
+    assert DEFAULT_OUTPUT_DIR.parent.name == "results"
 
 
 def test_combos_wire_the_correct_data_module_per_group() -> None:

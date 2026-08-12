@@ -37,14 +37,13 @@ attack code is built and tested, and both trajectory groups are now running (see
   100-round budget above was adopted (see the sweep script's own docstring/comments for the full
   derivation and the noted noise-to-signal drift over rounds, an expected consequence of
   single-early-round calibration, not a bug).
-- `results/eurosat_scaling/` currently holds exactly one file set:
-  `eurosatscale__homogeneous__global-dp__fedavg__n48__r3.{json,evaluation.json}` plus
-  `sweep_progress.log` — a **3-round smoke combo**, run only to produce a real
-  `.evaluation.json` and check its size for the gitignore decision below. This is **not** part of
-  the real sweep (which runs 100 rounds) and should not be read as a finished/representative
-  result — it exists purely as a pipeline sanity check (confirms data plugin + model + sweep
-  script + `runner.py` + `detailed_evaluation.py` all work end-to-end for EuroSAT) and as size
-  evidence. The real sweep will produce its own `r100` files alongside it.
+- Before the real sweep launched, an earlier 3-round smoke combo
+  (`eurosatscale__homogeneous__global-dp__fedavg__n48__r3.{json,evaluation.json}`) was run purely
+  as a pipeline sanity check (confirms data plugin + model + sweep script + `runner.py` +
+  `detailed_evaluation.py` all work end-to-end for EuroSAT) and to produce a real
+  `.evaluation.json` to check its size for the gitignore decision below. It's kept in
+  `results/eurosat_scaling/` for provenance, alongside `sweep_progress.log`, but was never part of
+  the real 100-round sweep and isn't a finished/representative result.
 - `.evaluation.json` gitignore check (Task 4): the smoke combo's file is 18,245,132 bytes
   (~17.4 MiB), well under the 90MB threshold, so **no `.gitignore` rule was added** — EuroSAT's
   10-class evaluation JSONs stay far under CIFAR-100's 100-class blowup risk, as expected.
@@ -67,8 +66,8 @@ CUDA_VISIBLE_DEVICES=0 uv run python -m experiments.cia.scripts.eurosat_scaling 
 CUDA_VISIBLE_DEVICES=0 uv run python -m experiments.cia.scripts.eurosat_scaling --group in --max-parallel-clients 6 > results/cia_eurosat_scaling/stdout_in.log 2>&1 &
 ```
 
-Target GPU: GPU 0 (confirmed free before launch — see Currently running table below). Both
-groups were launched this session; no result data exists yet, they were just started.
+Target GPU: GPU 0 (confirmed free before launch — see Currently running table below). Both groups
+were launched this session; see the Currently running table below for live status.
 
 ### Currently running
 

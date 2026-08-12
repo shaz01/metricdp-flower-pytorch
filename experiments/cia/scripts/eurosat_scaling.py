@@ -22,8 +22,10 @@ No weight_decay/lr_schedule: this branch is based on master, whose Hyperparams d
 neither field (feature/cifar100-scaling added them independently; this branch deliberately
 doesn't duplicate that, same decision already made for sweep_eurosat_scaling.py).
 
-Run one group at a time per attack_runner.run_attack's own not-safe-to-call-twice-against-the-
-same-report-file constraint:
+One group per process, per attack_runner.run_attack's own not-safe-to-call-twice-against-the-
+same-report-file constraint (calling it twice within one process against the same report file
+isn't safe). The two groups themselves are safe to run concurrently in separate processes, since
+each writes its own report file (cia_in.json / cia_out.json):
 
     uv run python -m experiments.cia.scripts.eurosat_scaling --group in
     uv run python -m experiments.cia.scripts.eurosat_scaling --group out
