@@ -1,30 +1,9 @@
-"""Check whether a fixed noise ratio really holds the injected noise constant.
+"""Report the noise each run actually injected, per PLAN.md's ratio system.
 
-The noise-ratio system in ``PLAN.md`` defines ``ratio = noise_multiplier /
-num_clients``.  It is built on Flower's global-DP noise rule,
-``compute_stdv(nm, clipping_norm, n) = nm * clipping_norm / n``: holding the
-ratio fixed makes that standard deviation ``ratio * clipping_norm``, i.e.
-independent of the client count, which is what makes runs at different ``n``
-comparable.
-
-Metric-privacy does not obey that rule.  It first rescales the multiplier by
-the measured maximum pairwise client-model distance ``d``
-(``metricdp_strategy.py``: ``calibrated_multiplier = noise_multiplier /
-distance``), so its standard deviation is ``nm * clipping_norm / (d * n)`` --
-smaller by a factor ``d``, and ``d`` is data-dependent and changes with client
-count and partitioning.  A fixed ratio therefore pins global-DP's noise but not
-metric-privacy's, which is a candidate explanation for metric-privacy's
-accuracy advantage shrinking (and, on the 4-class runs, reversing) as ``n``
-grows.
-
-This script quantifies that from the diagnostics already recorded in every run
-JSON -- ``metric-dp-distance``, ``metric-dp-noise-stdv``,
-``global-dp-noise-stdv``, ``dp-noise-to-signal-ratio`` -- rather than
-re-running anything.  For each run it reports the configured ratio, the noise
-standard deviation a global-DP run would use at that ratio, the standard
-deviation actually injected, and, for metric-privacy, the *effective* ratio
-``ratio / d`` -- the ratio a global-DP run would need in order to inject the
-same noise.
+Reads recorded per-round diagnostics from run JSONs; runs nothing. Per config:
+the ratio (``nm / n``), ``ratio * clipping_norm`` (what global-DP injects at
+it), the noise standard deviation actually injected, the mean ``d``, and
+``ratio / d``.
 
 Usage:
     uv run python -m experiments.client_scaling.scripts.noise_scaling_diagnostics
@@ -224,8 +203,6 @@ def format_table(summary: list[dict[str, Any]]) -> str:
     """Render the per-config view (vanilla omitted: it injects no noise)."""
     lines = [
         "Configured vs. realized noise scale, averaged over repeats of each config",
-        "(global-DP stdv = ratio x clipping_norm, constant by construction;",
-        " metric-privacy divides by the measured distance d, so it is not)",
         "",
         f"{'privacy':15s} {'source':28s} {'part':11s} {'n':>4} {'ratio':>9} "
         f"{'gDP stdv':>9} {'obs stdv':>9} {'d':>7} {'eff.ratio':>10}",
