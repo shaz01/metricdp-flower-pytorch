@@ -23,8 +23,9 @@ No weight_decay/lr_schedule: feature/cifar100-scaling (still active, unmerged) a
 branch is based on master, which doesn't have it -- Hyperparams here only has clipping_norm,
 rounds, local_epochs, batch_size, learning_rate, initialization_epochs. Decision (project owner,
 2026-08-12): build on master's actual fields rather than duplicate that feature independently.
-weight_decay therefore runs at runner.py's default (0.0); lr_schedule="none" was already
-CIFAR-100's own value, so that one is unaffected.
+This branch's runner.py has no weight-decay flag/concept at all, so training just uses PyTorch
+Adam's own default (weight_decay=0.0), not a value runner.py chose; lr_schedule="none" was
+already CIFAR-100's own value, so that one is unaffected.
 """
 
 from __future__ import annotations
@@ -58,12 +59,15 @@ NOISE_MULTIPLIER = 0.03710712210729851  # calibrated for this model's 289,194 pa
 # param_count = 289,194, giving target_noise_multiplier = signal_norm * num_sampled_clients /
 # (clipping_norm * sqrt(param_count)) = 0.03710712210729851.
 #
-# Known limitation (observed, not re-calibrated against): dp-noise-to-signal-ratio was ~1 (0.27)
-# at the round-3 calibration point but drifted up to 2.63 by round 20 of the 20-round verification
-# run below, because the signal update norm naturally shrinks as training converges while the
-# noise multiplier stays fixed at its early-round calibration. This is expected behavior for a
-# single-early-round calibration, not a bug -- training still converged cleanly over the full
-# 20 rounds (loss 2.275->0.703, accuracy 19.5%->74.4%), so the value was kept as calibrated.
+# Known limitation (observed, not re-calibrated against): dp-noise-to-signal-ratio was ~1
+# (0.998) at the round-3 calibration point but drifted up to 2.63 by round 20 of the 20-round
+# verification run below. The raw per-round signal update norm is noisy early in training (round
+# 1: 1.558, round 2: 3.277, round 3: 2.083 -- a 2.1x swing between rounds 1 and 2 alone) while the
+# noise multiplier stays fixed at its early-round calibration, so the drift only becomes visible
+# over the full 20-round window rather than as a smooth round-to-round decline. This is expected
+# behavior for a single-early-round calibration, not a bug -- training still converged cleanly
+# over the full 20 rounds (loss 2.275->0.703, accuracy 19.5%->74.4%; that trend was smooth even
+# though the raw signal norm wasn't), so the value was kept as calibrated.
 
 MAX_PARALLEL_CLIENTS = 16
 OUTPUT_DIR = PROJECT_ROOT / "results" / "eurosat_scaling"
