@@ -1,8 +1,8 @@
 # Project Status
 
-**Branch:** `master`
-**Last updated:** 2026-08-06, CUDA workstation (`feature/scale-controlled-redo` merged and
-closed) — see `git log` for anything more recent
+**Branch:** `feature/eurosat-scaling`
+**Last updated:** 2026-08-12, CUDA workstation (EuroSAT accuracy-sweep code ready, sweep not yet
+launched) — see `git log` for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -15,12 +15,40 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-Nothing currently running. `feature/scale-controlled-redo` (Phase 1 items 1 and 2 of
-`docs/RESEARCH_ROADMAP.md`) merged into `master` 2026-08-06 and was deleted — see "What's
-established" below for what it left behind. The natural next steps, not yet started: `fedyogi` at
-`n=48` (the redo's matrix only covers `n=4/8` for `fedyogi`), and Phase 1's remaining item (NaN/
-failure-mode logging in `runner.py`, motivated directly by the zero-norm-update crashes found
-during the redo). After that, Phase 2 (mechanism redesign) is the next major phase.
+`feature/eurosat-scaling` (branched from `master`) adds an accuracy sweep on EuroSAT (10-class
+satellite land-use imagery), a comparison point for `feature/cifar100-scaling`'s own sweep on a
+genuinely simpler, different-domain dataset. Code is ready; the real 6-combination sweep has not
+been launched yet — that's a separate, subsequent decision, matching how `feature/cifar100-scaling`
+launched its own sweep only after its code was reviewed.
+
+- Data plugin (`experiments/reproduce/dataset/eurosat.py`) and model
+  (`experiments/reproduce/eurosat_cnn.py`, 289,194 params, no batchnorm/buffers) are done and
+  tested (9 + 4 tests).
+- Sweep script (`experiments/eurosat_scaling/sweep_eurosat_scaling.py`, 7 tests) targets
+  `n=48` clients only (not CIFAR-100's `n=100` — EuroSAT's 21,600 train images would starve
+  per-client data further at 100 clients), `homogeneous`/`non-iid` partitions x
+  `vanilla`/`global-dp`/`metric-privacy` x `fedavg`, 100 rounds, `noise_multiplier =
+  0.03710712210729851`. That value was calibrated empirically from a measured post-clip/
+  post-aggregation signal-update norm of `2.0786466966688715` (round 3, homogeneous/global-dp/
+  n=48), following the same target-noise-to-signal-ratio-of-1 formula as CIFAR-100's sweep.
+- A real 20-round verification run (homogeneous/global-dp/n=48) confirmed healthy convergence with
+  the calibrated value — loss 2.275→0.703, accuracy 19.5%→74.4%, no freeze — which is why the
+  100-round budget above was adopted (see the sweep script's own docstring/comments for the full
+  derivation and the noted noise-to-signal drift over rounds, an expected consequence of
+  single-early-round calibration, not a bug).
+- `results/eurosat_scaling/` currently holds exactly one file set:
+  `eurosatscale__homogeneous__global-dp__fedavg__n48__r3.{json,evaluation.json}` plus
+  `sweep_progress.log` — a **3-round smoke combo**, run only to produce a real
+  `.evaluation.json` and check its size for the gitignore decision below. This is **not** part of
+  the real sweep (which runs 100 rounds) and should not be read as a finished/representative
+  result — it exists purely as a pipeline sanity check (confirms data plugin + model + sweep
+  script + `runner.py` + `detailed_evaluation.py` all work end-to-end for EuroSAT) and as size
+  evidence. The real sweep will produce its own `r100` files alongside it.
+- `.evaluation.json` gitignore check (Task 4): the smoke combo's file is 18,245,132 bytes
+  (~17.4 MiB), well under the 90MB threshold, so **no `.gitignore` rule was added** — EuroSAT's
+  10-class evaluation JSONs stay far under CIFAR-100's 100-class blowup risk, as expected.
+- Not yet started: launching the real 6-combination sweep. Launch command:
+  `uv run python -m experiments.eurosat_scaling.sweep_eurosat_scaling`.
 
 ### Currently running
 
