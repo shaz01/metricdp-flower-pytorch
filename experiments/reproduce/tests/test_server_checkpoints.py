@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import torch
 from flwr.app import ArrayRecord, MetricRecord
 from flwr.serverapp.strategy import Result
@@ -81,3 +82,35 @@ def test_run_seeds_fallback_model_initialization(monkeypatch) -> None:
     assert all(
         torch.equal(first_state[key], second_state[key]) for key in first_state
     )
+
+
+def test_require_trained_arrays_raises_on_empty_result_arrays() -> None:
+    """Flower's Strategy.start() only ever assigns result.arrays inside its
+    aggregation-succeeded branch (flwr/serverapp/strategy/strategy.py's start():
+    `if agg_arrays is not None: result.arrays = agg_arrays`) -- it never falls
+    back to initial_arrays. If literally every round's aggregate_train call is
+    skipped (e.g. DifferentialPrivacyServerSideFixedClipping discards the whole
+    round on any client error, and every round hits a client error under
+    sustained GPU pressure), result.arrays stays at Result()'s bare empty
+    default for the entire run. Observed live: a CIA CIFAR-100 combo where all
+    247 visible rounds logged "Some clients reported errors. Skipping
+    aggregation." -- its leftover checkpoint was a genuine 0-key state_dict
+    (2.8KB vs the ~18.5MB a real one is), which crashed model.load_state_dict()
+    deep inside detailed_evaluation.py with a confusing "Missing key(s)"
+    RuntimeError instead of a clear, actionable message.
+    """
+    from experiments.reproduce.server import _require_trained_arrays
+
+    empty_result = Result()
+
+    with pytest.raises(RuntimeError, match="ever successfully aggregated"):
+        _require_trained_arrays(empty_result, run_name="some-run")
+
+
+def test_require_trained_arrays_passes_on_nonempty_result_arrays() -> None:
+    from experiments.reproduce.server import _require_trained_arrays
+
+    result = Result()
+    result.arrays = ArrayRecord({"weight": torch.tensor([1.0])})
+
+    _require_trained_arrays(result, run_name="some-run")
