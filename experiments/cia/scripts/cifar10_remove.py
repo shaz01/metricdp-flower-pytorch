@@ -51,11 +51,9 @@ CHECKPOINT_ROUNDS = tuple(range(1, ROUNDS + 1))
 SHADOW_FRACTION = 0.10
 
 NOISE_STD_FRACTION = 0.20
-# Matches the calibrated multiplier used by the CIFAR-10 homogeneous scaling
-# sweep (experiments/client_scaling/scripts/cifar10_homogeneous.py), so CIA
-# results here sit at a noise level this repo already has accuracy data for.
-# Applied unchanged to both the IN and the OUT view of a pair, matching the
-# precedent set by the CIFAR-100 removal CIA runs.
+# Retained as the historical default.  A fixed ratio instead uses
+# ``ratio * active_clients`` separately for the IN and OUT views, preserving
+# the global-DP noise scale despite removal reducing the OUT client count.
 NOISE_MULTIPLIER = 0.0182
 
 # TODO: try increased rounds with lower epochs too
@@ -144,6 +142,7 @@ def build_combos(
     privacy_modes: Sequence[str] = PRIVACY_MODES,
     seeds: Sequence[int] = SEEDS,
     canonical_num_clients: int = CANONICAL_NUM_CLIENTS,
+    noise_ratio: float | None = None,
 ) -> list[Combo]:
     """Build the full adjacency x privacy x seed trajectory list."""
     if canonical_num_clients < 2:
@@ -154,6 +153,8 @@ def build_combos(
     for privacy in privacy_modes:
         if privacy not in PRIVACY_MODES:
             raise ValueError(f"privacy mode must come from {PRIVACY_MODES}.")
+    if noise_ratio is not None and noise_ratio <= 0:
+        raise ValueError("noise_ratio must be positive when provided.")
 
     return [
         Combo(
@@ -163,7 +164,11 @@ def build_combos(
             privacy=privacy,
             aggregation="fedavg",
             seed=seed,
-            noise_multiplier=NOISE_MULTIPLIER,
+            noise_multiplier=(
+                NOISE_MULTIPLIER
+                if noise_ratio is None
+                else noise_ratio * _active_clients(adjacency, canonical_num_clients)
+            ),
             hyperparams=HYPERPARAMS,
             data_module=_data_module(adjacency),
             model_module="experiments.reproduce.cifar10_cnn:create_model",
@@ -200,6 +205,14 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--noise-ratio",
+        type=float,
+        help=(
+            "Fixed noise ratio: each view uses ratio times its active client "
+            "count (the historical calibrated multiplier is the default)."
+        ),
+    )
+    parser.add_argument(
         "--max-parallel-clients",
         type=int,
         help="Defaults to min(clients, 8).",  # TODO: tune per machine.
@@ -218,6 +231,7 @@ def main() -> None:
         privacy_modes=(args.privacy,),
         seeds=args.seed,
         canonical_num_clients=args.clients,
+        noise_ratio=args.noise_ratio,
     )
     results = run_attack(
         combos=combos,
@@ -227,7 +241,8 @@ def main() -> None:
         force=args.force,
         start_message=(
             f"CIFAR-10 removal CIA chunk ({args.privacy}, "
-            f"clients={args.clients}): {len(combos)} trajectories"
+            f"clients={args.clients}, noise_ratio={args.noise_ratio}): "
+            f"{len(combos)} trajectories"
         ),
         clean_data_module_factory=_clean_shadow,
         noisy_data_module_factory=_noisy_shadow,

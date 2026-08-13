@@ -51,3 +51,20 @@ def test_both_views_resolve_the_same_canonical_partitioning(canonical: int) -> N
 def test_combos_carry_the_calibrated_noise_multiplier() -> None:
     combos = cifar10_remove.build_combos(canonical_num_clients=8)
     assert {c.noise_multiplier for c in combos} == {0.0182}
+
+
+def test_fixed_ratio_scales_by_active_client_count() -> None:
+    combos = cifar10_remove.build_combos(
+        canonical_num_clients=8,
+        privacy_modes=("global-dp",),
+        noise_ratio=0.00625,
+    )
+    by_adjacency = {combo.name_prefix: combo for combo in combos}
+
+    assert by_adjacency["cifar10-in-remove"].noise_multiplier == pytest.approx(0.05)
+    assert by_adjacency["cifar10-out-remove"].noise_multiplier == pytest.approx(0.04375)
+
+
+def test_fixed_ratio_must_be_positive() -> None:
+    with pytest.raises(ValueError, match="noise_ratio"):
+        cifar10_remove.build_combos(noise_ratio=0)
