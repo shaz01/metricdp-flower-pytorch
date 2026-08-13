@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import random
 from collections.abc import Callable, Iterable, Sequence
 
@@ -73,6 +74,7 @@ def train_with_adam(
     *,
     epochs: int,
     learning_rate: float = PAPER_ADAM_LEARNING_RATE,
+    weight_decay: float = 0.0,
     device: torch.device | None = None,
     proximal_mu: float = 0.0,
 ) -> list[float]:
@@ -85,6 +87,8 @@ def train_with_adam(
         raise ValueError("epochs must be at least one.")
     if learning_rate <= 0:
         raise ValueError("learning_rate must be positive.")
+    if weight_decay < 0:
+        raise ValueError("weight_decay must be non-negative.")
     if proximal_mu < 0:
         raise ValueError("proximal_mu must be non-negative.")
     if device is None:
@@ -92,7 +96,9 @@ def train_with_adam(
 
     model.to(device)
     initial_parameters = [parameter.detach().clone() for parameter in model.parameters()]
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=learning_rate, weight_decay=weight_decay
+    )
     epoch_losses: list[float] = []
     for _ in range(epochs):
         model.train()
@@ -117,6 +123,27 @@ def train_with_adam(
             raise ValueError("The validation loader must not be empty.")
         epoch_losses.append(total_loss / examples)
     return epoch_losses
+
+
+def cosine_decayed_lr(
+    base_lr: float,
+    server_round: int,
+    num_rounds: int,
+    *,
+    min_fraction: float = 0.01,
+) -> float:
+    """Cosine-decay ``base_lr`` from round 1 to ``num_rounds``, floored at
+    ``min_fraction * base_lr`` rather than zero (a literal zero LR at the
+    final round would freeze training entirely for that round).
+
+    ``num_rounds <= 1`` returns ``base_lr`` unchanged -- there's no
+    trajectory to decay over a single-round run.
+    """
+    if num_rounds <= 1:
+        return base_lr
+    progress = min(max((server_round - 1) / (num_rounds - 1), 0.0), 1.0)
+    decay = 0.5 * (1.0 + math.cos(math.pi * progress))
+    return base_lr * (min_fraction + (1.0 - min_fraction) * decay)
 
 
 def create_initial_model(

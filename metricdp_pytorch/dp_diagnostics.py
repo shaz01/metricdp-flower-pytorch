@@ -45,8 +45,8 @@ def clipping_diagnostics(
         # during a global-dp round. Skip it exactly like the non-ArrayRecord case
         # below already does, so a single bad client degrades the round instead of
         # taking down the run. (Found and fixed on feature/cifar100-scaling after
-        # two CIA retry combos crashed this way; ported here since EuroSAT's
-        # global-dp combos share this exact code path.)
+        # two CIA retry combos crashed this way; ported to feature/eurosat-scaling
+        # since EuroSAT's global-dp combos share this exact code path.)
         if not reply.has_content():
             continue
         model = reply.content.get(arrayrecord_key)

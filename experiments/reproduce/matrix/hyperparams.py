@@ -15,3 +15,5 @@ class Hyperparams:
     batch_size: int
     learning_rate: float
     initialization_epochs: int
+    weight_decay: float = 0.0
+    lr_schedule: str = "none"

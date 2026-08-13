@@ -106,3 +106,64 @@ def test_proximal_term_uses_mean_squared_difference_over_all_parameters() -> Non
 
     # sum of squares = 3^2 = 9, over 4 total parameters -> mean = 2.25
     assert term.item() == pytest.approx(2.25, abs=1e-6)
+
+
+def test_adam_uses_weight_decay_when_given() -> None:
+    model = nn.Sequential(nn.Linear(2, 2), nn.Softmax(dim=1))
+    captured_optimizers: list[torch.optim.Optimizer] = []
+    real_adam = torch.optim.Adam
+
+    def spy_adam(params, **kwargs):
+        optimizer = real_adam(params, **kwargs)
+        captured_optimizers.append(optimizer)
+        return optimizer
+
+    import experiments.reproduce.paper_training as module
+
+    original_adam = module.torch.optim.Adam
+    module.torch.optim.Adam = spy_adam
+    try:
+        module.train_with_adam(
+            model,
+            _tiny_loader(),
+            epochs=1,
+            learning_rate=0.01,
+            weight_decay=0.0005,
+            device=torch.device("cpu"),
+        )
+    finally:
+        module.torch.optim.Adam = original_adam
+
+    assert len(captured_optimizers) == 1
+    assert captured_optimizers[0].defaults["weight_decay"] == pytest.approx(0.0005)
+
+
+def test_adam_defaults_to_zero_weight_decay() -> None:
+    """Every existing caller that doesn't pass weight_decay must keep
+    getting PyTorch's un-regularized Adam, exactly as before this change."""
+    model = nn.Sequential(nn.Linear(2, 2), nn.Softmax(dim=1))
+    losses = paper_training.train_with_adam(
+        model,
+        _tiny_loader(),
+        epochs=1,
+        learning_rate=0.01,
+        device=torch.device("cpu"),
+    )
+    assert len(losses) == 1  # smoke check that the default path still runs
+
+
+def test_cosine_decayed_lr_starts_near_base_and_ends_at_floor() -> None:
+    base_lr = 0.001
+    num_rounds = 20
+
+    first = paper_training.cosine_decayed_lr(base_lr, 1, num_rounds)
+    last = paper_training.cosine_decayed_lr(base_lr, num_rounds, num_rounds)
+    middle = paper_training.cosine_decayed_lr(base_lr, 10, num_rounds)
+
+    assert first == pytest.approx(base_lr, rel=1e-6)
+    assert last == pytest.approx(base_lr * 0.01, rel=1e-6)
+    assert base_lr * 0.01 < middle < base_lr
+
+
+def test_cosine_decayed_lr_handles_single_round_run() -> None:
+    assert paper_training.cosine_decayed_lr(0.001, 1, 1) == pytest.approx(0.001)

@@ -98,33 +98,6 @@ mode.
 \toprule
 Partition & Privacy & Clean AUC & Clean CI95 & Noisy AUC & Noisy CI95 \\
 \midrule
-homogeneous & vanilla & 0.872 & 0.654--0.813 & 0.641 & 0.605--0.770 \\
-homogeneous & metric-privacy & 0.795 & 0.466--0.653 & 0.756 & 0.501--0.684 \\
-non-iid & vanilla & 0.744 & 0.582--0.752 & 0.667 & 0.624--0.782 \\
-non-iid & metric-privacy & 0.538 & 0.437--0.636 & 0.641 & 0.536--0.726 \\
-homogeneous & global-dp & \multicolumn{4}{c}{in progress} \\
-non-iid & global-dp & \multicolumn{4}{c}{in progress} \\
-\bottomrule
-\end{tabular}
-\caption*{Round-matched AUC (0.5 = no leakage, 1.0 = perfect leakage), pooled across 3 seeds.
-AUC/CI95 columns are the round-matched value and the pooled-AUC 95\% bootstrap interval. Both
-\code{global-dp} rows are still training (retry in progress on a contended shared GPU) and are
-excluded from this table's scoring until complete.}
-\end{table}
-
-\noindent
-Leakage is highest for \code{homogeneous/vanilla} (0.872) and lowest for
-\code{non-iid/metric-privacy} (0.538, near the 0.5 no-leakage line); metric-privacy visibly
-reduces the round-matched AUC relative to vanilla in both partition modes.
-
-\section*{CIFAR-100 CIA, Seed 42 Only}
-
-\begin{table}[h!]
-\centering
-\begin{tabular}{llrrrr}
-\toprule
-Partition & Privacy & Clean AUC & Clean CI95 & Noisy AUC & Noisy CI95 \\
-\midrule
 homogeneous & vanilla & 0.846 & 0.413--0.726 & 0.423 & 0.223--0.531 \\
 homogeneous & global-dp & 0.731 & 0.399--0.714 & 0.731 & 0.470--0.780 \\
 homogeneous & metric-privacy & 0.615 & 0.358--0.672 & 0.654 & 0.476--0.783 \\
@@ -133,16 +106,17 @@ non-iid & global-dp & 0.692 & 0.365--0.679 & 0.654 & 0.496--0.796 \\
 non-iid & metric-privacy & 0.654 & 0.365--0.680 & 0.615 & 0.435--0.746 \\
 \bottomrule
 \end{tabular}
-\caption*{Round-matched AUC, seed 42 only (26 round-matched pairs per combo), not pooled with
-seeds 43/44. Included because seed 42 is the only seed complete for all 6 combos right now --
-the \code{global-dp} rows above are still missing seeds 43/44 and excluded from that table's
-3-seed pooling until they finish.}
+\caption*{Round-matched AUC (0.5 = no leakage, 1.0 = perfect leakage), seed 42 only (26
+round-matched pairs per combo). AUC/CI95 columns are the round-matched value and the pooled-AUC
+95\% bootstrap interval. Seeds 43/44 were dropped (persistent GPU contention on this large
+100-client/4.6M-parameter model prevented a full 3-seed run from completing).}
 \end{table}
 
 \noindent
-On seed 42 alone, both \code{global-dp} rows already show real signal (0.731 and 0.692
-round-matched AUC, homogeneous/non-iid) comparable to or above their vanilla counterparts on this
-seed; this is a single-seed reading and may shift once seeds 43/44 complete and get pooled in.
+Leakage is highest for \code{homogeneous/vanilla} (0.846) and lowest for
+\code{non-iid/vanilla} (0.500, exactly the no-leakage line); both DP mechanisms sit in between,
+with \code{global-dp} showing more leakage than \code{metric-privacy} in every partition/shadow
+combination on this seed.
 
 \section*{EuroSAT Accuracy Sweep}
 

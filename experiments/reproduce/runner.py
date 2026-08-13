@@ -66,6 +66,13 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--local-epochs", type=int, required=True)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=0.001)
+    parser.add_argument("--weight-decay", type=float, default=0.0)
+    parser.add_argument(
+        "--lr-schedule",
+        choices=("none", "cosine"),
+        default="none",
+        help="none keeps a fixed --learning-rate; cosine decays it per round",
+    )
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--noise-multiplier", type=float, required=True)
     parser.add_argument("--clipping-norm", type=float, required=True)
@@ -161,6 +168,8 @@ def _validate(args: argparse.Namespace) -> None:
         raise ValueError("fraction-evaluate must be in (0, 1].")
     if args.rounds < 1 or args.local_epochs < 1:
         raise ValueError("rounds and local-epochs must be positive.")
+    if args.weight_decay < 0:
+        raise ValueError("weight-decay must be non-negative.")
     if len(set(args.checkpoint_rounds)) != len(args.checkpoint_rounds):
         raise ValueError("checkpoint-rounds must not contain duplicates.")
     if any(round_number < 1 or round_number > args.rounds for round_number in args.checkpoint_rounds):
@@ -226,6 +235,8 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
             "num-server-rounds": rounds,
             "local-epochs": local_epochs,
             "learning-rate": args.learning_rate,
+            "weight-decay": args.weight_decay,
+            "lr-schedule": args.lr_schedule,
             "batch-size": args.batch_size,
             "initialization-batch-size": args.initialization_batch_size,
             "initialization-epochs": initialization_epochs,

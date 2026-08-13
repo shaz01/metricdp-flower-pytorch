@@ -21,6 +21,17 @@ from metricdp_pytorch.dp_diagnostics import (
     signal_to_noise_diagnostics,
 )
 
+# Full per-round pairwise-distance/client-id lists are diagnostic-only --
+# the calibration itself only ever uses their max/min/median/mean/count
+# (all of which stay in the round metrics regardless of client count). But
+# the raw lists grow as C(num_clients, 2), and past this threshold that
+# means 8,128+ pairs x 3 lists x every round, ballooning a single run's
+# JSON past GitHub's 100MB push limit (measured ~230-400MB at 256 clients /
+# 120 rounds during the CIFAR-100 client-scaling experiment). Above this
+# many clients, omit the raw lists and keep only the summary statistics.
+MAX_CLIENTS_FOR_PAIRWISE_LOGGING = 64
+
+
 def pairwise_model_distances(models: Sequence[ArrayRecord]) -> list[float]:
     """Return every pairwise mean layer-wise Euclidean distance between models.
 
@@ -185,9 +196,6 @@ class MetricPrivacyServerSideFixedClipping(
         )
         diagnostics.update(
             {
-                "metric-dp-pairwise-distances": distances,
-                "metric-dp-pairwise-client-i": pair_client_i,
-                "metric-dp-pairwise-client-j": pair_client_j,
                 "metric-dp-distance-min": float(np.min(distances)),
                 "metric-dp-distance-median": float(np.median(distances)),
                 "metric-dp-distance-mean": float(np.mean(distances)),
@@ -196,6 +204,14 @@ class MetricPrivacyServerSideFixedClipping(
                 "metric-dp-distance-invalid": 1.0 if distance_invalid else 0.0,
             }
         )
+        if len(client_ids) <= MAX_CLIENTS_FOR_PAIRWISE_LOGGING:
+            diagnostics.update(
+                {
+                    "metric-dp-pairwise-distances": distances,
+                    "metric-dp-pairwise-client-i": pair_client_i,
+                    "metric-dp-pairwise-client-j": pair_client_j,
+                }
+            )
 
         try:
             aggregated_arrays, aggregated_metrics = super().aggregate_train(

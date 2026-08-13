@@ -77,6 +77,7 @@ def test_train_uses_paper_epochs_adam_config_and_fedprox(
         *,
         epochs,
         learning_rate,
+        weight_decay,
         device,
         proximal_mu,
     ):
@@ -86,6 +87,7 @@ def test_train_uses_paper_epochs_adam_config_and_fedprox(
             {
                 "epochs": epochs,
                 "learning_rate": learning_rate,
+                "weight_decay": weight_decay,
                 "proximal_mu": proximal_mu,
             }
         )
@@ -99,7 +101,7 @@ def test_train_uses_paper_epochs_adam_config_and_fedprox(
     reply = paper_client.train(_request("train", proximal_mu=0.5), _context())
 
     assert calls == [
-        {"epochs": 5, "learning_rate": 0.001, "proximal_mu": 0.5}
+        {"epochs": 5, "learning_rate": 0.001, "weight_decay": 0.0, "proximal_mu": 0.5}
     ]
     assert seeds == [43]
     assert reply.content["metrics"]["train_loss"] == 0.6

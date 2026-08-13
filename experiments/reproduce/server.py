@@ -84,6 +84,32 @@ def _runtime_metadata() -> dict[str, Any]:
     }
 
 
+def _require_trained_arrays(result: Result, *, run_name: str) -> None:
+    """Raise a clear error if this run never produced a trained model.
+
+    Flower's own Strategy.start() only assigns result.arrays inside its
+    aggregation-succeeded branch (`if agg_arrays is not None: result.arrays =
+    agg_arrays`) -- it never falls back to initial_arrays. If every single
+    round's aggregate_train call is skipped (e.g. Flower's own
+    DifferentialPrivacyServerSideFixedClipping.aggregate_train discards the
+    whole round on any client error, and every round hits a client error
+    under sustained GPU pressure), result.arrays stays at Result()'s bare
+    empty default for the entire run -- not even the initial model.
+    Downstream code (result.arrays.to_torch_state_dict() then
+    model.load_state_dict(state_dict)) would otherwise crash on this with a
+    confusing "Missing key(s) in state_dict" RuntimeError that gives no hint
+    the real problem is zero successful training rounds, not a code bug.
+    """
+    if not result.arrays:
+        raise RuntimeError(
+            f"{run_name}: no round in this run ever successfully aggregated "
+            "(result.arrays is empty). This happens when every single "
+            "round's aggregation was skipped due to client errors -- check "
+            "for sustained client failures (e.g. GPU OOM) throughout the "
+            "run rather than retrying blindly."
+        )
+
+
 def checkpoint_model_path(output_dir: Path, run_name: str, round_number: int) -> Path:
     """Return the model-checkpoint path for one aggregated server round."""
     return output_dir / f"{run_name}.round-{round_number}.pt"
@@ -230,6 +256,8 @@ def main(grid: Grid, context: Context) -> None:
             "rounds": int(config["num-server-rounds"]),
             "local_epochs": int(config.get("local-epochs", 5)),
             "batch_size": int(config.get("batch-size", 32)),
+            "weight_decay": float(config.get("weight-decay", 0.0)),
+            "lr_schedule": str(config.get("lr-schedule", "none")),
             "initialization_batch_size": int(
                 config.get("initialization-batch-size", 32)
             ),
@@ -261,6 +289,7 @@ def main(grid: Grid, context: Context) -> None:
         evaluation_path = destination / f"{run_name}.evaluation.json"
         predictions_path = destination / f"{run_name}.predictions.npz"
         checkpoint_path = destination / f"{run_name}.pt"
+        _require_trained_arrays(result, run_name=str(run_name))
         state_dict = result.arrays.to_torch_state_dict()
 
         # Always checkpoint before evaluating, regardless of --save-model:

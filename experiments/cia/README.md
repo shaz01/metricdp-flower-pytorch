@@ -36,14 +36,26 @@ module, without duplicating shadow-split logic.
 
 ## Running the first-round attack
 
+`experiments.cia.scripts.runner` has never existed in this repo (verified with
+`git log --all -- experiments/cia/scripts/runner.py`, which returns no commits). The corrected
+Table 9 partition and shadow-loss comparison described above are exercised today by
+`experiments/cia/scripts/planned_runs.py`'s Alzheimer groups, which checkpoint every round from 1
+through 20 (rather than training a single isolated round) for the 3-client, non-IID, FedAvg
+matrix:
+
 ```bash
-uv run python -m experiments.cia.scripts.runner --output-dir results/cia/first_round
+uv run python -m experiments.cia.scripts.planned_runs --group alzheimer-in-remove \
+  --output-dir results/planned_runs/alzheimer/in_remove
+uv run python -m experiments.cia.scripts.planned_runs --group alzheimer-out-remove \
+  --output-dir results/planned_runs/alzheimer/out_remove
 ```
 
-This takes a while: 18 real training runs, each downloading/reusing the
-cached Alzheimer MRI dataset and training 3 clients for 20 local epochs.
-Results are written to `<output-dir>/first_round_cia.json` and printed to
-stdout.
+Each group runs 9 real training runs (3 privacy modes x 3 seeds), downloading/reusing the cached
+Alzheimer MRI dataset. Results are written to `<output-dir>/<group-name>/cia.json`; the
+`server_round == 1` rows are the first-round, single-shot values Tables 9-12 describe. Committed
+results already exist at
+`results/planned_runs/alzheimer/in_remove/alzheimer-in-remove/cia.json` and
+`results/planned_runs/alzheimer/out_remove/alzheimer-out-remove/cia.json`.
 
 ## Multi-round CIA (Table 13)
 
@@ -63,30 +75,38 @@ against the 20 OUT scores, and its 95% interval is a stratified percentile
 bootstrap. Accuracy and weighted F1 are the aggregated client-test metrics,
 reported as mean and population standard deviation over rounds 16-20.
 
-```bash
-uv run python -m experiments.cia.scripts.multi_round
-```
-
-Outputs go to `results/cia/multi_round/`. The runner caches evaluated
-trajectories, atomically resumes completed privacy modes, and deletes the 20
-large model checkpoints after extracting each trajectory.
+No `scripts/multi_round.py` runner has ever existed in this repo (verified against every
+branch's history) -- the paragraphs above describe the intended protocol, and the AUC-scoring
+math they refer to is real and implemented in
+`experiments/cia/reports/build_alzheimer_cia_report.py` (`auc`, `pooled_auc`,
+`round_matched_auc`, `attack_scores`), but nothing ever wired it to an actual
+training/checkpointing runner until `experiments/cia/scripts/cifar100_scaling.py` (see "CIFAR-100
+multi-round CIA" below), which now trains three seeds (42, 43, 44) matching this section's protocol.
 
 ## 48-client checkpoint comparison
 
-The scalable CIA experiment now lives in `experiments/cia/scripts/client_scaling.py`.
-It trains each 48-client trajectory once for 20 rounds with the concluded
+The scalable CIA experiment originally lived in `experiments/cia/client_scaling.py`; that file
+was deleted 2026-08-03 during the `experiments/cia/scripts/` reorganization and never replaced,
+though its result data (`results/cia_client_scaling/`) is still committed. Its protocol -- one
+trajectory per combo (target participates), shadow-vs-test loss compared at "first-round" and
+"post-convergence" checkpoints -- is reconstructed here from that data rather than from surviving
+code.
+It trained each 48-client trajectory once for 20 rounds with the concluded
 client-scaling settings (`local-epochs=5`, `noise-multiplier=0.05`) and
-retains checkpoints at rounds 1 and 20. Both attacks therefore evaluate the
+retained checkpoints at rounds 1 and 20. Both attacks therefore evaluated the
 same model trajectory rather than independently training a one-round model.
+This is historical -- the command below no longer works, since the module
+that ran it was deleted:
 
 ```bash
+# historical -- experiments/cia/scripts/client_scaling.py no longer exists
 uv run python -m experiments.cia.scripts.client_scaling \
   --output-dir results/cia_client_scaling
 ```
 
-Its matrix covers homogeneous/non-IID partitions, all three privacy modes,
-and FedAvg/FedYogi. Results include the server round, client count, partition,
-noise multiplier, shadow fraction, and realized shadow size, and are written to
+Its matrix covered homogeneous/non-IID partitions, all three privacy modes,
+and FedAvg/FedYogi. Results included the server round, client count, partition,
+noise multiplier, shadow fraction, and realized shadow size, and were written to
 `results/cia_client_scaling/cia_client_scaling.json`.
 
 ## Comparing against the paper
@@ -94,8 +114,9 @@ noise multiplier, shadow fraction, and realized shadow size, and are written to
 The paper's Table 10 (FedAvg) and Table 11 (FedYogi) report, per privacy
 mode: aggregated test loss, target shadow loss, and the relative
 difference. Table 12 reports test loss only, across all six aggregation
-strategies. Compare the corresponding rows in
-`experiments/cia/results/first_round_cia.json` against those tables. Exact
+strategies. Compare the `server_round == 1` rows in
+`results/planned_runs/alzheimer/in_remove/alzheimer-in-remove/cia.json` (see "Running the
+first-round attack" above) against those tables. Exact
 numeric parity is not expected (different hardware/library versions, and
 the paper doesn't specify all stochastic-seed details), but the qualitative
 pattern -- metric-privacy loss lower than global-DP loss, with comparable
@@ -152,3 +173,30 @@ uv pip install \
   --reinstall \
   "jupyter-kernel-client @ git+https://github.com/googlecolab/jupyter-kernel-client.git"
 ```
+
+## CIFAR-100 multi-round CIA
+
+`experiments/cia/scripts/cifar100_scaling.py` attacks all 6 combos from the 100-client/250-round
+CIFAR-100 sweep (`results/cifar100_scaling/`): a matched IN-remove (target participates, 100
+clients) and OUT-remove (target excluded, 99 clients) trajectory per combo, checkpointed at round
+1 and every 10th round through 250. Three seeds (42, 43, 44), matching the three-seed
+protocol used elsewhere in this file.
+
+Run each group separately -- required, not optional: `run_attack` isn't safe to call twice
+concurrently against the same report file, so each group writes its own
+(`cia_in.json`/`cia_out.json`), which also happens to make it safe to run both at once on the
+same GPU:
+
+```bash
+CUDA_VISIBLE_DEVICES=1 uv run python -m experiments.cia.scripts.cifar100_scaling --group in
+CUDA_VISIBLE_DEVICES=1 uv run python -m experiments.cia.scripts.cifar100_scaling --group out
+```
+
+Outputs go to `results/cia_cifar100_scaling/`. After both groups finish, merge them into
+round-matched AUC per combo:
+
+```bash
+uv run python -m experiments.cia.scripts.cifar100_scaling_analysis
+```
+
+Writes `results/cia_cifar100_scaling/cia_analysis.json`.

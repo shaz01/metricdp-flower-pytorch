@@ -1,8 +1,9 @@
 # Project Status
 
-**Branch:** `feature/eurosat-scaling`
-**Last updated:** 2026-08-13, CUDA workstation (both EuroSAT experiments complete and reported —
-merging into `master`) — see `git log` for anything more recent
+**Branch:** `master`
+**Last updated:** 2026-08-13, CUDA workstation (`feature/eurosat-scaling` and
+`feature/cifar100-scaling` are both complete, merged into `master`, and deleted — see `git log`
+for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -15,18 +16,80 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-Nothing currently running on this line. `feature/eurosat-scaling` (both the EuroSAT accuracy
-sweep and the EuroSAT CIA attack against it) is complete and merging into `master` — see "What's
-established" below and `reports/eurosat_accuracy_sweep.md`/`reports/eurosat_cia.md` for the full
-writeups. `feature/cifar100-scaling` is separately still active (its own CIA multi-seed retry) —
-see `git branch -a`, not tracked here.
+Nothing currently running. Both `feature/eurosat-scaling` (the EuroSAT accuracy sweep and its CIA
+attack) and `feature/cifar100-scaling` (the CIFAR-100 accuracy sweep and its CIA attack) are
+complete, merged into `master`, and deleted (locally and on `origin`) — see "What's established"
+below and `reports/eurosat_accuracy_sweep.md`/`reports/eurosat_cia.md`/
+`reports/cifar-100_and_eurosat_results.tex` for the full writeups.
+
+**CIFAR-100 CIA multi-seed retry was dropped.** The seed-42 single-seed CIA run (6/6 combos, 0
+failures) was complete and reportable. A follow-on rerun to add seeds 43/44 — for a properly
+3-seed-pooled analysis matching the Alzheimer/CIFAR-10/Fashion-MNIST/EuroSAT CIA protocols —
+launched 2026-08-10 20:08 but never finished: the large 100-client/4.6M-parameter model combos hit
+persistent, severe GPU VRAM contention on this shared machine. Four separate retry attempts (each
+recovering 1-3 of the failing combos, with diminishing returns, despite reducing
+`--max-parallel-clients` 16→6→10 and fixing a real `dp_diagnostics.py` crash-on-client-error bug
+along the way) never reached a complete 3-seed run. Decision: drop seeds 43/44 entirely and keep
+only the complete seed-42 data. `results/cia_cifar100_scaling/cia_in.json`/`cia_out.json`/
+`cia_analysis.json` and the 12 per-trajectory result JSONs now hold seed-42-only data for all 6
+combos; the 22 seed-43/44 per-trajectory JSONs were deleted.
+`reports/cifar-100_and_eurosat_results.tex`'s CIFAR-100 CIA table reflects this (a single
+seed-42-only table, all 6 combos scored, replacing the earlier 3-seed-pooled table that had two
+"in progress" `global-dp` rows).
+
+**Model history** (this repo went through several CIFAR-100 architectures before settling):
+v1-v3 was a plain 3-block CNN (v2 briefly added a 4th conv block, reverted after its natural
+per-round update magnitude exceeded `clipping_norm=5.0` and froze every clipping privacy mode).
+v4 replaced it with a DenseNet+SELU architecture (553,220 params, concatenative skip connections,
+GroupNorm(8), SELU with LeCun-normal init and AlphaDropout), built and verified for robustness to
+that clipping-related freeze — and a second, independent freeze mode was found and fixed in that
+generation too (`vanilla`, no DP at all, froze at n=128/homogeneous from many highly-correlated
+client updates reinforcing rather than averaging out). **Per project-owner direction, v4 was itself
+replaced** with the current model (v5): an adaptation of the project supervisor's own `CNNCIFAR100`
+reference architecture (3 blocks of 2x[Conv3x3-GroupNorm-ReLU], channels 128/256/512,
+global-average-pooled classifier, 4,631,268 params, 0 buffers — see
+`experiments/cifar100_scaling/sweep_cifar100_scaling.py`'s docstring for the full model-history
+record and `experiments/reproduce/cifar100_cnn.py`'s docstring for the adaptation details). This
+consolidation also removed the separate `feature/cifar100-scaling-supervisor` branch/worktree that
+had briefly held this model in isolation (merged into this branch, then deleted) and cleared every
+prior CIFAR-100 result (v1-v4 sweep data, the supervisor model's own earlier narrower grid) —
+none were kept, since all described a model, grid, or directory layout no longer in use.
+
+GroupNorm has no running-stats buffers — unlike BatchNorm — so this still needs no
+`metricdp_pytorch/metricdp_strategy.py` changes, same as v1's "no normalization at all" workaround.
+Training supports weight decay (`WEIGHT_DECAY = 5e-4`) and an opt-in cosine LR schedule; the
+schedule was tried and dropped — a decaying LR eventually drops client updates below
+`clipping_norm`, so clipping stops binding late in each run and the DP noise-to-signal ratio drifts
+back up against `noise_multiplier`, fighting the whole point of tuning it — so the sweep uses a
+fixed LR instead. `noise_multiplier=0.0182`, calibrated specifically for this model at n=100 (the
+only client count this sweep runs — see the `NOISE_MULTIPLIER` comment in
+`experiments/cifar100_scaling/sweep_cifar100_scaling.py` for the full derivation), confirmed via a
+verification run: noise-to-signal ratio 1.001 at n=100.
+
+Full sweep and CIA results (tables, protocol, discussion) are in "What's established" below and
+`reports/cifar-100_and_eurosat_results.tex` — not repeated here to avoid drifting out of sync with
+those. Raw data: sweep JSONs at `results/cifar100_scaling/*.json`; CIA raw/analysis JSONs at
+`results/cia_cifar100_scaling/`. Both experiments' `.evaluation.json`/`.predictions.npz`
+artifacts stay local-only, gitignored (see `.gitignore` comment) — they blow past GitHub's 100MB
+push limit.
+
+Separately, on `master`: nothing currently running. `feature/scale-controlled-redo` (Phase 1 items
+1 and 2 of `docs/RESEARCH_ROADMAP.md`) merged into `master` 2026-08-06 and was deleted — see
+"What's established" below for what it left behind. The natural next steps there, not yet started:
+`fedyogi` at `n=48` (the redo's matrix only covers `n=4/8` for `fedyogi`), and Phase 1's remaining
+item (NaN/failure-mode logging in `runner.py`, motivated directly by the zero-norm-update crashes
+found during the redo). After that, Phase 2 (mechanism redesign) is the next major phase.
 
 ### Currently running
 
-Nothing. Update this table whenever a machine picks up new work: add a row, edit the Status column
+Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
 it, so machine-to-results provenance isn't lost; see `AGENTS.md`'s "Working across machines"
 section.
+
+| Command | What | Status |
+| --- | --- | --- |
+| _(none)_ | Nothing currently running. | — |
 
 ## What's established on `master`
 
@@ -70,6 +133,18 @@ section.
 - `reports/first_round_cia.md` is stale — says "no result data yet," but `results/cia_client_scaling/`
   has real trained models and partial attack scores. Needs a rewrite, not done yet. The Flower-1.32
   port-equivalence check (`reports/port_equivalence.md`) still has no committed result data.
+- **CIFAR-100 accuracy sweep + CIA** (`reports/cifar-100_and_eurosat_results.tex`): `n=100`
+  clients, 250 rounds, `fedavg`, `noise_multiplier=0.0182`. Accuracy sweep: 6/6 combos, 0 failed,
+  21.4–29.1% accuracy (100-class task, ~1% random-baseline) — metric-privacy roughly ties
+  global-dp (within ~0.6pp either way), both DP modes ~7–8pp below vanilla, partition mode barely
+  moves the numbers. CIA: seed-42-only (a multi-seed 43/44 rerun was attempted for proper 3-seed
+  pooling but dropped after repeated GPU VRAM contention on this large 4.6M-parameter model
+  prevented it from ever completing — see `git log` on the deleted `feature/cifar100-scaling` for
+  the retry history), 26 round-matched pairs per combo, all 6/6 combos scored. Leakage is highest
+  for `homogeneous/vanilla` (0.846) and lowest for `non-iid/vanilla` (0.500, the no-leakage line);
+  `global-dp` shows more leakage than `metric-privacy` in every partition/shadow combination on
+  this seed. Every 95% CI includes 0.5 (single-seed, underpowered), so read this as a directional
+  pattern, not a statistically confirmed ranking.
 - **EuroSAT accuracy sweep + CIA** (`reports/eurosat_accuracy_sweep.md`, `reports/eurosat_cia.md`):
   a comparison point on satellite land-use imagery (10-class, genuinely different domain from
   CIFAR-10/CIFAR-100/Fashion-MNIST/Alzheimer), `n=48`. Accuracy sweep: 6/6 combos, 0 failed,
