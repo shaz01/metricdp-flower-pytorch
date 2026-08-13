@@ -31,6 +31,13 @@
 \begin{document}
 \maketitle
 
+\noindent
+\code{metric-privacy} distance metric: for every pair of sampled client models, compute the
+Euclidean (L2) distance between each corresponding layer, then average across layers to get one
+scalar per pair; $d$ is the \emph{maximum} of these mean layer-wise distances over all client
+pairs in the round. Noise scale that round is \code{noise\_multiplier}$/d$ (vs.\ \code{global-dp}'s
+flat \code{noise\_multiplier}, independent of client-model spread).
+
 \section*{CIFAR-100 Accuracy Sweep}
 
 \begin{table}[h!]
