@@ -1,8 +1,8 @@
 # Project Status
 
-**Branch:** `master`
-**Last updated:** 2026-08-06, CUDA workstation (`feature/scale-controlled-redo` merged and
-closed) — see `git log` for anything more recent
+**Branch:** `feature/eurosat-scaling`
+**Last updated:** 2026-08-13, CUDA workstation (both EuroSAT experiments complete and reported —
+merging into `master`) — see `git log` for anything more recent
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -15,12 +15,11 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-Nothing currently running. `feature/scale-controlled-redo` (Phase 1 items 1 and 2 of
-`docs/RESEARCH_ROADMAP.md`) merged into `master` 2026-08-06 and was deleted — see "What's
-established" below for what it left behind. The natural next steps, not yet started: `fedyogi` at
-`n=48` (the redo's matrix only covers `n=4/8` for `fedyogi`), and Phase 1's remaining item (NaN/
-failure-mode logging in `runner.py`, motivated directly by the zero-norm-update crashes found
-during the redo). After that, Phase 2 (mechanism redesign) is the next major phase.
+Nothing currently running on this line. `feature/eurosat-scaling` (both the EuroSAT accuracy
+sweep and the EuroSAT CIA attack against it) is complete and merging into `master` — see "What's
+established" below and `reports/eurosat_accuracy_sweep.md`/`reports/eurosat_cia.md` for the full
+writeups. `feature/cifar100-scaling` is separately still active (its own CIA multi-seed retry) —
+see `git branch -a`, not tracked here.
 
 ### Currently running
 
@@ -71,6 +70,22 @@ section.
 - `reports/first_round_cia.md` is stale — says "no result data yet," but `results/cia_client_scaling/`
   has real trained models and partial attack scores. Needs a rewrite, not done yet. The Flower-1.32
   port-equivalence check (`reports/port_equivalence.md`) still has no committed result data.
+- **EuroSAT accuracy sweep + CIA** (`reports/eurosat_accuracy_sweep.md`, `reports/eurosat_cia.md`):
+  a comparison point on satellite land-use imagery (10-class, genuinely different domain from
+  CIFAR-10/CIFAR-100/Fashion-MNIST/Alzheimer), `n=48`. Accuracy sweep: 6/6 combos, 0 failed,
+  87.5–90.7% accuracy across all combos; `non-iid` partitioning slightly *outperformed*
+  `homogeneous` in every privacy mode, and DP mechanisms cost only 0.4–2.4pp versus vanilla. CIA:
+  36/36 trajectories (18 IN + 18 OUT), 0 failed, 3 seeds from the start (CIFAR-100's CIA needed a
+  post-hoc multi-seed redo after an underpowered single-seed pilot — this one skipped that
+  mistake). Round-matched AUC shows the clearest leak at `homogeneous/vanilla` (0.727), both DP
+  mechanisms suppress it there (to 0.606), and `non-iid` leaks much less across every privacy mode
+  (one combo's noisy-shadow AUC drops to 0.212, below chance) — but confidence intervals are wide
+  (~0.30–0.35 AUC units, all overlapping 0.5), so read this as a directional pattern, not a
+  statistically confirmed ranking. Along the way: found and fixed a real bug in `server.py`
+  (`_require_trained_arrays`) where a run whose every single round failed to aggregate crashed
+  with a confusing "Missing key(s) in state_dict" error instead of a clear one — Flower's
+  `Strategy.start()` only assigns `result.arrays` on a successful round, with no fallback to the
+  initial model.
 
 ## Where to look
 

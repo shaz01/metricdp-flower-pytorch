@@ -7,6 +7,18 @@ data/
 outputs/
 /results/**/*.npz
 /results/**/*.pt
+# cia_eurosat_scaling produces 36 IN/OUT trajectories (18 per group), each with its own
+# ~17.5MB evaluation.json -- ~630MB total, decided against committing given the volume
+# (unlike results/eurosat_scaling/'s single accuracy-sweep evaluation.json per combo, which
+# was small enough in isolation to keep). Result/report JSONs (cia_in.json, cia_out.json,
+# per-trajectory .json result files, .pt checkpoints already covered above) are unaffected.
+/results/cia_eurosat_scaling/*.evaluation.json
+# Raw full-output logs, not the small progress/summary logs -- matches the established
+# convention (checked directly against master: results/48client_scaling/,
+# results/cia_client_scaling/, etc. commit sweep_progress.log-style summaries but never a raw
+# stdout capture). 27-28MB each for the CIA groups, 9.3MB for the accuracy sweep.
+/results/eurosat_scaling/sweep_stdout.log
+/results/cia_eurosat_scaling/stdout_*.log
 final_model.pt
 *.fab
 .DS_Store

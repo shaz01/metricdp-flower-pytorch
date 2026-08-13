@@ -39,6 +39,16 @@ def clipping_diagnostics(
     """Measure client update norms before Flower clips the replies."""
     rows: list[tuple[int, float]] = []
     for fallback_id, reply in enumerate(replies):
+        # A reply from a client that errored (e.g. a CUDA OOM mid-training) carries
+        # no content -- .content raises ValueError in that case instead of returning
+        # None, which used to crash the whole server process on any client failure
+        # during a global-dp round. Skip it exactly like the non-ArrayRecord case
+        # below already does, so a single bad client degrades the round instead of
+        # taking down the run. (Found and fixed on feature/cifar100-scaling after
+        # two CIA retry combos crashed this way; ported here since EuroSAT's
+        # global-dp combos share this exact code path.)
+        if not reply.has_content():
+            continue
         model = reply.content.get(arrayrecord_key)
         if not isinstance(model, ArrayRecord):
             continue
