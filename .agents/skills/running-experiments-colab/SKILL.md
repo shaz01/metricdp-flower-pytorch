@@ -27,26 +27,29 @@ rejects common credential patterns in the source archive.
 
 ## Launch
 
-Use a unique session name and an explicit accelerator. L4 is the normal default
-for this repository unless the user requests another supported GPU.
+Use a unique session name and an explicit accelerator. Two A100 sessions in parallel
+is the normal default for this repository unless the user requests another supported GPU.
 
 ```bash
 uv run python scripts/colab/run_experiment.py run \
   --session <session-name> \
-  --gpu L4 \
+  --gpu A100 \
   --module experiments.<name>.<entrypoint> \
   --results results/<name> \
   --commit-message "results(<name>): add Colab run"
 ```
 
-Pass experiment arguments after the controller options. Keep the foreground
-controller attached when possible; successful completion means artifacts were
-downloaded, committed, pushed, and the VM was stopped—not merely that training
-exited.
+Pass experiment arguments after the controller options. **The module's output
+path must be the same directory supplied to `--results`**: explicitly pass its
+`--output-dir <the --results path>` when the module has one. Otherwise the
+controller can successfully collect and commit only `colab_run.json` and the
+training log while the actual result JSON/NPZ/checkpoints remain in the
+module's default directory on the released VM. Keep the foreground controller
+attached when possible; successful completion means artifacts were downloaded,
+committed, pushed, and the VM was stopped—not merely that training exited.
 
-On macOS, the controller sends a local notification after results have been
-collected and pushed, and once when a continuous status-probe connection failure
-begins. It is best-effort only and never changes the remote job's state.
+On macOS, the controller sends a best-effort local notification after results
+have been collected and pushed; it never changes the remote job's state.
 
 ### Five-minute launch watchdog
 
