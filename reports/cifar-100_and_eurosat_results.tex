@@ -38,6 +38,33 @@ scalar per pair; $d$ is the \emph{maximum} of these mean layer-wise distances ov
 pairs in the round. Noise scale that round is \code{noise\_multiplier}$/d$ (vs.\ \code{global-dp}'s
 flat \code{noise\_multiplier}, independent of client-model spread).
 
+\section*{Metric-Privacy Distance Metric ($d$), Training Values}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{llrrrr}
+\toprule
+Dataset & Partition & $d$ (round 1) & $d$ (mid-training) & $d$ (final round) & noise\_stdv (final) \\
+\midrule
+CIFAR-100 & homogeneous & 1.709 & 1.244 & 1.243 & 0.000732 \\
+CIFAR-100 & non-iid & 1.862 & 1.372 & 1.349 & 0.000674 \\
+EuroSAT & homogeneous & 0.517 & 0.377 & 0.410 & 0.009436 \\
+EuroSAT & non-iid & 0.631 & 0.401 & 0.442 & 0.008748 \\
+\bottomrule
+\end{tabular}
+\caption*{Mid-training = round 126/250 (CIFAR-100), round 51/100 (EuroSAT). \code{noise\_stdv}
+is the actual Gaussian noise standard deviation applied that round
+(\code{noise\_multiplier}$/d$, scaled by clipping norm). No round on any combo ever hit a
+non-finite/invalid distance or an aggregation collapse.}
+\end{table}
+
+\noindent
+$d$ drops sharply in the first part of training (client models start far apart, then converge
+toward each other) and levels off or drifts back up slightly rather than continuing to shrink,
+which is why \code{noise\_stdv} rises early and then roughly stabilizes rather than blowing up;
+EuroSAT's $d$ values are noticeably smaller than CIFAR-100's, consistent with EuroSAT's much
+smaller model (289K vs.\ 4.6M parameters).
+
 \section*{CIFAR-100 Accuracy Sweep}
 
 \begin{table}[h!]
