@@ -17,8 +17,7 @@ Federated learning + differential privacy research repo built on Flower and PyTo
 
 - Run the suite with `uv run pytest` from the repo root. The default `addopts` deselects the `reproducibility` marker (5 cross-version port-equivalence tests that need an isolated legacy environment).
 - To include those: `uv run pytest -m reproducibility experiments/port_equivalence/test_equivalence.py`.
-- Current test locations: `tests/`, `experiments/reproduce/tests/`, `experiments/cia/tests/`, `experiments/port_equivalence/test_equivalence.py`.
-- `experiments/client_scaling/` has no tests yet — it's sweep/analysis scripts only.
+- Current test locations: `tests/`, `experiments/reproduce/tests/`, `experiments/cia/tests/`, `experiments/client_scaling/tests/`, `experiments/port_equivalence/test_equivalence.py`.
 
 ## Linting
 

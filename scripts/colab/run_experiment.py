@@ -24,9 +24,6 @@ SECRET_PATTERNS = (
     re.compile(rb"github_pat_[A-Za-z0-9_]{20,}"),
     re.compile(rb"-----BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY-----"),
 )
-_CONNECTION_FAILURE_NOTIFIED: set[str] = set()
-
-
 def _notify_macos(title: str, message: str) -> None:
     """Send a best-effort macOS notification without affecting the controller."""
     if sys.platform != "darwin" or shutil.which("osascript") is None:
@@ -203,14 +200,7 @@ def _probe(session: str) -> tuple[str, str]:
         )
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
         print(f"Colab status probe failed ({error}); retrying without stopping training.")
-        if session not in _CONNECTION_FAILURE_NOTIFIED:
-            _notify_macos(
-                "Colab connection lost",
-                f"Could not connect to session {session}; monitoring will retry.",
-            )
-            _CONNECTION_FAILURE_NOTIFIED.add(session)
         return "unknown", ""
-    _CONNECTION_FAILURE_NOTIFIED.discard(session)
     output = result.stdout
     print(output, end="")
     marker = "COLAB_JOB_STATUS="

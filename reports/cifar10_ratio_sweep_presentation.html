@@ -1,0 +1,1292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CIFAR-10 Removal Ratio-Sweep Results</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#111}body{max-width:1500px;margin:0 auto;padding:28px}header{border-bottom:1px solid #bbb;margin-bottom:28px}h1{margin:0 0 8px;font-size:28px}h2{margin-top:36px;padding-bottom:6px;border-bottom:1px solid #ccc;font-size:21px}h3{font-size:17px}.meta,.note{color:#444;font-size:14px;line-height:1.45}.grid{display:grid;gap:20px}.panel{border:1px solid #ccc;padding:12px;overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}th,td{border-bottom:1px solid #ddd;padding:6px 8px;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}thead th{border-bottom:2px solid #888}th[colspan]{text-align:center}tbody tr.pair-start td{border-top:3px solid #777}svg{width:100%;height:auto;display:block}.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0;font-size:12px}.key{display:inline-flex;align-items:center;gap:5px}.key i{width:18px;height:3px;display:inline-block}.key i.solid{background:#333}.key i.dashed{background:repeating-linear-gradient(to right,#333 0 10px,transparent 10px 15px)}#utility .grid,#single-round .grid{grid-template-columns:1fr}#all-rounds .grid,#distance .grid{grid-template-columns:repeat(2,minmax(0,1fr))}footer{margin-top:36px;padding-top:10px;border-top:1px solid #bbb;font-size:12px;color:#555}@media(max-width:1000px){#all-rounds .grid,#distance .grid{grid-template-columns:1fr}}@media print{body{max-width:none;padding:12mm}section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<header>
+<h1>CIFAR-10 Removal Ratio-Sweep Results</h1>
+<p class="meta">Non-IID, FedAvg, seed 42; IN/OUT removal adjacency; clients n ∈ {8, 48, 100}; 20 rounds; ratios {0.0025, 0.004, 0.00625}. Vanilla is the non-private baseline. Noise multiplier = n × ratio; OUT noise multiplier = (n − 1) × ratio.</p>
+</header>
+<section id="utility">
+<h2>Server utility</h2>
+<p class="note">Visible gap in accuracy between Global-DP and metric privacy across most settings. Utility values are from the IN-remove runs at round 20.</p>
+<div class="grid">
+<div class="panel">
+<h3>8 clients</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Ratio</th>
+<th>Noise multiplier</th>
+<th>Round-20 accuracy</th>
+<th>Round-20 F1</th>
+<th>Round-20 loss</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vanilla</td>
+<td>—</td>
+<td>—</td>
+<td>0.700</td>
+<td>0.700</td>
+<td>1.563</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00250</td>
+<td>0.020</td>
+<td>0.686</td>
+<td>0.686</td>
+<td>1.166</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00250</td>
+<td>0.020</td>
+<td>0.713</td>
+<td>0.712</td>
+<td>1.082</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00400</td>
+<td>0.032</td>
+<td>0.624</td>
+<td>0.629</td>
+<td>1.437</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00400</td>
+<td>0.032</td>
+<td>0.711</td>
+<td>0.710</td>
+<td>1.073</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00625</td>
+<td>0.050</td>
+<td>0.474</td>
+<td>0.481</td>
+<td>2.264</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00625</td>
+<td>0.050</td>
+<td>0.698</td>
+<td>0.698</td>
+<td>1.107</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="panel">
+<h3>48 clients</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Ratio</th>
+<th>Noise multiplier</th>
+<th>Round-20 accuracy</th>
+<th>Round-20 F1</th>
+<th>Round-20 loss</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vanilla</td>
+<td>—</td>
+<td>—</td>
+<td>0.654</td>
+<td>0.653</td>
+<td>1.123</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00250</td>
+<td>0.120</td>
+<td>0.610</td>
+<td>0.608</td>
+<td>1.285</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00250</td>
+<td>0.120</td>
+<td>0.631</td>
+<td>0.629</td>
+<td>1.191</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00400</td>
+<td>0.192</td>
+<td>0.559</td>
+<td>0.558</td>
+<td>1.516</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00400</td>
+<td>0.192</td>
+<td>0.606</td>
+<td>0.605</td>
+<td>1.297</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00625</td>
+<td>0.300</td>
+<td>0.419</td>
+<td>0.414</td>
+<td>2.263</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00625</td>
+<td>0.300</td>
+<td>0.567</td>
+<td>0.566</td>
+<td>1.530</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="panel">
+<h3>100 clients</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Ratio</th>
+<th>Noise multiplier</th>
+<th>Round-20 accuracy</th>
+<th>Round-20 F1</th>
+<th>Round-20 loss</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vanilla</td>
+<td>—</td>
+<td>—</td>
+<td>0.577</td>
+<td>0.574</td>
+<td>1.225</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00250</td>
+<td>0.250</td>
+<td>0.562</td>
+<td>0.556</td>
+<td>1.348</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00250</td>
+<td>0.250</td>
+<td>0.574</td>
+<td>0.569</td>
+<td>1.308</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00400</td>
+<td>0.400</td>
+<td>0.519</td>
+<td>0.507</td>
+<td>1.552</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00400</td>
+<td>0.400</td>
+<td>0.540</td>
+<td>0.533</td>
+<td>1.478</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00625</td>
+<td>0.625</td>
+<td>0.424</td>
+<td>0.411</td>
+<td>1.873</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00625</td>
+<td>0.625</td>
+<td>0.471</td>
+<td>0.457</td>
+<td>1.753</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="single-round">
+<h2>Single-round CIA: rounds 1 and 20</h2>
+<p class="note">Relative difference is (target shadow loss − aggregated test loss) / target shadow loss × 100. Values closer to 0 indicate a weaker loss-based signal.</p>
+<div class="grid">
+<div class="panel">
+<h3>8 clients</h3>
+<table>
+<thead>
+<tr>
+<th rowspan="2">Method</th>
+<th rowspan="2">Ratio</th>
+<th colspan="5">Round 1</th>
+<th colspan="5">Round 20</th>
+</tr>
+<tr>
+<th>Agg. loss</th>
+<th>Clean loss</th>
+<th>Clean Δ%</th>
+<th>Noisy loss</th>
+<th>Noisy Δ%</th>
+<th>Agg. loss</th>
+<th>Clean loss</th>
+<th>Clean Δ%</th>
+<th>Noisy loss</th>
+<th>Noisy Δ%</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vanilla</td>
+<td>—</td>
+<td>2.219</td>
+<td>2.222</td>
+<td>0.14</td>
+<td>2.236</td>
+<td>0.74</td>
+<td>1.563</td>
+<td>0.142</td>
+<td>-1004.12</td>
+<td>3.591</td>
+<td>56.49</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00250</td>
+<td>2.300</td>
+<td>2.301</td>
+<td>0.04</td>
+<td>2.301</td>
+<td>0.04</td>
+<td>1.166</td>
+<td>0.537</td>
+<td>-117.28</td>
+<td>3.016</td>
+<td>61.34</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00250</td>
+<td>2.300</td>
+<td>2.301</td>
+<td>0.04</td>
+<td>2.301</td>
+<td>0.04</td>
+<td>1.082</td>
+<td>0.414</td>
+<td>-161.65</td>
+<td>3.030</td>
+<td>64.27</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00400</td>
+<td>2.300</td>
+<td>2.301</td>
+<td>0.04</td>
+<td>2.301</td>
+<td>0.03</td>
+<td>1.437</td>
+<td>0.949</td>
+<td>-51.47</td>
+<td>2.772</td>
+<td>48.16</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00400</td>
+<td>2.300</td>
+<td>2.301</td>
+<td>0.04</td>
+<td>2.301</td>
+<td>0.04</td>
+<td>1.073</td>
+<td>0.418</td>
+<td>-156.83</td>
+<td>3.167</td>
+<td>66.12</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00625</td>
+<td>2.300</td>
+<td>2.302</td>
+<td>0.06</td>
+<td>2.302</td>
+<td>0.09</td>
+<td>2.264</td>
+<td>1.929</td>
+<td>-17.32</td>
+<td>3.954</td>
+<td>42.75</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00625</td>
+<td>2.300</td>
+<td>2.301</td>
+<td>0.04</td>
+<td>2.301</td>
+<td>0.05</td>
+<td>1.107</td>
+<td>0.494</td>
+<td>-124.25</td>
+<td>3.544</td>
+<td>68.76</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="panel">
+<h3>48 clients</h3>
+<table>
+<thead>
+<tr>
+<th rowspan="2">Method</th>
+<th rowspan="2">Ratio</th>
+<th colspan="5">Round 1</th>
+<th colspan="5">Round 20</th>
+</tr>
+<tr>
+<th>Agg. loss</th>
+<th>Clean loss</th>
+<th>Clean Δ%</th>
+<th>Noisy loss</th>
+<th>Noisy Δ%</th>
+<th>Agg. loss</th>
+<th>Clean loss</th>
+<th>Clean Δ%</th>
+<th>Noisy loss</th>
+<th>Noisy Δ%</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vanilla</td>
+<td>—</td>
+<td>2.275</td>
+<td>2.273</td>
+<td>-0.07</td>
+<td>2.273</td>
+<td>-0.07</td>
+<td>1.123</td>
+<td>0.880</td>
+<td>-27.62</td>
+<td>3.155</td>
+<td>64.39</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00250</td>
+<td>2.285</td>
+<td>2.284</td>
+<td>-0.07</td>
+<td>2.285</td>
+<td>-0.02</td>
+<td>1.285</td>
+<td>1.146</td>
+<td>-12.14</td>
+<td>3.063</td>
+<td>58.05</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00250</td>
+<td>2.286</td>
+<td>2.284</td>
+<td>-0.07</td>
+<td>2.285</td>
+<td>-0.04</td>
+<td>1.191</td>
+<td>1.015</td>
+<td>-17.28</td>
+<td>3.284</td>
+<td>63.74</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00400</td>
+<td>2.285</td>
+<td>2.284</td>
+<td>-0.05</td>
+<td>2.285</td>
+<td>-0.01</td>
+<td>1.516</td>
+<td>1.359</td>
+<td>-11.53</td>
+<td>2.911</td>
+<td>47.94</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00400</td>
+<td>2.286</td>
+<td>2.284</td>
+<td>-0.07</td>
+<td>2.285</td>
+<td>-0.02</td>
+<td>1.297</td>
+<td>1.169</td>
+<td>-10.92</td>
+<td>3.201</td>
+<td>59.49</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00625</td>
+<td>2.284</td>
+<td>2.283</td>
+<td>-0.03</td>
+<td>2.288</td>
+<td>0.18</td>
+<td>2.263</td>
+<td>1.980</td>
+<td>-14.27</td>
+<td>3.001</td>
+<td>24.61</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00625</td>
+<td>2.285</td>
+<td>2.284</td>
+<td>-0.06</td>
+<td>2.285</td>
+<td>-0.01</td>
+<td>1.530</td>
+<td>1.344</td>
+<td>-13.84</td>
+<td>3.171</td>
+<td>51.75</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="panel">
+<h3>100 clients</h3>
+<table>
+<thead>
+<tr>
+<th rowspan="2">Method</th>
+<th rowspan="2">Ratio</th>
+<th colspan="5">Round 1</th>
+<th colspan="5">Round 20</th>
+</tr>
+<tr>
+<th>Agg. loss</th>
+<th>Clean loss</th>
+<th>Clean Δ%</th>
+<th>Noisy loss</th>
+<th>Noisy Δ%</th>
+<th>Agg. loss</th>
+<th>Clean loss</th>
+<th>Clean Δ%</th>
+<th>Noisy loss</th>
+<th>Noisy Δ%</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vanilla</td>
+<td>—</td>
+<td>2.291</td>
+<td>2.286</td>
+<td>-0.21</td>
+<td>2.286</td>
+<td>-0.23</td>
+<td>1.225</td>
+<td>1.278</td>
+<td>4.15</td>
+<td>2.844</td>
+<td>56.93</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00250</td>
+<td>2.290</td>
+<td>2.287</td>
+<td>-0.14</td>
+<td>2.287</td>
+<td>-0.11</td>
+<td>1.348</td>
+<td>1.511</td>
+<td>10.79</td>
+<td>2.966</td>
+<td>54.56</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00250</td>
+<td>2.290</td>
+<td>2.287</td>
+<td>-0.16</td>
+<td>2.287</td>
+<td>-0.13</td>
+<td>1.308</td>
+<td>1.480</td>
+<td>11.59</td>
+<td>3.079</td>
+<td>57.50</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00400</td>
+<td>2.289</td>
+<td>2.288</td>
+<td>-0.07</td>
+<td>2.288</td>
+<td>-0.03</td>
+<td>1.552</td>
+<td>1.836</td>
+<td>15.49</td>
+<td>3.680</td>
+<td>57.84</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00400</td>
+<td>2.290</td>
+<td>2.287</td>
+<td>-0.10</td>
+<td>2.288</td>
+<td>-0.08</td>
+<td>1.478</td>
+<td>1.701</td>
+<td>13.10</td>
+<td>3.507</td>
+<td>57.85</td>
+</tr>
+<tr class="pair-start">
+<td>Global-DP</td>
+<td>0.00625</td>
+<td>2.287</td>
+<td>2.290</td>
+<td>0.10</td>
+<td>2.293</td>
+<td>0.24</td>
+<td>1.873</td>
+<td>2.377</td>
+<td>21.22</td>
+<td>4.122</td>
+<td>54.57</td>
+</tr>
+<tr>
+<td>Metric privacy</td>
+<td>0.00625</td>
+<td>2.288</td>
+<td>2.288</td>
+<td>-0.01</td>
+<td>2.290</td>
+<td>0.07</td>
+<td>1.753</td>
+<td>2.302</td>
+<td>23.85</td>
+<td>4.554</td>
+<td>61.52</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="all-rounds">
+<h2>Single-round CIA across all rounds</h2>
+<p class="note">Clean and noisy shadow sets are plotted separately because their loss scales and attack behavior differ. Lines use IN-remove results.</p>
+<div class="legend">
+<span class="key">
+<i style="background:#222222">
+</i>Vanilla (dotted)</span>
+<span class="key">
+<i style="background:#0072B2">
+</i>Ratio 0.0025</span>
+<span class="key">
+<i style="background:#E69F00">
+</i>Ratio 0.004</span>
+<span class="key">
+<i style="background:#CC79A7">
+</i>Ratio 0.00625</span>
+<span class="key">
+<i class="solid">
+</i>Global-DP (solid)</span>
+<span class="key">
+<i class="dashed">
+</i>Metric privacy (dashed)</span>
+</div>
+<h3>Clean-shadow relative difference</h3>
+<div class="grid">
+<div class="panel">
+<h3>8 clients</h3>
+<svg viewBox="0 0 820 390" role="img" aria-label="Clean-shadow relative difference — 8 clients">
+<text x="410" y="20" text-anchor="middle" font-size="15" font-weight="bold">Clean-shadow relative difference — 8 clients</text>
+<line x1="70" y1="355.0" x2="802" y2="355.0" stroke="#e4e8ec"/>
+<text x="62" y="359.0" text-anchor="end" font-size="11">-1105.0</text>
+<line x1="70" y1="280.0" x2="802" y2="280.0" stroke="#e4e8ec"/>
+<text x="62" y="284.0" text-anchor="end" font-size="11">-802.4</text>
+<line x1="70" y1="205.0" x2="802" y2="205.0" stroke="#e4e8ec"/>
+<text x="62" y="209.0" text-anchor="end" font-size="11">-499.8</text>
+<line x1="70" y1="130.0" x2="802" y2="130.0" stroke="#e4e8ec"/>
+<text x="62" y="134.0" text-anchor="end" font-size="11">-197.2</text>
+<line x1="70" y1="55.0" x2="802" y2="55.0" stroke="#e4e8ec"/>
+<text x="62" y="59.0" text-anchor="end" font-size="11">105.3</text>
+<line x1="70.0" y1="35" x2="70.0" y2="335" stroke="#f0f2f4"/>
+<text x="70.0" y="353" text-anchor="middle" font-size="11">1</text>
+<line x1="224.1" y1="35" x2="224.1" y2="335" stroke="#f0f2f4"/>
+<text x="224.1" y="353" text-anchor="middle" font-size="11">5</text>
+<line x1="416.7" y1="35" x2="416.7" y2="335" stroke="#f0f2f4"/>
+<text x="416.7" y="353" text-anchor="middle" font-size="11">10</text>
+<line x1="609.4" y1="35" x2="609.4" y2="335" stroke="#f0f2f4"/>
+<text x="609.4" y="353" text-anchor="middle" font-size="11">15</text>
+<line x1="802.0" y1="35" x2="802.0" y2="335" stroke="#f0f2f4"/>
+<text x="802.0" y="353" text-anchor="middle" font-size="11">20</text>
+<rect x="70" y="35" width="732" height="300" fill="none" stroke="#555"/>
+<text x="410" y="378" text-anchor="middle" font-size="12">Round</text>
+<text x="15" y="195" transform="rotate(-90 15 195)" text-anchor="middle" font-size="12">Relative difference (%)</text>
+<polyline points="70.0,81.1 108.5,81.4 147.1,82.3 185.6,84.2 224.1,87.7 262.6,95.0 301.2,104.1 339.7,109.3 378.2,121.8 416.7,132.4 455.3,146.2 493.8,147.3 532.3,160.2 570.8,195.0 609.4,194.3 647.9,206.4 686.4,274.0 724.9,272.4 763.5,283.7 802.0,330.0" fill="none" stroke="#222222" stroke-width="3" stroke-dasharray="3 5"/>
+<polyline points="70.0,81.1 108.5,81.1 147.1,81.0 185.6,80.9 224.1,81.1 262.6,81.3 301.2,81.6 339.7,82.1 378.2,82.7 416.7,84.7 455.3,84.8 493.8,87.1 532.3,89.2 570.8,93.0 609.4,94.3 647.9,97.1 686.4,97.8 724.9,100.4 763.5,105.7 802.0,110.2" fill="none" stroke="#0072B2" stroke-width="3"/>
+<polyline points="70.0,81.1 108.5,81.1 147.1,81.0 185.6,81.0 224.1,81.1 262.6,81.3 301.2,81.9 339.7,82.7 378.2,83.6 416.7,85.5 455.3,87.3 493.8,89.7 532.3,91.2 570.8,95.4 609.4,98.4 647.9,101.1 686.4,106.2 724.9,110.2 763.5,113.3 802.0,121.2" fill="none" stroke="#0072B2" stroke-width="3" stroke-dasharray="10 5"/>
+<polyline points="70.0,81.1 108.5,81.1 147.1,81.0 185.6,80.8 224.1,81.0 262.6,81.0 301.2,81.3 339.7,81.0 378.2,81.0 416.7,81.9 455.3,82.8 493.8,84.6 532.3,84.5 570.8,86.4 609.4,86.1 647.9,89.8 686.4,86.5 724.9,88.3 763.5,90.1 802.0,93.9" fill="none" stroke="#E69F00" stroke-width="3"/>
+<polyline points="70.0,81.1 108.5,81.1 147.1,81.0 185.6,81.0 224.1,81.2 262.6,81.3 301.2,81.8 339.7,82.7 378.2,83.6 416.7,85.9 455.3,87.3 493.8,89.7 532.3,90.7 570.8,94.9 609.4,97.9 647.9,100.7 686.4,104.7 724.9,107.7 763.5,112.6 802.0,120.0" fill="none" stroke="#E69F00" stroke-width="3" stroke-dasharray="10 5"/>
+<polyline points="70.0,81.1 108.5,81.1 147.1,80.9 185.6,80.7 224.1,80.8 262.6,80.8 301.2,81.2 339.7,80.1 378.2,80.0 416.7,81.1 455.3,81.6 493.8,82.0 532.3,81.6 570.8,82.1 609.4,81.8 647.9,84.7 686.4,82.1 724.9,82.5 763.5,84.3 802.0,85.4" fill="none" stroke="#CC79A7" stroke-width="3"/>
+<polyline points="70.0,81.1 108.5,81.1 147.1,81.0 185.6,81.0 224.1,81.1 262.6,81.2 301.2,81.6 339.7,82.1 378.2,83.0 416.7,85.1 455.3,85.9 493.8,88.1 532.3,89.4 570.8,92.5 609.4,95.7 647.9,97.2 686.4,98.2 724.9,101.7 763.5,107.6 802.0,111.9" fill="none" stroke="#CC79A7" stroke-width="3" stroke-dasharray="10 5"/>
+</svg>
+</div>
+<div class="panel">
+<h3>48 clients</h3>
+<svg viewBox="0 0 820 390" role="img" aria-label="Clean-shadow relative difference — 48 clients">
+<text x="410" y="20" text-anchor="middle" font-size="15" font-weight="bold">Clean-shadow relative difference — 48 clients</text>
+<line x1="70" y1="355.0" x2="802" y2="355.0" stroke="#e4e8ec"/>
+<text x="62" y="359.0" text-anchor="end" font-size="11">-31.5</text>
+<line x1="70" y1="280.0" x2="802" y2="280.0" stroke="#e4e8ec"/>
+<text x="62" y="284.0" text-anchor="end" font-size="11">-19.8</text>
+<line x1="70" y1="205.0" x2="802" y2="205.0" stroke="#e4e8ec"/>
+<text x="62" y="209.0" text-anchor="end" font-size="11">-8.2</text>
+<line x1="70" y1="130.0" x2="802" y2="130.0" stroke="#e4e8ec"/>
+<text x="62" y="134.0" text-anchor="end" font-size="11">3.5</text>
+<line x1="70" y1="55.0" x2="802" y2="55.0" stroke="#e4e8ec"/>
+<text x="62" y="59.0" text-anchor="end" font-size="11">15.2</text>
+<line x1="70.0" y1="35" x2="70.0" y2="335" stroke="#f0f2f4"/>
+<text x="70.0" y="353" text-anchor="middle" font-size="11">1</text>
+<line x1="224.1" y1="35" x2="224.1" y2="335" stroke="#f0f2f4"/>
+<text x="224.1" y="353" text-anchor="middle" font-size="11">5</text>
+<line x1="416.7" y1="35" x2="416.7" y2="335" stroke="#f0f2f4"/>
+<text x="416.7" y="353" text-anchor="middle" font-size="11">10</text>
+<line x1="609.4" y1="35" x2="609.4" y2="335" stroke="#f0f2f4"/>
+<text x="609.4" y="353" text-anchor="middle" font-size="11">15</text>
+<line x1="802.0" y1="35" x2="802.0" y2="335" stroke="#f0f2f4"/>
+<text x="802.0" y="353" text-anchor="middle" font-size="11">20</text>
+<rect x="70" y="35" width="732" height="300" fill="none" stroke="#555"/>
+<text x="410" y="378" text-anchor="middle" font-size="12">Round</text>
+<text x="15" y="195" transform="rotate(-90 15 195)" text-anchor="middle" font-size="12">Relative difference (%)</text>
+<polyline points="70.0,153.0 108.5,154.8 147.1,151.5 185.6,139.7 224.1,143.5 262.6,147.4 301.2,148.8 339.7,153.1 378.2,152.2 416.7,161.1 455.3,163.5 493.8,172.4 532.3,178.8 570.8,195.0 609.4,205.4 647.9,232.8 686.4,244.7 724.9,275.8 763.5,301.8 802.0,330.0" fill="none" stroke="#222222" stroke-width="3" stroke-dasharray="3 5"/>
+<polyline points="70.0,153.0 108.5,157.1 147.1,147.7 185.6,153.9 224.1,145.3 262.6,150.5 301.2,135.2 339.7,155.8 378.2,137.8 416.7,178.1 455.3,173.6 493.8,195.3 532.3,167.1 570.8,213.4 609.4,178.4 647.9,145.0 686.4,204.7 724.9,184.9 763.5,191.4 802.0,230.5" fill="none" stroke="#0072B2" stroke-width="3"/>
+<polyline points="70.0,153.0 108.5,156.8 147.1,148.8 185.6,150.6 224.1,139.4 262.6,147.3 301.2,136.3 339.7,158.4 378.2,144.4 416.7,173.7 455.3,172.6 493.8,189.8 532.3,190.2 570.8,211.0 609.4,202.3 647.9,190.3 686.4,222.6 724.9,234.0 763.5,227.7 802.0,263.6" fill="none" stroke="#0072B2" stroke-width="3" stroke-dasharray="10 5"/>
+<polyline points="70.0,152.9 108.5,159.0 147.1,149.4 185.6,154.6 224.1,152.8 262.6,148.9 301.2,143.0 339.7,136.5 378.2,108.7 416.7,145.1 455.3,159.8 493.8,162.0 532.3,129.6 570.8,215.5 609.4,157.5 647.9,142.6 686.4,211.8 724.9,177.9 763.5,80.0 802.0,226.7" fill="none" stroke="#E69F00" stroke-width="3"/>
+<polyline points="70.0,153.0 108.5,157.5 147.1,148.7 185.6,154.8 224.1,146.7 262.6,147.0 301.2,133.6 339.7,154.6 378.2,132.2 416.7,170.1 455.3,159.2 493.8,183.5 532.3,151.9 570.8,192.2 609.4,155.5 647.9,128.4 686.4,179.0 724.9,142.9 763.5,175.6 802.0,222.7" fill="none" stroke="#E69F00" stroke-width="3" stroke-dasharray="10 5"/>
+<polyline points="70.0,152.7 108.5,159.8 147.1,152.1 185.6,163.9 224.1,174.5 262.6,157.9 301.2,132.6 339.7,99.2 378.2,125.0 416.7,139.2 455.3,126.2 493.8,137.0 532.3,123.7 570.8,151.0 609.4,110.5 647.9,131.4 686.4,119.0 724.9,130.2 763.5,86.9 802.0,244.2" fill="none" stroke="#CC79A7" stroke-width="3"/>
+<polyline points="70.0,152.9 108.5,159.6 147.1,151.2 185.6,156.0 224.1,148.8 262.6,138.5 301.2,135.8 339.7,135.1 378.2,107.1 416.7,135.7 455.3,128.6 493.8,158.3 532.3,122.2 570.8,222.2 609.4,160.4 647.9,145.8 686.4,186.3 724.9,145.1 763.5,89.5 802.0,241.5" fill="none" stroke="#CC79A7" stroke-width="3" stroke-dasharray="10 5"/>
+</svg>
+</div>
+<div class="panel">
+<h3>100 clients</h3>
+<svg viewBox="0 0 820 390" role="img" aria-label="Clean-shadow relative difference — 100 clients">
+<text x="410" y="20" text-anchor="middle" font-size="15" font-weight="bold">Clean-shadow relative difference — 100 clients</text>
+<line x1="70" y1="355.0" x2="802" y2="355.0" stroke="#e4e8ec"/>
+<text x="62" y="359.0" text-anchor="end" font-size="11">-6.0</text>
+<line x1="70" y1="280.0" x2="802" y2="280.0" stroke="#e4e8ec"/>
+<text x="62" y="284.0" text-anchor="end" font-size="11">2.1</text>
+<line x1="70" y1="205.0" x2="802" y2="205.0" stroke="#e4e8ec"/>
+<text x="62" y="209.0" text-anchor="end" font-size="11">10.3</text>
+<line x1="70" y1="130.0" x2="802" y2="130.0" stroke="#e4e8ec"/>
+<text x="62" y="134.0" text-anchor="end" font-size="11">18.4</text>
+<line x1="70" y1="55.0" x2="802" y2="55.0" stroke="#e4e8ec"/>
+<text x="62" y="59.0" text-anchor="end" font-size="11">26.6</text>
+<line x1="70.0" y1="35" x2="70.0" y2="335" stroke="#f0f2f4"/>
+<text x="70.0" y="353" text-anchor="middle" font-size="11">1</text>
+<line x1="224.1" y1="35" x2="224.1" y2="335" stroke="#f0f2f4"/>
+<text x="224.1" y="353" text-anchor="middle" font-size="11">5</text>
+<line x1="416.7" y1="35" x2="416.7" y2="335" stroke="#f0f2f4"/>
+<text x="416.7" y="353" text-anchor="middle" font-size="11">10</text>
+<line x1="609.4" y1="35" x2="609.4" y2="335" stroke="#f0f2f4"/>
+<text x="609.4" y="353" text-anchor="middle" font-size="11">15</text>
+<line x1="802.0" y1="35" x2="802.0" y2="335" stroke="#f0f2f4"/>
+<text x="802.0" y="353" text-anchor="middle" font-size="11">20</text>
+<rect x="70" y="35" width="732" height="300" fill="none" stroke="#555"/>
+<text x="410" y="378" text-anchor="middle" font-size="12">Round</text>
+<text x="15" y="195" transform="rotate(-90 15 195)" text-anchor="middle" font-size="12">Relative difference (%)</text>
+<polyline points="70.0,301.6 108.5,318.4 147.1,285.4 185.6,259.2 224.1,253.2 262.6,236.6 301.2,231.8 339.7,217.0 378.2,220.5 416.7,211.5 455.3,219.0 493.8,214.7 532.3,227.0 570.8,237.2 609.4,239.3 647.9,256.4 686.4,255.3 724.9,262.2 763.5,265.3 802.0,261.5" fill="none" stroke="#222222" stroke-width="3" stroke-dasharray="3 5"/>
+<polyline points="70.0,301.0 108.5,313.4 147.1,256.2 185.6,297.2 224.1,287.5 262.6,246.8 301.2,209.2 339.7,206.2 378.2,166.0 416.7,190.5 455.3,183.8 493.8,173.5 532.3,187.6 570.8,155.7 609.4,131.3 647.9,215.3 686.4,157.5 724.9,157.8 763.5,247.2 802.0,200.3" fill="none" stroke="#0072B2" stroke-width="3"/>
+<polyline points="70.0,301.2 108.5,314.3 147.1,254.5 185.6,297.1 224.1,287.1 262.6,248.8 301.2,216.9 339.7,210.8 378.2,177.8 416.7,209.8 455.3,193.1 493.8,188.0 532.3,197.2 570.8,169.1 609.4,144.5 647.9,211.3 686.4,170.9 724.9,167.2 763.5,225.7 802.0,193.0" fill="none" stroke="#0072B2" stroke-width="3" stroke-dasharray="10 5"/>
+<polyline points="70.0,300.4 108.5,308.2 147.1,256.2 185.6,316.8 224.1,293.6 262.6,241.7 301.2,194.2 339.7,150.3 378.2,131.9 416.7,142.4 455.3,137.3 493.8,103.6 532.3,162.3 570.8,142.9 609.4,181.6 647.9,234.4 686.4,194.8 724.9,156.1 763.5,236.8 802.0,157.0" fill="none" stroke="#E69F00" stroke-width="3"/>
+<polyline points="70.0,300.7 108.5,309.0 147.1,256.0 185.6,314.8 224.1,298.4 262.6,242.3 301.2,197.8 339.7,156.9 378.2,128.3 416.7,140.8 455.3,152.2 493.8,112.1 532.3,171.4 570.8,141.5 609.4,169.4 647.9,227.5 686.4,205.7 724.9,167.3 763.5,247.4 802.0,179.0" fill="none" stroke="#E69F00" stroke-width="3" stroke-dasharray="10 5"/>
+<polyline points="70.0,298.8 108.5,309.1 147.1,273.4 185.6,291.9 224.1,330.0 262.6,256.2 301.2,168.3 339.7,148.9 378.2,178.8 416.7,104.2 455.3,131.1 493.8,156.1 532.3,172.9 570.8,144.8 609.4,217.4 647.9,250.1 686.4,218.5 724.9,117.0 763.5,122.3 802.0,104.2" fill="none" stroke="#CC79A7" stroke-width="3"/>
+<polyline points="70.0,299.9 108.5,305.7 147.1,273.6 185.6,301.7 224.1,302.5 262.6,240.9 301.2,161.0 339.7,132.7 378.2,110.1 416.7,81.6 455.3,114.5 493.8,135.8 532.3,133.7 570.8,129.8 609.4,199.6 647.9,278.5 686.4,242.9 724.9,161.1 763.5,167.3 802.0,80.0" fill="none" stroke="#CC79A7" stroke-width="3" stroke-dasharray="10 5"/>
+</svg>
+</div>
+</div>
+<h3>Noisy-shadow relative difference</h3>
+<div class="grid">
+<div class="panel">
+<h3>8 clients</h3>
+<svg viewBox="0 0 820 390" role="img" aria-label="Noisy-shadow relative difference — 8 clients">
+<text x="410" y="20" text-anchor="middle" font-size="15" font-weight="bold">Noisy-shadow relative difference — 8 clients</text>
+<line x1="70" y1="355.0" x2="802" y2="355.0" stroke="#e4e8ec"/>
+<text x="62" y="359.0" text-anchor="end" font-size="11">-7.0</text>
+<line x1="70" y1="280.0" x2="802" y2="280.0" stroke="#e4e8ec"/>
+<text x="62" y="284.0" text-anchor="end" font-size="11">14.1</text>
+<line x1="70" y1="205.0" x2="802" y2="205.0" stroke="#e4e8ec"/>
+<text x="62" y="209.0" text-anchor="end" font-size="11">35.2</text>
+<line x1="70" y1="130.0" x2="802" y2="130.0" stroke="#e4e8ec"/>
+<text x="62" y="134.0" text-anchor="end" font-size="11">56.2</text>
+<line x1="70" y1="55.0" x2="802" y2="55.0" stroke="#e4e8ec"/>
+<text x="62" y="59.0" text-anchor="end" font-size="11">77.3</text>
+<line x1="70.0" y1="35" x2="70.0" y2="335" stroke="#f0f2f4"/>
+<text x="70.0" y="353" text-anchor="middle" font-size="11">1</text>
+<line x1="224.1" y1="35" x2="224.1" y2="335" stroke="#f0f2f4"/>
+<text x="224.1" y="353" text-anchor="middle" font-size="11">5</text>
+<line x1="416.7" y1="35" x2="416.7" y2="335" stroke="#f0f2f4"/>
+<text x="416.7" y="353" text-anchor="middle" font-size="11">10</text>
+<line x1="609.4" y1="35" x2="609.4" y2="335" stroke="#f0f2f4"/>
+<text x="609.4" y="353" text-anchor="middle" font-size="11">15</text>
+<line x1="802.0" y1="35" x2="802.0" y2="335" stroke="#f0f2f4"/>
+<text x="802.0" y="353" text-anchor="middle" font-size="11">20</text>
+<rect x="70" y="35" width="732" height="300" fill="none" stroke="#555"/>
+<text x="410" y="378" text-anchor="middle" font-size="12">Round</text>
+<text x="15" y="195" transform="rotate(-90 15 195)" text-anchor="middle" font-size="12">Relative difference (%)</text>
+<polyline points="70.0,327.3 108.5,170.3 147.1,124.7 185.6,109.4 224.1,104.1 262.6,80.0 301.2,85.8 339.7,103.3 378.2,99.0 416.7,99.8 455.3,95.2 493.8,109.8 532.3,100.7 570.8,106.8 609.4,119.9 647.9,125.3 686.4,99.7 724.9,143.5 763.5,114.3 802.0,129.2" fill="none" stroke="#222222" stroke-width="3" stroke-dasharray="3 5"/>
+<polyline points="70.0,329.8 108.5,328.0 147.1,319.0 185.6,299.2 224.1,282.3 262.6,253.9 301.2,200.4 339.7,166.1 378.2,127.9 416.7,106.3 455.3,102.7 493.8,130.0 532.3,126.8 570.8,112.3 609.4,116.8 647.9,133.9 686.4,137.1 724.9,132.2 763.5,114.2 802.0,111.9" fill="none" stroke="#0072B2" stroke-width="3"/>
+<polyline points="70.0,329.9 108.5,330.0 147.1,320.9 185.6,300.8 224.1,266.9 262.6,228.0 301.2,192.6 339.7,158.3 378.2,130.6 416.7,106.0 455.3,98.4 493.8,106.9 532.3,113.4 570.8,104.3 609.4,108.5 647.9,106.0 686.4,114.9 724.9,113.6 763.5,105.2 802.0,101.5" fill="none" stroke="#0072B2" stroke-width="3" stroke-dasharray="10 5"/>
+<polyline points="70.0,329.9 108.5,327.0 147.1,320.6 185.6,298.8 224.1,293.4 262.6,274.4 301.2,214.3 339.7,173.4 378.2,155.6 416.7,141.5 455.3,129.5 493.8,163.6 532.3,128.6 570.8,124.3 609.4,121.4 647.9,158.3 686.4,183.2 724.9,176.9 763.5,163.7 802.0,158.8" fill="none" stroke="#E69F00" stroke-width="3"/>
+<polyline points="70.0,329.8 108.5,329.7 147.1,320.0 185.6,300.6 224.1,274.8 262.6,236.0 301.2,197.6 339.7,162.2 378.2,135.5 416.7,110.0 455.3,102.7 493.8,114.5 532.3,122.4 570.8,104.4 609.4,111.0 647.9,112.9 686.4,115.4 724.9,111.6 763.5,91.0 802.0,94.9" fill="none" stroke="#E69F00" stroke-width="3" stroke-dasharray="10 5"/>
+<polyline points="70.0,329.7 108.5,327.2 147.1,322.8 185.6,302.3 224.1,299.7 262.6,269.4 301.2,216.0 339.7,194.4 378.2,173.7 416.7,152.4 455.3,130.8 493.8,194.4 532.3,174.9 570.8,120.0 609.4,152.7 647.9,192.1 686.4,195.3 724.9,186.5 763.5,170.7 802.0,178.0" fill="none" stroke="#CC79A7" stroke-width="3"/>
+<polyline points="70.0,329.8 108.5,328.8 147.1,318.1 185.6,300.5 224.1,278.9 262.6,239.8 301.2,190.3 339.7,163.4 378.2,125.7 416.7,94.4 455.3,95.6 493.8,120.6 532.3,125.2 570.8,103.4 609.4,111.9 647.9,123.0 686.4,128.8 724.9,117.8 763.5,87.8 802.0,85.5" fill="none" stroke="#CC79A7" stroke-width="3" stroke-dasharray="10 5"/>
+</svg>
+</div>
+<div class="panel">
+<h3>48 clients</h3>
+<svg viewBox="0 0 820 390" role="img" aria-label="Noisy-shadow relative difference — 48 clients">
+<text x="410" y="20" text-anchor="middle" font-size="15" font-weight="bold">Noisy-shadow relative difference — 48 clients</text>
+<line x1="70" y1="355.0" x2="802" y2="355.0" stroke="#e4e8ec"/>
+<text x="62" y="359.0" text-anchor="end" font-size="11">-6.5</text>
+<line x1="70" y1="280.0" x2="802" y2="280.0" stroke="#e4e8ec"/>
+<text x="62" y="284.0" text-anchor="end" font-size="11">12.8</text>
+<line x1="70" y1="205.0" x2="802" y2="205.0" stroke="#e4e8ec"/>
+<text x="62" y="209.0" text-anchor="end" font-size="11">32.2</text>
+<line x1="70" y1="130.0" x2="802" y2="130.0" stroke="#e4e8ec"/>
+<text x="62" y="134.0" text-anchor="end" font-size="11">51.5</text>
+<line x1="70" y1="55.0" x2="802" y2="55.0" stroke="#e4e8ec"/>
+<text x="62" y="59.0" text-anchor="end" font-size="11">70.8</text>
+<line x1="70.0" y1="35" x2="70.0" y2="335" stroke="#f0f2f4"/>
+<text x="70.0" y="353" text-anchor="middle" font-size="11">1</text>
+<line x1="224.1" y1="35" x2="224.1" y2="335" stroke="#f0f2f4"/>
+<text x="224.1" y="353" text-anchor="middle" font-size="11">5</text>
+<line x1="416.7" y1="35" x2="416.7" y2="335" stroke="#f0f2f4"/>
+<text x="416.7" y="353" text-anchor="middle" font-size="11">10</text>
+<line x1="609.4" y1="35" x2="609.4" y2="335" stroke="#f0f2f4"/>
+<text x="609.4" y="353" text-anchor="middle" font-size="11">15</text>
+<line x1="802.0" y1="35" x2="802.0" y2="335" stroke="#f0f2f4"/>
+<text x="802.0" y="353" text-anchor="middle" font-size="11">20</text>
+<rect x="70" y="35" width="732" height="300" fill="none" stroke="#555"/>
+<text x="410" y="378" text-anchor="middle" font-size="12">Round</text>
+<text x="15" y="195" transform="rotate(-90 15 195)" text-anchor="middle" font-size="12">Relative difference (%)</text>
+<polyline points="70.0,330.0 108.5,249.0 147.1,179.8 185.6,167.2 224.1,167.5 262.6,145.9 301.2,136.0 339.7,129.8 378.2,120.5 416.7,106.3 455.3,106.2 493.8,94.0 532.3,87.6 570.8,94.1 609.4,90.2 647.9,87.7 686.4,96.9 724.9,83.6 763.5,89.9 802.0,80.0" fill="none" stroke="#222222" stroke-width="3" stroke-dasharray="3 5"/>
+<polyline points="70.0,329.8 108.5,278.5 147.1,197.5 185.6,197.6 224.1,216.9 262.6,186.7 301.2,135.8 339.7,146.1 378.2,118.4 416.7,120.0 455.3,98.9 493.8,133.5 532.3,113.2 570.8,95.7 609.4,124.4 647.9,134.8 686.4,148.5 724.9,90.8 763.5,93.3 802.0,104.6" fill="none" stroke="#0072B2" stroke-width="3"/>
+<polyline points="70.0,329.9 108.5,279.8 147.1,196.6 185.6,193.3 224.1,201.0 262.6,179.4 301.2,147.0 339.7,150.0 378.2,123.6 416.7,119.2 455.3,102.6 493.8,128.7 532.3,108.1 570.8,94.3 609.4,107.8 647.9,112.8 686.4,117.5 724.9,82.2 763.5,89.0 802.0,82.5" fill="none" stroke="#0072B2" stroke-width="3" stroke-dasharray="10 5"/>
+<polyline points="70.0,329.8 108.5,265.3 147.1,188.5 185.6,178.5 224.1,257.5 262.6,203.7 301.2,131.0 339.7,143.6 378.2,111.7 416.7,116.2 455.3,109.3 493.8,137.9 532.3,117.0 570.8,109.1 609.4,142.4 647.9,164.9 686.4,179.5 724.9,119.0 763.5,123.4 802.0,143.8" fill="none" stroke="#E69F00" stroke-width="3"/>
+<polyline points="70.0,329.8 108.5,269.3 147.1,194.2 185.6,189.4 224.1,226.8 262.6,189.3 301.2,140.0 339.7,149.9 378.2,125.1 416.7,119.0 455.3,98.2 493.8,131.8 532.3,113.7 570.8,92.0 609.4,115.8 647.9,127.8 686.4,135.2 724.9,89.7 763.5,90.1 802.0,99.0" fill="none" stroke="#E69F00" stroke-width="3" stroke-dasharray="10 5"/>
+<polyline points="70.0,329.0 108.5,265.7 147.1,218.0 185.6,184.0 224.1,303.5 262.6,226.4 301.2,113.0 339.7,113.9 378.2,93.6 416.7,110.5 455.3,102.2 493.8,125.8 532.3,137.0 570.8,99.7 609.4,160.2 647.9,171.1 686.4,158.6 724.9,143.4 763.5,152.2 802.0,234.3" fill="none" stroke="#CC79A7" stroke-width="3"/>
+<polyline points="70.0,329.8 108.5,261.6 147.1,196.0 185.6,171.6 224.1,258.1 262.6,197.5 301.2,131.4 339.7,140.0 378.2,113.8 416.7,115.2 455.3,96.5 493.8,133.4 532.3,113.7 570.8,103.1 609.4,129.2 647.9,146.0 686.4,154.5 724.9,110.1 763.5,113.3 802.0,129.0" fill="none" stroke="#CC79A7" stroke-width="3" stroke-dasharray="10 5"/>
+</svg>
+</div>
+<div class="panel">
+<h3>100 clients</h3>
+<svg viewBox="0 0 820 390" role="img" aria-label="Noisy-shadow relative difference — 100 clients">
+<text x="410" y="20" text-anchor="middle" font-size="15" font-weight="bold">Noisy-shadow relative difference — 100 clients</text>
+<line x1="70" y1="355.0" x2="802" y2="355.0" stroke="#e4e8ec"/>
+<text x="62" y="359.0" text-anchor="end" font-size="11">-6.9</text>
+<line x1="70" y1="280.0" x2="802" y2="280.0" stroke="#e4e8ec"/>
+<text x="62" y="284.0" text-anchor="end" font-size="11">13.1</text>
+<line x1="70" y1="205.0" x2="802" y2="205.0" stroke="#e4e8ec"/>
+<text x="62" y="209.0" text-anchor="end" font-size="11">33.2</text>
+<line x1="70" y1="130.0" x2="802" y2="130.0" stroke="#e4e8ec"/>
+<text x="62" y="134.0" text-anchor="end" font-size="11">53.2</text>
+<line x1="70" y1="55.0" x2="802" y2="55.0" stroke="#e4e8ec"/>
+<text x="62" y="59.0" text-anchor="end" font-size="11">73.3</text>
+<line x1="70.0" y1="35" x2="70.0" y2="335" stroke="#f0f2f4"/>
+<text x="70.0" y="353" text-anchor="middle" font-size="11">1</text>
+<line x1="224.1" y1="35" x2="224.1" y2="335" stroke="#f0f2f4"/>
+<text x="224.1" y="353" text-anchor="middle" font-size="11">5</text>
+<line x1="416.7" y1="35" x2="416.7" y2="335" stroke="#f0f2f4"/>
+<text x="416.7" y="353" text-anchor="middle" font-size="11">10</text>
+<line x1="609.4" y1="35" x2="609.4" y2="335" stroke="#f0f2f4"/>
+<text x="609.4" y="353" text-anchor="middle" font-size="11">15</text>
+<line x1="802.0" y1="35" x2="802.0" y2="335" stroke="#f0f2f4"/>
+<text x="802.0" y="353" text-anchor="middle" font-size="11">20</text>
+<rect x="70" y="35" width="732" height="300" fill="none" stroke="#555"/>
+<text x="410" y="378" text-anchor="middle" font-size="12">Round</text>
+<text x="15" y="195" transform="rotate(-90 15 195)" text-anchor="middle" font-size="12">Relative difference (%)</text>
+<polyline points="70.0,330.0 108.5,305.4 147.1,212.7 185.6,172.5 224.1,177.2 262.6,173.3 301.2,172.4 339.7,164.0 378.2,167.6 416.7,160.9 455.3,160.1 493.8,152.2 532.3,152.8 570.8,147.5 609.4,136.7 647.9,135.5 686.4,127.0 724.9,122.1 763.5,117.5 802.0,116.2" fill="none" stroke="#222222" stroke-width="3" stroke-dasharray="3 5"/>
+<polyline points="70.0,329.5 108.5,300.1 147.1,201.3 185.6,194.2 224.1,212.9 262.6,190.6 301.2,137.5 339.7,170.8 378.2,133.4 416.7,132.5 455.3,119.1 493.8,150.9 532.3,124.9 570.8,122.5 609.4,135.2 647.9,153.1 686.4,155.8 724.9,116.3 763.5,125.9 802.0,125.1" fill="none" stroke="#0072B2" stroke-width="3"/>
+<polyline points="70.0,329.6 108.5,296.6 147.1,202.2 185.6,193.7 224.1,207.0 262.6,187.7 301.2,137.0 339.7,172.2 378.2,132.9 416.7,131.0 455.3,119.2 493.8,142.4 532.3,124.4 570.8,119.7 609.4,130.9 647.9,142.1 686.4,149.1 724.9,111.5 763.5,122.3 802.0,114.1" fill="none" stroke="#0072B2" stroke-width="3" stroke-dasharray="10 5"/>
+<polyline points="70.0,329.2 108.5,292.0 147.1,195.6 185.6,186.3 224.1,214.9 262.6,179.3 301.2,124.2 339.7,176.4 378.2,121.5 416.7,132.7 455.3,112.0 493.8,144.5 532.3,125.6 570.8,103.6 609.4,139.4 647.9,180.0 686.4,166.3 724.9,129.4 763.5,150.6 802.0,112.8" fill="none" stroke="#E69F00" stroke-width="3"/>
+<polyline points="70.0,329.4 108.5,288.4 147.1,196.4 185.6,180.6 224.1,219.8 262.6,172.9 301.2,122.2 339.7,171.0 378.2,117.4 416.7,116.7 455.3,105.1 493.8,136.9 532.3,114.4 570.8,97.7 609.4,126.7 647.9,152.9 686.4,150.6 724.9,112.3 763.5,134.6 802.0,112.8" fill="none" stroke="#E69F00" stroke-width="3" stroke-dasharray="10 5"/>
+<polyline points="70.0,328.2 108.5,298.4 147.1,202.3 185.6,162.0 224.1,220.3 262.6,174.4 301.2,96.2 339.7,156.9 378.2,141.1 416.7,116.7 455.3,102.8 493.8,170.8 532.3,121.0 570.8,87.0 609.4,142.2 647.9,166.7 686.4,115.1 724.9,115.7 763.5,121.9 802.0,125.0" fill="none" stroke="#CC79A7" stroke-width="3"/>
+<polyline points="70.0,328.9 108.5,288.9 147.1,213.4 185.6,168.1 224.1,211.5 262.6,174.7 301.2,108.7 339.7,164.7 378.2,122.3 416.7,122.9 455.3,105.2 493.8,145.6 532.3,115.5 570.8,80.0 609.4,131.2 647.9,165.4 686.4,120.7 724.9,117.4 763.5,125.0 802.0,99.1" fill="none" stroke="#CC79A7" stroke-width="3" stroke-dasharray="10 5"/>
+</svg>
+</div>
+</div>
+</section>
+<section id="cia-auc">
+<h2>Multi-round CIA ROC-AUC</h2>
+<p class="note">Pooled AUC uses all 20 IN and 20 OUT checkpoints. Effective AUC lets the attacker invert the loss direction, so values closer to 0.5 indicate better protection.</p>
+<div class="panel">
+<table>
+<thead>
+<tr>
+<th>Clients</th>
+<th>Method</th>
+<th>Ratio</th>
+<th>Clean pooled AUC</th>
+<th>Clean effective AUC</th>
+<th>Noisy pooled AUC</th>
+<th>Noisy effective AUC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8</td>
+<td>Vanilla</td>
+<td>—</td>
+<td>0.932</td>
+<td>0.932</td>
+<td>0.713</td>
+<td>0.713</td>
+</tr>
+<tr class="pair-start">
+<td>8</td>
+<td>Global-DP</td>
+<td>0.00250</td>
+<td>0.718</td>
+<td>0.718</td>
+<td>0.557</td>
+<td>0.557</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Metric privacy</td>
+<td>0.00250</td>
+<td>0.733</td>
+<td>0.733</td>
+<td>0.585</td>
+<td>0.585</td>
+</tr>
+<tr class="pair-start">
+<td>8</td>
+<td>Global-DP</td>
+<td>0.00400</td>
+<td>0.693</td>
+<td>0.693</td>
+<td>0.670</td>
+<td>0.670</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Metric privacy</td>
+<td>0.00400</td>
+<td>0.730</td>
+<td>0.730</td>
+<td>0.627</td>
+<td>0.627</td>
+</tr>
+<tr class="pair-start">
+<td>8</td>
+<td>Global-DP</td>
+<td>0.00625</td>
+<td>0.652</td>
+<td>0.652</td>
+<td>0.593</td>
+<td>0.593</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Metric privacy</td>
+<td>0.00625</td>
+<td>0.710</td>
+<td>0.710</td>
+<td>0.495</td>
+<td>0.505</td>
+</tr>
+<tr>
+<td>48</td>
+<td>Vanilla</td>
+<td>—</td>
+<td>0.752</td>
+<td>0.752</td>
+<td>0.403</td>
+<td>0.597</td>
+</tr>
+<tr class="pair-start">
+<td>48</td>
+<td>Global-DP</td>
+<td>0.00250</td>
+<td>0.698</td>
+<td>0.698</td>
+<td>0.593</td>
+<td>0.593</td>
+</tr>
+<tr>
+<td>48</td>
+<td>Metric privacy</td>
+<td>0.00250</td>
+<td>0.698</td>
+<td>0.698</td>
+<td>0.568</td>
+<td>0.568</td>
+</tr>
+<tr class="pair-start">
+<td>48</td>
+<td>Global-DP</td>
+<td>0.00400</td>
+<td>0.657</td>
+<td>0.657</td>
+<td>0.537</td>
+<td>0.537</td>
+</tr>
+<tr>
+<td>48</td>
+<td>Metric privacy</td>
+<td>0.00400</td>
+<td>0.715</td>
+<td>0.715</td>
+<td>0.613</td>
+<td>0.613</td>
+</tr>
+<tr class="pair-start">
+<td>48</td>
+<td>Global-DP</td>
+<td>0.00625</td>
+<td>0.562</td>
+<td>0.562</td>
+<td>0.535</td>
+<td>0.535</td>
+</tr>
+<tr>
+<td>48</td>
+<td>Metric privacy</td>
+<td>0.00625</td>
+<td>0.665</td>
+<td>0.665</td>
+<td>0.540</td>
+<td>0.540</td>
+</tr>
+<tr>
+<td>100</td>
+<td>Vanilla</td>
+<td>—</td>
+<td>0.555</td>
+<td>0.555</td>
+<td>0.405</td>
+<td>0.595</td>
+</tr>
+<tr class="pair-start">
+<td>100</td>
+<td>Global-DP</td>
+<td>0.00250</td>
+<td>0.530</td>
+<td>0.530</td>
+<td>0.540</td>
+<td>0.540</td>
+</tr>
+<tr>
+<td>100</td>
+<td>Metric privacy</td>
+<td>0.00250</td>
+<td>0.527</td>
+<td>0.527</td>
+<td>0.568</td>
+<td>0.568</td>
+</tr>
+<tr class="pair-start">
+<td>100</td>
+<td>Global-DP</td>
+<td>0.00400</td>
+<td>0.497</td>
+<td>0.502</td>
+<td>0.550</td>
+<td>0.550</td>
+</tr>
+<tr>
+<td>100</td>
+<td>Metric privacy</td>
+<td>0.00400</td>
+<td>0.573</td>
+<td>0.573</td>
+<td>0.490</td>
+<td>0.510</td>
+</tr>
+<tr class="pair-start">
+<td>100</td>
+<td>Global-DP</td>
+<td>0.00625</td>
+<td>0.477</td>
+<td>0.522</td>
+<td>0.468</td>
+<td>0.532</td>
+</tr>
+<tr>
+<td>100</td>
+<td>Metric privacy</td>
+<td>0.00625</td>
+<td>0.520</td>
+<td>0.520</td>
+<td>0.515</td>
+<td>0.515</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="distance">
+<h2>Metric-privacy distance d<sub>r</sub>
+</h2>
+<p class="note">d<sub>r</sub> increases with the amount of noise across all client-number settings.</p>
+<div class="legend">
+<span class="key">
+<i style="background:#0072B2">
+</i>Ratio 0.0025</span>
+<span class="key">
+<i style="background:#E69F00">
+</i>Ratio 0.004</span>
+<span class="key">
+<i style="background:#CC79A7">
+</i>Ratio 0.00625</span>
+</div>
+<div class="grid">
+<div class="panel">
+<h3>8 clients</h3>
+<svg viewBox="0 0 820 390" role="img" aria-label="Metric-privacy distance — 8 clients">
+<text x="410" y="20" text-anchor="middle" font-size="15" font-weight="bold">Metric-privacy distance — 8 clients</text>
+<line x1="64" y1="355.0" x2="802" y2="355.0" stroke="#e4e8ec"/>
+<text x="56" y="359.0" text-anchor="end" font-size="11">2.625</text>
+<line x1="64" y1="280.0" x2="802" y2="280.0" stroke="#e4e8ec"/>
+<text x="56" y="284.0" text-anchor="end" font-size="11">2.854</text>
+<line x1="64" y1="205.0" x2="802" y2="205.0" stroke="#e4e8ec"/>
+<text x="56" y="209.0" text-anchor="end" font-size="11">3.084</text>
+<line x1="64" y1="130.0" x2="802" y2="130.0" stroke="#e4e8ec"/>
+<text x="56" y="134.0" text-anchor="end" font-size="11">3.313</text>
+<line x1="64" y1="55.0" x2="802" y2="55.0" stroke="#e4e8ec"/>
+<text x="56" y="59.0" text-anchor="end" font-size="11">3.542</text>
+<line x1="64.0" y1="35" x2="64.0" y2="335" stroke="#f0f2f4"/>
+<text x="64.0" y="353" text-anchor="middle" font-size="11">1</text>
+<line x1="219.4" y1="35" x2="219.4" y2="335" stroke="#f0f2f4"/>
+<text x="219.4" y="353" text-anchor="middle" font-size="11">5</text>
+<line x1="413.6" y1="35" x2="413.6" y2="335" stroke="#f0f2f4"/>
+<text x="413.6" y="353" text-anchor="middle" font-size="11">10</text>
+<line x1="607.8" y1="35" x2="607.8" y2="335" stroke="#f0f2f4"/>
+<text x="607.8" y="353" text-anchor="middle" font-size="11">15</text>
+<line x1="802.0" y1="35" x2="802.0" y2="335" stroke="#f0f2f4"/>
+<text x="802.0" y="353" text-anchor="middle" font-size="11">20</text>
+<rect x="64" y="35" width="738" height="300" fill="none" stroke="#555"/>
+<text x="410" y="378" text-anchor="middle" font-size="12">Round</text>
+<text x="15" y="195" transform="rotate(-90 15 195)" text-anchor="middle" font-size="12">dᵣ</text>
+<polyline points="64.0,84.0 102.8,172.3 141.7,295.3 180.5,325.8 219.4,300.5 258.2,279.6 297.1,268.3 335.9,261.1 374.7,252.4 413.6,248.0 452.4,240.5 491.3,246.6 530.1,251.2 568.9,268.3 607.8,259.3 646.6,259.7 685.5,260.0 724.3,260.2 763.2,257.5 802.0,256.1" fill="none" stroke="#0072B2" stroke-width="3"/>
+<polyline points="64.0,84.0 102.8,197.2 141.7,287.5 180.5,307.1 219.4,319.6 258.2,280.9 297.1,282.4 335.9,230.9 374.7,225.5 413.6,231.3 452.4,221.8 491.3,206.6 530.1,204.8 568.9,200.0 607.8,193.1 646.6,209.2 685.5,221.2 724.3,226.9 763.2,210.6 802.0,223.9" fill="none" stroke="#E69F00" stroke-width="3" stroke-dasharray="10 5"/>
+<polyline points="64.0,84.0 102.8,145.9 141.7,284.9 180.5,326.0 219.4,278.6 258.2,247.2 297.1,201.3 335.9,204.3 374.7,182.5 413.6,188.0 452.4,188.5 491.3,172.2 530.1,191.2 568.9,167.6 607.8,171.2 646.6,174.0 685.5,164.5 724.3,174.5 763.2,171.8 802.0,160.7" fill="none" stroke="#CC79A7" stroke-width="3" stroke-dasharray="3 5"/>
+</svg>
+</div>
+<div class="panel">
+<h3>48 clients</h3>
+<svg viewBox="0 0 820 390" role="img" aria-label="Metric-privacy distance — 48 clients">
+<text x="410" y="20" text-anchor="middle" font-size="15" font-weight="bold">Metric-privacy distance — 48 clients</text>
+<line x1="64" y1="355.0" x2="802" y2="355.0" stroke="#e4e8ec"/>
+<text x="56" y="359.0" text-anchor="end" font-size="11">1.146</text>
+<line x1="64" y1="280.0" x2="802" y2="280.0" stroke="#e4e8ec"/>
+<text x="56" y="284.0" text-anchor="end" font-size="11">1.301</text>
+<line x1="64" y1="205.0" x2="802" y2="205.0" stroke="#e4e8ec"/>
+<text x="56" y="209.0" text-anchor="end" font-size="11">1.457</text>
+<line x1="64" y1="130.0" x2="802" y2="130.0" stroke="#e4e8ec"/>
+<text x="56" y="134.0" text-anchor="end" font-size="11">1.612</text>
+<line x1="64" y1="55.0" x2="802" y2="55.0" stroke="#e4e8ec"/>
+<text x="56" y="59.0" text-anchor="end" font-size="11">1.768</text>
+<line x1="64.0" y1="35" x2="64.0" y2="335" stroke="#f0f2f4"/>
+<text x="64.0" y="353" text-anchor="middle" font-size="11">1</text>
+<line x1="219.4" y1="35" x2="219.4" y2="335" stroke="#f0f2f4"/>
+<text x="219.4" y="353" text-anchor="middle" font-size="11">5</text>
+<line x1="413.6" y1="35" x2="413.6" y2="335" stroke="#f0f2f4"/>
+<text x="413.6" y="353" text-anchor="middle" font-size="11">10</text>
+<line x1="607.8" y1="35" x2="607.8" y2="335" stroke="#f0f2f4"/>
+<text x="607.8" y="353" text-anchor="middle" font-size="11">15</text>
+<line x1="802.0" y1="35" x2="802.0" y2="335" stroke="#f0f2f4"/>
+<text x="802.0" y="353" text-anchor="middle" font-size="11">20</text>
+<rect x="64" y="35" width="738" height="300" fill="none" stroke="#555"/>
+<text x="410" y="378" text-anchor="middle" font-size="12">Round</text>
+<text x="15" y="195" transform="rotate(-90 15 195)" text-anchor="middle" font-size="12">dᵣ</text>
+<polyline points="64.0,128.5 102.8,313.2 141.7,326.0 180.5,306.5 219.4,288.6 258.2,263.8 297.1,252.7 335.9,222.7 374.7,197.3 413.6,174.1 452.4,146.1 491.3,138.4 530.1,138.9 568.9,130.9 607.8,119.4 646.6,124.4 685.5,132.9 724.3,153.2 763.2,161.6 802.0,160.1" fill="none" stroke="#0072B2" stroke-width="3"/>
+<polyline points="64.0,128.5 102.8,307.7 141.7,299.3 180.5,287.2 219.4,248.5 258.2,223.7 297.1,193.3 335.9,166.0 374.7,138.1 413.6,134.6 452.4,113.4 491.3,109.2 530.1,107.4 568.9,105.1 607.8,101.0 646.6,109.8 685.5,122.0 724.3,128.0 763.2,151.5 802.0,156.0" fill="none" stroke="#E69F00" stroke-width="3" stroke-dasharray="10 5"/>
+<polyline points="64.0,128.5 102.8,263.2 141.7,248.8 180.5,243.7 219.4,196.9 258.2,183.1 297.1,148.9 335.9,116.9 374.7,116.9 413.6,100.8 452.4,84.0 491.3,92.2 530.1,106.3 568.9,109.8 607.8,96.0 646.6,93.1 685.5,121.7 724.3,97.0 763.2,130.4 802.0,141.0" fill="none" stroke="#CC79A7" stroke-width="3" stroke-dasharray="3 5"/>
+</svg>
+</div>
+<div class="panel">
+<h3>100 clients</h3>
+<svg viewBox="0 0 820 390" role="img" aria-label="Metric-privacy distance — 100 clients">
+<text x="410" y="20" text-anchor="middle" font-size="15" font-weight="bold">Metric-privacy distance — 100 clients</text>
+<line x1="64" y1="355.0" x2="802" y2="355.0" stroke="#e4e8ec"/>
+<text x="56" y="359.0" text-anchor="end" font-size="11">0.830</text>
+<line x1="64" y1="280.0" x2="802" y2="280.0" stroke="#e4e8ec"/>
+<text x="56" y="284.0" text-anchor="end" font-size="11">0.948</text>
+<line x1="64" y1="205.0" x2="802" y2="205.0" stroke="#e4e8ec"/>
+<text x="56" y="209.0" text-anchor="end" font-size="11">1.067</text>
+<line x1="64" y1="130.0" x2="802" y2="130.0" stroke="#e4e8ec"/>
+<text x="56" y="134.0" text-anchor="end" font-size="11">1.186</text>
+<line x1="64" y1="55.0" x2="802" y2="55.0" stroke="#e4e8ec"/>
+<text x="56" y="59.0" text-anchor="end" font-size="11">1.305</text>
+<line x1="64.0" y1="35" x2="64.0" y2="335" stroke="#f0f2f4"/>
+<text x="64.0" y="353" text-anchor="middle" font-size="11">1</text>
+<line x1="219.4" y1="35" x2="219.4" y2="335" stroke="#f0f2f4"/>
+<text x="219.4" y="353" text-anchor="middle" font-size="11">5</text>
+<line x1="413.6" y1="35" x2="413.6" y2="335" stroke="#f0f2f4"/>
+<text x="413.6" y="353" text-anchor="middle" font-size="11">10</text>
+<line x1="607.8" y1="35" x2="607.8" y2="335" stroke="#f0f2f4"/>
+<text x="607.8" y="353" text-anchor="middle" font-size="11">15</text>
+<line x1="802.0" y1="35" x2="802.0" y2="335" stroke="#f0f2f4"/>
+<text x="802.0" y="353" text-anchor="middle" font-size="11">20</text>
+<rect x="64" y="35" width="738" height="300" fill="none" stroke="#555"/>
+<text x="410" y="378" text-anchor="middle" font-size="12">Round</text>
+<text x="15" y="195" transform="rotate(-90 15 195)" text-anchor="middle" font-size="12">dᵣ</text>
+<polyline points="64.0,87.6 102.8,305.4 141.7,314.4 180.5,326.0 219.4,276.9 258.2,267.9 297.1,237.5 335.9,230.1 374.7,205.5 413.6,182.3 452.4,177.5 491.3,155.6 530.1,147.3 568.9,150.0 607.8,134.7 646.6,131.9 685.5,125.4 724.3,123.1 763.2,142.9 802.0,141.5" fill="none" stroke="#0072B2" stroke-width="3"/>
+<polyline points="64.0,87.6 102.8,275.3 141.7,292.1 180.5,290.5 219.4,238.7 258.2,195.5 297.1,187.4 335.9,164.8 374.7,154.6 413.6,128.9 452.4,122.8 491.3,126.3 530.1,121.8 568.9,127.9 607.8,126.0 646.6,116.0 685.5,119.1 724.3,116.8 763.2,128.0 802.0,135.7" fill="none" stroke="#E69F00" stroke-width="3" stroke-dasharray="10 5"/>
+<polyline points="64.0,87.6 102.8,248.9 141.7,269.4 180.5,232.2 219.4,188.5 258.2,146.3 297.1,123.9 335.9,119.4 374.7,112.8 413.6,113.0 452.4,109.8 491.3,108.1 530.1,106.0 568.9,120.5 607.8,95.8 646.6,88.1 685.5,84.0 724.3,88.3 763.2,95.1 802.0,111.8" fill="none" stroke="#CC79A7" stroke-width="3" stroke-dasharray="3 5"/>
+</svg>
+</div>
+</div>
+<div class="panel">
+<table>
+<thead>
+<tr>
+<th>Clients</th>
+<th>Ratio</th>
+<th>Noise multiplier</th>
+<th>d₁</th>
+<th>d₂₀</th>
+<th>Minimum</th>
+<th>Mean, rounds 6–20</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8</td>
+<td>0.00250</td>
+<td>0.020</td>
+<td>3.454</td>
+<td>2.927</td>
+<td>2.714</td>
+<td>2.922</td>
+</tr>
+<tr>
+<td>8</td>
+<td>0.00400</td>
+<td>0.032</td>
+<td>3.454</td>
+<td>3.026</td>
+<td>2.733</td>
+<td>3.024</td>
+</tr>
+<tr>
+<td>8</td>
+<td>0.00625</td>
+<td>0.050</td>
+<td>3.454</td>
+<td>3.219</td>
+<td>2.714</td>
+<td>3.148</td>
+</tr>
+<tr>
+<td>48</td>
+<td>0.00250</td>
+<td>0.120</td>
+<td>1.616</td>
+<td>1.550</td>
+<td>1.206</td>
+<td>1.534</td>
+</tr>
+<tr>
+<td>48</td>
+<td>0.00400</td>
+<td>0.192</td>
+<td>1.616</td>
+<td>1.558</td>
+<td>1.244</td>
+<td>1.597</td>
+</tr>
+<tr>
+<td>48</td>
+<td>0.00625</td>
+<td>0.300</td>
+<td>1.616</td>
+<td>1.590</td>
+<td>1.336</td>
+<td>1.642</td>
+</tr>
+<tr>
+<td>100</td>
+<td>0.00250</td>
+<td>0.250</td>
+<td>1.253</td>
+<td>1.168</td>
+<td>0.876</td>
+<td>1.122</td>
+</tr>
+<tr>
+<td>100</td>
+<td>0.00400</td>
+<td>0.400</td>
+<td>1.253</td>
+<td>1.177</td>
+<td>0.929</td>
+<td>1.173</td>
+</tr>
+<tr>
+<td>100</td>
+<td>0.00625</td>
+<td>0.625</td>
+<td>1.253</td>
+<td>1.215</td>
+<td>0.965</td>
+<td>1.221</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<footer>Source: committed JSON artifacts under <code>results/cia/cifar10_remove_ratio_sweep/</code>.</footer>
+</body>
+</html>

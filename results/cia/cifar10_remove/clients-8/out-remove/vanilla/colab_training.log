@@ -1,0 +1,951 @@
+2026-08-11 14:28:01 CIFAR-10 removal CIA chunk (vanilla, clients=8): 1 trajectories
+2026-08-11 14:28:01 START cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn 
+{
+  "partition-mode": "non-iid",
+  "partition-profile": "auto",
+  "client-weights": "",
+  "data-module": "experiments.cia.scripts.cifar10_remove:create_out_remove",
+  "model-module": "experiments.reproduce.cifar10_cnn:create_model",
+  "data-cache-dir": "",
+  "privacy": "vanilla",
+  "aggregation": "fedavg",
+  "seed": 42,
+  "num-server-rounds": 20,
+  "num-clients": 7,
+  "fraction-evaluate": 1.0,
+  "local-epochs": 5,
+  "learning-rate": 0.001,
+  "batch-size": 32,
+  "initialization-batch-size": 32,
+  "initialization-epochs": 20,
+  "initialization-learning-rate": 0.001,
+  "max-client-samples": 0,
+  "max-test-samples": 0,
+  "noise-multiplier": 0.0182,
+  "clipping-norm": 5.0,
+  "output-dir": "/content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs",
+  "run-name": "cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn",
+  "save-model": false,
+  "checkpoint-rounds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20
+  ]
+}
+2026-08-11 14:28:06.315518: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2026-08-11 14:28:06.387359: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+[93mWARNING [0m:   DEPRECATED FEATURE: The `run_simulation` function is deprecated and will be removed in a future version of Flower. Please use `flwr run` in the CLI instead to run your simulation. Refer to the Flower Tutorials for more details: https://flower.ai/docs/framework/tutorial-quickstart-pytorch.html
+
+            This is a deprecated feature. It will be removed
+            entirely in future versions of Flower.
+        
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Generating train split:   0%|          | 0/50000 [00:00<?, ? examples/s]Generating train split:  28%|██▊       | 14200/50000 [00:00<00:00, 124411.96 examples/s]Generating train split:  85%|████████▌ | 42600/50000 [00:00<00:00, 191368.82 examples/s]Generating train split: 100%|██████████| 50000/50000 [00:00<00:00, 188208.10 examples/s]
+Generating test split:   0%|          | 0/10000 [00:00<?, ? examples/s]Generating test split: 100%|██████████| 10000/10000 [00:00<00:00, 229113.06 examples/s]
+/usr/local/lib/python3.12/dist-packages/ray/_private/worker.py:2051: FutureWarning: Tip: In future versions of Ray, Ray will no longer override accelerator visible devices env var if num_gpus=0 or num_gpus=None (default). To enable this behavior and turn off this error message, set RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO=0
+  warnings.warn(
+[92mINFO [0m:      Starting DeterministicFedAvg strategy:
+[92mINFO [0m:      	├── Number of rounds: 20
+[92mINFO [0m:      	├── ArrayRecord (1.39 MB)
+[92mINFO [0m:      	├── ConfigRecord (train): {'lr': 0.001}
+[92mINFO [0m:      	├── ConfigRecord (evaluate): (empty!)
+[92mINFO [0m:      	├──> Sampling:
+[92mINFO [0m:      	│	├──Fraction: train (1.00) | evaluate ( 1.00)
+[92mINFO [0m:      	│	├──Minimum nodes: train (7) | evaluate (7)
+[92mINFO [0m:      	│	└──Minimum available nodes: 7
+[92mINFO [0m:      	└──> Keys in records:
+[92mINFO [0m:      		├── Weighted by: 'num-examples'
+[92mINFO [0m:      		├── ArrayRecord key: 'arrays'
+[92mINFO [0m:      		└── ConfigRecord key: 'config'
+[92mINFO [0m:      
+[92mINFO [0m:      Initial global evaluation results: {'loss': 2.304148851776123, 'accuracy': 0.1, 'f1': 0.01818181818181818, 'precision': 0.01, 'auc': 0.5009091888888889, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 1/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[36m(ClientAppActor pid=5886)[0m Using the latest cached version of the dataset since uoft-cs/cifar10 couldn't be found on the Hugging Face Hub (offline mode is enabled).
+[36m(ClientAppActor pid=5886)[0m Found the latest cached dataset configuration 'plain_text' at /root/.cache/huggingface/datasets/uoft-cs___cifar10/plain_text/0.0.0/0b2714987fa478483af9968de7c934580d0bb9a2 (last modified on Tue Aug 11 14:28:21 2026).
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 1.5289621073650637, 'train_loss_mean': 1.7629874032658093, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [1.5313589327811492, 1.7438533030727184, 1.3924497528076172, 1.4431188268920512, 1.672691643738947, 1.4826751323759129, 1.9162539081573486], 'per-client-train_loss_mean': [1.774426910784109, 1.9234555348954536, 1.6452354640960691, 1.7019856824137893, 1.892704029510669, 1.7264320478879374, 2.0524665241241453]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 2.180749891035713, 'eval_acc': 0.19164785553047406, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.19661266568483063, 0.18945102260495156, 0.181, 0.19036954087346025, 0.1874125874125874, 0.20229007633587787, 0.202], 'per-client-eval_loss': [2.1790665709393013, 2.180591527817709, 2.18315909576416, 2.183459731525964, 2.1787780441604294, 2.17739262229007, 2.1796746520996093], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 2.180628276062012, 'accuracy': 0.1886, 'f1': 0.10091406808877586, 'precision': 0.25985829623151874, 'auc': 0.7218139533333334, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 2/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 1.1952481727025217, 'train_loss_mean': 1.3888813342036166, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [1.2154116238753587, 1.2766186446994623, 1.123271745443344, 1.1701534687680022, 1.2821376754456209, 1.1688787852190938, 1.325738634109497], 'per-client-train_loss_mean': [1.4091086500079295, 1.441830964947363, 1.3320546714782715, 1.36197831863351, 1.4584025827108644, 1.3749137764310873, 1.5036644132614136]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.235532106852693, 'eval_acc': 0.5547404063205418, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.5294550810014728, 0.566200215285253, 0.551, 0.5481522956326987, 0.5706293706293706, 0.5699745547073791, 0.57], 'per-client-eval_loss': [1.2907038844562244, 1.201065793617421, 1.226773871421814, 1.2432291024476123, 1.2215573584283148, 1.2217688966950084, 1.2205186653137208], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.233123477935791, 'accuracy': 0.5532, 'f1': 0.547973370929016, 'precision': 0.5544722226187677, 'auc': 0.9153134533333335, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 3/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.8468898562948433, 'train_loss_mean': 1.058263947887598, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.8574821233485846, 0.9089521750141744, 0.794384245634079, 0.8434700726186063, 0.9190753154060086, 0.8271453515821349, 0.8840951881408692], 'per-client-train_loss_mean': [1.0646167436766993, 1.1136804860624885, 1.0148402458190917, 1.044223556154902, 1.0962569550973695, 1.0578728918187088, 1.1089288954734804]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.0378662646220447, 'eval_acc': 0.6346501128668172, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6104565537555229, 0.6404736275565124, 0.645, 0.6326987681970885, 0.6363636363636364, 0.6323155216284987, 0.66], 'per-client-eval_loss': [1.1135073817706775, 0.9946658128814369, 1.0107808799743652, 1.0474530857594524, 1.0312507122546644, 1.039223721312506, 0.9919812393188476], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.0259765531539917, 'accuracy': 0.6314, 'f1': 0.6302924676728004, 'precision': 0.633225371255325, 'auc': 0.9412155533333331, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 4/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.5463960436363907, 'train_loss_mean': 0.7900217373869451, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.5674231829191713, 0.5725353816278403, 0.5373412722349167, 0.5449701618091842, 0.5504247491934052, 0.5318279995317011, 0.5221263465881347], 'per-client-train_loss_mean': [0.8019359330834057, 0.8291530671824867, 0.7606470489978789, 0.7852491845716436, 0.8140248182941885, 0.7843074570056836, 0.8032443833351135]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 0.9813897829696232, 'eval_acc': 0.6748306997742665, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6509572901325479, 0.6889128094725512, 0.684, 0.673572228443449, 0.6615384615384615, 0.6692111959287532, 0.718], 'per-client-eval_loss': [1.0562182764943815, 0.9693862977402588, 0.9459517602920532, 0.991673110714151, 0.9766116042237182, 0.9802088922520024, 0.9160236301422119], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 0.955328861618042, 'accuracy': 0.671, 'f1': 0.6698603886153638, 'precision': 0.6720256639578959, 'auc': 0.9516506044444445, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 5/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.3419701734947144, 'train_loss_mean': 0.5869354801993262, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.3709247105246356, 0.3469509118721571, 0.33598042267560957, 0.3380370588591665, 0.3605185816852318, 0.33452489722576423, 0.28905410480499266], 'per-client-train_loss_mean': [0.6165631442844824, 0.6226993232726243, 0.5508613330066204, 0.5724836810828757, 0.6246190448351602, 0.5846460777826981, 0.5894060493946076]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.0298313693725767, 'eval_acc': 0.691647855530474, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6715758468335787, 0.7072120559741658, 0.6965, 0.6886898096304591, 0.6895104895104895, 0.6902035623409669, 0.716], 'per-client-eval_loss': [1.113325526331591, 0.9882743015997633, 1.0037670993804932, 1.0321968811223114, 1.0310264037205623, 1.034130980040281, 0.9608548679351807], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.0060158979415894, 'accuracy': 0.693, 'f1': 0.690595709694832, 'precision': 0.6921996659430539, 'auc': 0.9545717955555555, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 6/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.23465097667743506, 'train_loss_mean': 0.4534352947879419, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.2442508417627086, 0.26133944664710174, 0.21874719282984734, 0.25658558851469637, 0.2216625461558334, 0.22801562135619782, 0.18371120619773865], 'per-client-train_loss_mean': [0.4838419059509729, 0.521916943222513, 0.399673246794939, 0.4364401528757026, 0.5027788706186439, 0.4412825956253087, 0.48721490309238435]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.0979654564007142, 'eval_acc': 0.699548532731377, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6796759941089838, 0.7147470398277718, 0.7035, 0.6982082866741322, 0.6881118881118881, 0.6991094147582697, 0.732], 'per-client-eval_loss': [1.1935724502810674, 1.0473230909095, 1.0718093075752257, 1.0984430911159195, 1.1222997672074324, 1.09958938848578, 0.9954051532745362], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.053087691783905, 'accuracy': 0.706, 'f1': 0.7040784815693184, 'precision': 0.7033749236446293, 'auc': 0.9560932466666665, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 7/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.18494845167520524, 'train_loss_mean': 0.3652285164114257, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.1771841804711759, 0.16776543366509616, 0.197406216442585, 0.18729218669119926, 0.21657767173956757, 0.18612704029989888, 0.13085759848356246], 'per-client-train_loss_mean': [0.3915899869600859, 0.42137830050842207, 0.31396332879960537, 0.33826345133899094, 0.4409563081354654, 0.345116550106327, 0.445842384159565]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.1473403985021344, 'eval_acc': 0.6972911963882619, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6782032400589102, 0.7093649085037675, 0.703, 0.6976483762597985, 0.6881118881118881, 0.6927480916030534, 0.73], 'per-client-eval_loss': [1.2557016493470048, 1.0749487799900084, 1.122368052482605, 1.145048896516157, 1.1949282496125548, 1.1567703132107665, 0.9979112186431884], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.107404986000061, 'accuracy': 0.7026, 'f1': 0.7024635917214036, 'precision': 0.7033294023810525, 'auc': 0.9559625133333334, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 8/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.15411772518952138, 'train_loss_mean': 0.30082711454787703, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.17676345790978645, 0.16554678629082767, 0.14863333782181143, 0.16915796920563284, 0.12811990750103103, 0.14487735788525336, 0.10581749600172043], 'per-client-train_loss_mean': [0.3169856165425252, 0.36214417771598767, 0.24992732750400898, 0.2720808337003693, 0.389488923603914, 0.2787250417212503, 0.39222034457921984]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.2096054884165728, 'eval_acc': 0.6994356659142212, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.678939617083947, 0.7029063509149623, 0.703, 0.70996640537514, 0.6895104895104895, 0.6972010178117048, 0.718], 'per-client-eval_loss': [1.334925343958724, 1.1427203818465974, 1.179547133922577, 1.2083473643423595, 1.2540911901247251, 1.219332549408192, 1.0240402927398682], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.147416209602356, 'accuracy': 0.7068, 'f1': 0.706131941450317, 'precision': 0.7069557088003444, 'auc': 0.9551123177777777, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 9/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.1265019397634342, 'train_loss_mean': 0.26065011024471546, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.11509485006903407, 0.11576958566374462, 0.12423699962347746, 0.1619078258260298, 0.1005628708363915, 0.1320056274473999, 0.07974405312538146], 'per-client-train_loss_mean': [0.2743659738173973, 0.3257861682113664, 0.20639311230629684, 0.23192354241568852, 0.34048250947429354, 0.23877771821966604, 0.37682585145831105]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.272874886026232, 'eval_acc': 0.6961625282167043, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6752577319587629, 0.7093649085037675, 0.6965, 0.6959686450167973, 0.6881118881118881, 0.6972010178117048, 0.736], 'per-client-eval_loss': [1.4189094085580998, 1.179066414212, 1.230970932483673, 1.2764766176230162, 1.2956449001819104, 1.3081436284625803, 1.0618456459045411], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.215436527824402, 'accuracy': 0.703, 'f1': 0.7000288894811235, 'precision': 0.6989831307923888, 'auc': 0.9546853711111111, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 10/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.12097475080882748, 'train_loss_mean': 0.22973226990123768, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.11942964422467797, 0.11563279795837546, 0.12098488223738968, 0.1420999678185836, 0.09065684353729256, 0.12487528498922441, 0.09063548117876052], 'per-client-train_loss_mean': [0.23347867703835315, 0.28932244613248603, 0.17659866134710608, 0.19729577494203943, 0.33492592074164823, 0.20825523326154163, 0.3545619938731194]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.3682645839304743, 'eval_acc': 0.6900677200902934, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6627393225331369, 0.7029063509149623, 0.6915, 0.7026875699888018, 0.6685314685314685, 0.6921119592875318, 0.714], 'per-client-eval_loss': [1.5166147777012415, 1.2984306639054364, 1.3218675026893616, 1.3703141297898929, 1.4098299856786127, 1.3896891148642425, 1.1465669784545898], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.3036609816551208, 'accuracy': 0.6958, 'f1': 0.6964450670482064, 'precision': 0.6999289325669036, 'auc': 0.9531145222222221, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 11/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.10618546905888307, 'train_loss_mean': 0.21080791996455106, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.11517500721038969, 0.07880358434471316, 0.10777712134830654, 0.10699151372013205, 0.08742907765407522, 0.1238350139111399, 0.09471105699241161], 'per-client-train_loss_mean': [0.21551611695737855, 0.27813026279615305, 0.16946657492145895, 0.1720655531680783, 0.29301570084165124, 0.18480693818510835, 0.34106140002310276]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.4106646240699372, 'eval_acc': 0.6945823927765238, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6715758468335787, 0.7039827771797632, 0.7035, 0.6909294512877939, 0.6951048951048951, 0.6914758269720102, 0.726], 'per-client-eval_loss': [1.555258596417479, 1.3185653180942598, 1.3708314266204833, 1.4111962526669561, 1.4319686086027772, 1.4409417271917406, 1.2208458080291749], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.3377199150085448, 'accuracy': 0.7016, 'f1': 0.6999955293786875, 'precision': 0.6995235358677752, 'auc': 0.9536882644444444, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 12/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.1062687916306833, 'train_loss_mean': 0.1917277172989528, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.11464777384049417, 0.10309826549501719, 0.13375435810536146, 0.08770924055539192, 0.07507539333916512, 0.10636859413239343, 0.08998961511254311], 'per-client-train_loss_mean': [0.19327491256041215, 0.23822657811257422, 0.15412176366634667, 0.1552603010368267, 0.27516856226256164, 0.17026292020080103, 0.3301470348119736]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.421542372680679, 'eval_acc': 0.6932279909706546, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6782032400589102, 0.7007534983853606, 0.6945, 0.6993281075027995, 0.676923076923077, 0.6902035623409669, 0.726], 'per-client-eval_loss': [1.5890559307429857, 1.3329456064878162, 1.399010533809662, 1.3961041900105065, 1.4494669103955888, 1.450921206377238, 1.179881742477417], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.342568912601471, 'accuracy': 0.7028, 'f1': 0.7023581451722736, 'precision': 0.7025569267862491, 'auc': 0.9533837088888889, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 13/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.10193000637560162, 'train_loss_mean': 0.1727035128301963, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.11668523454828655, 0.06507758059081013, 0.10752291275933384, 0.13287412276851118, 0.07030774560608283, 0.09774273354189682, 0.05574582782387733], 'per-client-train_loss_mean': [0.17550663885577428, 0.21380614360085276, 0.13188583955690264, 0.14592620934287107, 0.26525172146992027, 0.14828827530655392, 0.29224011793434623]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.47135867407844, 'eval_acc': 0.6914221218961625, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6649484536082474, 0.7093649085037675, 0.69, 0.6853303471444568, 0.7006993006993008, 0.6978371501272265, 0.724], 'per-client-eval_loss': [1.672150179282906, 1.3729270546505603, 1.442406289100647, 1.4713185706571128, 1.4991747215911224, 1.4639341606741947, 1.2084134063720704], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.410352282142639, 'accuracy': 0.7012, 'f1': 0.7011743340432696, 'precision': 0.7020866734006225, 'auc': 0.9521835755555557, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 14/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.09371778349728677, 'train_loss_mean': 0.16273228157193106, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.10285025270615945, 0.07309309241026712, 0.08907713623717427, 0.10408348971475205, 0.07158079913736475, 0.10942065666771257, 0.07103911742568016], 'per-client-train_loss_mean': [0.1638747776974495, 0.21142186366595433, 0.1175931223200634, 0.1295629064164565, 0.2539321237582849, 0.14764924037534752, 0.2854011358320713]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.497580134209338, 'eval_acc': 0.6934537246049662, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6752577319587629, 0.7072120559741658, 0.693, 0.6976483762597985, 0.6825174825174826, 0.7029262086513995, 0.69], 'per-client-eval_loss': [1.6874469046389056, 1.3568468025862466, 1.4710891156196595, 1.4857047957775975, 1.5213749305351632, 1.5098731886339551, 1.3190913772583008], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.4214241409301758, 'accuracy': 0.6992, 'f1': 0.6982203581722304, 'precision': 0.6984602562078212, 'auc': 0.9527080377777777, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 15/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.09316982619252616, 'train_loss_mean': 0.1567831533208347, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.10172661851237781, 0.09800358399534152, 0.10179288016725331, 0.0828538327686566, 0.08119082035554223, 0.10114697786781554, 0.055359579406678676], 'per-client-train_loss_mean': [0.15032230532489987, 0.21322676892009676, 0.11784482933096588, 0.1241318061699623, 0.24964103553266753, 0.13249592556565548, 0.2855912403449416]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.5289479511047863, 'eval_acc': 0.6942437923250565, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6796759941089838, 0.7072120559741658, 0.6895, 0.6998880179171333, 0.7076923076923077, 0.6895674300254453, 0.704], 'per-client-eval_loss': [1.7097963184249945, 1.3877166261970677, 1.5258966455459595, 1.4977523103139436, 1.4792348861694335, 1.5856673808498236, 1.3165714340209962], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.4938523942947388, 'accuracy': 0.691, 'f1': 0.6878462245748923, 'precision': 0.6871268527806867, 'auc': 0.9501535, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 16/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.10419786082292451, 'train_loss_mean': 0.15023462047836914, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.10761024296426475, 0.08362276581811628, 0.09676239868160337, 0.12027396779050016, 0.09237449740370114, 0.1208245068017983, 0.07010516761988402], 'per-client-train_loss_mean': [0.14311785462573884, 0.1977091541819477, 0.10649725001594053, 0.11845471704374551, 0.23987928576120474, 0.1360888613649928, 0.2862811868712306]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.5438458138475568, 'eval_acc': 0.6924379232505644, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6774668630338734, 0.7039827771797632, 0.6895, 0.6976483762597985, 0.6881118881118881, 0.69529262086514, 0.702], 'per-client-eval_loss': [1.719210060074684, 1.421649482586412, 1.5379509391784667, 1.5209931056416715, 1.5452399640650183, 1.584215723831235, 1.2708900451660157], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.4750869163513183, 'accuracy': 0.6978, 'f1': 0.6963422688185746, 'precision': 0.6962319312617087, 'auc': 0.9526095933333333, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 17/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.09080366120283492, 'train_loss_mean': 0.14038892040432885, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.07875964895313552, 0.1205817098752445, 0.08492713501304389, 0.11610250156902138, 0.06527068332119398, 0.08660261990323177, 0.0510074351541698], 'per-client-train_loss_mean': [0.13290171154576383, 0.19224874798450384, 0.09970177779821679, 0.11468963945675895, 0.2254289545155331, 0.11744462627787129, 0.26960433334037665]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.5936743827894095, 'eval_acc': 0.6880361173814898, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6774668630338734, 0.6932185145317545, 0.689, 0.6948488241881299, 0.6783216783216783, 0.688295165394402, 0.692], 'per-client-eval_loss': [1.7574314207321413, 1.4753436083685851, 1.5728296494483949, 1.5605705983160858, 1.6122184426634463, 1.6421706373151628, 1.3914042682647705], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.5165832483291626, 'accuracy': 0.6962, 'f1': 0.6959776709963372, 'precision': 0.6972468354756118, 'auc': 0.9513845977777778, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 18/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.0866545541411761, 'train_loss_mean': 0.13486357761155995, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.09292570033502562, 0.09872895692498712, 0.08121341373538599, 0.0872309909948077, 0.07119263830876463, 0.09912666054079479, 0.049804336249828336], 'per-client-train_loss_mean': [0.12928790335372561, 0.17087105338862413, 0.09711005641976371, 0.10871060423539432, 0.2289395345462335, 0.11121420335374303, 0.26752719631195065]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.6188584289217103, 'eval_acc': 0.6836343115124154, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6627393225331369, 0.6932185145317545, 0.691, 0.6903695408734603, 0.6643356643356644, 0.6793893129770993, 0.71], 'per-client-eval_loss': [1.7926739298015701, 1.4870354118080262, 1.5973745679855347, 1.564276205065002, 1.682293196991607, 1.671287964925208, 1.4170556621551513], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.5166903909683227, 'accuracy': 0.6958, 'f1': 0.6958190207021198, 'precision': 0.6981523430344473, 'auc': 0.951192822222222, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 19/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.08516844296087082, 'train_loss_mean': 0.1265753127222598, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.12207262898268907, 0.07072175211861417, 0.09005136461788789, 0.08733811287722316, 0.08420898792456512, 0.06691668657297024, 0.04328357049822807], 'per-client-train_loss_mean': [0.12436975039783302, 0.16253373710665178, 0.0885527821911499, 0.10072927911909686, 0.21462700482176134, 0.10430113324811038, 0.2544444386065006]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.634918485107594, 'eval_acc': 0.6905191873589165, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6701030927835051, 0.7050592034445641, 0.6945, 0.6881298992161254, 0.6937062937062937, 0.688295165394402, 0.714], 'per-client-eval_loss': [1.8271007509751243, 1.44395824551454, 1.6134458994865417, 1.6380442088555383, 1.5887078211857721, 1.674746998090477, 1.4833412380218507], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.5806262916564942, 'accuracy': 0.6958, 'f1': 0.6932511507039876, 'precision': 0.6940676787118162, 'auc': 0.9502718622222223, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 20/20]
+[92mINFO [0m:      configure_train: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_train: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'train_loss': 0.08064411281415551, 'train_loss_mean': 0.12475529351380009, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-num-examples': [5428, 3714, 8000, 7143, 2856, 6285, 2000], 'per-client-train_loss': [0.09759147103818225, 0.0477666620268218, 0.0968077761940658, 0.07382577490197119, 0.05357200992541487, 0.09027303247079076, 0.06379953194409609], 'per-client-train_loss_mean': [0.11968302973734823, 0.15911002083611403, 0.09169658792186527, 0.09432271577000104, 0.20516099172333874, 0.10695394021739728, 0.25677087823599576]}
+[92mINFO [0m:      configure_evaluate: Sampled 7 nodes (out of 7)
+[92mINFO [0m:      aggregate_evaluate: Received 7 results and 0 failures
+[92mINFO [0m:      	└──> Aggregated MetricRecord: {'eval_loss': 1.6317117928920426, 'eval_acc': 0.6878103837471784, 'client-ids': [0, 1, 2, 3, 4, 5, 6], 'per-client-eval_acc': [0.6649484536082474, 0.7104413347685683, 0.6795, 0.6987681970884658, 0.6909090909090909, 0.6838422391857506, 0.71], 'per-client-eval_loss': [1.8131328900186934, 1.4229689593977255, 1.637366774559021, 1.5967822998662011, 1.6290246556688857, 1.6963339337259151, 1.4296350955963135], 'per-client-num-examples': [1358, 929, 2000, 1786, 715, 1572, 500]}
+[92mINFO [0m:      Global evaluation
+[92mINFO [0m:      	└──> MetricRecord: {'loss': 1.5494415288925172, 'accuracy': 0.6966, 'f1': 0.6954522956600335, 'precision': 0.6955565372259033, 'auc': 0.95067224, 'diverged': 0.0}
+[92mINFO [0m:      
+[92mINFO [0m:      Strategy execution finished in 616.39s
+[92mINFO [0m:      
+[92mINFO [0m:      Final results:
+[92mINFO [0m:      
+[92mINFO [0m:      	Global Arrays:
+[92mINFO [0m:      		ArrayRecord (1.392 MB)
+[92mINFO [0m:      	
+[92mINFO [0m:      	Aggregated ClientApp-side Train Metrics:
+[92mINFO [0m:      	{ 1: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                  "'6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['1.5314e+00', '1.7439e+00', '1.3924e+00', "
+[92mINFO [0m:      	                                "'1.4431e+00', '1.6727e+00', '1.4827e+00', "
+[92mINFO [0m:      	                                "'1.9163e+00']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['1.7744e+00', '1.9235e+00', "
+[92mINFO [0m:      	                                     "'1.6452e+00', '1.7020e+00', "
+[92mINFO [0m:      	                                     "'1.8927e+00', '1.7264e+00', "
+[92mINFO [0m:      	                                     "'2.0525e+00']",
+[92mINFO [0m:      	       'train_loss': '1.5290e+00',
+[92mINFO [0m:      	       'train_loss_mean': '1.7630e+00'},
+[92mINFO [0m:      	  2: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                  "'6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['1.2154e+00', '1.2766e+00', '1.1233e+00', "
+[92mINFO [0m:      	                                "'1.1702e+00', '1.2821e+00', '1.1689e+00', "
+[92mINFO [0m:      	                                "'1.3257e+00']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['1.4091e+00', '1.4418e+00', "
+[92mINFO [0m:      	                                     "'1.3321e+00', '1.3620e+00', "
+[92mINFO [0m:      	                                     "'1.4584e+00', '1.3749e+00', "
+[92mINFO [0m:      	                                     "'1.5037e+00']",
+[92mINFO [0m:      	       'train_loss': '1.1952e+00',
+[92mINFO [0m:      	       'train_loss_mean': '1.3889e+00'},
+[92mINFO [0m:      	  3: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                  "'6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['8.5748e-01', '9.0895e-01', '7.9438e-01', "
+[92mINFO [0m:      	                                "'8.4347e-01', '9.1908e-01', '8.2715e-01', "
+[92mINFO [0m:      	                                "'8.8410e-01']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['1.0646e+00', '1.1137e+00', "
+[92mINFO [0m:      	                                     "'1.0148e+00', '1.0442e+00', "
+[92mINFO [0m:      	                                     "'1.0963e+00', '1.0579e+00', "
+[92mINFO [0m:      	                                     "'1.1089e+00']",
+[92mINFO [0m:      	       'train_loss': '8.4689e-01',
+[92mINFO [0m:      	       'train_loss_mean': '1.0583e+00'},
+[92mINFO [0m:      	  4: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                  "'6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['5.6742e-01', '5.7254e-01', '5.3734e-01', "
+[92mINFO [0m:      	                                "'5.4497e-01', '5.5042e-01', '5.3183e-01', "
+[92mINFO [0m:      	                                "'5.2213e-01']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['8.0194e-01', '8.2915e-01', "
+[92mINFO [0m:      	                                     "'7.6065e-01', '7.8525e-01', "
+[92mINFO [0m:      	                                     "'8.1402e-01', '7.8431e-01', "
+[92mINFO [0m:      	                                     "'8.0324e-01']",
+[92mINFO [0m:      	       'train_loss': '5.4640e-01',
+[92mINFO [0m:      	       'train_loss_mean': '7.9002e-01'},
+[92mINFO [0m:      	  5: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                  "'6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['3.7092e-01', '3.4695e-01', '3.3598e-01', "
+[92mINFO [0m:      	                                "'3.3804e-01', '3.6052e-01', '3.3452e-01', "
+[92mINFO [0m:      	                                "'2.8905e-01']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['6.1656e-01', '6.2270e-01', "
+[92mINFO [0m:      	                                     "'5.5086e-01', '5.7248e-01', "
+[92mINFO [0m:      	                                     "'6.2462e-01', '5.8465e-01', "
+[92mINFO [0m:      	                                     "'5.8941e-01']",
+[92mINFO [0m:      	       'train_loss': '3.4197e-01',
+[92mINFO [0m:      	       'train_loss_mean': '5.8694e-01'},
+[92mINFO [0m:      	  6: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                  "'6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['2.4425e-01', '2.6134e-01', '2.1875e-01', "
+[92mINFO [0m:      	                                "'2.5659e-01', '2.2166e-01', '2.2802e-01', "
+[92mINFO [0m:      	                                "'1.8371e-01']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['4.8384e-01', '5.2192e-01', "
+[92mINFO [0m:      	                                     "'3.9967e-01', '4.3644e-01', "
+[92mINFO [0m:      	                                     "'5.0278e-01', '4.4128e-01', "
+[92mINFO [0m:      	                                     "'4.8721e-01']",
+[92mINFO [0m:      	       'train_loss': '2.3465e-01',
+[92mINFO [0m:      	       'train_loss_mean': '4.5344e-01'},
+[92mINFO [0m:      	  7: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                  "'6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['1.7718e-01', '1.6777e-01', '1.9741e-01', "
+[92mINFO [0m:      	                                "'1.8729e-01', '2.1658e-01', '1.8613e-01', "
+[92mINFO [0m:      	                                "'1.3086e-01']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['3.9159e-01', '4.2138e-01', "
+[92mINFO [0m:      	                                     "'3.1396e-01', '3.3826e-01', "
+[92mINFO [0m:      	                                     "'4.4096e-01', '3.4512e-01', "
+[92mINFO [0m:      	                                     "'4.4584e-01']",
+[92mINFO [0m:      	       'train_loss': '1.8495e-01',
+[92mINFO [0m:      	       'train_loss_mean': '3.6523e-01'},
+[92mINFO [0m:      	  8: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                  "'6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['1.7676e-01', '1.6555e-01', '1.4863e-01', "
+[92mINFO [0m:      	                                "'1.6916e-01', '1.2812e-01', '1.4488e-01', "
+[92mINFO [0m:      	                                "'1.0582e-01']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['3.1699e-01', '3.6214e-01', "
+[92mINFO [0m:      	                                     "'2.4993e-01', '2.7208e-01', "
+[92mINFO [0m:      	                                     "'3.8949e-01', '2.7873e-01', "
+[92mINFO [0m:      	                                     "'3.9222e-01']",
+[92mINFO [0m:      	       'train_loss': '1.5412e-01',
+[92mINFO [0m:      	       'train_loss_mean': '3.0083e-01'},
+[92mINFO [0m:      	  9: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                  "'6285', '2000']",
+[92mINFO [0m:      	       'per-client-train_loss': "['1.1509e-01', '1.1577e-01', '1.2424e-01', "
+[92mINFO [0m:      	                                "'1.6191e-01', '1.0056e-01', '1.3201e-01', "
+[92mINFO [0m:      	                                "'7.9744e-02']",
+[92mINFO [0m:      	       'per-client-train_loss_mean': "['2.7437e-01', '3.2579e-01', "
+[92mINFO [0m:      	                                     "'2.0639e-01', '2.3192e-01', "
+[92mINFO [0m:      	                                     "'3.4048e-01', '2.3878e-01', "
+[92mINFO [0m:      	                                     "'3.7683e-01']",
+[92mINFO [0m:      	       'train_loss': '1.2650e-01',
+[92mINFO [0m:      	       'train_loss_mean': '2.6065e-01'},
+[92mINFO [0m:      	  10: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                   "'6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['1.1943e-01', '1.1563e-01', '1.2098e-01', "
+[92mINFO [0m:      	                                 "'1.4210e-01', '9.0657e-02', '1.2488e-01', "
+[92mINFO [0m:      	                                 "'9.0635e-02']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['2.3348e-01', '2.8932e-01', "
+[92mINFO [0m:      	                                      "'1.7660e-01', '1.9730e-01', "
+[92mINFO [0m:      	                                      "'3.3493e-01', '2.0826e-01', "
+[92mINFO [0m:      	                                      "'3.5456e-01']",
+[92mINFO [0m:      	        'train_loss': '1.2097e-01',
+[92mINFO [0m:      	        'train_loss_mean': '2.2973e-01'},
+[92mINFO [0m:      	  11: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                   "'6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['1.1518e-01', '7.8804e-02', '1.0778e-01', "
+[92mINFO [0m:      	                                 "'1.0699e-01', '8.7429e-02', '1.2384e-01', "
+[92mINFO [0m:      	                                 "'9.4711e-02']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['2.1552e-01', '2.7813e-01', "
+[92mINFO [0m:      	                                      "'1.6947e-01', '1.7207e-01', "
+[92mINFO [0m:      	                                      "'2.9302e-01', '1.8481e-01', "
+[92mINFO [0m:      	                                      "'3.4106e-01']",
+[92mINFO [0m:      	        'train_loss': '1.0619e-01',
+[92mINFO [0m:      	        'train_loss_mean': '2.1081e-01'},
+[92mINFO [0m:      	  12: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                   "'6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['1.1465e-01', '1.0310e-01', '1.3375e-01', "
+[92mINFO [0m:      	                                 "'8.7709e-02', '7.5075e-02', '1.0637e-01', "
+[92mINFO [0m:      	                                 "'8.9990e-02']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['1.9327e-01', '2.3823e-01', "
+[92mINFO [0m:      	                                      "'1.5412e-01', '1.5526e-01', "
+[92mINFO [0m:      	                                      "'2.7517e-01', '1.7026e-01', "
+[92mINFO [0m:      	                                      "'3.3015e-01']",
+[92mINFO [0m:      	        'train_loss': '1.0627e-01',
+[92mINFO [0m:      	        'train_loss_mean': '1.9173e-01'},
+[92mINFO [0m:      	  13: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                   "'6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['1.1669e-01', '6.5078e-02', '1.0752e-01', "
+[92mINFO [0m:      	                                 "'1.3287e-01', '7.0308e-02', '9.7743e-02', "
+[92mINFO [0m:      	                                 "'5.5746e-02']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['1.7551e-01', '2.1381e-01', "
+[92mINFO [0m:      	                                      "'1.3189e-01', '1.4593e-01', "
+[92mINFO [0m:      	                                      "'2.6525e-01', '1.4829e-01', "
+[92mINFO [0m:      	                                      "'2.9224e-01']",
+[92mINFO [0m:      	        'train_loss': '1.0193e-01',
+[92mINFO [0m:      	        'train_loss_mean': '1.7270e-01'},
+[92mINFO [0m:      	  14: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                   "'6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['1.0285e-01', '7.3093e-02', '8.9077e-02', "
+[92mINFO [0m:      	                                 "'1.0408e-01', '7.1581e-02', '1.0942e-01', "
+[92mINFO [0m:      	                                 "'7.1039e-02']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['1.6387e-01', '2.1142e-01', "
+[92mINFO [0m:      	                                      "'1.1759e-01', '1.2956e-01', "
+[92mINFO [0m:      	                                      "'2.5393e-01', '1.4765e-01', "
+[92mINFO [0m:      	                                      "'2.8540e-01']",
+[92mINFO [0m:      	        'train_loss': '9.3718e-02',
+[92mINFO [0m:      	        'train_loss_mean': '1.6273e-01'},
+[92mINFO [0m:      	  15: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                   "'6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['1.0173e-01', '9.8004e-02', '1.0179e-01', "
+[92mINFO [0m:      	                                 "'8.2854e-02', '8.1191e-02', '1.0115e-01', "
+[92mINFO [0m:      	                                 "'5.5360e-02']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['1.5032e-01', '2.1323e-01', "
+[92mINFO [0m:      	                                      "'1.1784e-01', '1.2413e-01', "
+[92mINFO [0m:      	                                      "'2.4964e-01', '1.3250e-01', "
+[92mINFO [0m:      	                                      "'2.8559e-01']",
+[92mINFO [0m:      	        'train_loss': '9.3170e-02',
+[92mINFO [0m:      	        'train_loss_mean': '1.5678e-01'},
+[92mINFO [0m:      	  16: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                   "'6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['1.0761e-01', '8.3623e-02', '9.6762e-02', "
+[92mINFO [0m:      	                                 "'1.2027e-01', '9.2374e-02', '1.2082e-01', "
+[92mINFO [0m:      	                                 "'7.0105e-02']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['1.4312e-01', '1.9771e-01', "
+[92mINFO [0m:      	                                      "'1.0650e-01', '1.1845e-01', "
+[92mINFO [0m:      	                                      "'2.3988e-01', '1.3609e-01', "
+[92mINFO [0m:      	                                      "'2.8628e-01']",
+[92mINFO [0m:      	        'train_loss': '1.0420e-01',
+[92mINFO [0m:      	        'train_loss_mean': '1.5023e-01'},
+[92mINFO [0m:      	  17: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                   "'6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['7.8760e-02', '1.2058e-01', '8.4927e-02', "
+[92mINFO [0m:      	                                 "'1.1610e-01', '6.5271e-02', '8.6603e-02', "
+[92mINFO [0m:      	                                 "'5.1007e-02']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['1.3290e-01', '1.9225e-01', "
+[92mINFO [0m:      	                                      "'9.9702e-02', '1.1469e-01', "
+[92mINFO [0m:      	                                      "'2.2543e-01', '1.1744e-01', "
+[92mINFO [0m:      	                                      "'2.6960e-01']",
+[92mINFO [0m:      	        'train_loss': '9.0804e-02',
+[92mINFO [0m:      	        'train_loss_mean': '1.4039e-01'},
+[92mINFO [0m:      	  18: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                   "'6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['9.2926e-02', '9.8729e-02', '8.1213e-02', "
+[92mINFO [0m:      	                                 "'8.7231e-02', '7.1193e-02', '9.9127e-02', "
+[92mINFO [0m:      	                                 "'4.9804e-02']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['1.2929e-01', '1.7087e-01', "
+[92mINFO [0m:      	                                      "'9.7110e-02', '1.0871e-01', "
+[92mINFO [0m:      	                                      "'2.2894e-01', '1.1121e-01', "
+[92mINFO [0m:      	                                      "'2.6753e-01']",
+[92mINFO [0m:      	        'train_loss': '8.6655e-02',
+[92mINFO [0m:      	        'train_loss_mean': '1.3486e-01'},
+[92mINFO [0m:      	  19: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                   "'6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['1.2207e-01', '7.0722e-02', '9.0051e-02', "
+[92mINFO [0m:      	                                 "'8.7338e-02', '8.4209e-02', '6.6917e-02', "
+[92mINFO [0m:      	                                 "'4.3284e-02']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['1.2437e-01', '1.6253e-01', "
+[92mINFO [0m:      	                                      "'8.8553e-02', '1.0073e-01', "
+[92mINFO [0m:      	                                      "'2.1463e-01', '1.0430e-01', "
+[92mINFO [0m:      	                                      "'2.5444e-01']",
+[92mINFO [0m:      	        'train_loss': '8.5168e-02',
+[92mINFO [0m:      	        'train_loss_mean': '1.2658e-01'},
+[92mINFO [0m:      	  20: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'per-client-num-examples': "['5428', '3714', '8000', '7143', '2856', "
+[92mINFO [0m:      	                                   "'6285', '2000']",
+[92mINFO [0m:      	        'per-client-train_loss': "['9.7591e-02', '4.7767e-02', '9.6808e-02', "
+[92mINFO [0m:      	                                 "'7.3826e-02', '5.3572e-02', '9.0273e-02', "
+[92mINFO [0m:      	                                 "'6.3800e-02']",
+[92mINFO [0m:      	        'per-client-train_loss_mean': "['1.1968e-01', '1.5911e-01', "
+[92mINFO [0m:      	                                      "'9.1697e-02', '9.4323e-02', "
+[92mINFO [0m:      	                                      "'2.0516e-01', '1.0695e-01', "
+[92mINFO [0m:      	                                      "'2.5677e-01']",
+[92mINFO [0m:      	        'train_loss': '8.0644e-02',
+[92mINFO [0m:      	        'train_loss_mean': '1.2476e-01'}}
+[92mINFO [0m:      	
+[92mINFO [0m:      	Aggregated ClientApp-side Evaluate Metrics:
+[92mINFO [0m:      	{ 1: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'eval_acc': '1.9165e-01',
+[92mINFO [0m:      	       'eval_loss': '2.1807e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['1.9661e-01', '1.8945e-01', '1.8100e-01', "
+[92mINFO [0m:      	                              "'1.9037e-01', '1.8741e-01', '2.0229e-01', "
+[92mINFO [0m:      	                              "'2.0200e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['2.1791e+00', '2.1806e+00', '2.1832e+00', "
+[92mINFO [0m:      	                               "'2.1835e+00', '2.1788e+00', '2.1774e+00', "
+[92mINFO [0m:      	                               "'2.1797e+00']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                  "'1572', '500']"},
+[92mINFO [0m:      	  2: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'eval_acc': '5.5474e-01',
+[92mINFO [0m:      	       'eval_loss': '1.2355e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['5.2946e-01', '5.6620e-01', '5.5100e-01', "
+[92mINFO [0m:      	                              "'5.4815e-01', '5.7063e-01', '5.6997e-01', "
+[92mINFO [0m:      	                              "'5.7000e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['1.2907e+00', '1.2011e+00', '1.2268e+00', "
+[92mINFO [0m:      	                               "'1.2432e+00', '1.2216e+00', '1.2218e+00', "
+[92mINFO [0m:      	                               "'1.2205e+00']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                  "'1572', '500']"},
+[92mINFO [0m:      	  3: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'eval_acc': '6.3465e-01',
+[92mINFO [0m:      	       'eval_loss': '1.0379e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['6.1046e-01', '6.4047e-01', '6.4500e-01', "
+[92mINFO [0m:      	                              "'6.3270e-01', '6.3636e-01', '6.3232e-01', "
+[92mINFO [0m:      	                              "'6.6000e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['1.1135e+00', '9.9467e-01', '1.0108e+00', "
+[92mINFO [0m:      	                               "'1.0475e+00', '1.0313e+00', '1.0392e+00', "
+[92mINFO [0m:      	                               "'9.9198e-01']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                  "'1572', '500']"},
+[92mINFO [0m:      	  4: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'eval_acc': '6.7483e-01',
+[92mINFO [0m:      	       'eval_loss': '9.8139e-01',
+[92mINFO [0m:      	       'per-client-eval_acc': "['6.5096e-01', '6.8891e-01', '6.8400e-01', "
+[92mINFO [0m:      	                              "'6.7357e-01', '6.6154e-01', '6.6921e-01', "
+[92mINFO [0m:      	                              "'7.1800e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['1.0562e+00', '9.6939e-01', '9.4595e-01', "
+[92mINFO [0m:      	                               "'9.9167e-01', '9.7661e-01', '9.8021e-01', "
+[92mINFO [0m:      	                               "'9.1602e-01']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                  "'1572', '500']"},
+[92mINFO [0m:      	  5: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'eval_acc': '6.9165e-01',
+[92mINFO [0m:      	       'eval_loss': '1.0298e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['6.7158e-01', '7.0721e-01', '6.9650e-01', "
+[92mINFO [0m:      	                              "'6.8869e-01', '6.8951e-01', '6.9020e-01', "
+[92mINFO [0m:      	                              "'7.1600e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['1.1133e+00', '9.8827e-01', '1.0038e+00', "
+[92mINFO [0m:      	                               "'1.0322e+00', '1.0310e+00', '1.0341e+00', "
+[92mINFO [0m:      	                               "'9.6085e-01']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                  "'1572', '500']"},
+[92mINFO [0m:      	  6: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'eval_acc': '6.9955e-01',
+[92mINFO [0m:      	       'eval_loss': '1.0980e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['6.7968e-01', '7.1475e-01', '7.0350e-01', "
+[92mINFO [0m:      	                              "'6.9821e-01', '6.8811e-01', '6.9911e-01', "
+[92mINFO [0m:      	                              "'7.3200e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['1.1936e+00', '1.0473e+00', '1.0718e+00', "
+[92mINFO [0m:      	                               "'1.0984e+00', '1.1223e+00', '1.0996e+00', "
+[92mINFO [0m:      	                               "'9.9541e-01']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                  "'1572', '500']"},
+[92mINFO [0m:      	  7: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'eval_acc': '6.9729e-01',
+[92mINFO [0m:      	       'eval_loss': '1.1473e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['6.7820e-01', '7.0936e-01', '7.0300e-01', "
+[92mINFO [0m:      	                              "'6.9765e-01', '6.8811e-01', '6.9275e-01', "
+[92mINFO [0m:      	                              "'7.3000e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['1.2557e+00', '1.0749e+00', '1.1224e+00', "
+[92mINFO [0m:      	                               "'1.1450e+00', '1.1949e+00', '1.1568e+00', "
+[92mINFO [0m:      	                               "'9.9791e-01']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                  "'1572', '500']"},
+[92mINFO [0m:      	  8: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'eval_acc': '6.9944e-01',
+[92mINFO [0m:      	       'eval_loss': '1.2096e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['6.7894e-01', '7.0291e-01', '7.0300e-01', "
+[92mINFO [0m:      	                              "'7.0997e-01', '6.8951e-01', '6.9720e-01', "
+[92mINFO [0m:      	                              "'7.1800e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['1.3349e+00', '1.1427e+00', '1.1795e+00', "
+[92mINFO [0m:      	                               "'1.2083e+00', '1.2541e+00', '1.2193e+00', "
+[92mINFO [0m:      	                               "'1.0240e+00']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                  "'1572', '500']"},
+[92mINFO [0m:      	  9: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	       'eval_acc': '6.9616e-01',
+[92mINFO [0m:      	       'eval_loss': '1.2729e+00',
+[92mINFO [0m:      	       'per-client-eval_acc': "['6.7526e-01', '7.0936e-01', '6.9650e-01', "
+[92mINFO [0m:      	                              "'6.9597e-01', '6.8811e-01', '6.9720e-01', "
+[92mINFO [0m:      	                              "'7.3600e-01']",
+[92mINFO [0m:      	       'per-client-eval_loss': "['1.4189e+00', '1.1791e+00', '1.2310e+00', "
+[92mINFO [0m:      	                               "'1.2765e+00', '1.2956e+00', '1.3081e+00', "
+[92mINFO [0m:      	                               "'1.0618e+00']",
+[92mINFO [0m:      	       'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                  "'1572', '500']"},
+[92mINFO [0m:      	  10: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'eval_acc': '6.9007e-01',
+[92mINFO [0m:      	        'eval_loss': '1.3683e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.6274e-01', '7.0291e-01', '6.9150e-01', "
+[92mINFO [0m:      	                               "'7.0269e-01', '6.6853e-01', '6.9211e-01', "
+[92mINFO [0m:      	                               "'7.1400e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.5166e+00', '1.2984e+00', '1.3219e+00', "
+[92mINFO [0m:      	                                "'1.3703e+00', '1.4098e+00', '1.3897e+00', "
+[92mINFO [0m:      	                                "'1.1466e+00']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                   "'1572', '500']"},
+[92mINFO [0m:      	  11: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'eval_acc': '6.9458e-01',
+[92mINFO [0m:      	        'eval_loss': '1.4107e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.7158e-01', '7.0398e-01', '7.0350e-01', "
+[92mINFO [0m:      	                               "'6.9093e-01', '6.9510e-01', '6.9148e-01', "
+[92mINFO [0m:      	                               "'7.2600e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.5553e+00', '1.3186e+00', '1.3708e+00', "
+[92mINFO [0m:      	                                "'1.4112e+00', '1.4320e+00', '1.4409e+00', "
+[92mINFO [0m:      	                                "'1.2208e+00']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                   "'1572', '500']"},
+[92mINFO [0m:      	  12: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'eval_acc': '6.9323e-01',
+[92mINFO [0m:      	        'eval_loss': '1.4215e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.7820e-01', '7.0075e-01', '6.9450e-01', "
+[92mINFO [0m:      	                               "'6.9933e-01', '6.7692e-01', '6.9020e-01', "
+[92mINFO [0m:      	                               "'7.2600e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.5891e+00', '1.3329e+00', '1.3990e+00', "
+[92mINFO [0m:      	                                "'1.3961e+00', '1.4495e+00', '1.4509e+00', "
+[92mINFO [0m:      	                                "'1.1799e+00']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                   "'1572', '500']"},
+[92mINFO [0m:      	  13: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'eval_acc': '6.9142e-01',
+[92mINFO [0m:      	        'eval_loss': '1.4714e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.6495e-01', '7.0936e-01', '6.9000e-01', "
+[92mINFO [0m:      	                               "'6.8533e-01', '7.0070e-01', '6.9784e-01', "
+[92mINFO [0m:      	                               "'7.2400e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.6722e+00', '1.3729e+00', '1.4424e+00', "
+[92mINFO [0m:      	                                "'1.4713e+00', '1.4992e+00', '1.4639e+00', "
+[92mINFO [0m:      	                                "'1.2084e+00']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                   "'1572', '500']"},
+[92mINFO [0m:      	  14: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'eval_acc': '6.9345e-01',
+[92mINFO [0m:      	        'eval_loss': '1.4976e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.7526e-01', '7.0721e-01', '6.9300e-01', "
+[92mINFO [0m:      	                               "'6.9765e-01', '6.8252e-01', '7.0293e-01', "
+[92mINFO [0m:      	                               "'6.9000e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.6874e+00', '1.3568e+00', '1.4711e+00', "
+[92mINFO [0m:      	                                "'1.4857e+00', '1.5214e+00', '1.5099e+00', "
+[92mINFO [0m:      	                                "'1.3191e+00']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                   "'1572', '500']"},
+[92mINFO [0m:      	  15: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'eval_acc': '6.9424e-01',
+[92mINFO [0m:      	        'eval_loss': '1.5289e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.7968e-01', '7.0721e-01', '6.8950e-01', "
+[92mINFO [0m:      	                               "'6.9989e-01', '7.0769e-01', '6.8957e-01', "
+[92mINFO [0m:      	                               "'7.0400e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.7098e+00', '1.3877e+00', '1.5259e+00', "
+[92mINFO [0m:      	                                "'1.4978e+00', '1.4792e+00', '1.5857e+00', "
+[92mINFO [0m:      	                                "'1.3166e+00']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                   "'1572', '500']"},
+[92mINFO [0m:      	  16: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'eval_acc': '6.9244e-01',
+[92mINFO [0m:      	        'eval_loss': '1.5438e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.7747e-01', '7.0398e-01', '6.8950e-01', "
+[92mINFO [0m:      	                               "'6.9765e-01', '6.8811e-01', '6.9529e-01', "
+[92mINFO [0m:      	                               "'7.0200e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.7192e+00', '1.4216e+00', '1.5380e+00', "
+[92mINFO [0m:      	                                "'1.5210e+00', '1.5452e+00', '1.5842e+00', "
+[92mINFO [0m:      	                                "'1.2709e+00']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                   "'1572', '500']"},
+[92mINFO [0m:      	  17: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'eval_acc': '6.8804e-01',
+[92mINFO [0m:      	        'eval_loss': '1.5937e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.7747e-01', '6.9322e-01', '6.8900e-01', "
+[92mINFO [0m:      	                               "'6.9485e-01', '6.7832e-01', '6.8830e-01', "
+[92mINFO [0m:      	                               "'6.9200e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.7574e+00', '1.4753e+00', '1.5728e+00', "
+[92mINFO [0m:      	                                "'1.5606e+00', '1.6122e+00', '1.6422e+00', "
+[92mINFO [0m:      	                                "'1.3914e+00']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                   "'1572', '500']"},
+[92mINFO [0m:      	  18: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'eval_acc': '6.8363e-01',
+[92mINFO [0m:      	        'eval_loss': '1.6189e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.6274e-01', '6.9322e-01', '6.9100e-01', "
+[92mINFO [0m:      	                               "'6.9037e-01', '6.6434e-01', '6.7939e-01', "
+[92mINFO [0m:      	                               "'7.1000e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.7927e+00', '1.4870e+00', '1.5974e+00', "
+[92mINFO [0m:      	                                "'1.5643e+00', '1.6823e+00', '1.6713e+00', "
+[92mINFO [0m:      	                                "'1.4171e+00']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                   "'1572', '500']"},
+[92mINFO [0m:      	  19: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'eval_acc': '6.9052e-01',
+[92mINFO [0m:      	        'eval_loss': '1.6349e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.7010e-01', '7.0506e-01', '6.9450e-01', "
+[92mINFO [0m:      	                               "'6.8813e-01', '6.9371e-01', '6.8830e-01', "
+[92mINFO [0m:      	                               "'7.1400e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.8271e+00', '1.4440e+00', '1.6134e+00', "
+[92mINFO [0m:      	                                "'1.6380e+00', '1.5887e+00', '1.6747e+00', "
+[92mINFO [0m:      	                                "'1.4833e+00']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                   "'1572', '500']"},
+[92mINFO [0m:      	  20: { 'client-ids': "['0', '1', '2', '3', '4', '5', '6']",
+[92mINFO [0m:      	        'eval_acc': '6.8781e-01',
+[92mINFO [0m:      	        'eval_loss': '1.6317e+00',
+[92mINFO [0m:      	        'per-client-eval_acc': "['6.6495e-01', '7.1044e-01', '6.7950e-01', "
+[92mINFO [0m:      	                               "'6.9877e-01', '6.9091e-01', '6.8384e-01', "
+[92mINFO [0m:      	                               "'7.1000e-01']",
+[92mINFO [0m:      	        'per-client-eval_loss': "['1.8131e+00', '1.4230e+00', '1.6374e+00', "
+[92mINFO [0m:      	                                "'1.5968e+00', '1.6290e+00', '1.6963e+00', "
+[92mINFO [0m:      	                                "'1.4296e+00']",
+[92mINFO [0m:      	        'per-client-num-examples': "['1358', '929', '2000', '1786', '715', "
+[92mINFO [0m:      	                                   "'1572', '500']"}}
+[92mINFO [0m:      	
+[92mINFO [0m:      	ServerApp-side Evaluate Metrics:
+[92mINFO [0m:      	{ 0: { 'accuracy': '1.0000e-01',
+[92mINFO [0m:      	       'auc': '5.0091e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '1.8182e-02',
+[92mINFO [0m:      	       'loss': '2.3041e+00',
+[92mINFO [0m:      	       'precision': '1.0000e-02'},
+[92mINFO [0m:      	  1: { 'accuracy': '1.8860e-01',
+[92mINFO [0m:      	       'auc': '7.2181e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '1.0091e-01',
+[92mINFO [0m:      	       'loss': '2.1806e+00',
+[92mINFO [0m:      	       'precision': '2.5986e-01'},
+[92mINFO [0m:      	  2: { 'accuracy': '5.5320e-01',
+[92mINFO [0m:      	       'auc': '9.1531e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '5.4797e-01',
+[92mINFO [0m:      	       'loss': '1.2331e+00',
+[92mINFO [0m:      	       'precision': '5.5447e-01'},
+[92mINFO [0m:      	  3: { 'accuracy': '6.3140e-01',
+[92mINFO [0m:      	       'auc': '9.4122e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '6.3029e-01',
+[92mINFO [0m:      	       'loss': '1.0260e+00',
+[92mINFO [0m:      	       'precision': '6.3323e-01'},
+[92mINFO [0m:      	  4: { 'accuracy': '6.7100e-01',
+[92mINFO [0m:      	       'auc': '9.5165e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '6.6986e-01',
+[92mINFO [0m:      	       'loss': '9.5533e-01',
+[92mINFO [0m:      	       'precision': '6.7203e-01'},
+[92mINFO [0m:      	  5: { 'accuracy': '6.9300e-01',
+[92mINFO [0m:      	       'auc': '9.5457e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '6.9060e-01',
+[92mINFO [0m:      	       'loss': '1.0060e+00',
+[92mINFO [0m:      	       'precision': '6.9220e-01'},
+[92mINFO [0m:      	  6: { 'accuracy': '7.0600e-01',
+[92mINFO [0m:      	       'auc': '9.5609e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '7.0408e-01',
+[92mINFO [0m:      	       'loss': '1.0531e+00',
+[92mINFO [0m:      	       'precision': '7.0337e-01'},
+[92mINFO [0m:      	  7: { 'accuracy': '7.0260e-01',
+[92mINFO [0m:      	       'auc': '9.5596e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '7.0246e-01',
+[92mINFO [0m:      	       'loss': '1.1074e+00',
+[92mINFO [0m:      	       'precision': '7.0333e-01'},
+[92mINFO [0m:      	  8: { 'accuracy': '7.0680e-01',
+[92mINFO [0m:      	       'auc': '9.5511e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '7.0613e-01',
+[92mINFO [0m:      	       'loss': '1.1474e+00',
+[92mINFO [0m:      	       'precision': '7.0696e-01'},
+[92mINFO [0m:      	  9: { 'accuracy': '7.0300e-01',
+[92mINFO [0m:      	       'auc': '9.5469e-01',
+[92mINFO [0m:      	       'diverged': '0.0000e+00',
+[92mINFO [0m:      	       'f1': '7.0003e-01',
+[92mINFO [0m:      	       'loss': '1.2154e+00',
+[92mINFO [0m:      	       'precision': '6.9898e-01'},
+[92mINFO [0m:      	  10: { 'accuracy': '6.9580e-01',
+[92mINFO [0m:      	        'auc': '9.5311e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.9645e-01',
+[92mINFO [0m:      	        'loss': '1.3037e+00',
+[92mINFO [0m:      	        'precision': '6.9993e-01'},
+[92mINFO [0m:      	  11: { 'accuracy': '7.0160e-01',
+[92mINFO [0m:      	        'auc': '9.5369e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '7.0000e-01',
+[92mINFO [0m:      	        'loss': '1.3377e+00',
+[92mINFO [0m:      	        'precision': '6.9952e-01'},
+[92mINFO [0m:      	  12: { 'accuracy': '7.0280e-01',
+[92mINFO [0m:      	        'auc': '9.5338e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '7.0236e-01',
+[92mINFO [0m:      	        'loss': '1.3426e+00',
+[92mINFO [0m:      	        'precision': '7.0256e-01'},
+[92mINFO [0m:      	  13: { 'accuracy': '7.0120e-01',
+[92mINFO [0m:      	        'auc': '9.5218e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '7.0117e-01',
+[92mINFO [0m:      	        'loss': '1.4104e+00',
+[92mINFO [0m:      	        'precision': '7.0209e-01'},
+[92mINFO [0m:      	  14: { 'accuracy': '6.9920e-01',
+[92mINFO [0m:      	        'auc': '9.5271e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.9822e-01',
+[92mINFO [0m:      	        'loss': '1.4214e+00',
+[92mINFO [0m:      	        'precision': '6.9846e-01'},
+[92mINFO [0m:      	  15: { 'accuracy': '6.9100e-01',
+[92mINFO [0m:      	        'auc': '9.5015e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.8785e-01',
+[92mINFO [0m:      	        'loss': '1.4939e+00',
+[92mINFO [0m:      	        'precision': '6.8713e-01'},
+[92mINFO [0m:      	  16: { 'accuracy': '6.9780e-01',
+[92mINFO [0m:      	        'auc': '9.5261e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.9634e-01',
+[92mINFO [0m:      	        'loss': '1.4751e+00',
+[92mINFO [0m:      	        'precision': '6.9623e-01'},
+[92mINFO [0m:      	  17: { 'accuracy': '6.9620e-01',
+[92mINFO [0m:      	        'auc': '9.5138e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.9598e-01',
+[92mINFO [0m:      	        'loss': '1.5166e+00',
+[92mINFO [0m:      	        'precision': '6.9725e-01'},
+[92mINFO [0m:      	  18: { 'accuracy': '6.9580e-01',
+[92mINFO [0m:      	        'auc': '9.5119e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.9582e-01',
+[92mINFO [0m:      	        'loss': '1.5167e+00',
+[92mINFO [0m:      	        'precision': '6.9815e-01'},
+[92mINFO [0m:      	  19: { 'accuracy': '6.9580e-01',
+[92mINFO [0m:      	        'auc': '9.5027e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.9325e-01',
+[92mINFO [0m:      	        'loss': '1.5806e+00',
+[92mINFO [0m:      	        'precision': '6.9407e-01'},
+[92mINFO [0m:      	  20: { 'accuracy': '6.9660e-01',
+[92mINFO [0m:      	        'auc': '9.5067e-01',
+[92mINFO [0m:      	        'diverged': '0.0000e+00',
+[92mINFO [0m:      	        'f1': '6.9545e-01',
+[92mINFO [0m:      	        'loss': '1.5494e+00',
+[92mINFO [0m:      	        'precision': '6.9556e-01'}}
+[92mINFO [0m:      
+[36m(ClientAppActor pid=5883)[0m Using the latest cached version of the dataset since uoft-cs/cifar10 couldn't be found on the Hugging Face Hub (offline mode is enabled).[32m [repeated 6x across cluster] (Ray deduplicates logs by default. Set RAY_DEDUP_LOGS=0 to disable log deduplication, or see https://docs.ray.io/en/master/ray-observability/user-guides/configure-logging.html#log-deduplication for more options.)[0m
+[36m(ClientAppActor pid=5883)[0m Found the latest cached dataset configuration 'plain_text' at /root/.cache/huggingface/datasets/uoft-cs___cifar10/plain_text/0.0.0/0b2714987fa478483af9968de7c934580d0bb9a2 (last modified on Tue Aug 11 14:28:21 2026).[32m [repeated 6x across cluster][0m
+Round 1 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-1.pt
+Round 2 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-2.pt
+Round 3 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-3.pt
+Round 4 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-4.pt
+Round 5 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-5.pt
+Round 6 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-6.pt
+Round 7 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-7.pt
+Round 8 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-8.pt
+Round 9 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-9.pt
+Round 10 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-10.pt
+Round 11 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-11.pt
+Round 12 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-12.pt
+Round 13 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-13.pt
+Round 14 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-14.pt
+Round 15 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-15.pt
+Round 16 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-16.pt
+Round 17 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-17.pt
+Round 18 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-18.pt
+Round 19 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-19.pt
+Round 20 checkpoint written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.round-20.pt
+Experiment result written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.json
+Detailed evaluation written to /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.evaluation.json and /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.predictions.npz
+Result: /content/metricdp-pytorch/results/cia/cifar10_remove/clients-8/out-remove/vanilla/runs/cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn.json
+Final server metrics: {'loss': 1.5494415288925172, 'accuracy': 0.6966, 'f1': 0.6954522956600335, 'precision': 0.6955565372259033, 'auc': 0.95067224, 'diverged': 0.0}
+2026-08-11 14:38:59 DONE  cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn (657.6s)
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-08-11 14:39:09 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=1 (checkpoint deleted)
+2026-08-11 14:39:17 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=2 (checkpoint deleted)
+2026-08-11 14:39:24 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=3 (checkpoint deleted)
+2026-08-11 14:39:31 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=4 (checkpoint deleted)
+2026-08-11 14:39:38 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=5 (checkpoint deleted)
+2026-08-11 14:39:46 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=6 (checkpoint deleted)
+2026-08-11 14:39:53 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=7 (checkpoint deleted)
+2026-08-11 14:40:00 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=8 (checkpoint deleted)
+2026-08-11 14:40:07 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=9 (checkpoint deleted)
+2026-08-11 14:40:15 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=10 (checkpoint deleted)
+2026-08-11 14:40:22 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=11 (checkpoint deleted)
+2026-08-11 14:40:29 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=12 (checkpoint deleted)
+2026-08-11 14:40:36 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=13 (checkpoint deleted)
+2026-08-11 14:40:44 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=14 (checkpoint deleted)
+2026-08-11 14:40:51 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=15 (checkpoint deleted)
+2026-08-11 14:40:58 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=16 (checkpoint deleted)
+2026-08-11 14:41:05 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=17 (checkpoint deleted)
+2026-08-11 14:41:13 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=18 (checkpoint deleted)
+2026-08-11 14:41:20 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=19 (checkpoint deleted)
+2026-08-11 14:41:27 EVALUATED cifar10-out-remove__non-iid__vanilla__fedavg__clients-7__seed-42__nm0p0182__clip5__rounds-20__epochs-5__cifar10_remove__cifar10_cnn round=20 (checkpoint deleted)
+2026-08-11 14:41:27 PROGRESS 1/1 (0 failed so far)
+2026-08-11 14:41:27 Sweep finished: 1/1 attempted, 0 failed
+round= 1 non-iid      vanilla         clients= 7 agg=2.181 clean_diff=-0.031% noisy_diff=1.939%
+round= 2 non-iid      vanilla         clients= 7 agg=1.233 clean_diff=1.109% noisy_diff=44.912%
+round= 3 non-iid      vanilla         clients= 7 agg=1.026 clean_diff=2.442% noisy_diff=57.004%
+round= 4 non-iid      vanilla         clients= 7 agg=0.955 clean_diff=1.799% noisy_diff=65.814%
+round= 5 non-iid      vanilla         clients= 7 agg=1.006 clean_diff=0.063% noisy_diff=69.000%
+round= 6 non-iid      vanilla         clients= 7 agg=1.053 clean_diff=2.719% noisy_diff=69.455%
+round= 7 non-iid      vanilla         clients= 7 agg=1.107 clean_diff=1.120% noisy_diff=66.114%
+round= 8 non-iid      vanilla         clients= 7 agg=1.147 clean_diff=1.451% noisy_diff=68.132%
+round= 9 non-iid      vanilla         clients= 7 agg=1.215 clean_diff=3.049% noisy_diff=68.903%
+round=10 non-iid      vanilla         clients= 7 agg=1.304 clean_diff=-0.983% noisy_diff=62.421%
+round=11 non-iid      vanilla         clients= 7 agg=1.338 clean_diff=-0.354% noisy_diff=64.485%
+round=12 non-iid      vanilla         clients= 7 agg=1.343 clean_diff=-0.493% noisy_diff=60.829%
+round=13 non-iid      vanilla         clients= 7 agg=1.410 clean_diff=-2.015% noisy_diff=65.035%
+round=14 non-iid      vanilla         clients= 7 agg=1.421 clean_diff=-5.145% noisy_diff=67.924%
+round=15 non-iid      vanilla         clients= 7 agg=1.494 clean_diff=-9.305% noisy_diff=60.787%
+round=16 non-iid      vanilla         clients= 7 agg=1.475 clean_diff=-3.691% noisy_diff=63.510%
+round=17 non-iid      vanilla         clients= 7 agg=1.517 clean_diff=-9.806% noisy_diff=67.818%
+round=18 non-iid      vanilla         clients= 7 agg=1.517 clean_diff=-8.647% noisy_diff=66.000%
+round=19 non-iid      vanilla         clients= 7 agg=1.581 clean_diff=-9.009% noisy_diff=69.533%
+round=20 non-iid      vanilla         clients= 7 agg=1.549 clean_diff=-11.379% noisy_diff=64.721%
