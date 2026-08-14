@@ -15,17 +15,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "reports" / "accuracy_vs_roc_auc.html"
 RESULT_SETS = (
-    ("cifar-remove", "CIFAR-10 removal", "results/cia/cifar10_remove", True),
+    ("cifar-remove", "CIFAR-10 fixed nm", "results/cia/cifar10_remove", True),
     ("cifar-homogeneous", "CIFAR-10 homogeneous scaling", "results/client_scaling/cifar10_homogeneous", True),
     ("alzheimer", "Alzheimer", "results/planned_runs/alzheimer", True),
     ("fashion", "Fashion-MNIST", "results/planned_runs/fashion", True),
     ("cifar-full", "CIFAR full replacement", "results/planned_runs/cifar/full", True),
     ("cifar-validation-48", "CIFAR 48-client validation", "results/planned_runs/cifar/validation_48", True),
     ("cifar-max-records", "CIFAR max records", "results/planned_runs/cifar/max_records", True),
-    ("cifar-noise-sweep", "CIFAR noise sweep", "results/planned_runs/cifar/noise_sweep", True),
-    # Keep partial sweep artifacts out until the result set is declared ready.
-    # Change the final value to True and rerun this generator at that point.
-    ("cifar-remove-ratio-sweep", "CIFAR-10 removal ratio sweep", "results/cia/cifar10_remove_ratio_sweep", False),
+    ("cifar-remove-ratio-sweep", "CIFAR-10 noise ratios", "results/cia/cifar10_remove_ratio_sweep", True),
+    ("eurosat-scaling", "EuroSAT scaling", "results/eurosat_scaling", True),
+    ("cifar100-scaling", "CIFAR-100 scaling", "results/cifar100_scaling", True),
 )
 PRIVACY_LABELS = {
     "vanilla": "Vanilla",
@@ -36,9 +35,13 @@ PRIVACY_LABELS = {
 
 def path_ratio(path: Path) -> float | None:
     for part in path.parts:
-        if part.startswith("ratio-"):
+        token = part.removeprefix("ratio-") if part.startswith("ratio-") else None
+        if token is None:
+            match = re.search(r"-r(\d+p\d+)$", part)
+            token = match.group(1) if match else None
+        if token is not None:
             try:
-                return float(part.removeprefix("ratio-").replace("p", "."))
+                return float(token.replace("p", "."))
             except ValueError:
                 return None
     return None
@@ -52,6 +55,8 @@ def parse_run_name(name: str) -> dict[str, object]:
             values["privacy"] = part
         elif part.startswith("clients-"):
             values["clients"] = int(part.removeprefix("clients-"))
+        elif re.fullmatch(r"n\d+", part):
+            values["clients"] = int(part[1:])
         elif part.startswith("seed-"):
             values["seed"] = int(part.removeprefix("seed-"))
         elif part.startswith("nm"):
@@ -73,6 +78,16 @@ def load_points() -> tuple[list[dict], list[dict]]:
     for set_id, label, relative, include in RESULT_SETS:
         directory = ROOT / relative
         discovered = sorted(directory.rglob("*.evaluation.json")) if directory.exists() else []
+        if set_id == "eurosat-scaling":
+            # Ignore a stale round-3 checkpoint evaluation; the completed run is round 100.
+            discovered = [path for path in discovered if "__r3.evaluation.json" not in path.name]
+        # Some new scaling sets have complete run JSONs but no postprocessed
+        # evaluation artifact. Their final server metric has the same accuracy/AUC fields.
+        if directory.exists() and not discovered:
+            discovered = [
+                path for path in sorted(directory.glob("*.json"))
+                if "server_evaluate_metrics" in json.loads(path.read_text())
+            ]
         files = discovered if include else []
         sets.append({
             "id": set_id,
@@ -84,11 +99,21 @@ def load_points() -> tuple[list[dict], list[dict]]:
         })
         for path in files:
             payload = json.loads(path.read_text())
-            run_name = str(payload["run_name"])
+            run_name = str(payload.get("run_name") or payload.get("metadata", {}).get("run_name"))
             meta = parse_run_name(run_name)
-            test = payload["server_final_test"]
-            roc = test.get("roc_ovr", {})
-            if "macro_auc" not in roc or "accuracy" not in test or "privacy" not in meta:
+            run_metadata = payload.get("metadata", {})
+            meta.update({key: value for key, value in run_metadata.items() if key in {"privacy", "seed", "noise_multiplier"}})
+            if "num_clients" in run_metadata:
+                meta["clients"] = run_metadata["num_clients"]
+            if "server_final_test" in payload:
+                test = payload["server_final_test"]
+                accuracy = test.get("accuracy")
+                auc_value = test.get("roc_ovr", {}).get("macro_auc")
+            else:
+                metrics = payload["server_evaluate_metrics"]
+                final = metrics[max(metrics, key=lambda value: int(value))]
+                accuracy, auc_value = final.get("accuracy"), final.get("auc")
+            if accuracy is None or auc_value is None or "privacy" not in meta:
                 continue
             ratio = path_ratio(path)
             adjacency = meta.get("adjacency")
@@ -96,6 +121,7 @@ def load_points() -> tuple[list[dict], list[dict]]:
                 "in" if isinstance(adjacency, str) and adjacency.startswith("in-")
                 else "out" if isinstance(adjacency, str) and adjacency.startswith("out-")
                 else "homogeneous" if "__homogeneous__" in run_name
+                else "non-iid" if "__non-iid__" in run_name
                 else "other"
             )
             point = {
@@ -105,8 +131,8 @@ def load_points() -> tuple[list[dict], list[dict]]:
                 "path": str(path.relative_to(ROOT)),
                 "run": run_name,
                 "privacy": meta["privacy"],
-                "accuracy": float(test["accuracy"]),
-                "auc": float(roc["macro_auc"]),
+                "accuracy": float(accuracy),
+                "auc": float(auc_value),
                 "experiment": meta.get("experiment", ""),
                 "adjacency": meta.get("adjacency", "—"),
                 "direction": direction,
@@ -124,17 +150,51 @@ def build() -> None:
     points, sets = load_points()
     active_sets = [item for item in sets if item["count"]]
     pending_sets = [item for item in sets if not item["count"]]
-    controls = "".join(
-        f'<label class="toggle"><input type="checkbox" data-set="{html.escape(item["id"])}" checked> '
-        f'<span>{html.escape(item["label"])}</span><small>{item["count"]}</small></label>'
-        for item in active_sets
-    )
-    pending = "".join(
-        f'<label class="toggle pending"><input type="checkbox" disabled> '
-        f'<span>{html.escape(item["label"])}</span><small>'
-        f'{("partial data excluded" if item["pending"] and item["discovered"] else "awaiting data")}</small></label>'
-        for item in pending_sets
-    )
+    def category(item: dict) -> str:
+        if item["path"].startswith("results/planned_runs/"):
+            return "Planned runs"
+        if item["id"] in {"eurosat-scaling", "cifar100-scaling"}:
+            return "EuroSAT & CIFAR-100"
+        return "CIFAR-10"
+
+    def subtitle(item: dict) -> str:
+        rows = [point for point in points if point["set"] == item["id"]]
+        global_accuracy = [point["accuracy"] for point in rows if point["privacy"] == "global-dp"]
+        metric_accuracy = [point["accuracy"] for point in rows if point["privacy"] == "metric-privacy"]
+        notes: list[str] = []
+        if global_accuracy and metric_accuracy:
+            gap = abs(sum(global_accuracy) / len(global_accuracy) - sum(metric_accuracy) / len(metric_accuracy))
+            if gap <= 0.02:
+                notes.append("Low gap")
+        if item["id"] == "cifar100-scaling":
+            notes.append("Low accuracy")
+        return " · ".join(notes)
+
+    groups: list[str] = []
+    for heading in ("Planned runs", "EuroSAT & CIFAR-100", "CIFAR-10"):
+        items = [item for item in active_sets if category(item) == heading]
+        pending_items = [item for item in pending_sets if category(item) == heading]
+        if not items and not pending_items:
+            continue
+        controls = "".join(
+            f'<label class="toggle"><input type="checkbox" data-set="{html.escape(item["id"])}" checked> '
+            f'<span class="set-name"><span class="set-title">{html.escape(item["label"])}</span>'
+            f'{(f"<small class=\"set-subtitle\">{html.escape(subtitle(item))}</small>" if subtitle(item) else "")}'
+            f'</span><small class="set-count">{item["count"]}</small></label>'
+            for item in items
+        )
+        pending = "".join(
+            f'<label class="toggle pending"><input type="checkbox" disabled> '
+            f'<span>{html.escape(item["label"])}</span><small>'
+            f'{("partial data excluded" if item["pending"] and item["discovered"] else "awaiting data")}</small></label>'
+            for item in pending_items
+        )
+        groups.append(
+            f'<div class="set-group panel"><h3>{html.escape(heading)}</h3>'
+            f'<div class="set-group-controls">{controls}{pending}</div></div>'
+        )
+    controls = "".join(groups)
+    pending = ""
     data_json = json.dumps({"points": points, "sets": sets}, separators=(",", ":")).replace("</", "<\\/")
     document = TEMPLATE.replace("__CONTROLS__", controls).replace("__PENDING__", pending).replace("__DATA__", data_json)
     OUTPUT.write_text(document)
@@ -157,10 +217,14 @@ TEMPLATE = r'''<!doctype html>
     p { line-height: 1.45; }
     .meta, .note { color: #444; font-size: 14px; }
     .panel { border: 1px solid #ccc; padding: 14px; }
-    .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 8px 14px; }
+    .set-groups { display: grid; gap: 14px; }
+    .set-group h3 { margin: 0 0 10px; }
+    .set-group-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 8px 14px; }
     .toggle { display: flex; align-items: center; gap: 7px; padding: 7px 9px; border: 1px solid #ddd; cursor: pointer; font-size: 13px; }
-    .toggle span { flex: 1; }
+    .toggle > .set-name { display: flex; flex: 1; flex-direction: column; gap: 2px; }
+    .set-title { line-height: 1.2; }
     .toggle small { color: #666; font-variant-numeric: tabular-nums; }
+    .set-subtitle { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: .03em; }
     .toggle.pending { color: #777; background: #fafafa; cursor: not-allowed; }
     .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin: 12px 0 2px; font-size: 13px; }
     button { border: 1px solid #999; background: #fff; color: #111; padding: 6px 10px; cursor: pointer; }
@@ -222,8 +286,7 @@ TEMPLATE = r'''<!doctype html>
 
 <section>
   <h2>Result sets</h2>
-  <div class="panel controls">__CONTROLS____PENDING__</div>
-  <p class="note"><strong>Data update:</strong> partial artifacts under <code>results/cia/cifar10_remove_ratio_sweep/</code> are intentionally excluded. Once that result set is fully ready, enable its entry in <code>reports/build_accuracy_vs_roc_auc.py</code> and rerun the generator.</p>
+  <div class="set-groups">__CONTROLS____PENDING__</div>
 </section>
 
 <section>
@@ -275,7 +338,7 @@ TEMPLATE = r'''<!doctype html>
     });
   }
   const numericSort=(a,b) => a === 'na' ? -1 : b === 'na' ? 1 : Number(a)-Number(b);
-  populateCheckboxes(directionFilter, 'direction', v => ({in:'IN',out:'OUT',homogeneous:'Homogeneous',other:'Other'}[v] || v), (a,b) => ['in','out','homogeneous','other'].indexOf(a)-['in','out','homogeneous','other'].indexOf(b));
+  populateCheckboxes(directionFilter, 'direction', v => ({in:'IN',out:'OUT',homogeneous:'Homogeneous','non-iid':'Non-IID',other:'Other'}[v] || v), (a,b) => ['in','out','homogeneous','non-iid','other'].indexOf(a)-['in','out','homogeneous','non-iid','other'].indexOf(b));
   populateCheckboxes(ratioFilter, 'ratio', v => v === 'na' ? 'Not specified' : v, numericSort);
   populateCheckboxes(noiseFilter, 'noise', v => v === 'na' ? 'Not specified' : v, numericSort);
   const selected = container => new Set([...container.querySelectorAll('input:not([data-all]):checked')].map(input => input.value));
