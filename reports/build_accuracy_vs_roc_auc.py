@@ -1,4 +1,4 @@
-"""Build the standalone interactive accuracy-versus-ROC-AUC report.
+"""Build the standalone CIA big-picture visualization report.
 
 Run from the repository root:
     uv run python reports/build_accuracy_vs_roc_auc.py
@@ -6,199 +6,250 @@ Run from the repository root:
 
 from __future__ import annotations
 
-import html
 import json
-import re
+import statistics
 from pathlib import Path
+
+from experiments.cia.reports import build_alzheimer_cia_report as transfer
+from experiments.cia.reports import build_cifar_full_cia_report as full
 
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "reports" / "accuracy_vs_roc_auc.html"
-RESULT_SETS = (
-    ("cifar-remove", "CIFAR-10 fixed nm", "results/cia/cifar10_remove", True),
-    ("cifar-homogeneous", "CIFAR-10 homogeneous scaling", "results/client_scaling/cifar10_homogeneous", True),
-    ("alzheimer", "Alzheimer", "results/planned_runs/alzheimer", True),
-    ("fashion", "Fashion-MNIST", "results/planned_runs/fashion", True),
-    ("cifar-full", "CIFAR full replacement", "results/planned_runs/cifar/full", True),
-    ("cifar-validation-48", "CIFAR 48-client validation", "results/planned_runs/cifar/validation_48", True),
-    ("cifar-max-records", "CIFAR max records", "results/planned_runs/cifar/max_records", True),
-    ("cifar-remove-ratio-sweep", "CIFAR-10 noise ratios", "results/cia/cifar10_remove_ratio_sweep", True),
-    ("eurosat-scaling", "EuroSAT scaling", "results/eurosat_scaling", True),
-    ("cifar100-scaling", "CIFAR-100 scaling", "results/cifar100_scaling", True),
-)
-PRIVACY_LABELS = {
+METHODS = ("vanilla", "global-dp", "metric-privacy")
+LABELS = {
     "vanilla": "Vanilla",
     "global-dp": "Global-DP",
     "metric-privacy": "Metric privacy",
 }
 
 
-def path_ratio(path: Path) -> float | None:
-    for part in path.parts:
-        token = part.removeprefix("ratio-") if part.startswith("ratio-") else None
-        if token is None:
-            match = re.search(r"-r(\d+p\d+)$", part)
-            token = match.group(1) if match else None
-        if token is not None:
-            try:
-                return float(token.replace("p", "."))
-            except ValueError:
-                return None
-    return None
+def round_matched_full_auc(
+    data: dict,
+    clients: int,
+    privacy: str,
+    ratio: float | None,
+) -> float:
+    """Compare clean-shadow IN/OUT scores only at the same seed and round."""
+    outcomes: list[float] = []
+    for seed in full.SEEDS:
+        in_scores = full.scores(
+            data[("in-replace", clients, privacy, ratio, seed)],
+            "target_clean_shadow_loss",
+        )
+        out_scores = full.scores(
+            data[("out-replace", clients, privacy, ratio, seed)],
+            "target_clean_shadow_loss",
+        )
+        outcomes.extend(
+            1.0 if in_score > out_score else 0.5 if in_score == out_score else 0.0
+            for in_score, out_score in zip(in_scores, out_scores, strict=True)
+        )
+    return statistics.fmean(outcomes)
 
 
-def parse_run_name(name: str) -> dict[str, object]:
-    parts = name.split("__")
-    values: dict[str, object] = {"experiment": parts[0]}
-    for part in parts[1:]:
-        if part in PRIVACY_LABELS:
-            values["privacy"] = part
-        elif part.startswith("clients-"):
-            values["clients"] = int(part.removeprefix("clients-"))
-        elif re.fullmatch(r"n\d+", part):
-            values["clients"] = int(part[1:])
-        elif part.startswith("seed-"):
-            values["seed"] = int(part.removeprefix("seed-"))
-        elif part.startswith("nm"):
-            try:
-                values["noise_multiplier"] = float(part.removeprefix("nm").replace("p", "."))
-            except ValueError:
-                pass
-    experiment = str(values["experiment"])
-    for adjacency in ("in-remove", "out-remove", "in-replace", "out-replace"):
-        if adjacency in experiment:
-            values["adjacency"] = adjacency
-            break
-    return values
+def full_accuracy(
+    data: dict,
+    clients: int,
+    privacy: str,
+    ratio: float | None,
+) -> float:
+    """Average late-round task accuracy over matched IN and OUT trajectories."""
+    accuracy_in, _ = full.utility(data, "in-replace", clients, privacy, ratio)
+    accuracy_out, _ = full.utility(data, "out-replace", clients, privacy, ratio)
+    return statistics.fmean((accuracy_in, accuracy_out))
 
 
-def load_points() -> tuple[list[dict], list[dict]]:
-    points: list[dict] = []
-    sets: list[dict] = []
-    for set_id, label, relative, include in RESULT_SETS:
-        directory = ROOT / relative
-        discovered = sorted(directory.rglob("*.evaluation.json")) if directory.exists() else []
-        if set_id == "eurosat-scaling":
-            # Ignore a stale round-3 checkpoint evaluation; the completed run is round 100.
-            discovered = [path for path in discovered if "__r3.evaluation.json" not in path.name]
-        # Some new scaling sets have complete run JSONs but no postprocessed
-        # evaluation artifact. Their final server metric has the same accuracy/AUC fields.
-        if directory.exists() and not discovered:
-            discovered = [
-                path for path in sorted(directory.glob("*.json"))
-                if "server_evaluate_metrics" in json.loads(path.read_text())
-            ]
-        files = discovered if include else []
-        sets.append({
-            "id": set_id,
-            "label": label,
-            "path": relative,
-            "count": len(files),
-            "discovered": len(discovered),
-            "pending": not include,
-        })
-        for path in files:
-            payload = json.loads(path.read_text())
-            run_name = str(payload.get("run_name") or payload.get("metadata", {}).get("run_name"))
-            meta = parse_run_name(run_name)
-            run_metadata = payload.get("metadata", {})
-            meta.update({key: value for key, value in run_metadata.items() if key in {"privacy", "seed", "noise_multiplier"}})
-            if "num_clients" in run_metadata:
-                meta["clients"] = run_metadata["num_clients"]
-            if "server_final_test" in payload:
-                test = payload["server_final_test"]
-                accuracy = test.get("accuracy")
-                auc_value = test.get("roc_ovr", {}).get("macro_auc")
-            else:
-                metrics = payload["server_evaluate_metrics"]
-                final = metrics[max(metrics, key=lambda value: int(value))]
-                accuracy, auc_value = final.get("accuracy"), final.get("auc")
-            if accuracy is None or auc_value is None or "privacy" not in meta:
-                continue
-            ratio = path_ratio(path)
-            adjacency = meta.get("adjacency")
-            direction = (
-                "in" if isinstance(adjacency, str) and adjacency.startswith("in-")
-                else "out" if isinstance(adjacency, str) and adjacency.startswith("out-")
-                else "homogeneous" if "__homogeneous__" in run_name
-                else "non-iid" if "__non-iid__" in run_name
-                else "other"
+def load_client_trends(full_data: dict) -> list[dict]:
+    replacement = {
+        "dataset": "CIFAR-10",
+        "protocol": "Full replacement",
+        "note": "3 seeds · vanilla only",
+        "clients": list(full.CLIENTS),
+        "pooled": [
+            full.pooled_auc(
+                full_data,
+                clients,
+                "vanilla",
+                None,
+                "target_clean_shadow_loss",
             )
-            point = {
-                "id": len(points),
-                "set": set_id,
-                "setLabel": label,
-                "path": str(path.relative_to(ROOT)),
-                "run": run_name,
-                "privacy": meta["privacy"],
-                "accuracy": float(accuracy),
-                "auc": float(auc_value),
-                "experiment": meta.get("experiment", ""),
-                "adjacency": meta.get("adjacency", "—"),
-                "direction": direction,
-                "clients": meta.get("clients"),
-                "seed": meta.get("seed"),
-                "noise": meta.get("noise_multiplier"),
-                "ratio": ratio,
-            }
-            points.append(point)
+            for clients in full.CLIENTS
+        ],
+        "matched": [
+            round_matched_full_auc(full_data, clients, "vanilla", None)
+            for clients in full.CLIENTS
+        ],
+    }
 
-    return points, sets
+    removal_analysis = json.loads(
+        (ROOT / "results" / "cia" / "cifar10_remove" / "cia_analysis.json").read_text()
+    )
+    vanilla_rows = sorted(
+        (row for row in removal_analysis if row["privacy"] == "vanilla"),
+        key=lambda row: row["num_clients_canonical"],
+    )
+    removal = {
+        "dataset": "CIFAR-10",
+        "protocol": "Client removal",
+        "note": "1 seed · vanilla only",
+        "clients": [row["num_clients_canonical"] for row in vanilla_rows],
+        "pooled": [row["multi_round"]["clean"]["pooled_auc"] for row in vanilla_rows],
+        "matched": [
+            row["multi_round"]["clean"]["round_matched_auc"]
+            for row in vanilla_rows
+        ],
+    }
+    return [replacement, removal]
+
+
+def load_noise_sweep(full_data: dict) -> list[dict]:
+    rows: list[dict] = []
+    for privacy in ("global-dp", "metric-privacy"):
+        values = [
+            {
+                "level": "No noise",
+                "ratio": 0.0,
+                "sigma": 0.0,
+                "attack": round_matched_full_auc(full_data, 16, "vanilla", None),
+                "accuracy": full_accuracy(full_data, 16, "vanilla", None),
+            }
+        ]
+        for level, ratio in zip(("Low", "Medium", "High"), (0.0025, 0.003333, 0.00625), strict=True):
+            values.append(
+                {
+                    "level": level,
+                    "ratio": ratio,
+                    "sigma": ratio * 5.0,
+                    "attack": round_matched_full_auc(full_data, 16, privacy, ratio),
+                    "accuracy": full_accuracy(full_data, 16, privacy, ratio),
+                }
+            )
+        rows.append({"privacy": privacy, "label": LABELS[privacy], "values": values})
+    return rows
+
+
+def planned_snapshot(dataset: str) -> dict:
+    transfer.configure_dataset(dataset)
+    in_groups = transfer.load_cia(transfer.IN_DIR / "cia.json")
+    out_groups = transfer.load_cia(transfer.OUT_DIR / "cia.json")
+    values = []
+    for privacy in METHODS:
+        attack_auc = transfer.round_matched_auc(
+            in_groups,
+            out_groups,
+            privacy,
+            "target_clean_shadow_loss",
+        )
+        accuracy_in, _ = transfer.last_five_utility(transfer.IN_DIR, privacy)
+        accuracy_out, _ = transfer.last_five_utility(transfer.OUT_DIR, privacy)
+        values.append(
+            {
+                "privacy": privacy,
+                "attack": attack_auc,
+                "accuracy": statistics.fmean(accuracy_in + accuracy_out),
+            }
+        )
+    labels = {"alzheimer": "Alzheimer", "fashion": "Fashion-MNIST"}
+    return {
+        "dataset": labels[dataset],
+        "subtitle": "3-client transfer · non-IID",
+        "evidence": "3 seeds · 60 same-round pairs",
+        "values": values,
+    }
+
+
+def scaling_accuracy(directory: Path, partition: str, privacy: str) -> float:
+    values: list[float] = []
+    for path in directory.glob("*.json"):
+        if path.name.startswith("cia_"):
+            continue
+        payload = json.loads(path.read_text())
+        metadata = payload.get("metadata")
+        if not metadata:
+            continue
+        if metadata.get("partition_mode") != partition or metadata.get("privacy") != privacy:
+            continue
+        metrics = payload["server_evaluate_metrics"]
+        final_round = max(metrics, key=lambda value: int(value))
+        values.append(float(metrics[final_round]["accuracy"]))
+    if not values:
+        raise RuntimeError(f"No scaling accuracy for {directory=}, {partition=}, {privacy=}")
+    return statistics.fmean(values)
+
+
+def scaling_snapshot(
+    *,
+    dataset: str,
+    clients: int,
+    directory_name: str,
+    prefix: str,
+    seeds: int,
+    pairs: int,
+) -> dict:
+    directory = ROOT / "results" / directory_name
+    analysis = json.loads((directory / "cia_analysis.json").read_text())
+    by_privacy = {
+        row["privacy"]: row
+        for row in analysis
+        if row["partition_mode"] == "homogeneous"
+    }
+    values = []
+    for privacy in METHODS:
+        values.append(
+            {
+                "privacy": privacy,
+                "attack": by_privacy[privacy]["target_clean_shadow_loss"]["round_matched_auc"],
+                "accuracy": scaling_accuracy(directory, "homogeneous", privacy),
+            }
+        )
+    return {
+        "dataset": dataset,
+        "subtitle": f"{clients} clients · homogeneous",
+        "evidence": f"{seeds} seed{'s' if seeds != 1 else ''} · {pairs} same-round pairs",
+        "values": values,
+        "prefix": prefix,
+    }
+
+
+def load_snapshots() -> list[dict]:
+    return [
+        planned_snapshot("alzheimer"),
+        planned_snapshot("fashion"),
+        scaling_snapshot(
+            dataset="EuroSAT",
+            clients=48,
+            directory_name="cia_eurosat_scaling",
+            prefix="eurosat",
+            seeds=3,
+            pairs=33,
+        ),
+        scaling_snapshot(
+            dataset="CIFAR-100",
+            clients=100,
+            directory_name="cia_cifar100_scaling",
+            prefix="cifar100",
+            seeds=1,
+            pairs=26,
+        ),
+    ]
 
 
 def build() -> None:
-    points, sets = load_points()
-    active_sets = [item for item in sets if item["count"]]
-    pending_sets = [item for item in sets if not item["count"]]
-    def category(item: dict) -> str:
-        if item["path"].startswith("results/planned_runs/"):
-            return "Planned runs"
-        if item["id"] in {"eurosat-scaling", "cifar100-scaling"}:
-            return "EuroSAT & CIFAR-100"
-        return "CIFAR-10"
-
-    def subtitle(item: dict) -> str:
-        rows = [point for point in points if point["set"] == item["id"]]
-        global_accuracy = [point["accuracy"] for point in rows if point["privacy"] == "global-dp"]
-        metric_accuracy = [point["accuracy"] for point in rows if point["privacy"] == "metric-privacy"]
-        notes: list[str] = []
-        if global_accuracy and metric_accuracy:
-            gap = abs(sum(global_accuracy) / len(global_accuracy) - sum(metric_accuracy) / len(metric_accuracy))
-            if gap <= 0.02:
-                notes.append("Low gap")
-        if item["id"] == "cifar100-scaling":
-            notes.append("Low accuracy")
-        return " · ".join(notes)
-
-    groups: list[str] = []
-    for heading in ("Planned runs", "EuroSAT & CIFAR-100", "CIFAR-10"):
-        items = [item for item in active_sets if category(item) == heading]
-        pending_items = [item for item in pending_sets if category(item) == heading]
-        if not items and not pending_items:
-            continue
-        controls = "".join(
-            f'<label class="toggle"><input type="checkbox" data-set="{html.escape(item["id"])}" checked> '
-            f'<span class="set-name"><span class="set-title">{html.escape(item["label"])}</span>'
-            f'{(f"<small class=\"set-subtitle\">{html.escape(subtitle(item))}</small>" if subtitle(item) else "")}'
-            f'</span><small class="set-count">{item["count"]}</small></label>'
-            for item in items
-        )
-        pending = "".join(
-            f'<label class="toggle pending"><input type="checkbox" disabled> '
-            f'<span>{html.escape(item["label"])}</span><small>'
-            f'{("partial data excluded" if item["pending"] and item["discovered"] else "awaiting data")}</small></label>'
-            for item in pending_items
-        )
-        groups.append(
-            f'<div class="set-group panel"><h3>{html.escape(heading)}</h3>'
-            f'<div class="set-group-controls">{controls}{pending}</div></div>'
-        )
-    controls = "".join(groups)
-    pending = ""
-    data_json = json.dumps({"points": points, "sets": sets}, separators=(",", ":")).replace("</", "<\\/")
-    document = TEMPLATE.replace("__CONTROLS__", controls).replace("__PENDING__", pending).replace("__DATA__", data_json)
-    OUTPUT.write_text(document)
-    print(f"Wrote {OUTPUT.relative_to(ROOT)} with {len(points)} points from {len(active_sets)} result sets.")
+    full_data = full.load()
+    data = {
+        "clientTrends": load_client_trends(full_data),
+        "noiseSweep": load_noise_sweep(full_data),
+        "snapshots": load_snapshots(),
+    }
+    data_json = json.dumps(data, separators=(",", ":")).replace("</", "<\\/")
+    OUTPUT.write_text(TEMPLATE.replace("__DATA__", data_json))
+    print(
+        f"Wrote {OUTPUT.relative_to(ROOT)} with "
+        f"{len(data['clientTrends'])} client-count plots, "
+        f"{len(data['noiseSweep'])} noise-sweep plots, and "
+        f"{len(data['snapshots'])} dataset checks."
+    )
 
 
 TEMPLATE = r'''<!doctype html>
@@ -206,251 +257,251 @@ TEMPLATE = r'''<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Accuracy vs. ROC AUC</title>
+  <title>CIA: clients, noise, and accuracy</title>
   <style>
     :root { color-scheme: light; font-family: Arial, Helvetica, sans-serif; }
     * { box-sizing: border-box; }
     body { max-width: 1180px; margin: 0 auto; padding: 28px; color: #111; background: #fff; }
     header { border-bottom: 1px solid #bbb; margin-bottom: 28px; }
     h1 { margin: 0 0 8px; font-size: 28px; }
-    h2 { margin-top: 32px; padding-bottom: 6px; border-bottom: 1px solid #ccc; font-size: 21px; }
+    h2 { margin-top: 36px; padding-bottom: 6px; border-bottom: 1px solid #ccc; font-size: 22px; }
+    h3 { margin: 0 0 5px; font-size: 17px; }
     p { line-height: 1.45; }
     .meta, .note { color: #444; font-size: 14px; }
-    .panel { border: 1px solid #ccc; padding: 14px; }
-    .set-groups { display: grid; gap: 14px; }
-    .set-group h3 { margin: 0 0 10px; }
-    .set-group-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 8px 14px; }
-    .toggle { display: flex; align-items: center; gap: 7px; padding: 7px 9px; border: 1px solid #ddd; cursor: pointer; font-size: 13px; }
-    .toggle > .set-name { display: flex; flex: 1; flex-direction: column; gap: 2px; }
-    .set-title { line-height: 1.2; }
-    .toggle small { color: #666; font-variant-numeric: tabular-nums; }
-    .set-subtitle { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: .03em; }
-    .toggle.pending { color: #777; background: #fafafa; cursor: not-allowed; }
-    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin: 12px 0 2px; font-size: 13px; }
-    button { border: 1px solid #999; background: #fff; color: #111; padding: 6px 10px; cursor: pointer; }
-    button:hover { background: #f3f3f3; }
-    .filter-groups { display: grid; gap: 8px; width: 100%; }
-    .filter-group { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 12px; margin: 0; padding: 7px 9px; border: 1px solid #ddd; }
-    .filter-group legend { padding: 0 5px; font-weight: bold; }
-    .filter-group label { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
-    #chart { width: 100%; min-height: 590px; display: block; }
+    .lead { max-width: 900px; font-size: 16px; }
+    .panel { border: 1px solid #ccc; padding: 14px; background: #fff; }
+    .verdicts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 20px 0 8px; }
+    .verdict { border: 1px solid #ccc; border-top-width: 5px; padding: 14px; }
+    .verdict.caution { border-top-color: #c57b00; }
+    .verdict.supported { border-top-color: #18733c; }
+    .verdict strong { display: block; margin-bottom: 5px; font-size: 17px; }
+    .verdict p { margin: 0; font-size: 14px; color: #333; }
+    .plot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .dataset-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .plot-card { min-width: 0; }
+    .card-head { min-height: 51px; margin-bottom: 4px; }
+    .card-head p { margin: 0; color: #555; font-size: 13px; }
+    svg { display: block; width: 100%; height: auto; overflow: visible; }
     .gridline { stroke: #e2e2e2; stroke-width: 1; }
     .axis { stroke: #777; stroke-width: 1.2; }
-    .tick, .axis-label { fill: #333; font-size: 12px; }
-    .axis-label { font-size: 14px; font-weight: bold; }
-    .tradeoff { fill: none; stroke-width: 2; opacity: .58; }
-    .set-mean { fill: #fff; stroke-width: 2; opacity: .85; }
-    .point { stroke: #fff; stroke-width: 1.5; cursor: crosshair; }
-    .point:hover { stroke: #111; stroke-width: 2.5; }
-    .legend { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 5px 0 12px; font-size: 13px; }
+    .tick { fill: #444; font-size: 12px; }
+    .axis-label { fill: #222; font-size: 13px; font-weight: bold; }
+    .value-label { fill: #222; font-size: 12px; font-weight: bold; }
+    .chance { stroke: #999; stroke-width: 1.5; stroke-dasharray: 5 4; }
+    .legend { display: flex; flex-wrap: wrap; gap: 9px 20px; margin: 10px 0 14px; font-size: 13px; }
     .key { display: inline-flex; align-items: center; gap: 7px; }
+    .swatch { width: 22px; height: 4px; display: inline-block; }
+    .swatch.dashed { height: 0; border-top: 3px dashed #888; }
     .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
-    #summary { color: #444; font-size: 13px; margin-left: auto; }
-    .stats { margin-top: 20px; }
-    .stat-cards { display: grid; grid-template-columns: repeat(4, minmax(130px, 1fr)); gap: 10px; margin: 12px 0; }
-    .stat-card { border: 1px solid #ccc; padding: 12px; }
-    .stat-card strong { display: block; font-size: 24px; font-variant-numeric: tabular-nums; }
-    .stat-card span { color: #555; font-size: 12px; }
-    .stat-card.metric { border-top: 4px solid #b2182b; }
-    .stat-card.global { border-top: 4px solid #2166ac; }
-    .stat-card.mixed { border-top: 4px solid #888; }
-    .stat-card.total { border-top: 4px solid #111; }
-    .stats table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
-    .stats th, .stats td { border-bottom: 1px solid #ddd; padding: 6px 8px; text-align: right; }
-    .stats th:first-child, .stats td:first-child { text-align: left; }
-    .stats thead th { border-bottom: 2px solid #888; }
-    .tradeoff-summary { display: grid; grid-template-columns: repeat(2, minmax(220px, 1fr)); gap: 10px; margin: 14px 0; }
-    .tradeoff-box { border: 1px solid #ddd; padding: 10px; font-size: 13px; }
-    .tradeoff-box strong { display: block; margin-bottom: 4px; }
-    .tradeoff-box span { color: #555; }
-    details { margin-top: 12px; }
-    summary { cursor: pointer; font-weight: bold; }
-    .table-scroll { max-height: 360px; margin-top: 8px; overflow: auto; border: 1px solid #ddd; }
-    .table-scroll thead { position: sticky; top: 0; background: #fff; }
-    .delta-good { color: #18733c; font-weight: bold; }
-    .delta-bad { color: #a3212b; font-weight: bold; }
-    .empty-stat { color: #666; padding: 12px 0; }
-    #tooltip { position: fixed; z-index: 10; display: none; max-width: 390px; padding: 9px 11px; color: #111; background: rgba(255,255,255,.98); border: 1px solid #777; box-shadow: 0 2px 8px #0002; font-size: 12px; line-height: 1.45; pointer-events: none; }
-    #tooltip strong { font-size: 13px; }
-    #tooltip .path { color: #666; overflow-wrap: anywhere; }
-    footer { margin-top: 36px; padding-top: 10px; border-top: 1px solid #bbb; font-size: 12px; color: #555; }
-    @media (max-width: 700px) { body { padding: 16px; } #chart { min-height: 470px; } #summary { width: 100%; margin-left: 0; } .stat-cards, .tradeoff-summary { grid-template-columns: repeat(2, 1fr); } }
-    @media print { body { max-width: none; padding: 12mm; } .controls, .toolbar button { display: none; } }
+    .callout { margin: 16px 0; padding: 12px 14px; border-left: 5px solid #c57b00; background: #faf8f3; font-size: 14px; line-height: 1.45; }
+    .callout.good { border-left-color: #18733c; background: #f5faf7; }
+    .plain-list { margin: 10px 0 0; padding-left: 21px; }
+    .plain-list li { margin: 6px 0; line-height: 1.4; }
+    .method-label { font-size: 13px; font-weight: bold; }
+    .takeaway-table { width: 100%; margin-top: 18px; border-collapse: collapse; font-size: 14px; }
+    .takeaway-table th, .takeaway-table td { padding: 9px 10px; border-bottom: 1px solid #ddd; text-align: left; vertical-align: top; }
+    .takeaway-table thead th { border-bottom: 2px solid #888; }
+    .yes { color: #18733c; font-weight: bold; }
+    .mixed { color: #9a5b00; font-weight: bold; }
+    footer { margin-top: 36px; padding-top: 10px; border-top: 1px solid #bbb; color: #555; font-size: 12px; line-height: 1.5; }
+    code { font-size: 11px; }
+    @media (max-width: 760px) {
+      body { padding: 16px; }
+      .verdicts, .plot-grid, .dataset-grid { grid-template-columns: 1fr; }
+    }
+    @media print {
+      body { max-width: none; padding: 10mm; }
+      h2 { break-before: page; }
+      .plot-card { break-inside: avoid; }
+    }
   </style>
 </head>
 <body>
 <header>
-  <h1>Accuracy vs. ROC AUC</h1>
-  <p class="meta">Final server-test accuracy against one-vs-rest macro ROC AUC. Each dot is one evaluation artifact. Lines connect the per-result-set means of the same privacy method across result sets.</p>
+  <h1>Client inference: the big picture</h1>
+  <p class="meta">Two simple questions: Do more clients make the attack harder? Does noise buy privacy by sacrificing model accuracy?</p>
 </header>
 
 <section>
-  <h2>Result sets</h2>
-  <div class="set-groups">__CONTROLS____PENDING__</div>
+  <p class="lead"><strong>How to read the plots:</strong> attack AUC measures attacker success. <strong>50% means random guessing</strong>, so lower is safer. Model accuracy measures useful prediction performance, so higher is better.</p>
+  <div class="verdicts">
+    <div class="verdict caution">
+      <strong>1 · More clients: not yet confirmed</strong>
+      <p>The downward trend appears only in the older pooled score. A fair same-round check does not show a smooth decline, and only CIFAR-10 has been tested at several client counts.</p>
+    </div>
+    <div class="verdict supported">
+      <strong>2 · More noise: supported, with limits</strong>
+      <p>In the controlled 16-client CIFAR-10 sweep, more noise lowers attack AUC and accuracy together. The cost is heavy at the highest noise, but not at every tested setting or dataset.</p>
+    </div>
+  </div>
 </section>
 
 <section>
-  <h2>Utility map</h2>
-  <div class="toolbar">
-    <button id="all">Enable all</button><button id="none">Disable all</button><button id="clear-filters">Clear filters</button>
-    <label><input id="lines" type="checkbox" checked> same-privacy set lines</label>
-    <span id="summary"></span>
-    <div class="filter-groups">
-      <fieldset id="direction-filter" class="filter-group"><legend>Adjacency / partition</legend></fieldset>
-      <fieldset id="ratio-filter" class="filter-group"><legend>Noise ratio</legend></fieldset>
-      <fieldset id="noise-filter" class="filter-group"><legend>Noise multiplier</legend></fieldset>
-    </div>
+  <h2>1 · Does attack AUC fall as the number of clients rises?</h2>
+  <p class="note">Vanilla only, as suggested. Each protocol gets its own plot. The gray line is the older score that compares checkpoints from different training rounds; the black line compares IN and OUT at the same seed and round.</p>
+  <div class="legend">
+    <span class="key"><i class="swatch" style="background:#111"></i>Fair comparison: same round</span>
+    <span class="key"><i class="swatch dashed"></i>Old comparison: mixed rounds</span>
+    <span class="key"><i class="swatch" style="height:1px;background:#999"></i>50% = random guess</span>
   </div>
-  <div class="legend"><span class="key"><i class="dot" style="background:#111"></i>Vanilla</span><span class="key"><i class="dot" style="background:#2166ac"></i>Global-DP</span><span class="key"><i class="dot" style="background:#b2182b"></i>Metric privacy</span></div>
-  <div class="panel"><svg id="chart" role="img" aria-label="Scatter plot of accuracy versus macro ROC AUC"></svg></div>
-  <div class="panel stats">
-    <h3>Metric-DP vs. Global-DP matched-point dominance</h3>
-    <p class="note">Interactive summary for the currently visible points. A method dominates when its accuracy is at least as high and its macro ROC AUC is at least as low, with one strictly better. Runs are matched within result set by adjacency, clients, seed, and noise ratio.</p>
-    <div id="dominance-stats"></div>
+  <div id="client-plots" class="plot-grid"></div>
+  <div class="callout">
+    <strong>Actionable takeaway:</strong> we should not claim a general client-count privacy benefit yet. The next clean test is the same multi-count CIA sweep on at least one non-CIFAR dataset, with the same-round AUC chosen before running it.
   </div>
 </section>
-<div id="tooltip"></div>
-<footer>Standalone interactive report generated from committed <code>*.evaluation.json</code> artifacts. Axes rescale when result sets are toggled.</footer>
+
+<section>
+  <h2>2 · Does more noise reduce attack AUC at an accuracy cost?</h2>
+  <p class="note">Controlled subset: CIFAR-10 full replacement, 16 active clients, non-IID, three seeds. Only noise changes within each plot. Both measures use the same 0–100% scale.</p>
+  <div class="legend">
+    <span class="key"><i class="swatch" style="background:#a3212b"></i>Attack AUC — lower is safer</span>
+    <span class="key"><i class="swatch" style="background:#18733c"></i>Model accuracy — higher is better</span>
+  </div>
+  <div id="noise-plots" class="plot-grid"></div>
+  <div class="callout good">
+    <strong>Clear trade-off:</strong> at the highest tested noise, Global-DP cuts attack AUC by about 18 percentage points and accuracy by about 11 points; Metric privacy cuts attack AUC by about 12 points and accuracy by about 8 points.
+  </div>
+
+  <h3 style="margin-top:28px">Does noise help on other datasets?</h3>
+  <p class="note">One separate plot per dataset, using the clean-shadow same-round attack AUC. These are mechanism snapshots at each dataset's tested noise—not additional noise sweeps. Homogeneous partitions are used for EuroSAT and CIFAR-100 because they show the clearest vanilla leakage.</p>
+  <div class="legend">
+    <span class="key"><i class="dot" style="background:#111"></i>Vanilla</span>
+    <span class="key"><i class="dot" style="background:#2166ac"></i>Global-DP</span>
+    <span class="key"><i class="dot" style="background:#b2182b"></i>Metric privacy</span>
+  </div>
+  <div id="dataset-plots" class="dataset-grid"></div>
+
+  <table class="takeaway-table">
+    <thead><tr><th>Dataset</th><th>Does DP lower attack AUC?</th><th>Accuracy cost</th></tr></thead>
+    <tbody>
+      <tr><td>Alzheimer</td><td class="yes">Yes</td><td>Small for Metric privacy; larger for Global-DP</td></tr>
+      <tr><td>Fashion-MNIST</td><td class="mixed">Barely</td><td>Essentially none</td></tr>
+      <tr><td>EuroSAT</td><td class="yes">Yes</td><td>Small to moderate</td></tr>
+      <tr><td>CIFAR-100</td><td class="yes">Yes</td><td>Very large</td></tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <strong>Overall:</strong> “noise can reduce CIA AUC” is supported across several datasets. “It always comes at a very heavy accuracy cost” is too strong: that is clear at high noise and on CIFAR-100, but not on Fashion-MNIST, Alzheimer, or EuroSAT at their tested settings.
+  </div>
+</section>
+
+<footer>
+  Attack metric: directional clean-shadow raw-loss ROC AUC, with the same-round value treated as the primary check. Accuracy is averaged over matched IN/OUT trajectories (late rounds for 20-round experiments; final checkpoints for EuroSAT/CIFAR-100). CIFAR-100 has one seed and should be treated as preliminary. Sources: <code>results/planned_runs/</code>, <code>results/cia/cifar10_remove/cia_analysis.json</code>, <code>results/cia_eurosat_scaling/cia_analysis.json</code>, and <code>results/cia_cifar100_scaling/cia_analysis.json</code>.
+</footer>
 
 <script id="report-data" type="application/json">__DATA__</script>
 <script>
 (() => {
   const data = JSON.parse(document.getElementById('report-data').textContent);
-  const svg = document.getElementById('chart'), tooltip = document.getElementById('tooltip');
-  const directionFilter = document.getElementById('direction-filter');
-  const ratioFilter = document.getElementById('ratio-filter'), noiseFilter = document.getElementById('noise-filter');
+  const NS = 'http://www.w3.org/2000/svg';
   const colors = {'vanilla':'#111','global-dp':'#2166ac','metric-privacy':'#b2182b'};
   const labels = {'vanilla':'Vanilla','global-dp':'Global-DP','metric-privacy':'Metric privacy'};
-  const enabled = new Set(data.sets.filter(s => s.count).map(s => s.id));
-  let fixedDomain = null;
-  const NS = 'http://www.w3.org/2000/svg';
-  const el = (name, attrs={}, text='') => { const n=document.createElementNS(NS,name); Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v)); if(text)n.textContent=text; return n; };
-  const fmt = v => Number(v).toFixed(4);
-  const filterValue = v => v == null ? 'na' : String(v);
-  function populateCheckboxes(container, key, labelFor, sortValues) {
-    const counts = new Map();
-    data.points.forEach(p => counts.set(filterValue(p[key]), (counts.get(filterValue(p[key])) || 0) + 1));
-    container.insertAdjacentHTML('beforeend', `<label><input type="checkbox" data-all checked> All (${data.points.length})</label>`);
-    [...counts].sort((a,b) => sortValues(a[0],b[0])).forEach(([value,count]) => {
-      const label=document.createElement('label'), input=document.createElement('input');
-      input.type='checkbox'; input.value=value; input.checked=true;
-      label.append(input, document.createTextNode(` ${labelFor(value)} (${count})`)); container.append(label);
-    });
+  const el = (name, attrs={}, text='') => {
+    const node = document.createElementNS(NS, name);
+    Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
+    if (text) node.textContent = text;
+    return node;
+  };
+  const pct = value => `${Math.round(value * 100)}%`;
+
+  function card(title, subtitle) {
+    const section = document.createElement('article');
+    section.className = 'panel plot-card';
+    const head = document.createElement('div');
+    head.className = 'card-head';
+    head.innerHTML = `<h3>${title}</h3><p>${subtitle}</p>`;
+    const svg = el('svg', {viewBox:'0 0 520 330', role:'img', 'aria-label':title});
+    section.append(head, svg);
+    return {section, svg};
   }
-  const numericSort=(a,b) => a === 'na' ? -1 : b === 'na' ? 1 : Number(a)-Number(b);
-  populateCheckboxes(directionFilter, 'direction', v => ({in:'IN',out:'OUT',homogeneous:'Homogeneous','non-iid':'Non-IID',other:'Other'}[v] || v), (a,b) => ['in','out','homogeneous','non-iid','other'].indexOf(a)-['in','out','homogeneous','non-iid','other'].indexOf(b));
-  populateCheckboxes(ratioFilter, 'ratio', v => v === 'na' ? 'Not specified' : v, numericSort);
-  populateCheckboxes(noiseFilter, 'noise', v => v === 'na' ? 'Not specified' : v, numericSort);
-  const selected = container => new Set([...container.querySelectorAll('input:not([data-all]):checked')].map(input => input.value));
-  function domains(points) {
-    if (fixedDomain) return fixedDomain;
-    if (!points.length) return {x:[0,1],y:[0,1]};
-    const extent = key => { const vs=points.map(p=>p[key]), lo=Math.min(...vs), hi=Math.max(...vs), pad=Math.max((hi-lo)*.09,.006); return [Math.max(0,lo-pad),Math.min(1,hi+pad)]; };
-    return {x:extent('accuracy'),y:extent('auc')};
-  }
-  function renderDominance(points) {
-    const groups=new Map();
-    points.filter(p=>p.privacy==='global-dp'||p.privacy==='metric-privacy').forEach(p=>{
-      const key=[p.set,p.adjacency,p.clients,p.seed,p.ratio].join('|');
-      if(!groups.has(key)) groups.set(key,{}); groups.get(key)[p.privacy]=p;
+
+  function axes(svg, {left=58, right=495, top=20, bottom=270, min=.45, max=1, ticks=[.5,.6,.7,.8,.9,1]}) {
+    const y = value => bottom - (value-min)/(max-min)*(bottom-top);
+    ticks.forEach(value => {
+      const yy = y(value);
+      svg.append(el('line', {x1:left, y1:yy, x2:right, y2:yy, class:'gridline'}));
+      svg.append(el('text', {x:left-9, y:yy+4, 'text-anchor':'end', class:'tick'}, pct(value)));
     });
-    const rows=[];
-    groups.forEach(pair=>{
-      const global=pair['global-dp'], metric=pair['metric-privacy'];
-      if(!global||!metric) return;
-      const da=metric.accuracy-global.accuracy, du=metric.auc-global.auc;
-      const outcome=da>=0&&du<=0&&(da>0||du<0) ? 'metric' : da<=0&&du>=0&&(da<0||du>0) ? 'global' : 'mixed';
-      rows.push({
-        set:metric.setLabel, outcome, da, du,
-        adjacency:metric.adjacency, clients:metric.clients, seed:metric.seed, ratio:metric.ratio
+    svg.append(el('line', {x1:left, y1:top, x2:left, y2:bottom, class:'axis'}));
+    svg.append(el('line', {x1:left, y1:bottom, x2:right, y2:bottom, class:'axis'}));
+    return y;
+  }
+
+  function path(points) {
+    return points.map((point, index) => `${index ? 'L' : 'M'}${point[0]},${point[1]}`).join(' ');
+  }
+
+  data.clientTrends.forEach(plot => {
+    const {section, svg} = card(`${plot.dataset} · ${plot.protocol}`, plot.note);
+    const left=58, right=495, top=20, bottom=270;
+    const y = axes(svg, {left,right,top,bottom,min:.45,max:1});
+    const xs = plot.clients.map((_, index) => left + index * (right-left)/(plot.clients.length-1));
+    svg.append(el('line', {x1:left,y1:y(.5),x2:right,y2:y(.5),class:'chance'}));
+    plot.clients.forEach((clients,index) => {
+      svg.append(el('text',{x:xs[index],y:bottom+23,'text-anchor':'middle',class:'tick'},String(clients)));
+    });
+    svg.append(el('text',{x:(left+right)/2,y:bottom+51,'text-anchor':'middle',class:'axis-label'},'Number of clients'));
+    const series = [
+      {values:plot.pooled,color:'#888',dash:'7 5',width:3},
+      {values:plot.matched,color:'#111',dash:'',width:4},
+    ];
+    series.forEach(item => {
+      const points=item.values.map((value,index)=>[xs[index],y(value)]);
+      svg.append(el('path',{d:path(points),fill:'none',stroke:item.color,'stroke-width':item.width,'stroke-dasharray':item.dash}));
+      points.forEach(([xpos,ypos],index)=>{
+        svg.append(el('circle',{cx:xpos,cy:ypos,r:5,fill:'#fff',stroke:item.color,'stroke-width':3}));
+        if (item.color === '#111') svg.append(el('text',{x:xpos,y:ypos-10,'text-anchor':'middle',class:'value-label'},pct(item.values[index])));
       });
     });
-    const counts={metric:0,global:0,mixed:0}; rows.forEach(r=>counts[r.outcome]++);
-    const target=document.getElementById('dominance-stats');
-    if(!rows.length) { target.innerHTML='<div class="empty-stat">No visible matched Global-DP/Metric-DP pairs. Broaden the active filters to compare both methods.</div>'; return; }
-    const pct=n=>`${(100*n/rows.length).toFixed(1)}%`;
-    const bySet=new Map(); rows.forEach(r=>{if(!bySet.has(r.set))bySet.set(r.set,{metric:0,global:0,mixed:0});bySet.get(r.set)[r.outcome]++;});
-    const table=[...bySet].map(([set,c])=>`<tr><td>${set}</td><td>${c.metric}</td><td>${c.global}</td><td>${c.mixed}</td><td>${c.metric+c.global+c.mixed}</td></tr>`).join('');
-    const mixed=rows.filter(r=>r.outcome==='mixed');
-    const metricUtility=mixed.filter(r=>r.da>0&&r.du>0);
-    const globalUtility=mixed.filter(r=>r.da<0&&r.du<0);
-    const mean=(items,key)=>items.length ? items.reduce((sum,r)=>sum+r[key],0)/items.length : 0;
-    const signed=(value,digits=4)=>`${value>=0?'+':''}${value.toFixed(digits)}`;
-    const mixedRows=mixed.map(r=>`<tr><td>${r.set}</td><td>${r.adjacency}</td><td>${r.clients??'—'}</td><td>${r.seed??'—'}</td><td>${r.ratio??'—'}</td><td class="${r.da>=0?'delta-good':'delta-bad'}">${signed(100*r.da,2)} pp</td><td class="${r.du<=0?'delta-good':'delta-bad'}">${signed(r.du)}</td></tr>`).join('');
-    target.innerHTML=`<div class="stat-cards">
-      <div class="stat-card metric"><strong>${counts.metric}</strong><span>Metric-DP dominates · ${pct(counts.metric)}</span></div>
-      <div class="stat-card global"><strong>${counts.global}</strong><span>Global-DP dominates · ${pct(counts.global)}</span></div>
-      <div class="stat-card mixed"><strong>${counts.mixed}</strong><span>Mixed tradeoff or tie · ${pct(counts.mixed)}</span></div>
-      <div class="stat-card total"><strong>${rows.length}</strong><span>Matched comparisons</span></div>
-    </div><table><thead><tr><th>Result set</th><th>Metric-DP</th><th>Global-DP</th><th>Mixed/tie</th><th>Total</th></tr></thead><tbody>${table}</tbody></table>
-    <div class="tradeoff-summary">
-      <div class="tradeoff-box"><strong>Metric-DP gains accuracy, loses ROC AUC: ${metricUtility.length}</strong><span>Mean Metric − Global: ${signed(100*mean(metricUtility,'da'),2)} accuracy pp, ${signed(mean(metricUtility,'du'))} AUC</span></div>
-      <div class="tradeoff-box"><strong>Global-DP gains accuracy, loses ROC AUC: ${globalUtility.length}</strong><span>Mean Metric − Global: ${signed(100*mean(globalUtility,'da'),2)} accuracy pp, ${signed(mean(globalUtility,'du'))} AUC</span></div>
-    </div>
-    ${mixed.length ? `<details><summary>Show all ${mixed.length} mixed tradeoffs</summary><p class="note">Deltas are Metric-DP minus Global-DP. Green is favorable to Metric-DP: positive accuracy or negative ROC AUC.</p><div class="table-scroll"><table><thead><tr><th>Result set</th><th>Adjacency</th><th>Clients</th><th>Seed</th><th>Ratio</th><th>Δ accuracy</th><th>Δ ROC AUC</th></tr></thead><tbody>${mixedRows}</tbody></table></div></details>` : ''}`;
-  }
-  function draw() {
-    const directions=selected(directionFilter), ratios=selected(ratioFilter), noises=selected(noiseFilter);
-    const points=data.points.filter(p => enabled.has(p.set)
-      && directions.has(filterValue(p.direction))
-      && ratios.has(filterValue(p.ratio))
-      && noises.has(filterValue(p.noise)));
-    svg.replaceChildren();
-    const box=svg.getBoundingClientRect(), W=Math.max(650,Math.round(box.width)||1000), H=Math.max(470,Math.min(660,Math.round(W*.62)));
-    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
-    const m={l:72,r:24,t:18,b:64}, pw=W-m.l-m.r, ph=H-m.t-m.b, d=domains(points);
-    const X=v=>m.l+(v-d.x[0])/(d.x[1]-d.x[0]||1)*pw, Y=v=>m.t+ph-(v-d.y[0])/(d.y[1]-d.y[0]||1)*ph;
-    for(let i=0;i<=5;i++) {
-      const xv=d.x[0]+i*(d.x[1]-d.x[0])/5, yv=d.y[0]+i*(d.y[1]-d.y[0])/5;
-      svg.append(el('line',{x1:X(xv),y1:m.t,x2:X(xv),y2:m.t+ph,class:'gridline'}));
-      svg.append(el('line',{x1:m.l,y1:Y(yv),x2:m.l+pw,y2:Y(yv),class:'gridline'}));
-      svg.append(el('text',{x:X(xv),y:m.t+ph+22,'text-anchor':'middle',class:'tick'},xv.toFixed(3)));
-      svg.append(el('text',{x:m.l-10,y:Y(yv)+4,'text-anchor':'end',class:'tick'},yv.toFixed(3)));
-    }
-    svg.append(el('line',{x1:m.l,y1:m.t+ph,x2:m.l+pw,y2:m.t+ph,class:'axis'}));
-    svg.append(el('line',{x1:m.l,y1:m.t,x2:m.l,y2:m.t+ph,class:'axis'}));
-    svg.append(el('text',{x:m.l+pw/2,y:H-12,'text-anchor':'middle',class:'axis-label'},'Final server-test accuracy'));
-    const yl=el('text',{x:17,y:m.t+ph/2,'text-anchor':'middle',class:'axis-label',transform:`rotate(-90 17 ${m.t+ph/2})`},'Macro ROC AUC (one-vs-rest)'); svg.append(yl);
-    if(document.getElementById('lines').checked) {
-      ['vanilla','global-dp','metric-privacy'].forEach(privacy => {
-        const means = data.sets.map(set => {
-          const rows = points.filter(p => p.set === set.id && p.privacy === privacy);
-          if (!rows.length) return null;
-          return {
-            set: set.label,
-            accuracy: rows.reduce((sum,p)=>sum+p.accuracy,0)/rows.length,
-            auc: rows.reduce((sum,p)=>sum+p.auc,0)/rows.length,
-            count: rows.length
-          };
-        }).filter(Boolean);
-        if(means.length > 1) {
-          svg.append(el('polyline',{points:means.map(p=>`${X(p.accuracy)},${Y(p.auc)}`).join(' '),class:'tradeoff',stroke:colors[privacy]}));
-          means.forEach(p => svg.append(el('circle',{cx:X(p.accuracy),cy:Y(p.auc),r:4,class:'set-mean',stroke:colors[privacy]})));
-        }
-      });
-    }
-    points.forEach(p=>{
-      const c=el('circle',{cx:X(p.accuracy),cy:Y(p.auc),r:5.5,fill:colors[p.privacy],class:'point',tabindex:'0'});
-      const show=e=>{tooltip.innerHTML=`<strong>${p.setLabel} · ${labels[p.privacy]}</strong><br>Accuracy: ${fmt(p.accuracy)} · Macro AUC: ${fmt(p.auc)}<br>Adjacency: ${p.adjacency} · Clients: ${p.clients ?? '—'} · Seed: ${p.seed ?? '—'}<br>Noise multiplier: ${p.noise ?? '—'} · Ratio: ${p.ratio ?? '—'}<br><span class="path">${p.path}</span>`; tooltip.style.display='block'; move(e);};
-      const move=e=>{const x=(e.clientX??W/2)+14,y=(e.clientY??H/2)+14; tooltip.style.left=Math.min(x,innerWidth-tooltip.offsetWidth-8)+'px';tooltip.style.top=Math.min(y,innerHeight-tooltip.offsetHeight-8)+'px';};
-      c.addEventListener('mouseenter',show); c.addEventListener('mousemove',move); c.addEventListener('mouseleave',()=>tooltip.style.display='none'); c.addEventListener('focus',show); c.addEventListener('blur',()=>tooltip.style.display='none'); svg.append(c);
+    document.getElementById('client-plots').append(section);
+  });
+
+  data.noiseSweep.forEach(plot => {
+    const {section, svg} = card(plot.label, 'CIFAR-10 · 16 clients · same-round AUC');
+    const left=58, right=495, top=20, bottom=270;
+    const y = axes(svg,{left,right,top,bottom,min:.65,max:1,ticks:[.7,.8,.9,1]});
+    const xs=plot.values.map((_,index)=>left+index*(right-left)/(plot.values.length-1));
+    plot.values.forEach((value,index)=>{
+      svg.append(el('text',{x:xs[index],y:bottom+22,'text-anchor':'middle',class:'tick'},value.level));
+      const noise = index === 0 ? 'σ = 0' : `σ = ${value.sigma.toFixed(4)}`;
+      svg.append(el('text',{x:xs[index],y:bottom+39,'text-anchor':'middle',class:'tick'},noise));
     });
-    const activeSetCount = new Set(points.map(p => p.set)).size;
-    document.getElementById('summary').textContent=`${points.length} points · ${activeSetCount} visible result sets`;
-    renderDominance(points);
-  }
-  document.querySelectorAll('[data-set]').forEach(input=>input.addEventListener('change',()=>{input.checked?enabled.add(input.dataset.set):enabled.delete(input.dataset.set);fixedDomain=null;draw();}));
-  document.getElementById('lines').addEventListener('change',draw);
-  [directionFilter, ratioFilter, noiseFilter].forEach(group => group.addEventListener('change', event => {
-    const boxes=[...group.querySelectorAll('input:not([data-all])')], all=group.querySelector('input[data-all]');
-    if(event.target === all) boxes.forEach(box => box.checked=all.checked);
-    else all.checked=boxes.every(box => box.checked);
-    fixedDomain=null; draw();
-  }));
-  document.getElementById('all').onclick=()=>{document.querySelectorAll('[data-set]').forEach(i=>{i.checked=true;enabled.add(i.dataset.set)});fixedDomain=null;draw();};
-  document.getElementById('none').onclick=()=>{document.querySelectorAll('[data-set]').forEach(i=>{i.checked=false;enabled.delete(i.dataset.set)});fixedDomain=null;draw();};
-  document.getElementById('clear-filters').onclick=()=>{[directionFilter,ratioFilter,noiseFilter].forEach(group=>group.querySelectorAll('input').forEach(input=>input.checked=true));fixedDomain=null;draw();};
-  new ResizeObserver(draw).observe(svg.parentElement); draw();
+    const series=[
+      {key:'attack',color:'#a3212b'},
+      {key:'accuracy',color:'#18733c'},
+    ];
+    series.forEach(item=>{
+      const points=plot.values.map((value,index)=>[xs[index],y(value[item.key])]);
+      svg.append(el('path',{d:path(points),fill:'none',stroke:item.color,'stroke-width':4}));
+      points.forEach(([xpos,ypos],index)=>{
+        svg.append(el('circle',{cx:xpos,cy:ypos,r:5,fill:item.color,stroke:'#fff','stroke-width':2}));
+        svg.append(el('text',{x:xpos,y:ypos+(item.key==='attack'?-10:18),'text-anchor':'middle',class:'value-label'},pct(plot.values[index][item.key])));
+      });
+    });
+    document.getElementById('noise-plots').append(section);
+  });
+
+  data.snapshots.forEach(plot => {
+    const {section, svg} = card(plot.dataset, `${plot.subtitle} · ${plot.evidence}`);
+    const left=58, right=495, top=20, bottom=270;
+    const y=axes(svg,{left,right,top,bottom,min:0,max:1,ticks:[0,.25,.5,.75,1]});
+    const centers=[180,385];
+    const groupNames=['Attack AUC ↓','Model accuracy ↑'];
+    const keys=['attack','accuracy'];
+    const barWidth=33, gap=7;
+    svg.append(el('line',{x1:85,y1:y(.5),x2:275,y2:y(.5),class:'chance'}));
+    svg.append(el('text',{x:278,y:y(.5)+4,class:'tick'},'random'));
+    centers.forEach((center,groupIndex)=>{
+      const start=center-(barWidth*3+gap*2)/2;
+      plot.values.forEach((value,index)=>{
+        const xpos=start+index*(barWidth+gap), valueY=y(value[keys[groupIndex]]);
+        svg.append(el('rect',{x:xpos,y:valueY,width:barWidth,height:bottom-valueY,fill:colors[value.privacy]}));
+        svg.append(el('text',{x:xpos+barWidth/2,y:valueY-6,'text-anchor':'middle',class:'value-label'},pct(value[keys[groupIndex]])));
+      });
+      svg.append(el('text',{x:center,y:bottom+25,'text-anchor':'middle',class:'axis-label'},groupNames[groupIndex]));
+    });
+    document.getElementById('dataset-plots').append(section);
+  });
 })();
 </script>
 </body>

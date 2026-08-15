@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-08-13, CUDA workstation (`feature/eurosat-scaling` and
+**Last updated:** 2026-08-15, CUDA workstation (`feature/eurosat-scaling` and
 `feature/cifar100-scaling` are both complete, merged into `master`, and deleted — see `git log`
 for anything more recent
 
@@ -16,10 +16,14 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-Nothing currently running. Both `feature/eurosat-scaling` (the EuroSAT accuracy sweep and its CIA
-attack) and `feature/cifar100-scaling` (the CIFAR-100 accuracy sweep and its CIA attack) are
-complete, merged into `master`, and deleted (locally and on `origin`) — see "What's established"
-below and `reports/eurosat_accuracy_sweep.md`/`reports/eurosat_cia.md`/
+Nothing currently running. The standalone CIA visualization at
+`reports/accuracy_vs_roc_auc.html` was refreshed on 2026-08-15 to provide simple, per-dataset
+plots for the supervisor's two questions: client-count trends and the CIA-AUC/accuracy noise
+trade-off. Its generator is `reports/build_accuracy_vs_roc_auc.py`; relevant CIA tests passed.
+Both `feature/eurosat-scaling` (the EuroSAT accuracy sweep and its CIA attack) and
+`feature/cifar100-scaling` (the CIFAR-100 accuracy sweep and its CIA attack) are complete, merged
+into `master`, and deleted (locally and on `origin`) — see "What's established" below and
+`reports/eurosat_accuracy_sweep.md`/`reports/eurosat_cia.md`/
 `reports/cifar-100_and_eurosat_results.tex` for the full writeups.
 
 **CIFAR-100 CIA multi-seed retry was dropped.** The seed-42 single-seed CIA run (6/6 combos, 0
