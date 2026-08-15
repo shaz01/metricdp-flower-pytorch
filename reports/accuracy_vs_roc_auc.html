@@ -23,6 +23,7 @@
     .verdict strong { display: block; margin-bottom: 5px; font-size: 17px; }
     .verdict p { margin: 0; font-size: 14px; color: #333; }
     .plot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    #client-plots { grid-template-columns: minmax(0, 1fr); max-width: 570px; }
     .dataset-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
     .plot-card { min-width: 0; }
     .card-head { min-height: 51px; margin-bottom: 4px; }
@@ -69,7 +70,7 @@
 </header>
 
 <section>
-  <p class="lead"><strong>How to read the plots:</strong> attack AUC measures attacker success. <strong>50% means random guessing</strong>, so lower is safer. Model accuracy measures useful prediction performance, so higher is better.</p>
+  <p class="lead"><strong>How to read the plots:</strong> attack AUC measures attacker success after allowing the attacker to choose the better score direction. <strong>50% means random guessing</strong>, so lower is safer. Model accuracy measures useful prediction performance, so higher is better.</p>
   <div class="verdicts">
     <div class="verdict caution">
       <strong>1 · More clients: not yet confirmed</strong>
@@ -77,14 +78,14 @@
     </div>
     <div class="verdict supported">
       <strong>2 · More noise: supported, with limits</strong>
-      <p>In the controlled 16-client CIFAR-10 sweep, more noise lowers attack AUC and accuracy together. The cost is heavy at the highest noise, but not at every tested setting or dataset.</p>
+      <p>In the actual 48-client CIFAR-10 sweep, Global-DP noise lowers attack AUC and accuracy together. Metric privacy shows a much smaller attack change at the same setting, so the effect is not universal.</p>
     </div>
   </div>
 </section>
 
 <section>
   <h2>1 · Does attack AUC fall as the number of clients rises?</h2>
-  <p class="note">Vanilla only, as suggested. Each protocol gets its own plot. The gray line is the older score that compares checkpoints from different training rounds; the black line compares IN and OUT at the same seed and round.</p>
+  <p class="note">Actual CIFAR-10 client-removal experiment; vanilla only, as suggested. The gray line is the older score that compares checkpoints from different training rounds; the black line compares IN and OUT at the same seed and round.</p>
   <div class="legend">
     <span class="key"><i class="swatch" style="background:#111"></i>Fair comparison: same round</span>
     <span class="key"><i class="swatch dashed"></i>Old comparison: mixed rounds</span>
@@ -98,14 +99,14 @@
 
 <section>
   <h2>2 · Does more noise reduce attack AUC at an accuracy cost?</h2>
-  <p class="note">Controlled subset: CIFAR-10 full replacement, 16 active clients, non-IID, three seeds. Only noise changes within each plot. Both measures use the same 0–100% scale.</p>
+  <p class="note">Actual CIFAR-10 client-removal ratio sweep: 48 active clients, non-IID, one seed. Only the calibrated noise ratio changes within each plot. Both measures use the same 0–100% scale.</p>
   <div class="legend">
     <span class="key"><i class="swatch" style="background:#a3212b"></i>Attack AUC — lower is safer</span>
     <span class="key"><i class="swatch" style="background:#18733c"></i>Model accuracy — higher is better</span>
   </div>
   <div id="noise-plots" class="plot-grid"></div>
   <div class="callout good">
-    <strong>Clear trade-off:</strong> at the highest tested noise, Global-DP cuts attack AUC by about 18 percentage points and accuracy by about 11 points; Metric privacy cuts attack AUC by about 12 points and accuracy by about 8 points.
+    <strong>What this actual CIFAR-10 sweep shows:</strong> at the highest tested noise, Global-DP cuts attack AUC by 25 percentage points and accuracy by 20 points. Metric privacy cuts attack AUC by only 5 points while accuracy falls by 8 points.
   </div>
 
   <h3 style="margin-top:28px">Does noise help on other datasets?</h3>
@@ -132,10 +133,10 @@
 </section>
 
 <footer>
-  Attack metric: directional clean-shadow raw-loss ROC AUC, with the same-round value treated as the primary check. Accuracy is averaged over matched IN/OUT trajectories (late rounds for 20-round experiments; final checkpoints for EuroSAT/CIFAR-100). CIFAR-100 has one seed and should be treated as preliminary. Sources: <code>results/planned_runs/</code>, <code>results/cia/cifar10_remove/cia_analysis.json</code>, <code>results/cia_eurosat_scaling/cia_analysis.json</code>, and <code>results/cia_cifar100_scaling/cia_analysis.json</code>.
+  Attack metric: clean-shadow raw-loss ROC AUC, reported after allowing the attacker to reverse its score direction; the same-round value is the primary check. Accuracy is averaged over matched IN/OUT trajectories (late rounds for 20-round experiments; final checkpoints for EuroSAT/CIFAR-100). The CIFAR-10 plots use only actual CIFAR-10 artifacts under <code>results/cia/cifar10_remove/</code> and <code>results/cia/cifar10_remove_ratio_sweep/</code>; no <code>results/planned_runs/cifar/</code> artifact is used. CIFAR-100 has one seed and should be treated as preliminary.
 </footer>
 
-<script id="report-data" type="application/json">{"clientTrends":[{"dataset":"CIFAR-10","protocol":"Full replacement","note":"3 seeds \u00b7 vanilla only","clients":[3,8,16],"pooled":[0.9572222222222222,0.8916666666666667,0.8227777777777778],"matched":[0.95,0.9333333333333333,0.95]},{"dataset":"CIFAR-10","protocol":"Client removal","note":"1 seed \u00b7 vanilla only","clients":[8,16,48,100],"pooled":[0.9325,0.8475,0.7525,0.555],"matched":[0.95,0.85,1.0,0.55]}],"noiseSweep":[{"privacy":"global-dp","label":"Global-DP","values":[{"level":"No noise","ratio":0.0,"sigma":0.0,"attack":0.95,"accuracy":0.8198666666666666},{"level":"Low","ratio":0.0025,"sigma":0.0125,"attack":0.8666666666666667,"accuracy":0.8026166666666668},{"level":"Medium","ratio":0.003333,"sigma":0.016665,"attack":0.8333333333333334,"accuracy":0.7891833333333333},{"level":"High","ratio":0.00625,"sigma":0.03125,"attack":0.7666666666666667,"accuracy":0.7065166666666667}]},{"privacy":"metric-privacy","label":"Metric privacy","values":[{"level":"No noise","ratio":0.0,"sigma":0.0,"attack":0.95,"accuracy":0.8198666666666666},{"level":"Low","ratio":0.0025,"sigma":0.0125,"attack":0.9,"accuracy":0.8060166666666666},{"level":"Medium","ratio":0.003333,"sigma":0.016665,"attack":0.8833333333333333,"accuracy":0.7981333333333334},{"level":"High","ratio":0.00625,"sigma":0.03125,"attack":0.8333333333333334,"accuracy":0.7420333333333333}]}],"snapshots":[{"dataset":"Alzheimer","subtitle":"3-client transfer \u00b7 non-IID","evidence":"3 seeds \u00b7 60 same-round pairs","values":[{"privacy":"vanilla","attack":1.0,"accuracy":0.9125520833333333},{"privacy":"global-dp","attack":0.9333333333333333,"accuracy":0.85203125},{"privacy":"metric-privacy","attack":0.9166666666666666,"accuracy":0.8986979166666667}]},{"dataset":"Fashion-MNIST","subtitle":"3-client transfer \u00b7 non-IID","evidence":"3 seeds \u00b7 60 same-round pairs","values":[{"privacy":"vanilla","attack":0.9666666666666667,"accuracy":0.9067000000000001},{"privacy":"global-dp","attack":0.95,"accuracy":0.9077500000000001},{"privacy":"metric-privacy","attack":0.95,"accuracy":0.9032666666666667}]},{"dataset":"EuroSAT","subtitle":"48 clients \u00b7 homogeneous","evidence":"3 seeds \u00b7 33 same-round pairs","values":[{"privacy":"vanilla","attack":0.7272727272727273,"accuracy":0.8996296296296297},{"privacy":"global-dp","attack":0.6060606060606061,"accuracy":0.8951851851851852},{"privacy":"metric-privacy","attack":0.6060606060606061,"accuracy":0.881358024691358}],"prefix":"eurosat"},{"dataset":"CIFAR-100","subtitle":"100 clients \u00b7 homogeneous","evidence":"1 seed \u00b7 26 same-round pairs","values":[{"privacy":"vanilla","attack":0.8461538461538461,"accuracy":0.28659999999999997},{"privacy":"global-dp","attack":0.7307692307692307,"accuracy":0.2106},{"privacy":"metric-privacy","attack":0.6153846153846154,"accuracy":0.21639999999999998}],"prefix":"cifar100"}]}</script>
+<script id="report-data" type="application/json">{"clientTrends":[{"dataset":"CIFAR-10","protocol":"Client removal","note":"Actual CIFAR-10 \u00b7 1 seed \u00b7 vanilla only","clients":[8,16,48,100],"pooled":[0.9325,0.8475,0.7525,0.555],"matched":[0.95,0.85,1.0,0.55]}],"noiseSweep":[{"privacy":"global-dp","label":"Global-DP","values":[{"level":"No noise","ratio":0.0,"sigma":0.0,"attack":1.0,"accuracy":0.64894},{"level":"Low","ratio":0.0025,"sigma":0.12,"attack":1.0,"accuracy":0.5993999999999999},{"level":"Medium","ratio":0.004,"sigma":0.192,"attack":0.9,"accuracy":0.5596},{"level":"High","ratio":0.00625,"sigma":0.30000000000000004,"attack":0.75,"accuracy":0.44698000000000004}]},{"privacy":"metric-privacy","label":"Metric privacy","values":[{"level":"No noise","ratio":0.0,"sigma":0.0,"attack":1.0,"accuracy":0.64894},{"level":"Low","ratio":0.0025,"sigma":0.12,"attack":1.0,"accuracy":0.61492},{"level":"Medium","ratio":0.004,"sigma":0.192,"attack":0.95,"accuracy":0.6013},{"level":"High","ratio":0.00625,"sigma":0.30000000000000004,"attack":0.95,"accuracy":0.5683199999999999}]}],"snapshots":[{"dataset":"Alzheimer","subtitle":"3-client transfer \u00b7 non-IID","evidence":"3 seeds \u00b7 60 same-round pairs","values":[{"privacy":"vanilla","attack":1.0,"accuracy":0.9125520833333333},{"privacy":"global-dp","attack":0.9333333333333333,"accuracy":0.85203125},{"privacy":"metric-privacy","attack":0.9166666666666666,"accuracy":0.8986979166666667}]},{"dataset":"Fashion-MNIST","subtitle":"3-client transfer \u00b7 non-IID","evidence":"3 seeds \u00b7 60 same-round pairs","values":[{"privacy":"vanilla","attack":0.9666666666666667,"accuracy":0.9067000000000001},{"privacy":"global-dp","attack":0.95,"accuracy":0.9077500000000001},{"privacy":"metric-privacy","attack":0.95,"accuracy":0.9032666666666667}]},{"dataset":"EuroSAT","subtitle":"48 clients \u00b7 homogeneous","evidence":"3 seeds \u00b7 33 same-round pairs","values":[{"privacy":"vanilla","attack":0.7272727272727273,"accuracy":0.8996296296296297},{"privacy":"global-dp","attack":0.6060606060606061,"accuracy":0.8951851851851852},{"privacy":"metric-privacy","attack":0.6060606060606061,"accuracy":0.881358024691358}],"prefix":"eurosat"},{"dataset":"CIFAR-100","subtitle":"100 clients \u00b7 homogeneous","evidence":"1 seed \u00b7 26 same-round pairs","values":[{"privacy":"vanilla","attack":0.8461538461538461,"accuracy":0.28659999999999997},{"privacy":"global-dp","attack":0.7307692307692307,"accuracy":0.2106},{"privacy":"metric-privacy","attack":0.6153846153846154,"accuracy":0.21639999999999998}],"prefix":"cifar100"}]}</script>
 <script>
 (() => {
   const data = JSON.parse(document.getElementById('report-data').textContent);
@@ -203,9 +204,9 @@
   });
 
   data.noiseSweep.forEach(plot => {
-    const {section, svg} = card(plot.label, 'CIFAR-10 · 16 clients · same-round AUC');
+    const {section, svg} = card(plot.label, 'Actual CIFAR-10 · removal · 48 clients · one seed');
     const left=58, right=495, top=20, bottom=270;
-    const y = axes(svg,{left,right,top,bottom,min:.65,max:1,ticks:[.7,.8,.9,1]});
+    const y = axes(svg,{left,right,top,bottom,min:.4,max:1,ticks:[.4,.5,.6,.7,.8,.9,1]});
     const xs=plot.values.map((_,index)=>left+index*(right-left)/(plot.values.length-1));
     plot.values.forEach((value,index)=>{
       svg.append(el('text',{x:xs[index],y:bottom+22,'text-anchor':'middle',class:'tick'},value.level));

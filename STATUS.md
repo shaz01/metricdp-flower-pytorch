@@ -19,8 +19,10 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 Nothing currently running. The standalone CIA visualization at
 `reports/accuracy_vs_roc_auc.html` was refreshed on 2026-08-15 to provide simple, per-dataset
 plots for the supervisor's two questions: client-count trends and the CIA-AUC/accuracy noise
-trade-off. Its generator is `reports/build_accuracy_vs_roc_auc.py`; relevant CIA tests passed.
-Both `feature/eurosat-scaling` (the EuroSAT accuracy sweep and its CIA attack) and
+trade-off. Its CIFAR plots use only actual CIFAR-10 client-removal artifacts
+(`results/cia/cifar10_remove/` and `results/cia/cifar10_remove_ratio_sweep/`), not the filtered
+CIFAR subset under `results/planned_runs/cifar/`. Its generator is
+`reports/build_accuracy_vs_roc_auc.py`; relevant CIA tests passed. Both `feature/eurosat-scaling` (the EuroSAT accuracy sweep and its CIA attack) and
 `feature/cifar100-scaling` (the CIFAR-100 accuracy sweep and its CIA attack) are complete, merged
 into `master`, and deleted (locally and on `origin`) — see "What's established" below and
 `reports/eurosat_accuracy_sweep.md`/`reports/eurosat_cia.md`/

@@ -11,11 +11,12 @@ import statistics
 from pathlib import Path
 
 from experiments.cia.reports import build_alzheimer_cia_report as transfer
-from experiments.cia.reports import build_cifar_full_cia_report as full
 
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "reports" / "accuracy_vs_roc_auc.html"
+CIFAR10_REMOVE_DIR = ROOT / "results" / "cia" / "cifar10_remove"
+CIFAR10_RATIO_SWEEP_DIR = ROOT / "results" / "cia" / "cifar10_remove_ratio_sweep"
 METHODS = ("vanilla", "global-dp", "metric-privacy")
 LABELS = {
     "vanilla": "Vanilla",
@@ -24,107 +25,96 @@ LABELS = {
 }
 
 
-def round_matched_full_auc(
-    data: dict,
-    clients: int,
-    privacy: str,
-    ratio: float | None,
-) -> float:
-    """Compare clean-shadow IN/OUT scores only at the same seed and round."""
-    outcomes: list[float] = []
-    for seed in full.SEEDS:
-        in_scores = full.scores(
-            data[("in-replace", clients, privacy, ratio, seed)],
-            "target_clean_shadow_loss",
-        )
-        out_scores = full.scores(
-            data[("out-replace", clients, privacy, ratio, seed)],
-            "target_clean_shadow_loss",
-        )
-        outcomes.extend(
-            1.0 if in_score > out_score else 0.5 if in_score == out_score else 0.0
-            for in_score, out_score in zip(in_scores, out_scores, strict=True)
-        )
-    return statistics.fmean(outcomes)
+def effective_auc(value: float) -> float:
+    """AUC after letting an attacker choose the more revealing score direction."""
+    return max(value, 1.0 - value)
 
 
-def full_accuracy(
-    data: dict,
-    clients: int,
-    privacy: str,
-    ratio: float | None,
-) -> float:
-    """Average late-round task accuracy over matched IN and OUT trajectories."""
-    accuracy_in, _ = full.utility(data, "in-replace", clients, privacy, ratio)
-    accuracy_out, _ = full.utility(data, "out-replace", clients, privacy, ratio)
-    return statistics.fmean((accuracy_in, accuracy_out))
-
-
-def load_client_trends(full_data: dict) -> list[dict]:
-    replacement = {
-        "dataset": "CIFAR-10",
-        "protocol": "Full replacement",
-        "note": "3 seeds · vanilla only",
-        "clients": list(full.CLIENTS),
-        "pooled": [
-            full.pooled_auc(
-                full_data,
-                clients,
-                "vanilla",
-                None,
-                "target_clean_shadow_loss",
-            )
-            for clients in full.CLIENTS
-        ],
-        "matched": [
-            round_matched_full_auc(full_data, clients, "vanilla", None)
-            for clients in full.CLIENTS
-        ],
-    }
-
-    removal_analysis = json.loads(
-        (ROOT / "results" / "cia" / "cifar10_remove" / "cia_analysis.json").read_text()
+def round_matched_auc(rows: list[dict]) -> float:
+    """Effective clean-shadow AUC using only equal-round IN/OUT comparisons."""
+    trajectories: dict[str, list[dict]] = {}
+    for row in rows:
+        trajectories.setdefault(str(row["run_name"]), []).append(row)
+    scores: dict[str, list[float]] = {}
+    for name, trajectory in trajectories.items():
+        trajectory.sort(key=lambda row: int(row["server_round"]))
+        scores[name] = [-float(row["target_clean_shadow_loss"]) for row in trajectory]
+    in_scores = next(value for name, value in scores.items() if "in-remove" in name)
+    out_scores = next(value for name, value in scores.items() if "out-remove" in name)
+    directional_auc = statistics.fmean(
+        1.0 if score_in > score_out else 0.5 if score_in == score_out else 0.0
+        for score_in, score_out in zip(in_scores, out_scores, strict=True)
     )
+    return effective_auc(directional_auc)
+
+
+def late_accuracy(directory: Path) -> float:
+    """Mean accuracy across late IN/OUT checkpoints in one CIA pairing."""
+    values: list[float] = []
+    for path in directory.glob("*.json"):
+        if path.name == "cia.json" or path.name.endswith(".evaluation.json"):
+            continue
+        payload = json.loads(path.read_text())
+        metrics = payload["server_evaluate_metrics"]
+        for server_round in range(16, 21):
+            values.append(float(metrics[str(server_round)]["accuracy"]))
+    if len(values) != 10:
+        raise RuntimeError(f"Expected two complete 20-round runs in {directory}, found {len(values)} late metrics.")
+    return statistics.fmean(values)
+
+
+def ratio_sweep_directory(clients: int, privacy: str, ratio: float | None) -> Path:
+    if privacy == "vanilla":
+        suffix = "vanilla"
+    else:
+        short = {"global-dp": "gdp", "metric-privacy": "mp"}[privacy]
+        ratio_token = str(ratio).replace(".", "p")
+        suffix = f"{short}-r{ratio_token}"
+    directory = CIFAR10_RATIO_SWEEP_DIR / f"n{clients}-{suffix}" / "runs"
+    if not directory.is_dir():
+        raise RuntimeError(f"Missing CIFAR-10 ratio-sweep run directory: {directory}")
+    return directory
+
+
+def load_client_trends() -> list[dict]:
+    removal_analysis = json.loads((CIFAR10_REMOVE_DIR / "cia_analysis.json").read_text())
     vanilla_rows = sorted(
         (row for row in removal_analysis if row["privacy"] == "vanilla"),
         key=lambda row: row["num_clients_canonical"],
     )
-    removal = {
+    return [{
         "dataset": "CIFAR-10",
         "protocol": "Client removal",
-        "note": "1 seed · vanilla only",
+        "note": "Actual CIFAR-10 · 1 seed · vanilla only",
         "clients": [row["num_clients_canonical"] for row in vanilla_rows],
         "pooled": [row["multi_round"]["clean"]["pooled_auc"] for row in vanilla_rows],
         "matched": [
-            row["multi_round"]["clean"]["round_matched_auc"]
+            effective_auc(row["multi_round"]["clean"]["round_matched_auc"])
             for row in vanilla_rows
         ],
-    }
-    return [replacement, removal]
+    }]
 
 
-def load_noise_sweep(full_data: dict) -> list[dict]:
+def load_noise_sweep() -> list[dict]:
+    """Actual CIFAR-10 removal ratio sweep at 48 clients (one seed)."""
     rows: list[dict] = []
     for privacy in ("global-dp", "metric-privacy"):
-        values = [
-            {
-                "level": "No noise",
-                "ratio": 0.0,
-                "sigma": 0.0,
-                "attack": round_matched_full_auc(full_data, 16, "vanilla", None),
-                "accuracy": full_accuracy(full_data, 16, "vanilla", None),
-            }
-        ]
-        for level, ratio in zip(("Low", "Medium", "High"), (0.0025, 0.003333, 0.00625), strict=True):
-            values.append(
-                {
-                    "level": level,
-                    "ratio": ratio,
-                    "sigma": ratio * 5.0,
-                    "attack": round_matched_full_auc(full_data, 16, privacy, ratio),
-                    "accuracy": full_accuracy(full_data, 16, privacy, ratio),
-                }
-            )
+        values = []
+        for level, ratio in (
+            ("No noise", None),
+            ("Low", 0.0025),
+            ("Medium", 0.004),
+            ("High", 0.00625),
+        ):
+            selected_privacy = "vanilla" if ratio is None else privacy
+            directory = ratio_sweep_directory(48, selected_privacy, ratio)
+            values.append({
+                "level": level,
+                "ratio": 0.0 if ratio is None else ratio,
+                "sigma": 0.0 if ratio is None else 48.0 * ratio,
+                "attack": round_matched_auc(json.loads((directory / "cia.json").read_text())),
+                "accuracy": late_accuracy(directory),
+            })
         rows.append({"privacy": privacy, "label": LABELS[privacy], "values": values})
     return rows
 
@@ -135,12 +125,12 @@ def planned_snapshot(dataset: str) -> dict:
     out_groups = transfer.load_cia(transfer.OUT_DIR / "cia.json")
     values = []
     for privacy in METHODS:
-        attack_auc = transfer.round_matched_auc(
+        attack_auc = effective_auc(transfer.round_matched_auc(
             in_groups,
             out_groups,
             privacy,
             "target_clean_shadow_loss",
-        )
+        ))
         accuracy_in, _ = transfer.last_five_utility(transfer.IN_DIR, privacy)
         accuracy_out, _ = transfer.last_five_utility(transfer.OUT_DIR, privacy)
         values.append(
@@ -199,7 +189,9 @@ def scaling_snapshot(
         values.append(
             {
                 "privacy": privacy,
-                "attack": by_privacy[privacy]["target_clean_shadow_loss"]["round_matched_auc"],
+                "attack": effective_auc(
+                    by_privacy[privacy]["target_clean_shadow_loss"]["round_matched_auc"]
+                ),
                 "accuracy": scaling_accuracy(directory, "homogeneous", privacy),
             }
         )
@@ -236,10 +228,9 @@ def load_snapshots() -> list[dict]:
 
 
 def build() -> None:
-    full_data = full.load()
     data = {
-        "clientTrends": load_client_trends(full_data),
-        "noiseSweep": load_noise_sweep(full_data),
+        "clientTrends": load_client_trends(),
+        "noiseSweep": load_noise_sweep(),
         "snapshots": load_snapshots(),
     }
     data_json = json.dumps(data, separators=(",", ":")).replace("</", "<\\/")
@@ -277,6 +268,7 @@ TEMPLATE = r'''<!doctype html>
     .verdict strong { display: block; margin-bottom: 5px; font-size: 17px; }
     .verdict p { margin: 0; font-size: 14px; color: #333; }
     .plot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    #client-plots { grid-template-columns: minmax(0, 1fr); max-width: 570px; }
     .dataset-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
     .plot-card { min-width: 0; }
     .card-head { min-height: 51px; margin-bottom: 4px; }
@@ -323,7 +315,7 @@ TEMPLATE = r'''<!doctype html>
 </header>
 
 <section>
-  <p class="lead"><strong>How to read the plots:</strong> attack AUC measures attacker success. <strong>50% means random guessing</strong>, so lower is safer. Model accuracy measures useful prediction performance, so higher is better.</p>
+  <p class="lead"><strong>How to read the plots:</strong> attack AUC measures attacker success after allowing the attacker to choose the better score direction. <strong>50% means random guessing</strong>, so lower is safer. Model accuracy measures useful prediction performance, so higher is better.</p>
   <div class="verdicts">
     <div class="verdict caution">
       <strong>1 · More clients: not yet confirmed</strong>
@@ -331,14 +323,14 @@ TEMPLATE = r'''<!doctype html>
     </div>
     <div class="verdict supported">
       <strong>2 · More noise: supported, with limits</strong>
-      <p>In the controlled 16-client CIFAR-10 sweep, more noise lowers attack AUC and accuracy together. The cost is heavy at the highest noise, but not at every tested setting or dataset.</p>
+      <p>In the actual 48-client CIFAR-10 sweep, Global-DP noise lowers attack AUC and accuracy together. Metric privacy shows a much smaller attack change at the same setting, so the effect is not universal.</p>
     </div>
   </div>
 </section>
 
 <section>
   <h2>1 · Does attack AUC fall as the number of clients rises?</h2>
-  <p class="note">Vanilla only, as suggested. Each protocol gets its own plot. The gray line is the older score that compares checkpoints from different training rounds; the black line compares IN and OUT at the same seed and round.</p>
+  <p class="note">Actual CIFAR-10 client-removal experiment; vanilla only, as suggested. The gray line is the older score that compares checkpoints from different training rounds; the black line compares IN and OUT at the same seed and round.</p>
   <div class="legend">
     <span class="key"><i class="swatch" style="background:#111"></i>Fair comparison: same round</span>
     <span class="key"><i class="swatch dashed"></i>Old comparison: mixed rounds</span>
@@ -352,14 +344,14 @@ TEMPLATE = r'''<!doctype html>
 
 <section>
   <h2>2 · Does more noise reduce attack AUC at an accuracy cost?</h2>
-  <p class="note">Controlled subset: CIFAR-10 full replacement, 16 active clients, non-IID, three seeds. Only noise changes within each plot. Both measures use the same 0–100% scale.</p>
+  <p class="note">Actual CIFAR-10 client-removal ratio sweep: 48 active clients, non-IID, one seed. Only the calibrated noise ratio changes within each plot. Both measures use the same 0–100% scale.</p>
   <div class="legend">
     <span class="key"><i class="swatch" style="background:#a3212b"></i>Attack AUC — lower is safer</span>
     <span class="key"><i class="swatch" style="background:#18733c"></i>Model accuracy — higher is better</span>
   </div>
   <div id="noise-plots" class="plot-grid"></div>
   <div class="callout good">
-    <strong>Clear trade-off:</strong> at the highest tested noise, Global-DP cuts attack AUC by about 18 percentage points and accuracy by about 11 points; Metric privacy cuts attack AUC by about 12 points and accuracy by about 8 points.
+    <strong>What this actual CIFAR-10 sweep shows:</strong> at the highest tested noise, Global-DP cuts attack AUC by 25 percentage points and accuracy by 20 points. Metric privacy cuts attack AUC by only 5 points while accuracy falls by 8 points.
   </div>
 
   <h3 style="margin-top:28px">Does noise help on other datasets?</h3>
@@ -386,7 +378,7 @@ TEMPLATE = r'''<!doctype html>
 </section>
 
 <footer>
-  Attack metric: directional clean-shadow raw-loss ROC AUC, with the same-round value treated as the primary check. Accuracy is averaged over matched IN/OUT trajectories (late rounds for 20-round experiments; final checkpoints for EuroSAT/CIFAR-100). CIFAR-100 has one seed and should be treated as preliminary. Sources: <code>results/planned_runs/</code>, <code>results/cia/cifar10_remove/cia_analysis.json</code>, <code>results/cia_eurosat_scaling/cia_analysis.json</code>, and <code>results/cia_cifar100_scaling/cia_analysis.json</code>.
+  Attack metric: clean-shadow raw-loss ROC AUC, reported after allowing the attacker to reverse its score direction; the same-round value is the primary check. Accuracy is averaged over matched IN/OUT trajectories (late rounds for 20-round experiments; final checkpoints for EuroSAT/CIFAR-100). The CIFAR-10 plots use only actual CIFAR-10 artifacts under <code>results/cia/cifar10_remove/</code> and <code>results/cia/cifar10_remove_ratio_sweep/</code>; no <code>results/planned_runs/cifar/</code> artifact is used. CIFAR-100 has one seed and should be treated as preliminary.
 </footer>
 
 <script id="report-data" type="application/json">__DATA__</script>
@@ -457,9 +449,9 @@ TEMPLATE = r'''<!doctype html>
   });
 
   data.noiseSweep.forEach(plot => {
-    const {section, svg} = card(plot.label, 'CIFAR-10 · 16 clients · same-round AUC');
+    const {section, svg} = card(plot.label, 'Actual CIFAR-10 · removal · 48 clients · one seed');
     const left=58, right=495, top=20, bottom=270;
-    const y = axes(svg,{left,right,top,bottom,min:.65,max:1,ticks:[.7,.8,.9,1]});
+    const y = axes(svg,{left,right,top,bottom,min:.4,max:1,ticks:[.4,.5,.6,.7,.8,.9,1]});
     const xs=plot.values.map((_,index)=>left+index*(right-left)/(plot.values.length-1));
     plot.values.forEach((value,index)=>{
       svg.append(el('text',{x:xs[index],y:bottom+22,'text-anchor':'middle',class:'tick'},value.level));
