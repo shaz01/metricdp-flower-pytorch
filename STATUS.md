@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-08-15, CUDA workstation (`feature/eurosat-scaling` and
+**Last updated:** 2026-08-16, CUDA workstation (`feature/eurosat-scaling` and
 `feature/cifar100-scaling` are both complete, merged into `master`, and deleted — see `git log`
 for anything more recent
 
@@ -16,13 +16,32 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-Nothing currently running. The standalone CIA visualization at
-`reports/accuracy_vs_roc_auc.html` was refreshed on 2026-08-15 to provide simple, per-dataset
-plots for the supervisor's two questions: client-count trends and the CIA-AUC/accuracy noise
-trade-off. Its CIFAR plots use only actual CIFAR-10 client-removal artifacts
-(`results/cia/cifar10_remove/` and `results/cia/cifar10_remove_ratio_sweep/`), not the filtered
-CIFAR subset under `results/planned_runs/cifar/`. Its generator is
-`reports/build_accuracy_vs_roc_auc.py`; relevant CIA tests passed. Both `feature/eurosat-scaling` (the EuroSAT accuracy sweep and its CIA attack) and
+Nothing currently running. `reports/accuracy_vs_roc_auc.html` (refreshed 2026-08-15) was sent to
+the project supervisor for review; his feedback asked for a step back from the numbers-heavy
+format toward two plain-language, plot-supported claims: (1) more clients → lower CIA attack AUC,
+especially vanilla, and (2) DP noise lowers attack AUC at a heavy accuracy cost. **New follow-up
+report, 2026-08-16: `reports/cia_takeaways.html`** (generator: `reports/build_cia_takeaways.py`,
+independent of `build_accuracy_vs_roc_auc.py` — recomputes everything from source rather than
+reusing the old script's embedded numbers) builds one plot per claim, one plot per dataset where
+data exists, and checked both claims against the actual numbers rather than assuming them true:
+- **Claim 1 (client count) holds only partially, and only on CIFAR-10** — the only dataset ever
+  run at more than one client count. Round-matched attack AUC does drop net (95%→55% from 8→100
+  clients) but isn't monotonic (bumps back to 100% at 48), and Global-DP/Metric-privacy show the
+  *same* shape as vanilla, not a weaker one — so the "especially vanilla" framing isn't supported.
+  Flagged as an open question in the report, not silently smoothed over.
+- **Claim 2 (noise vs. accuracy) holds directionally on every dataset checked** (CIFAR-10 full
+  sweep, EuroSAT, CIFAR-100, Alzheimer, Fashion-MNIST — 6 checks, 6/6 show DP attack AUC ≤
+  vanilla's) but "heavy cost" is dataset-dependent, not universal: real on CIFAR-100 (~8pp) and
+  CIFAR-10 under high noise (~20pp for global-dp), negligible on EuroSAT/Fashion-MNIST (<2pp).
+- Old `reports/accuracy_vs_roc_auc.html` was left as-is (not overwritten) per explicit instruction
+  to generate a new file instead — both now exist; `cia_takeaways.html` is the one to send back to
+  the supervisor.
+- Housekeeping: 4 remote branches confirmed fully merged into `origin/master` (0 unique commits
+  each) and deleted, both locally-absent and on `origin` — `feature/cia-client-scaling`,
+  `feature/cifar10-scaling` (already reflected below), `improve-logging`, `new_experiments`. `git
+  branch -a` now shows only `master`.
+
+Separately, both `feature/eurosat-scaling` (the EuroSAT accuracy sweep and its CIA attack) and
 `feature/cifar100-scaling` (the CIFAR-100 accuracy sweep and its CIA attack) are complete, merged
 into `master`, and deleted (locally and on `origin`) — see "What's established" below and
 `reports/eurosat_accuracy_sweep.md`/`reports/eurosat_cia.md`/
