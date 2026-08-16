@@ -1,0 +1,83 @@
+\documentclass[10pt]{article}
+
+\usepackage[margin=1.8cm,top=1.5cm,bottom=1.5cm]{geometry}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{enumitem}
+
+\setlist[itemize]{noitemsep, topsep=1pt, parsep=0pt, partopsep=0pt, leftmargin=1.3em}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!50!black,
+    urlcolor=blue!50!black,
+    citecolor=blue!50!black,
+}
+
+\newcommand{\code}[1]{\texttt{\small #1}}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2pt}
+
+\begin{document}
+{\centering\large\textbf{Client Inference Attack (CIA): Threat Model}\\[2pt]
+\small Federated Learning + Differential Privacy Research Project \\ \today\par}
+\vspace{4pt}
+\hrule
+\vspace{6pt}
+
+\small
+The Client Inference Attack (CIA), introduced by S\'ainz-Pardo D\'iaz et al.\ (2026,
+\emph{Knowledge-Based Systems} 343, 115993), asks whether a specific \emph{client} took part in
+training a released global model --- not whether a single data record was used, as in a classic
+Membership Inference Attack. Formally (Definition 8), given global model $W$ and target client
+$x$'s shadow dataset $D_x$: $C(D_x, W) := P(s_x = 1 \mid D_x, W)$, where $s_x$ indicates $x$'s
+participation. Motivating example: a curious pharmaceutical participant in a hospital-consortium
+model wants to confirm a rival hospital's participation, as a stepping stone toward a subsequent
+MIA/SIA. Implementation: \code{experiments/cia/}.
+
+\vspace{3pt}
+\textbf{Threat model --- adversary and goal}
+\begin{itemize}
+    \item \textbf{Who}: a \emph{semi-honest} (honest-but-curious) client that legitimately
+    participates in training --- not an external party, and not the server, which is assumed
+    \textbf{trusted}. The attack targets the aggregated model once released back to clients.
+    \item \textbf{Goal}: infer whether a particular \emph{other} (``target'') client contributed to
+    the current global model. Confirming participation narrows down whose data could explain
+    observed model behavior, sharpening a follow-on MIA or SIA against that client.
+    \item \textbf{Variant}: the paper's main analysis, and this repository's implementation, is the
+    \emph{passive} CIA --- the attacker only observes released models, never deviates from the
+    protocol. \emph{Active} (crafted/scaled updates) and \emph{adaptive} (multi-round) CIA are
+    flagged as stronger future-work variants; this repo's multi-round attack extends toward the
+    adaptive case empirically.
+\end{itemize}
+
+\textbf{Adversary's knowledge}
+\begin{itemize}
+    \item Receives the global model $W$ each round exactly as any legitimate client does --- no
+    privileged access --- plus whatever aggregated per-round convergence metrics the server
+    broadcasts to all clients.
+    \item Central assumption: holds a shadow dataset $D_x$ approximating target $x$'s data
+    distribution, either disjoint (same distribution) or overlapping (genuine target data points).
+    Realistic sources: (1) public datasets partially reflecting the target's distribution,
+    (2) historical data from similar sources, (3) small subsets of leaked target data.
+    \item Knowledge strength is a spectrum: a fully representative shadow dataset gives an upper
+    bound on attack success; a non-representative one still leaks partial signal at reduced
+    confidence. Client population is assumed static across rounds (cross-silo setting).
+\end{itemize}
+
+\textbf{Adversary capabilities}
+\begin{itemize}
+    \item Can evaluate the released model's loss (or other metric) on its own shadow dataset each
+    round it holds a checkpoint for, comparing it against the model's loss on other available data
+    to estimate the target's influence on training.
+    \item Cannot tamper with its own submitted updates to bias the aggregate toward revealing more
+    about the target (that is the out-of-scope active-CIA variant), and cannot see other clients'
+    individual updates or raw data --- only the server-released aggregate is visible.
+    \item Acts on a single round's released model in the passive/first-round setting this repo's
+    \code{experiments/cia} first-round attack reproduces; the repository's separate multi-round
+    attack additionally exploits the trajectory of released models across rounds.
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,182 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=2cm]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!50!black,
+    urlcolor=blue!50!black,
+    citecolor=blue!50!black,
+}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\pp}{\,\text{pp}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Epoch- and Round-Scaling Results}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\title{\textbf{Epoch- and Round-Scaling Experiments}\\[0.2em]
+\large Results Tables}
+\author{Federated Learning + Differential Privacy Research Project}
+\date{August 8, 2026}
+
+\begin{document}
+\maketitle
+
+\noindent
+This document reports the two constant-compute client-count-scaling sweeps that hold total
+training compute roughly constant across $n \in \{4, 8, 48\}$ federated clients
+(Alzheimer MRI classification, $\text{noise\_multiplier}=0.05$, seed 42, clipping norm 5.0):
+\textbf{v1 (round-scaled)} scales the number of communication rounds with $n$
+($\text{rounds}(n) = \text{round}(20 \cdot n / 4)$) while holding local epochs fixed at 5;
+\textbf{v2 (epoch-scaled)} instead fixes rounds at 20 and scales local epochs with $n$
+($\text{local\_epochs}(n) = \text{round}(5 \cdot n / 4)$). Source data:
+\code{results/scale\_controlled/} (v1) and \code{results/scale\_controlled\_epochs/} (v2); sweep
+code: \code{experiments/client\_scaling/sweep\_scale\_controlled.py} and
+\code{sweep\_scale\_controlled\_epochs.py}; full narrative writeup:
+\code{reports/constant\_compute\_scaling.md}. Accuracy/loss/F1/precision/AUC are the
+training-time recorded values from the last completed round; ``Invalid''/``Collapsed'' are
+per-round counts of \code{metric-dp-distance-invalid}/\code{metric-dp-aggregation-collapsed}
+flags (metric-privacy only); distance min/mean/max pools every round's finite
+\code{metric-dp-distance-mean} value.
+
+% =====================================================================
+\section*{Motivation and Expected vs.\ Observed Outcome}
+% =====================================================================
+
+\noindent \textbf{Why.} \code{results/48client\_scaling} (fixed 20-round budget for every client
+count) found metric-privacy's accuracy advantage over global-DP shrinking or reversing as $n$ grows
+from 8 to 48. That comparison has a built-in confound: under a \emph{fixed} round budget, each
+client's per-round data shard shrinks roughly $\propto 1/n$, so a 48-client run gives each client
+far less data per round than an 8-client run. The shrinking advantage could therefore be either
+(a) a genuine failure of the metric-privacy mechanism at scale, or (b) an artifact of clients being
+under-trained at high $n$ because of the fixed round budget --- not the mechanism's fault at all.
+v1 and v2 hold total training compute roughly constant across $n$ instead of the round budget, to
+disentangle these two explanations.
+
+\noindent \textbf{Expected output.} If (b) --- the round-budget confound --- were the whole story,
+the metric-privacy-vs-global-DP advantage should stay roughly flat across $n \in \{4,8,48\}$ under
+constant compute, instead of shrinking, since every client count now receives a comparable amount
+of total local training.
+
+\noindent \textbf{What differs from that expectation.} The advantage does \emph{not} stay flat: it
+still shrinks steadily from $n{=}4$ to $n{=}48$ in both v1 and v2, landing close to zero (and
+turning slightly negative for \code{homogeneous}/\code{fedavg} and \code{fedyogi}) rather than
+holding constant. So the round-budget confound is not the whole story --- it explains part of the
+effect (shrinkage under constant compute is far milder than the sharp reversal seen under the
+fixed-round-budget baseline), but a real, smaller scale-related narrowing of the advantage remains
+even after removing the confound. A second surprise: v1 and v2 do not converge to the same absolute
+accuracy at $n{=}48$ (v1 reaches 91--98\%, v2 plateaus at 77--79\%), showing that scaling local
+epochs is not a drop-in substitute for scaling rounds --- aggregation frequency itself matters
+independently of total local compute.
+
+% =====================================================================
+\begin{table}[h]
+\centering
+\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llllrrrrrrrrl}
+\toprule
+Partition & Privacy & Agg. & $n$ & Rounds & Accuracy & Loss & F1 & Precision & AUC & Invalid & Collapsed & Distance min/mean/max \\
+\midrule
+homogeneous & global-dp      & fedavg  & 4  & 20  & 49.53\% & 1.0489 & 0.3281 & 0.2453 & 0.7797 & n/a & n/a & n/a \\
+homogeneous & global-dp      & fedavg  & 8  & 40  & 79.69\% & 0.6015 & 0.7877 & 0.8023 & 0.9491 & n/a & n/a & n/a \\
+homogeneous & global-dp      & fedavg  & 48 & 240 & 97.50\% & 1.1434 & 0.9748 & 0.9753 & 0.9911 & n/a & n/a & n/a \\
+homogeneous & global-dp      & fedyogi & 4  & 20  & 49.53\% & 1.3536 & 0.3281 & 0.2453 & 0.8156 & n/a & n/a & n/a \\
+homogeneous & global-dp      & fedyogi & 8  & 40  & 74.69\% & 0.8036 & 0.7750 & 0.8190 & 0.9433 & n/a & n/a & n/a \\
+homogeneous & metric-privacy & fedavg  & 4  & 20  & 63.44\% & 1.5078 & 0.5792 & 0.6948 & 0.8816 & 0 & 0 & 1.4601 / 1.6416 / 1.7923 \\
+homogeneous & metric-privacy & fedavg  & 8  & 40  & 90.47\% & 0.4030 & 0.9034 & 0.9084 & 0.9804 & 0 & 0 & 1.1253 / 1.3231 / 1.5318 \\
+homogeneous & metric-privacy & fedavg  & 48 & 240 & 95.63\% & 1.2058 & 0.9561 & 0.9562 & 0.9897 & 0 & 0 & 0.3001 / 0.5446 / 0.7507 \\
+homogeneous & metric-privacy & fedyogi & 4  & 20  & 61.09\% & 5.6919 & 0.5548 & 0.6514 & 0.8810 & 0 & 0 & 1.0688 / 1.4682 / 1.9291 \\
+homogeneous & metric-privacy & fedyogi & 8  & 40  & 72.19\% & 0.8431 & 0.7348 & 0.7818 & 0.9287 & 0 & 0 & 0.7429 / 0.9541 / 1.3089 \\
+non-IID     & global-dp      & fedavg  & 4  & 20  & 49.53\% & 1.0506 & 0.3281 & 0.2453 & 0.7797 & n/a & n/a & n/a \\
+non-IID     & global-dp      & fedavg  & 8  & 40  & 79.37\% & 0.6802 & 0.7852 & 0.7932 & 0.9511 & n/a & n/a & n/a \\
+non-IID     & global-dp      & fedavg  & 48 & 240 & 93.59\% & 0.6606 & 0.9356 & 0.9372 & 0.9895 & n/a & n/a & n/a \\
+non-IID     & global-dp      & fedyogi & 4  & 20  & 49.53\% & 1.1039 & 0.3281 & 0.2453 & 0.7797 & n/a & n/a & n/a \\
+non-IID     & global-dp      & fedyogi & 8  & 40  & 78.59\% & 1.1930 & 0.7816 & 0.8021 & 0.9466 & n/a & n/a & n/a \\
+non-IID     & metric-privacy & fedavg  & 4  & 20  & 83.44\% & 0.7186 & 0.8303 & 0.8368 & 0.9626 & 0 & 0 & 1.5601 / 1.7226 / 1.9422 \\
+non-IID     & metric-privacy & fedavg  & 8  & 40  & 92.50\% & 0.3386 & 0.9249 & 0.9267 & 0.9823 & 0 & 0 & 1.0216 / 1.2192 / 1.4692 \\
+non-IID     & metric-privacy & fedavg  & 48 & 240 & 91.09\% & 0.6775 & 0.9101 & 0.9115 & 0.9855 & 0 & 0 & 0.3808 / 0.5742 / 0.7165 \\
+non-IID     & metric-privacy & fedyogi & 4  & 20  & 86.41\% & 1.2186 & 0.8609 & 0.8748 & 0.9733 & 0 & 0 & 1.2368 / 1.5180 / 1.9743 \\
+non-IID     & metric-privacy & fedyogi & 8  & 40  & 85.94\% & 1.0073 & 0.8575 & 0.8578 & 0.9658 & 0 & 0 & 0.8507 / 0.9949 / 1.3177 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{v1 (round-scaled) constant-compute sweep, $\text{noise\_multiplier}=0.05$, seed 42.
+Source: \code{results/scale\_controlled/}.}
+\label{tab:v1}
+\end{table}
+
+\noindent
+Accuracy climbs sharply with $n$ under both privacy modes in v1 (e.g.\ homogeneous/global-dp/fedavg:
+$49.53\% \to 79.69\% \to 97.50\%$; homogeneous/metric-privacy/fedavg: $63.44\% \to 90.47\% \to
+95.63\%$), and every metric-privacy combination completes its full round budget with zero
+invalid-distance or collapsed-aggregation rounds, at any $n$. The metric-privacy advantage over
+global-dp is largest at $n{=}4$ (up to $+33.91\pp$, non-IID/fedavg) and narrows steadily as $n$
+grows, landing close to parity by $n{=}48$ and even turning slightly negative for
+homogeneous/fedavg ($95.63\%$ vs.\ $97.50\%$) and homogeneous/fedyogi ($72.19\%$ vs.\ $74.69\%$ at
+$n{=}8$) --- consistent with round-scaling giving the model far more total local steps at $n{=}48$
+(240 rounds) than at $n{=}4$ (20 rounds), which increasingly favors whichever mechanism tolerates
+more aggregation events.
+
+% =====================================================================
+\begin{table}[h]
+\centering
+\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llllrrrrrrrrl}
+\toprule
+Partition & Privacy & Agg. & $n$ & Local epochs & Accuracy & Loss & F1 & Precision & AUC & Invalid & Collapsed & Distance min/mean/max \\
+\midrule
+homogeneous & global-dp      & fedavg  & 4  & 5  & 49.53\% & 1.0489 & 0.3281 & 0.2453 & 0.7797 & n/a & n/a & n/a \\
+homogeneous & global-dp      & fedavg  & 8  & 10 & 80.00\% & 0.7190 & 0.7950 & 0.7924 & 0.9451 & n/a & n/a & n/a \\
+homogeneous & global-dp      & fedavg  & 48 & 60 & 77.81\% & 0.8219 & 0.7756 & 0.7768 & 0.9349 & n/a & n/a & n/a \\
+homogeneous & global-dp      & fedyogi & 4  & 5  & 49.53\% & 1.3536 & 0.3281 & 0.2453 & 0.8156 & n/a & n/a & n/a \\
+homogeneous & global-dp      & fedyogi & 8  & 10 & 85.62\% & 1.0896 & 0.8532 & 0.8726 & 0.9681 & n/a & n/a & n/a \\
+homogeneous & metric-privacy & fedavg  & 4  & 5  & 63.44\% & 1.5078 & 0.5792 & 0.6948 & 0.8816 & 0 & 0 & 1.4601 / 1.6416 / 1.7923 \\
+homogeneous & metric-privacy & fedavg  & 8  & 10 & 87.19\% & 0.5687 & 0.8720 & 0.8751 & 0.9714 & 0 & 0 & 1.3767 / 1.5766 / 1.9439 \\
+homogeneous & metric-privacy & fedavg  & 48 & 60 & 77.97\% & 0.9069 & 0.7737 & 0.7845 & 0.9352 & 0 & 0 & 1.1188 / 1.4019 / 2.7281 \\
+homogeneous & metric-privacy & fedyogi & 4  & 5  & 61.09\% & 5.6919 & 0.5548 & 0.6514 & 0.8810 & 0 & 0 & 1.0688 / 1.4682 / 1.9291 \\
+homogeneous & metric-privacy & fedyogi & 8  & 10 & 92.19\% & 0.7650 & 0.9213 & 0.9267 & 0.9830 & 0 & 0 & 1.2268 / 1.5065 / 2.1193 \\
+non-IID     & global-dp      & fedavg  & 4  & 5  & 49.53\% & 1.0506 & 0.3281 & 0.2453 & 0.7797 & n/a & n/a & n/a \\
+non-IID     & global-dp      & fedavg  & 8  & 10 & 74.06\% & 0.9658 & 0.7248 & 0.7458 & 0.9317 & n/a & n/a & n/a \\
+non-IID     & global-dp      & fedavg  & 48 & 60 & 78.44\% & 0.7476 & 0.7822 & 0.7831 & 0.9352 & n/a & n/a & n/a \\
+non-IID     & global-dp      & fedyogi & 4  & 5  & 49.53\% & 1.1039 & 0.3281 & 0.2453 & 0.7797 & n/a & n/a & n/a \\
+non-IID     & global-dp      & fedyogi & 8  & 10 & 87.97\% & 0.7390 & 0.8785 & 0.8834 & 0.9770 & n/a & n/a & n/a \\
+non-IID     & metric-privacy & fedavg  & 4  & 5  & 83.44\% & 0.7186 & 0.8303 & 0.8368 & 0.9626 & 0 & 0 & 1.5601 / 1.7226 / 1.9422 \\
+non-IID     & metric-privacy & fedavg  & 8  & 10 & 90.16\% & 0.3710 & 0.9014 & 0.9027 & 0.9829 & 0 & 0 & 1.3543 / 1.5382 / 1.8673 \\
+non-IID     & metric-privacy & fedavg  & 48 & 60 & 79.06\% & 0.7584 & 0.7893 & 0.7899 & 0.9393 & 0 & 0 & 1.3086 / 1.5228 / 2.6866 \\
+non-IID     & metric-privacy & fedyogi & 4  & 5  & 86.41\% & 1.2186 & 0.8609 & 0.8748 & 0.9733 & 0 & 0 & 1.2368 / 1.5180 / 1.9743 \\
+non-IID     & metric-privacy & fedyogi & 8  & 10 & 94.53\% & 0.6252 & 0.9452 & 0.9466 & 0.9879 & 0 & 0 & 1.2704 / 1.5098 / 2.0980 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{v2 (epoch-scaled) constant-compute sweep, rounds fixed at 20 throughout,
+$\text{noise\_multiplier}=0.05$, seed 42. Source: \code{results/scale\_controlled\_epochs/}.}
+\label{tab:v2}
+\end{table}
+
+\noindent
+With rounds held fixed at 20 and local epochs scaled instead ($5 \to 10 \to 60$), v2 again shows
+zero invalid-distance or collapsed-aggregation rounds across every metric-privacy combination, and
+the same narrowing-advantage pattern as $n$ grows. The absolute numbers diverge from v1 at
+$n{=}48$, however: v2 plateaus around $77$--$79\%$ for both privacy modes on both partitions
+(vs.\ v1's $91$--$98\%$), since aggregation frequency itself never increases beyond 20 rounds ---
+scaling local epochs alone cannot substitute for more aggregation events at high $n$. This design is
+also far cheaper to run: total wall-clock across all 20 combinations is $\approx 1.83$h for v2
+versus $\approx 4.34$h for v1, almost entirely because v1's $n{=}48$ combinations run 240 rounds
+while v2's stay at 20.
+
+\end{document}
