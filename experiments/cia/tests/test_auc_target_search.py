@@ -130,3 +130,25 @@ def test_step_up_to_target_reaches_stage_cap() -> None:
     assert status == "stage-cap-reached"
     assert landing_ratio is None
     assert len(stages) == 3
+
+
+def test_step_up_to_target_collapse_takes_priority_over_landing() -> None:
+    # A single stage whose AUC already sits inside the target band but whose
+    # accuracy has also collapsed to the random baseline must be reported as
+    # a collapse, not a landing -- the collapse check must run before (and
+    # win over) the landing check within one stage.
+    def run_and_score(ratio: float) -> StageResult:
+        return StageResult(noise_ratio=ratio, seed=42, accuracy=0.10, auc=0.50)
+
+    status, landing_ratio, stages = step_up_to_target(
+        anchor_ratio=0.01,
+        target_band=(0.45, 0.55),
+        step_multiplier=2.0,
+        stage_cap=12,
+        random_baseline_accuracy=0.10,
+        collapse_margin=0.02,
+        run_and_score=run_and_score,
+    )
+    assert status == "collapsed-before-target"
+    assert landing_ratio is None
+    assert len(stages) == 1

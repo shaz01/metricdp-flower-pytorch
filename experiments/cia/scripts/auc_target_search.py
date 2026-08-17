@@ -30,6 +30,7 @@ from typing import Any
 
 from experiments.cia.result import CiaResult
 from experiments.cia.scripts.score_stage import score_stage
+from experiments.reproduce.matrix.combo import format_noise
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 RESULTS_ROOT = PROJECT_ROOT / "results" / "auc_target_sweep"
@@ -199,10 +200,31 @@ def _load_state(dataset: str, partition: str, privacy: str) -> CurveState | None
     return CurveState.from_json(path.read_text())
 
 
+def _atomic_write_text(path: Path, text: str) -> None:
+    """Write ``text`` atomically so an interruption mid-write can't leave a
+    truncated/corrupt file behind (same idiom as ``attack_runner._write_report``)."""
+    temporary_path = path.with_suffix(path.suffix + ".tmp")
+    temporary_path.write_text(text, encoding="utf-8")
+    temporary_path.replace(path)
+
+
 def _save_state(state: CurveState) -> None:
     path = _state_path(state.dataset, state.partition, state.privacy)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(state.to_json())
+    _atomic_write_text(path, state.to_json())
+
+
+def _stage_dir(base_dir: Path, ratio: float | None, seed: int) -> Path:
+    """A stage-isolated output directory.
+
+    ``run_stage()`` writes its report to ``<output_dir>/runs/cia.json`` and
+    ``run_attack`` returns *every* row ever accumulated in that report file,
+    not just the rows from the current call. Stages sharing one output_dir
+    would therefore silently pool every prior stage's rows together, so each
+    (ratio, seed) pair gets its own subdirectory here.
+    """
+    ratio_token = "vanilla" if ratio is None else format_noise(ratio)
+    return base_dir / f"nm-{ratio_token}-seed-{seed}"
 
 
 def _run_and_score_real(
@@ -218,16 +240,17 @@ def _run_and_score_real(
     module = _module_for(dataset)
 
     def run_and_score(ratio: float) -> StageResult:
+        stage_dir = _stage_dir(output_dir, ratio, seed)
         results: Sequence[CiaResult] = module.run_stage(
             privacy=privacy,
             partition=partition,
             seed=seed,
             noise_ratio=ratio,
             canonical_num_clients=spec.canonical_num_clients,
-            output_dir=output_dir,
+            output_dir=stage_dir,
             max_parallel_clients=max_parallel_clients,
         )
-        score = score_stage(results, output_dir / "runs")
+        score = score_stage(results, stage_dir / "runs")
         return StageResult(
             noise_ratio=ratio, seed=seed, accuracy=score.accuracy, auc=score.auc
         )
@@ -249,19 +272,20 @@ def ensure_vanilla_reference(
 
     spec = DATASET_REGISTRY[dataset]
     module = _module_for(dataset)
-    output_dir = RESULTS_ROOT / dataset / partition / "vanilla"
+    base_dir = RESULTS_ROOT / dataset / partition / "vanilla"
     per_seed: list[StageResult] = []
     for seed in VANILLA_SEEDS:
+        stage_dir = _stage_dir(base_dir, None, seed)
         results = module.run_stage(
             privacy="vanilla",
             partition=partition,
             seed=seed,
             noise_ratio=None,
             canonical_num_clients=spec.canonical_num_clients,
-            output_dir=output_dir,
+            output_dir=stage_dir,
             max_parallel_clients=max_parallel_clients,
         )
-        score = score_stage(results, output_dir / "runs")
+        score = score_stage(results, stage_dir / "runs")
         per_seed.append(
             StageResult(noise_ratio=None, seed=seed, accuracy=score.accuracy, auc=score.auc)
         )
@@ -273,7 +297,7 @@ def ensure_vanilla_reference(
         auc=statistics.fmean(s.auc for s in per_seed),
     )
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(asdict(reference), indent=2))
+    _atomic_write_text(path, json.dumps(asdict(reference), indent=2))
     return reference
 
 
@@ -293,8 +317,13 @@ def search_curve(
         raise ValueError(f"privacy must come from {PRIVACY_MODES}.")
 
     existing = _load_state(dataset, partition, privacy)
-    if existing is not None and existing.status != "searching":
-        return existing  # already terminal; idempotent no-op.
+    # "searching" and "confirming" are the only non-terminal statuses: the
+    # former means the anchor/target search hasn't finished, the latter means
+    # a landing ratio was found but its 2 confirmation seeds haven't all run
+    # yet. Anything else (landed, anchor-not-found, collapsed-before-target,
+    # stage-cap-reached) is a terminal, idempotent no-op on resume.
+    if existing is not None and existing.status not in ("searching", "confirming"):
+        return existing
 
     spec = DATASET_REGISTRY[dataset]
     vanilla = ensure_vanilla_reference(
@@ -330,35 +359,53 @@ def search_curve(
         state.anchor_ratio = anchor
         _save_state(state)
 
-    status, landing_ratio, search_stages = step_up_to_target(
-        anchor_ratio=state.anchor_ratio,
-        target_band=TARGET_BAND,
-        step_multiplier=STEP_MULTIPLIER,
-        stage_cap=STAGE_CAP,
-        random_baseline_accuracy=spec.random_baseline_accuracy,
-        collapse_margin=COLLAPSE_MARGIN,
-        run_and_score=run_and_score,
-    )
-    state.search_stages = search_stages
-    state.status = status
-    _save_state(state)
+    if state.landing_ratio is None:
+        assert state.anchor_ratio is not None
+        status, landing_ratio, search_stages = step_up_to_target(
+            anchor_ratio=state.anchor_ratio,
+            target_band=TARGET_BAND,
+            step_multiplier=STEP_MULTIPLIER,
+            stage_cap=STAGE_CAP,
+            random_baseline_accuracy=spec.random_baseline_accuracy,
+            collapse_margin=COLLAPSE_MARGIN,
+            run_and_score=run_and_score,
+        )
+        state.search_stages = search_stages
+        if status != "landed":
+            state.status = status
+            _save_state(state)
+            return state
 
-    if status != "landed":
-        return state
+        # Landing ratio and "confirming" status are persisted together, only
+        # once both are known -- never persist a terminal "landed" status
+        # before the landing ratio itself is saved, or a crash mid-confirmation
+        # would leave the state file stuck with status="landed" but
+        # landing_ratio=None forever (the resume check above would treat it
+        # as done and never retry).
+        assert landing_ratio is not None
+        state.landing_ratio = landing_ratio
+        state.status = "confirming"
+        _save_state(state)
 
-    state.landing_ratio = landing_ratio
-    confirmation = [
-        _run_and_score_real(
+    # Confirmation phase: resumable per-seed, so a crash here only re-runs
+    # whichever confirmation seeds hadn't completed yet.
+    assert state.landing_ratio is not None
+    already_confirmed = {stage.seed for stage in state.confirmation_stages}
+    for seed in (43, 44):
+        if seed in already_confirmed:
+            continue
+        stage = _run_and_score_real(
             dataset=dataset,
             partition=partition,
             privacy=privacy,
             seed=seed,
             output_dir=output_dir,
             max_parallel_clients=max_parallel_clients,
-        )(landing_ratio)
-        for seed in (43, 44)
-    ]
-    state.confirmation_stages = confirmation
+        )(state.landing_ratio)
+        state.confirmation_stages.append(stage)
+        _save_state(state)
+
+    state.status = "landed"
     _save_state(state)
     return state
 
