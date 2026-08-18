@@ -36,7 +36,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 RESULTS_ROOT = PROJECT_ROOT / "results" / "auc_target_sweep"
 
 TARGET_BAND = (0.45, 0.55)
-ANCHOR_TOLERANCE = 0.03
+ANCHOR_TOLERANCE = 0.10  # widened from 0.03 post-pilot (2026-08-18): the EuroSAT
+# pilot's single-seed round-matched AUC over 11 checkpoint rounds is quantized in
+# steps of ~1/11 ~= 0.09 -- close to 3x the original 0.03 tolerance -- so the
+# anchor could not converge at any noise level regardless of the true low-noise
+# effect (5 anchor stages bounced between 0.545/0.727/0.909 AUC with no trend as
+# noise fell toward zero, while accuracy converged to within 0.01 of vanilla
+# immediately). 0.10 absorbs one quantization step's worth of single-seed noise.
 MAX_HALVINGS = 4
 STEP_MULTIPLIER = 2.0
 STAGE_CAP = 12
