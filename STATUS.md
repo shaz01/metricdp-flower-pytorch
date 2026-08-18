@@ -16,7 +16,36 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-Nothing currently running. `reports/accuracy_vs_roc_auc.html` (refreshed 2026-08-15) was sent to
+**New branch, 2026-08-19: `feature/auc-targeted-noise-sweep`** (worktree
+`.claude/worktrees/feature+auc-targeted-noise-sweep`) — supervisor asked for noise-multiplier
+sweeps on 4 datasets (EuroSAT, Alzheimer, Fashion-MNIST, CIFAR-10) at one large client count each,
+pushed specifically down to CIA attack AUC≈0.5, to see how much noise it takes to neutralize the
+attack and what that costs in accuracy. Full design: `docs/superpowers/specs/2026-08-17-auc-targeted-noise-sweep-design.md`,
+plan: `docs/superpowers/plans/2026-08-17-auc-targeted-noise-sweep.md` (both gitignored, copy
+manually to other machines). Tasks 1-6 (tooling: per-dataset CIA "remove" scripts with a uniform
+`run_stage()`, a shared `score_stage.py` scorer, and an autonomous `auc_target_search.py` driver
+with a bounded, resumable stop-condition state machine) are done, tested, and code-reviewed clean.
+
+**Task 7 (pilot curve, eurosat/homogeneous/global-dp) is done and surfaced two real design gaps**,
+both now resolved by explicit project-owner decisions rather than fixed unilaterally:
+1. The original `ANCHOR_TOLERANCE=0.03` was too tight for single-seed round-matched AUC's own
+   quantization noise over only 11 checkpoint rounds (~1/11≈0.09 steps) — the anchor could never
+   converge regardless of the true low-noise effect. Widened to 0.10; fix committed and verified.
+2. Even after that fix, the curve "landed" based on one seed's AUC (0.545, in-band) but the two
+   confirmation seeds disagreed sharply (0.818, 0.727 — 3-seed mean ≈0.697, nowhere near 0.5).
+   Decision: accept as-is, no driver change — `search_state.json`'s `"landed"` status means "the
+   search's best single-seed guess," and the eventual report must show the true, wide 3-seed
+   picture rather than implying false precision (matches this repo's existing convention for
+   small-seed-count CIA results, e.g. `reports/eurosat_cia.md`).
+
+**Not yet started: Task 8** (roll out the same driver to the remaining 15 of 16 curves — 4 datasets
+× 2 partition modes × 2 privacy modes, minus the pilot). Explicitly gated on project-owner
+go-ahead per the plan (Task 7 Step 5) and `AGENTS.md`'s "don't unilaterally decide an
+experiment/phase is done" rule — do not start Task 8 without that.
+
+---
+
+Nothing else currently running. `reports/accuracy_vs_roc_auc.html` (refreshed 2026-08-15) was sent to
 the project supervisor for review; his feedback asked for a step back from the numbers-heavy
 format toward two plain-language, plot-supported claims: (1) more clients → lower CIA attack AUC,
 especially vanilla, and (2) DP noise lowers attack AUC at a heavy accuracy cost. **New follow-up
