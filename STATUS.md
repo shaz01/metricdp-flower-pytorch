@@ -26,9 +26,12 @@ records (200 train/51 held out) and target-vs-global TV about 0.50; broader dire
 showed expected alpha-dependent heterogeneity. Existing `non-iid` quantity skew is unchanged.
 A Dirichlet-only CIFAR-10 removal-CIA entry point now lives at
 `experiments/cia/scripts/cifar10_dirichlet.py` (commit `db3b02e`). It requires an explicit
-`--dirichlet-alpha`, exposes no non-Dirichlet partition choice, and writes directly under
-`results/dirichlet/cifar10/{n}_clients/`. The original `cifar10_remove.py` is unchanged.
-Nothing pushed and nothing running. Tests: all 117 CIA tests pass; 274/274 non-MPS-fatal tests
+`--dirichlet-alpha`, exposes no non-Dirichlet partition choice, and writes under
+`results/dirichlet/cifar10/{n}_clients/`. Commit `6a52000` adds an automatically unique child
+folder keyed by alpha, privacy, adjacency selection, seeds, and noise ratio, allowing disjoint
+chunks to run concurrently without racing on `cia.json` or `progress.log`. The original
+`cifar10_remove.py` is unchanged. Nothing pushed and nothing running. Tests: all 118 CIA tests
+pass; 274/274 non-MPS-fatal tests
 passed before adding this isolated runner, when the pre-existing
 `experiments/reproduce/tests/test_paper_loss.py` native abort is excluded.
 
