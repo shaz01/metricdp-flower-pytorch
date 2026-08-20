@@ -24,8 +24,13 @@ reconstruction, and CIA result provenance, so sweeps cannot silently collide or 
 postprocessing. A real CIFAR-10 n=100/seed-42/default-alpha loader check produced 251 target
 records (200 train/51 held out) and target-vs-global TV about 0.50; broader direct partition checks
 showed expected alpha-dependent heterogeneity. Existing `non-iid` quantity skew is unchanged.
-Nothing pushed and nothing running. Tests: 73 focused tests pass; 274/274 non-MPS-fatal tests pass
-when the pre-existing `experiments/reproduce/tests/test_paper_loss.py` native abort is excluded.
+A Dirichlet-only CIFAR-10 removal-CIA entry point now lives at
+`experiments/cia/scripts/cifar10_dirichlet.py` (commit `db3b02e`). It requires an explicit
+`--dirichlet-alpha`, exposes no non-Dirichlet partition choice, and writes directly under
+`results/dirichlet/cifar10/{n}_clients/`. The original `cifar10_remove.py` is unchanged.
+Nothing pushed and nothing running. Tests: all 117 CIA tests pass; 274/274 non-MPS-fatal tests
+passed before adding this isolated runner, when the pre-existing
+`experiments/reproduce/tests/test_paper_loss.py` native abort is excluded.
 
 On `master`, nothing currently running. `reports/accuracy_vs_roc_auc.html` (refreshed 2026-08-15) was sent to
 the project supervisor for review; his feedback asked for a step back from the numbers-heavy
