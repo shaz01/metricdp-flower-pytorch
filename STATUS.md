@@ -1,6 +1,6 @@
 # Project Status
 
-**Branch:** `feature/strong-label-skew-splitter`
+**Branch:** `feature/dirichlet-splitter`
 **Last updated:** 2026-08-20, local development machine
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -14,17 +14,18 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-`feature/strong-label-skew-splitter` is a local branch adding a new `label-skew` partition mode
-across all six dataset plugins. It uses four seeded, mostly single-label shards per client: client
-sizes stay closely balanced while class mixtures are strongly heterogeneous and less likely to be
-duplicated than the classic two-shard construction. Exact real-data checks through the normal
-client-loader flow gave target-vs-global training-distribution TV=0.600 on CIFAR-10 at both n=48
-and n=100; EuroSAT n=48 gave 0.629/0.687/0.613 for seeds 42/43/44. Target-vs-nearest-other-client
-TV stayed at least 0.249 for CIFAR-10 and 0.251 for EuroSAT in those checks. Select it with
-`--partition label-skew`; the existing `non-iid` quantity-skew behavior is unchanged. Commit
-`9e18afe`; nothing pushed and nothing running. Tests: 51 focused tests pass; 254/254 non-MPS-fatal
-tests pass when the pre-existing `experiments/reproduce/tests/test_paper_loss.py` native abort is
-excluded.
+`feature/dirichlet-splitter` is a local branch with two explicit label-heterogeneity modes across
+all six dataset plugins. The earlier `label-skew` mode (commit `9e18afe`) uses four seeded,
+mostly single-label shards per client and stays closely size-balanced. The new `dirichlet` mode
+(commit `3ff14c9`) performs class-wise symmetric Dirichlet allocation and exposes concentration
+end-to-end as `--dirichlet-alpha` (default 0.5; smaller means stronger label and quantity skew).
+Alpha is included in run names, training metadata, detailed-evaluation reconstruction, CIA shadow
+reconstruction, and CIA result provenance, so sweeps cannot silently collide or repartition during
+postprocessing. A real CIFAR-10 n=100/seed-42/default-alpha loader check produced 251 target
+records (200 train/51 held out) and target-vs-global TV about 0.50; broader direct partition checks
+showed expected alpha-dependent heterogeneity. Existing `non-iid` quantity skew is unchanged.
+Nothing pushed and nothing running. Tests: 73 focused tests pass; 274/274 non-MPS-fatal tests pass
+when the pre-existing `experiments/reproduce/tests/test_paper_loss.py` native abort is excluded.
 
 On `master`, nothing currently running. `reports/accuracy_vs_roc_auc.html` (refreshed 2026-08-15) was sent to
 the project supervisor for review; his feedback asked for a step back from the numbers-heavy
