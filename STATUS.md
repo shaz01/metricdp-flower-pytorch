@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/dirichlet-splitter`
-**Last updated:** 2026-08-20, local development machine (Colab CIA sweep launched)
+**Last updated:** 2026-08-20, local development machine (Colab CIA sweep complete)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -14,7 +14,7 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-`feature/dirichlet-splitter` is now pushed to `origin`. Its Dirichlet CIFAR-10 removal-CIA sweep is running on Colab A100s in two-session batches: 8 canonical clients, seed 42, 20 rounds, 5 local epochs, alphas 0.1/1.5/3, noise ratios 0.0025/0.004/0.00625, and vanilla/global-DP/metric-privacy. Each `(alpha, ratio, privacy)` session runs both IN-remove (8 active clients) and OUT-remove (7 active clients), for 54 trajectories total; results go to disjoint `results/dirichlet/cifar10/8_clients/` chunks. The first batch (alpha 0.1, ratio 0.0025, vanilla and global-DP) passed its five-minute startup watchdog with real round progress and A100 utilization; continue two at a time, collect/push each completed chunk, and do not stage `mail.pdf`.
+`feature/dirichlet-splitter` is pushed to `origin`. Its 8-canonical-client Dirichlet CIFAR-10 removal-CIA sweep completed on Colab A100s: 25 matched `(IN-remove, OUT-remove)` chunks / 50 trajectories, all seed 42, 20 rounds, and 5 local epochs. Alphas 0.1 and 1.5 cover all three privacy modes at ratios 0.0025/0.004/0.00625; alpha 3 covers global-DP and metric-privacy at all three ratios, plus the single vanilla ratio-0.0025 chunk (the other two alpha-3 vanilla ratios were deliberately omitted because vanilla is ratio-independent). Every chunk was collected, committed, pushed, and its VM released; `colab sessions` is empty. Results are under `results/dirichlet/cifar10/8_clients/`. Do not stage the unrelated `mail.pdf` or untracked presentation files.
 
 `feature/dirichlet-splitter` is a local branch with two explicit label-heterogeneity modes across
 all six dataset plugins. The earlier `label-skew` mode (commit `9e18afe`) uses four seeded,
@@ -135,8 +135,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `cia-dir-a0p1-r0p0025-vanilla` | CIFAR-10 Dirichlet CIA: α=0.1, ratio=0.0025, vanilla; IN/OUT pair | running; passed startup watchdog (round 17/20 at last check; A100 19%, 5719/40960 MiB) |
-| `cia-dir-a0p1-r0p0025-global` | CIFAR-10 Dirichlet CIA: α=0.1, ratio=0.0025, global-DP; IN/OUT pair | running; passed startup watchdog (round 17/20 at last check; A100 24%, 5719/40960 MiB) |
+| _(none)_ | All requested Dirichlet CIA chunks collected and Colab sessions released. | — |
 
 ## What's established on `master`
 
