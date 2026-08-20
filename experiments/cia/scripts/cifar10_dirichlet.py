@@ -4,6 +4,8 @@ This entry point permits only Dirichlet partitioning. The concentration must
 be supplied explicitly with ``--dirichlet-alpha``; there is intentionally no
 alpha default. It covers both removal views (IN keeps the target, OUT drops
 it) and all three privacy modes over the full ten-class ``uoft-cs/cifar10``.
+Each selected matrix chunk receives its own directory below the client-count
+folder, so disjoint alpha/privacy/adjacency/seed chunks can run concurrently.
 
 ``--clients`` sets the *canonical* federation size, i.e. the partition count the
 dataset is split into. The IN view runs all of them; the OUT view runs the same
@@ -183,6 +185,32 @@ def build_combos(
     ]
 
 
+def _path_float(value: float) -> str:
+    return f"{value:g}".replace("-", "m").replace(".", "p")
+
+
+def _chunk_output_dir(
+    *,
+    clients: int,
+    dirichlet_alpha: float,
+    privacy: str,
+    adjacencies: Sequence[str],
+    seeds: Sequence[int],
+    noise_ratio: float | None,
+) -> Path:
+    """Give every independently runnable matrix chunk its own report directory."""
+    adjacency_token = "-".join(adjacencies)
+    seed_token = "-".join(str(seed) for seed in seeds)
+    noise_token = (
+        "historical" if noise_ratio is None else _path_float(noise_ratio)
+    )
+    chunk = (
+        f"alpha-{_path_float(dirichlet_alpha)}__{privacy}"
+        f"__{adjacency_token}__seeds-{seed_token}__noise-{noise_token}"
+    )
+    return RESULTS_ROOT / f"{clients}_clients" / chunk
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -233,7 +261,14 @@ def _parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = _parser().parse_args()
-    output_dir = (RESULTS_ROOT / f"{args.clients}_clients").resolve()
+    output_dir = _chunk_output_dir(
+        clients=args.clients,
+        dirichlet_alpha=args.dirichlet_alpha,
+        privacy=args.privacy,
+        adjacencies=args.adjacency,
+        seeds=args.seed,
+        noise_ratio=args.noise_ratio,
+    ).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     combos = build_combos(
         adjacencies=args.adjacency,

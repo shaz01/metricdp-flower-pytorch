@@ -105,7 +105,31 @@ def test_results_path_is_derived_from_client_count() -> None:
     )
 
 
-def test_main_writes_directly_to_client_count_directory(tmp_path, monkeypatch) -> None:
+def test_disjoint_chunks_receive_disjoint_output_directories(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(cifar10_dirichlet, "RESULTS_ROOT", tmp_path)
+    common = {
+        "clients": 48,
+        "privacy": "vanilla",
+        "adjacencies": ("in-remove", "out-remove"),
+        "seeds": (42,),
+        "noise_ratio": None,
+    }
+
+    weak = cifar10_dirichlet._chunk_output_dir(
+        dirichlet_alpha=10.0, **common
+    )
+    strong = cifar10_dirichlet._chunk_output_dir(
+        dirichlet_alpha=0.1, **common
+    )
+
+    assert weak != strong
+    assert weak.parent == tmp_path / "48_clients"
+    assert strong.parent == tmp_path / "48_clients"
+
+
+def test_main_writes_to_unique_chunk_below_client_count_directory(
+    tmp_path, monkeypatch
+) -> None:
     calls = []
     monkeypatch.setattr(cifar10_dirichlet, "RESULTS_ROOT", tmp_path)
     monkeypatch.setattr(cifar10_dirichlet, "resolve_device", lambda: "cpu")
@@ -130,7 +154,12 @@ def test_main_writes_directly_to_client_count_directory(tmp_path, monkeypatch) -
 
     cifar10_dirichlet.main()
 
-    assert calls[0]["output_dir"] == tmp_path / "48_clients"
-    assert calls[0]["log_path"] == tmp_path / "48_clients" / "progress.log"
+    expected = (
+        tmp_path
+        / "48_clients"
+        / "alpha-0p1__vanilla__in-remove-out-remove__seeds-42__noise-historical"
+    )
+    assert calls[0]["output_dir"] == expected
+    assert calls[0]["log_path"] == expected / "progress.log"
     assert {combo.partition for combo in calls[0]["combos"]} == {"dirichlet"}
     assert {combo.dirichlet_alpha for combo in calls[0]["combos"]} == {0.1}
