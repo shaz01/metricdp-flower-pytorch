@@ -29,6 +29,7 @@ from metricdp_pytorch.utils.data import (
 )
 from metricdp_pytorch.utils.split_data import (
     balanced_stratified_partitions,
+    label_shard_partitions,
     partition_by_class_counts,
     quantity_skewed_partitions,
 )
@@ -106,16 +107,21 @@ def create_partitions(
     partition_profile: str = "auto",
     client_weights: Sequence[float] | None = None,
 ) -> list[list[int]]:
-    """Create all paper-profile or scalable client partitions."""
+    """Create paper-profile, scalable, or strongly label-skewed partitions."""
     if num_partitions < 1:
         raise ValueError("num_partitions must be positive.")
-    if mode not in ("homogeneous", "non-iid"):
-        raise ValueError("mode must be 'homogeneous' or 'non-iid'.")
+    if mode not in ("homogeneous", "non-iid", "label-skew"):
+        raise ValueError("mode must be 'homogeneous', 'non-iid', or 'label-skew'.")
     if client_weights is not None and mode != "non-iid":
         raise ValueError("client_weights are only supported for non-IID partitions.")
 
     label_array = np.asarray(labels, dtype=np.int64)
-    if _use_exact_profile(partition_profile, num_partitions):
+    use_exact_profile = _use_exact_profile(partition_profile, num_partitions)
+    if mode == "label-skew":
+        if partition_profile.lower() == "exact":
+            raise ValueError("The exact paper profile does not support label-skew mode.")
+        return label_shard_partitions(label_array, num_partitions, seed=seed)
+    if use_exact_profile:
         observed = tuple(np.bincount(label_array, minlength=4).tolist())
         if observed != PAPER_TRAIN_CLASS_COUNTS:
             raise ValueError(

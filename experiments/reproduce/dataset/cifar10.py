@@ -29,6 +29,7 @@ from metricdp_pytorch.utils.data import (
 )
 from metricdp_pytorch.utils.split_data import (
     balanced_stratified_partitions,
+    label_shard_partitions,
     quantity_skewed_partitions,
 )
 
@@ -97,11 +98,11 @@ def create_partitions(
     partition_profile: str = "auto",
     client_weights: Sequence[float] | None = None,
 ) -> list[list[int]]:
-    """Create balanced or quantity-skewed CIFAR-10 partitions."""
+    """Create balanced, quantity-skewed, or strongly label-skewed partitions."""
     if num_partitions < 1:
         raise ValueError("num_partitions must be positive.")
-    if mode not in ("homogeneous", "non-iid"):
-        raise ValueError("mode must be 'homogeneous' or 'non-iid'.")
+    if mode not in ("homogeneous", "non-iid", "label-skew"):
+        raise ValueError("mode must be 'homogeneous', 'non-iid', or 'label-skew'.")
     if partition_profile.lower() not in ("auto", "scalable"):
         raise ValueError("CIFAR-10 supports 'auto' and 'scalable' profiles.")
     if client_weights is not None and mode != "non-iid":
@@ -112,6 +113,8 @@ def create_partitions(
         return balanced_stratified_partitions(
             label_array, num_partitions, seed=seed
         )
+    if mode == "label-skew":
+        return label_shard_partitions(label_array, num_partitions, seed=seed)
     return quantity_skewed_partitions(
         len(label_array),
         num_partitions,

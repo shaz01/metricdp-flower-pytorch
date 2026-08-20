@@ -17,7 +17,7 @@ from torchvision.transforms import ToTensor
 
 HF_OFFLINE_VARS = ("HF_HUB_OFFLINE", "HF_DATASETS_OFFLINE")
 DatasetLoader = Callable[..., Any]
-PartitionMode = Literal["homogeneous", "non-iid"]
+PartitionMode = Literal["homogeneous", "non-iid", "label-skew"]
 _TO_TENSOR = ToTensor()
 
 
