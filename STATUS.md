@@ -1,9 +1,7 @@
 # Project Status
 
-**Branch:** `master`
-**Last updated:** 2026-08-16, CUDA workstation (`feature/eurosat-scaling` and
-`feature/cifar100-scaling` are both complete, merged into `master`, and deleted — see `git log`
-for anything more recent
+**Branch:** `feature/strong-label-skew-splitter`
+**Last updated:** 2026-08-20, local development machine
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -16,7 +14,19 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-Nothing currently running. `reports/accuracy_vs_roc_auc.html` (refreshed 2026-08-15) was sent to
+`feature/strong-label-skew-splitter` is a local branch adding a new `label-skew` partition mode
+across all six dataset plugins. It uses four seeded, mostly single-label shards per client: client
+sizes stay closely balanced while class mixtures are strongly heterogeneous and less likely to be
+duplicated than the classic two-shard construction. Exact real-data checks through the normal
+client-loader flow gave target-vs-global training-distribution TV=0.600 on CIFAR-10 at both n=48
+and n=100; EuroSAT n=48 gave 0.629/0.687/0.613 for seeds 42/43/44. Target-vs-nearest-other-client
+TV stayed at least 0.249 for CIFAR-10 and 0.251 for EuroSAT in those checks. Select it with
+`--partition label-skew`; the existing `non-iid` quantity-skew behavior is unchanged. Commit
+`9e18afe`; nothing pushed and nothing running. Tests: 51 focused tests pass; 254/254 non-MPS-fatal
+tests pass when the pre-existing `experiments/reproduce/tests/test_paper_loss.py` native abort is
+excluded.
+
+On `master`, nothing currently running. `reports/accuracy_vs_roc_auc.html` (refreshed 2026-08-15) was sent to
 the project supervisor for review; his feedback asked for a step back from the numbers-heavy
 format toward two plain-language, plot-supported claims: (1) more clients → lower CIA attack AUC,
 especially vanilla, and (2) DP noise lowers attack AUC at a heavy accuracy cost. **New follow-up
