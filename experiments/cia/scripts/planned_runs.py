@@ -76,9 +76,10 @@ class FashionTable9DataModule(FashionMNISTDataModule):
         seed: int,
         partition_profile: str = "auto",
         client_weights: Sequence[float] | None = None,
+        dirichlet_alpha: float = 0.5,
         max_samples: int = 0,
     ) -> tuple[DataLoader, DataLoader]:
-        del partition_mode, partition_profile
+        del partition_mode, partition_profile, dirichlet_alpha
         if num_partitions != PAPER_CIA_NUM_CLIENTS:
             raise ValueError("The Table-9 transfer distribution requires three clients.")
         if client_weights is not None:
@@ -115,9 +116,10 @@ class CifarTable9DataModule(Cifar4DataModule):
         seed: int,
         partition_profile: str = "auto",
         client_weights: Sequence[float] | None = None,
+        dirichlet_alpha: float = 0.5,
         max_samples: int = 0,
     ) -> tuple[DataLoader, DataLoader]:
-        del partition_mode, partition_profile
+        del partition_mode, partition_profile, dirichlet_alpha
         if num_partitions != PAPER_CIA_NUM_CLIENTS:
             raise ValueError("The Table-9 transfer distribution requires three clients.")
         if client_weights is not None:

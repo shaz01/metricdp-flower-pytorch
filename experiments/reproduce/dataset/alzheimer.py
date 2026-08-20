@@ -29,6 +29,7 @@ from metricdp_pytorch.utils.data import (
 )
 from metricdp_pytorch.utils.split_data import (
     balanced_stratified_partitions,
+    dirichlet_label_partitions,
     label_shard_partitions,
     partition_by_class_counts,
     quantity_skewed_partitions,
@@ -106,21 +107,30 @@ def create_partitions(
     seed: int = 42,
     partition_profile: str = "auto",
     client_weights: Sequence[float] | None = None,
+    dirichlet_alpha: float = 0.5,
 ) -> list[list[int]]:
-    """Create paper-profile, scalable, or strongly label-skewed partitions."""
+    """Create paper-profile, scalable, shard-skewed, or Dirichlet partitions."""
     if num_partitions < 1:
         raise ValueError("num_partitions must be positive.")
-    if mode not in ("homogeneous", "non-iid", "label-skew"):
-        raise ValueError("mode must be 'homogeneous', 'non-iid', or 'label-skew'.")
+    if mode not in ("homogeneous", "non-iid", "label-skew", "dirichlet"):
+        raise ValueError(
+            "mode must be 'homogeneous', 'non-iid', 'label-skew', or 'dirichlet'."
+        )
     if client_weights is not None and mode != "non-iid":
         raise ValueError("client_weights are only supported for non-IID partitions.")
 
     label_array = np.asarray(labels, dtype=np.int64)
     use_exact_profile = _use_exact_profile(partition_profile, num_partitions)
-    if mode == "label-skew":
+    if mode in ("label-skew", "dirichlet"):
         if partition_profile.lower() == "exact":
-            raise ValueError("The exact paper profile does not support label-skew mode.")
-        return label_shard_partitions(label_array, num_partitions, seed=seed)
+            raise ValueError(
+                f"The exact paper profile does not support {mode} mode."
+            )
+        if mode == "label-skew":
+            return label_shard_partitions(label_array, num_partitions, seed=seed)
+        return dirichlet_label_partitions(
+            label_array, num_partitions, seed=seed, alpha=dirichlet_alpha
+        )
     if use_exact_profile:
         observed = tuple(np.bincount(label_array, minlength=4).tolist())
         if observed != PAPER_TRAIN_CLASS_COUNTS:
@@ -155,6 +165,7 @@ def partition_train_indices(
     seed: int = 42,
     exact_paper_distribution: bool | None = None,
     client_weights: Sequence[float] | None = None,
+    dirichlet_alpha: float = 0.5,
 ) -> list[int]:
     """Compatibility wrapper returning one partition from ``create_partitions``."""
     if not 0 <= partition_id < num_partitions:
@@ -171,6 +182,7 @@ def partition_train_indices(
         seed=seed,
         partition_profile=profile,
         client_weights=client_weights,
+        dirichlet_alpha=dirichlet_alpha,
     )[partition_id]
 
 
@@ -206,6 +218,7 @@ class AlzheimerDataModule:
         seed: int,
         partition_profile: str = "auto",
         client_weights: Sequence[float] | None = None,
+        dirichlet_alpha: float = 0.5,
         max_samples: int = 0,
     ) -> tuple[DataLoader, DataLoader]:
         split = self.dataset["train"]
@@ -217,6 +230,7 @@ class AlzheimerDataModule:
             seed=seed,
             partition_profile=partition_profile,
             client_weights=client_weights,
+            dirichlet_alpha=dirichlet_alpha,
         )
         if not 0 <= partition_id < len(partitions):
             raise ValueError("partition_id must be in [0, num_partitions).")
@@ -266,6 +280,7 @@ def load_client_data(
     seed: int = 42,
     exact_paper_distribution: bool | None = None,
     client_weights: Sequence[float] | None = None,
+    dirichlet_alpha: float = 0.5,
     max_samples: int = 0,
     dataset: HuggingFaceDataset | None = None,
     cache_dir: str | Path | None = None,
@@ -288,6 +303,7 @@ def load_client_data(
             else "exact" if exact_paper_distribution else "scalable"
         ),
         client_weights=client_weights,
+        dirichlet_alpha=dirichlet_alpha,
         max_samples=max_samples,
     )
 

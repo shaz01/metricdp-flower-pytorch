@@ -91,6 +91,7 @@ class NoisyDataModule:
         seed: int,
         partition_profile: str = "auto",
         client_weights: Sequence[float] | None = None,
+        dirichlet_alpha: float = 0.5,
         max_samples: int = 0,
     ) -> tuple[DataLoader, DataLoader]:
         train_loader, test_loader = self.data_module.client_loaders(
@@ -101,6 +102,7 @@ class NoisyDataModule:
             seed=seed,
             partition_profile=partition_profile,
             client_weights=client_weights,
+            dirichlet_alpha=dirichlet_alpha,
             max_samples=max_samples,
         )
         return (

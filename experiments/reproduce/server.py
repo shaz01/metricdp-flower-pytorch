@@ -264,6 +264,7 @@ def main(grid: Grid, context: Context) -> None:
             "max_client_samples": int(config.get("max-client-samples", 0)),
             "max_test_samples": int(config.get("max-test-samples", 0)),
             "client_weights": str(config.get("client-weights", "")),
+            "dirichlet_alpha": float(config.get("dirichlet-alpha", 0.5)),
             "noise_multiplier": float(config.get("noise-multiplier", 0.01)),
             "clipping_norm": float(config.get("clipping-norm", 5.0)),
             "initialization_pretrained": bool(initialization_losses),

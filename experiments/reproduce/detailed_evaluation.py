@@ -249,6 +249,7 @@ def _evaluate_model(
     max_test_samples = int(metadata.get("max_test_samples", 0))
     partition_profile = str(metadata.get("partition_profile", "auto"))
     encoded_weights = str(metadata.get("client_weights", "")).strip()
+    dirichlet_alpha = float(metadata.get("dirichlet_alpha", 0.5))
     client_weights = (
         [float(weight.strip()) for weight in encoded_weights.split(",")]
         if encoded_weights
@@ -291,6 +292,7 @@ def _evaluate_model(
             seed=seed,
             partition_profile=partition_profile,
             client_weights=client_weights,
+            dirichlet_alpha=dirichlet_alpha,
             max_samples=max_client_samples,
         )
         labels, probabilities = predict_probabilities(

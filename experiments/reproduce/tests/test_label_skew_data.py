@@ -48,6 +48,34 @@ def test_dataset_plugins_expose_strong_label_skew(create_partitions) -> None:
     )
 
 
+@pytest.mark.parametrize(
+    "create_partitions",
+    [
+        alzheimer_partitions,
+        cifar4_partitions,
+        cifar10_partitions,
+        cifar100_partitions,
+        eurosat_partitions,
+        fashion_partitions,
+    ],
+)
+def test_dataset_plugins_expose_dirichlet_label_skew(create_partitions) -> None:
+    labels = [label for label in range(4) for _ in range(200)]
+
+    partitions = create_partitions(
+        labels,
+        num_partitions=8,
+        mode="dirichlet",
+        seed=42,
+        dirichlet_alpha=0.1,
+    )
+
+    assert sorted(index for partition in partitions for index in partition) == list(
+        range(len(labels))
+    )
+    assert all(partitions)
+
+
 def test_alzheimer_label_skew_does_not_select_four_client_paper_profile() -> None:
     """The new mode must work at n=4 even though profile=auto is paper-exact there."""
     labels = [label for label in range(4) for _ in range(100)]
@@ -64,3 +92,20 @@ def test_alzheimer_label_skew_does_not_select_four_client_paper_profile() -> Non
         len({labels[index] for index in partition}) <= 4
         for partition in partitions
     )
+
+
+def test_alzheimer_dirichlet_does_not_select_four_client_paper_profile() -> None:
+    labels = [label for label in range(4) for _ in range(100)]
+
+    partitions = alzheimer_partitions(
+        labels,
+        num_partitions=4,
+        mode="dirichlet",
+        seed=42,
+        dirichlet_alpha=0.5,
+    )
+
+    assert sorted(index for partition in partitions for index in partition) == list(
+        range(len(labels))
+    )
+    assert all(partitions)

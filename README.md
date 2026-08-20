@@ -13,7 +13,7 @@ Each metric-private round:
 
 ## Dataset
 
-The default data module uses `Falah/Alzheimer_MRI`, the paper CNN, and the published four-client distributions. Every local client partition uses a deterministic stratified 80/20 train/test split. Scalable balanced, quantity-skewed, and strong label-shard partitions are available for custom client counts. Select the latter with `--partition label-skew`; it assigns four mostly single-label shards per client to create strong class-distribution heterogeneity without large client-size imbalance.
+The default data module uses `Falah/Alzheimer_MRI`, the paper CNN, and the published four-client distributions. Every local client partition uses a deterministic stratified 80/20 train/test split. Scalable balanced, quantity-skewed, strong label-shard, and Dirichlet partitions are available for custom client counts. Use `--partition label-skew` for four mostly single-label shards per client, or `--partition dirichlet --dirichlet-alpha 0.5` for class-wise symmetric Dirichlet allocation. Smaller positive alpha values produce stronger label and quantity heterogeneity.
 
 Fashion-MNIST is available with matching data and model plugins:
 

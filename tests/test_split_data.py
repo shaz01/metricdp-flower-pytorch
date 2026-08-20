@@ -2,12 +2,62 @@
 
 from collections import Counter
 
+import numpy as np
 import pytest
 
 from metricdp_pytorch.utils.split_data import (
+    dirichlet_label_partitions,
     label_shard_partitions,
     partition_by_class_counts,
 )
+
+
+def test_dirichlet_partitions_are_complete_nonempty_deterministic_and_skewed() -> None:
+    labels = [label for label in range(10) for _ in range(200)]
+
+    seed_42_a = dirichlet_label_partitions(labels, 20, seed=42, alpha=0.1)
+    seed_42_b = dirichlet_label_partitions(labels, 20, seed=42, alpha=0.1)
+    seed_43 = dirichlet_label_partitions(labels, 20, seed=43, alpha=0.1)
+
+    assert seed_42_a == seed_42_b
+    assert seed_42_a != seed_43
+    assert sorted(index for partition in seed_42_a for index in partition) == list(
+        range(len(labels))
+    )
+    assert all(seed_42_a)
+    global_distribution = np.full(10, 0.1)
+    target_counts = np.bincount(
+        [labels[index] for index in seed_42_a[0]], minlength=10
+    )
+    target_distribution = target_counts / target_counts.sum()
+    assert 0.5 * np.abs(target_distribution - global_distribution).sum() > 0.2
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"num_partitions": 0}, "num_partitions"),
+        ({"num_partitions": 2, "alpha": 0.0}, "alpha"),
+        ({"num_partitions": 2, "min_partition_size": 0}, "min_partition_size"),
+        ({"num_partitions": 2, "max_attempts": 0}, "max_attempts"),
+        ({"num_partitions": 3, "min_partition_size": 2}, "too small"),
+    ],
+)
+def test_dirichlet_partitions_reject_invalid_configuration(kwargs, message) -> None:
+    with pytest.raises(ValueError, match=message):
+        dirichlet_label_partitions([0, 0, 1, 1], seed=42, **kwargs)
+
+
+def test_dirichlet_partitions_report_impossible_conditioned_draw() -> None:
+    with pytest.raises(RuntimeError, match="Could not draw"):
+        dirichlet_label_partitions(
+            [0] * 20,
+            2,
+            seed=42,
+            alpha=0.01,
+            min_partition_size=10,
+            max_attempts=1,
+        )
 
 
 def test_label_shards_are_balanced_complete_deterministic_and_skewed() -> None:

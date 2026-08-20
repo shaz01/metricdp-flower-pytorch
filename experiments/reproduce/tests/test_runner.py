@@ -39,6 +39,7 @@ def test_default_runner_config_uses_paper_settings(tmp_path) -> None:
     assert config["local-epochs"] == 5
     assert config["learning-rate"] == 0.001
     assert config["partition-profile"] == "auto"
+    assert config["dirichlet-alpha"] == 0.5
     assert config["data-module"] == (
         "experiments.reproduce.dataset.alzheimer:create_data_module"
     )
@@ -94,6 +95,36 @@ def test_runner_passes_plugin_specific_partition_values_through(tmp_path) -> Non
     assert config["partition-profile"] == "dataset-profile-a"
     assert config["data-module"] == "my_package.data:create_data_module"
     assert config["model-module"] == "my_package.model:create_model"
+
+
+def test_runner_passes_dirichlet_alpha_through(tmp_path) -> None:
+    config = build_run_config(
+        _args(
+            "--partition",
+            "dirichlet",
+            "--dirichlet-alpha",
+            "0.1",
+            "--output-dir",
+            str(tmp_path),
+        )
+    )
+
+    assert config["partition-mode"] == "dirichlet"
+    assert config["dirichlet-alpha"] == 0.1
+    assert "__dirichlet__alpha-0p1__" in config["run-name"]
+
+
+@pytest.mark.parametrize("alpha", ("0", "-0.1", "nan", "inf"))
+def test_runner_rejects_invalid_dirichlet_alpha(tmp_path, alpha) -> None:
+    with pytest.raises(ValueError, match="dirichlet-alpha"):
+        build_run_config(
+            _args(
+                "--dirichlet-alpha",
+                alpha,
+                "--output-dir",
+                str(tmp_path),
+            )
+        )
 
 
 def test_runner_passes_checkpoint_rounds_through(tmp_path) -> None:

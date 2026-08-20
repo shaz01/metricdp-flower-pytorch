@@ -159,6 +159,7 @@ class PartitionViewDataModule:
         seed: int,
         partition_profile: str = "auto",
         client_weights: Sequence[float] | None = None,
+        dirichlet_alpha: float = 0.5,
         max_samples: int = 0,
     ) -> tuple[DataLoader, DataLoader]:
         if num_partitions != self.num_active_partitions:
@@ -181,6 +182,7 @@ class PartitionViewDataModule:
             seed=seed,
             partition_profile=partition_profile,
             client_weights=client_weights,
+            dirichlet_alpha=dirichlet_alpha,
             max_samples=max_samples,
         )
 

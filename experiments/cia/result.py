@@ -24,6 +24,7 @@ class CiaResult:
     shadow_size: int
     clean_difference_pct: float
     noisy_difference_pct: float
+    dirichlet_alpha: float = 0.5
 
 
 def relative_difference(aggregated_loss: float, target_loss: float) -> float:
@@ -63,4 +64,5 @@ def make_cia_result(
         noisy_difference_pct=relative_difference(
             aggregated_test_loss, target_noisy_shadow_loss
         ),
+        dirichlet_alpha=combo.dirichlet_alpha,
     )

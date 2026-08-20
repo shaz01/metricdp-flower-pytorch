@@ -72,6 +72,7 @@ def _client_data(context: Context):
         seed=int(config.get("seed", 42)),
         partition_profile=str(config.get("partition-profile", "auto")),
         client_weights=_client_weights(config),
+        dirichlet_alpha=float(config.get("dirichlet-alpha", 0.5)),
         max_samples=int(config.get("max-client-samples", 0)),
     )
 

@@ -57,6 +57,76 @@ def balanced_stratified_partitions(
     return partitions
 
 
+def dirichlet_label_partitions(
+    labels: Sequence[int],
+    num_partitions: int,
+    *,
+    seed: int,
+    alpha: float = 0.5,
+    min_partition_size: int = 1,
+    max_attempts: int = 1_000,
+) -> list[list[int]]:
+    """Allocate each class across clients with symmetric Dirichlet proportions.
+
+    For every label, independently draw a client-probability vector from
+    ``Dirichlet(alpha)`` and allocate that label's shuffled examples with a
+    multinomial draw. Smaller ``alpha`` produces stronger label and quantity
+    heterogeneity; larger values approach an IID split. The complete allocation
+    is redrawn until every client has at least ``min_partition_size`` examples,
+    matching the usual conditioned-Dirichlet construction used in federated
+    learning experiments.
+
+    Every input index is assigned exactly once. Identical inputs and seeds
+    produce identical partitions.
+    """
+    if num_partitions < 1:
+        raise ValueError("num_partitions must be positive.")
+    if not np.isfinite(alpha) or alpha <= 0.0:
+        raise ValueError("alpha must be positive and finite.")
+    if min_partition_size < 1:
+        raise ValueError("min_partition_size must be positive.")
+    if max_attempts < 1:
+        raise ValueError("max_attempts must be positive.")
+
+    label_array = np.asarray(labels)
+    if label_array.ndim != 1:
+        raise ValueError("labels must be one-dimensional.")
+    if len(label_array) < num_partitions * min_partition_size:
+        raise ValueError(
+            "The dataset is too small for the requested minimum partition size "
+            f"({len(label_array)} examples, {num_partitions} partitions, "
+            f"minimum {min_partition_size})."
+        )
+
+    rng = np.random.default_rng(seed)
+    class_indices = [
+        np.flatnonzero(label_array == label) for label in np.unique(label_array)
+    ]
+    for _attempt in range(max_attempts):
+        partitions: list[list[int]] = [[] for _ in range(num_partitions)]
+        for indices in class_indices:
+            shuffled = indices.copy()
+            rng.shuffle(shuffled)
+            proportions = rng.dirichlet(np.full(num_partitions, alpha))
+            counts = rng.multinomial(len(shuffled), proportions)
+            offset = 0
+            for partition_id, count in enumerate(counts):
+                next_offset = offset + int(count)
+                partitions[partition_id].extend(shuffled[offset:next_offset].tolist())
+                offset = next_offset
+
+        if min(map(len, partitions)) >= min_partition_size:
+            for partition in partitions:
+                rng.shuffle(partition)
+            return partitions
+
+    raise RuntimeError(
+        "Could not draw a Dirichlet allocation satisfying min_partition_size "
+        f"after {max_attempts} attempts; increase alpha, lower the minimum, or "
+        "reduce the number of partitions."
+    )
+
+
 def label_shard_partitions(
     labels: Sequence[int],
     num_partitions: int,

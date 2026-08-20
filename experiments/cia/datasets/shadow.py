@@ -76,6 +76,7 @@ class ShadowDataModule:
         partition_mode: str = "homogeneous",
         partition_profile: str = "auto",
         client_weights: Sequence[float] | None = None,
+        dirichlet_alpha: float = 0.5,
     ) -> None:
         if num_clients < 1:
             raise ValueError("num_clients must be positive.")
@@ -93,6 +94,7 @@ class ShadowDataModule:
         self.partition_mode = partition_mode
         self.partition_profile = partition_profile
         self.client_weights = client_weights
+        self.dirichlet_alpha = dirichlet_alpha
 
     @property
     def class_names(self) -> Sequence[str]:
@@ -109,6 +111,7 @@ class ShadowDataModule:
         seed: int,
         partition_profile: str = "auto",
         client_weights: Sequence[float] | None = None,
+        dirichlet_alpha: float = 0.5,
         max_samples: int = 0,
     ) -> tuple[DataLoader, DataLoader]:
         return self.data_module.client_loaders(
@@ -119,6 +122,7 @@ class ShadowDataModule:
             seed=seed,
             partition_profile=partition_profile,
             client_weights=client_weights,
+            dirichlet_alpha=dirichlet_alpha,
             max_samples=max_samples,
         )
 
@@ -143,6 +147,7 @@ class ShadowDataModule:
             seed=seed,
             partition_profile=self.partition_profile,
             client_weights=self.client_weights,
+            dirichlet_alpha=self.dirichlet_alpha,
             max_samples=max_samples,
         )
         target_train_dataset = target_train_loader.dataset
@@ -180,4 +185,5 @@ def create_shadow_data_module(config: Mapping[str, Any]) -> ShadowDataModule:
         partition_mode=str(config.get("partition-mode", "homogeneous")),
         partition_profile=str(config.get("partition-profile", "auto")),
         client_weights=_client_weights(config.get("client-weights")),
+        dirichlet_alpha=float(config.get("dirichlet-alpha", 0.5)),
     )

@@ -86,6 +86,12 @@ def _parser() -> argparse.ArgumentParser:
         default="",
         help="comma-separated non-IID quantity weights, one per client",
     )
+    parser.add_argument(
+        "--dirichlet-alpha",
+        type=float,
+        default=0.5,
+        help="positive concentration for --partition dirichlet (smaller means stronger skew)",
+    )
     parser.add_argument("--initialization-epochs", type=int, default=20)
     parser.add_argument("--initialization-batch-size", type=int, default=32)
     parser.add_argument("--initialization-learning-rate", type=float, default=0.001)
@@ -170,6 +176,8 @@ def _validate(args: argparse.Namespace) -> None:
         raise ValueError("rounds and local-epochs must be positive.")
     if args.weight_decay < 0:
         raise ValueError("weight-decay must be non-negative.")
+    if not math.isfinite(args.dirichlet_alpha) or args.dirichlet_alpha <= 0:
+        raise ValueError("dirichlet-alpha must be positive and finite.")
     if len(set(args.checkpoint_rounds)) != len(args.checkpoint_rounds):
         raise ValueError("checkpoint-rounds must not contain duplicates.")
     if any(round_number < 1 or round_number > args.rounds for round_number in args.checkpoint_rounds):
@@ -212,8 +220,12 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
     max_test_samples = (
         64 if args.smoke and args.max_test_samples == 0 else args.max_test_samples
     )
+    partition_token = args.partition
+    if args.partition == "dirichlet":
+        encoded_alpha = f"{args.dirichlet_alpha:g}".replace(".", "p")
+        partition_token = f"{partition_token}__alpha-{encoded_alpha}"
     run_name = args.run_name or (
-        f"paper__{args.partition}__{args.privacy}__{args.aggregation}"
+        f"paper__{partition_token}__{args.privacy}__{args.aggregation}"
         f"__clients-{args.num_clients}__seed-{args.seed}"
     )
     output_dir = args.output_dir.resolve()
@@ -227,6 +239,7 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
             "partition-mode": args.partition,
             "partition-profile": args.partition_profile,
             "client-weights": args.client_weights,
+            "dirichlet-alpha": args.dirichlet_alpha,
             "privacy": args.privacy,
             "aggregation": args.aggregation,
             "seed": args.seed,

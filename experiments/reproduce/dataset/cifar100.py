@@ -30,6 +30,7 @@ from metricdp_pytorch.utils.data import (
 )
 from metricdp_pytorch.utils.split_data import (
     balanced_stratified_partitions,
+    dirichlet_label_partitions,
     label_shard_partitions,
     quantity_skewed_partitions,
     split_stratified,
@@ -112,12 +113,15 @@ def create_partitions(
     seed: int = 42,
     partition_profile: str = "auto",
     client_weights: Sequence[float] | None = None,
+    dirichlet_alpha: float = 0.5,
 ) -> list[list[int]]:
-    """Create balanced, quantity-skewed, or strongly label-skewed partitions."""
+    """Create balanced, quantity-skewed, shard-skewed, or Dirichlet partitions."""
     if num_partitions < 1:
         raise ValueError("num_partitions must be positive.")
-    if mode not in ("homogeneous", "non-iid", "label-skew"):
-        raise ValueError("mode must be 'homogeneous', 'non-iid', or 'label-skew'.")
+    if mode not in ("homogeneous", "non-iid", "label-skew", "dirichlet"):
+        raise ValueError(
+            "mode must be 'homogeneous', 'non-iid', 'label-skew', or 'dirichlet'."
+        )
     if partition_profile.lower() not in ("auto", "scalable"):
         raise ValueError("CIFAR-100 supports 'auto' and 'scalable' profiles.")
     if client_weights is not None and mode != "non-iid":
@@ -130,6 +134,10 @@ def create_partitions(
         )
     if mode == "label-skew":
         return label_shard_partitions(label_array, num_partitions, seed=seed)
+    if mode == "dirichlet":
+        return dirichlet_label_partitions(
+            label_array, num_partitions, seed=seed, alpha=dirichlet_alpha
+        )
     return quantity_skewed_partitions(
         len(label_array),
         num_partitions,
@@ -176,6 +184,7 @@ class Cifar100DataModule:
         seed: int,
         partition_profile: str = "auto",
         client_weights: Sequence[float] | None = None,
+        dirichlet_alpha: float = 0.5,
         max_samples: int = 0,
     ) -> tuple[DataLoader, DataLoader]:
         split = self.dataset["train"]
@@ -187,6 +196,7 @@ class Cifar100DataModule:
             seed=seed,
             partition_profile=partition_profile,
             client_weights=client_weights,
+            dirichlet_alpha=dirichlet_alpha,
         )
         if not 0 <= partition_id < len(partitions):
             raise ValueError("partition_id must be in [0, num_partitions).")
