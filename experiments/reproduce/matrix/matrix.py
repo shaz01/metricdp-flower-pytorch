@@ -21,7 +21,7 @@ class Matrix:
     hyperparams: Hyperparams
     data_module: str
     model_module: str
-    dirichlet_alpha: float = 0.5
+    dirichlet_alpha: float
 
     def list_combos(self, *, name_prefix: str, num_clients: int) -> list[Combo]:
         """List every meaningful combo in this matrix.
