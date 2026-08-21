@@ -10,6 +10,7 @@ def test_list_combos_only_uses_first_noise_multiplier_for_vanilla() -> None:
         aggregations=("fedavg",),
         seeds=(42,),
         noise_multipliers=(0.01, 0.1, 1.0),
+        dirichlet_alphas=(0.5,),
         hyperparams=Hyperparams(
             clipping_norm=5.0,
             rounds=20,
@@ -54,7 +55,7 @@ def test_matrix_propagates_dirichlet_alpha_into_names_and_runner_args(tmp_path) 
         ),
         data_module="example.data:create_data_module",
         model_module="example.model:create_model",
-        dirichlet_alpha=0.1,
+        dirichlet_alphas=(0.1,),
     )
 
     combo = matrix.list_combos(name_prefix="test", num_clients=8)[0]
