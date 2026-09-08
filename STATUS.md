@@ -1,9 +1,8 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-08-16, CUDA workstation (`feature/eurosat-scaling` and
-`feature/cifar100-scaling` are both complete, merged into `master`, and deleted — see `git log`
-for anything more recent
+**Last updated:** 2026-09-08, CUDA workstation (`feature/auc-targeted-noise-sweep` is complete,
+merged into `master`, and deleted — see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -16,32 +15,9 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-**New branch, 2026-08-19: `feature/auc-targeted-noise-sweep`** (worktree
-`.claude/worktrees/feature+auc-targeted-noise-sweep`) — supervisor asked for noise-multiplier
-sweeps on 4 datasets (EuroSAT, Alzheimer, Fashion-MNIST, CIFAR-10) at one large client count each,
-pushed specifically down to CIA attack AUC≈0.5, to see how much noise it takes to neutralize the
-attack and what that costs in accuracy. Full design: `docs/superpowers/specs/2026-08-17-auc-targeted-noise-sweep-design.md`,
-plan: `docs/superpowers/plans/2026-08-17-auc-targeted-noise-sweep.md` (both gitignored, copy
-manually to other machines). Tasks 1-6 (tooling: per-dataset CIA "remove" scripts with a uniform
-`run_stage()`, a shared `score_stage.py` scorer, and an autonomous `auc_target_search.py` driver
-with a bounded, resumable stop-condition state machine) are done, tested, and code-reviewed clean.
-
-**Task 7 (pilot curve, eurosat/homogeneous/global-dp) is done and surfaced two real design gaps**,
-both now resolved by explicit project-owner decisions rather than fixed unilaterally:
-1. The original `ANCHOR_TOLERANCE=0.03` was too tight for single-seed round-matched AUC's own
-   quantization noise over only 11 checkpoint rounds (~1/11≈0.09 steps) — the anchor could never
-   converge regardless of the true low-noise effect. Widened to 0.10; fix committed and verified.
-2. Even after that fix, the curve "landed" based on one seed's AUC (0.545, in-band) but the two
-   confirmation seeds disagreed sharply (0.818, 0.727 — 3-seed mean ≈0.697, nowhere near 0.5).
-   Decision: accept as-is, no driver change — `search_state.json`'s `"landed"` status means "the
-   search's best single-seed guess," and the eventual report must show the true, wide 3-seed
-   picture rather than implying false precision (matches this repo's existing convention for
-   small-seed-count CIA results, e.g. `reports/eurosat_cia.md`).
-
-**Not yet started: Task 8** (roll out the same driver to the remaining 15 of 16 curves — 4 datasets
-× 2 partition modes × 2 privacy modes, minus the pilot). Explicitly gated on project-owner
-go-ahead per the plan (Task 7 Step 5) and `AGENTS.md`'s "don't unilaterally decide an
-experiment/phase is done" rule — do not start Task 8 without that.
+**`feature/auc-targeted-noise-sweep` is complete (2026-09-01) and merged into `master`.** See
+`reports/auc_targeted_noise_sweep.md` for the full writeup and "What's established" below for the
+summary — not repeated here to avoid drifting out of sync.
 
 ---
 
@@ -147,6 +123,19 @@ section.
 
 ## What's established on `master`
 
+- **AUC-targeted noise sweep** (`reports/auc_targeted_noise_sweep.md`, `reports/auc_frontier.html`):
+  4 datasets (EuroSAT n=48, Alzheimer n=48, Fashion-MNIST n=48, CIFAR-10 n=100) x 2 partition modes
+  x 2 privacy modes = 16 curves, each an autonomous search for the noise multiplier that pushes CIA
+  round-matched attack AUC to ~0.5 (10 landed, 4 collapsed-before-target, 2 anchor-not-found — see
+  the report for the full per-curve table). Noise-to-neutralize-attack cost is dataset/partition/
+  mechanism-dependent, not a single number: EuroSAT reaches the target cheaply in all 4
+  combinations; CIFAR-10 reaches it in all 4 but the accuracy cost swings from negligible
+  (non-iid/global-dp) to severe (homogeneous/global-dp, pushed to near-random accuracy); Alzheimer
+  and Fashion-MNIST/homogeneous show the sweep's clearest negative result — several combinations
+  break the model before the attack is ever actually neutralized, and Fashion-MNIST/homogeneous
+  (both privacy modes) never found a usable low-noise anchor at all in the range searched.
+  Metric-privacy's cost advantage over global-DP shows up clearly on CIFAR-10/homogeneous but
+  reverses on CIFAR-10/non-iid — no blanket "metric-privacy is cheaper" claim survives this data.
 - The metric-privacy mechanism reproduces the source paper at 4 clients — the effect is barely
   visible at the paper's `noise_multiplier=0.01` (`reports/paper_reproduction.md`).
 - A genuine, previously unpublished effect exists at 8 clients: metric-privacy beats global-DP by
