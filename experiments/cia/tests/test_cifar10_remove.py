@@ -68,3 +68,20 @@ def test_fixed_ratio_scales_by_active_client_count() -> None:
 def test_fixed_ratio_must_be_positive() -> None:
     with pytest.raises(ValueError, match="noise_ratio"):
         cifar10_remove.build_combos(noise_ratio=0)
+
+
+def test_build_combos_defaults_to_non_iid_partition() -> None:
+    combos = cifar10_remove.build_combos(canonical_num_clients=8)
+    assert {c.partition for c in combos} == {"non-iid"}
+
+
+def test_build_combos_accepts_homogeneous_partition() -> None:
+    combos = cifar10_remove.build_combos(
+        canonical_num_clients=8, partition="homogeneous"
+    )
+    assert {c.partition for c in combos} == {"homogeneous"}
+
+
+def test_build_combos_rejects_unknown_partition() -> None:
+    with pytest.raises(ValueError, match="partition"):
+        cifar10_remove.build_combos(canonical_num_clients=8, partition="bogus")

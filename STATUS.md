@@ -1,9 +1,8 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-08-16, CUDA workstation (`feature/eurosat-scaling` and
-`feature/cifar100-scaling` are both complete, merged into `master`, and deleted — see `git log`
-for anything more recent
+**Last updated:** 2026-09-08, CUDA workstation (`feature/auc-targeted-noise-sweep` is complete,
+merged into `master`, and deleted — see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -16,7 +15,13 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-Nothing currently running. `reports/accuracy_vs_roc_auc.html` (refreshed 2026-08-15) was sent to
+**`feature/auc-targeted-noise-sweep` is complete (2026-09-01) and merged into `master`.** See
+`reports/auc_targeted_noise_sweep.md` for the full writeup and "What's established" below for the
+summary — not repeated here to avoid drifting out of sync.
+
+---
+
+Nothing else currently running. `reports/accuracy_vs_roc_auc.html` (refreshed 2026-08-15) was sent to
 the project supervisor for review; his feedback asked for a step back from the numbers-heavy
 format toward two plain-language, plot-supported claims: (1) more clients → lower CIA attack AUC,
 especially vanilla, and (2) DP noise lowers attack AUC at a heavy accuracy cost. **New follow-up
@@ -118,6 +123,19 @@ section.
 
 ## What's established on `master`
 
+- **AUC-targeted noise sweep** (`reports/auc_targeted_noise_sweep.md`, `reports/auc_frontier.html`):
+  4 datasets (EuroSAT n=48, Alzheimer n=48, Fashion-MNIST n=48, CIFAR-10 n=100) x 2 partition modes
+  x 2 privacy modes = 16 curves, each an autonomous search for the noise multiplier that pushes CIA
+  round-matched attack AUC to ~0.5 (10 landed, 4 collapsed-before-target, 2 anchor-not-found — see
+  the report for the full per-curve table). Noise-to-neutralize-attack cost is dataset/partition/
+  mechanism-dependent, not a single number: EuroSAT reaches the target cheaply in all 4
+  combinations; CIFAR-10 reaches it in all 4 but the accuracy cost swings from negligible
+  (non-iid/global-dp) to severe (homogeneous/global-dp, pushed to near-random accuracy); Alzheimer
+  and Fashion-MNIST/homogeneous show the sweep's clearest negative result — several combinations
+  break the model before the attack is ever actually neutralized, and Fashion-MNIST/homogeneous
+  (both privacy modes) never found a usable low-noise anchor at all in the range searched.
+  Metric-privacy's cost advantage over global-DP shows up clearly on CIFAR-10/homogeneous but
+  reverses on CIFAR-10/non-iid — no blanket "metric-privacy is cheaper" claim survives this data.
 - The metric-privacy mechanism reproduces the source paper at 4 clients — the effect is barely
   visible at the paper's `noise_multiplier=0.01` (`reports/paper_reproduction.md`).
 - A genuine, previously unpublished effect exists at 8 clients: metric-privacy beats global-DP by
