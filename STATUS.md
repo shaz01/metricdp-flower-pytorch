@@ -1,8 +1,8 @@
 # Project Status
 
-**Branch:** `master`
-**Last updated:** 2026-09-08, CUDA workstation (`feature/auc-targeted-noise-sweep` is complete,
-merged into `master`, and deleted — see `git log` for anything more recent)
+**Branch:** `runs/new-auc-frontier-eurosat`
+**Last updated:** 2026-09-22, macOS laptop (new EuroSAT frontier implementation;
+no experiment runs launched)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -14,6 +14,26 @@ section (including the Currently running table) updates more often, at "worth a 
 granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
+
+**`runs/new-auc-frontier-eurosat` (implementation ready for review; NOT RUN).**
+New isolated experiment under `experiments/auc_frontier/`; handoff commands and
+protocol are in its `README.md`. EuroSAT-only, label-Dirichlet non-IID, 48 canonical
+clients, one shared IN per seed/ratio/mechanism plus per-target removal OUT models.
+Preserves attack measurements every round (1–100), analyzes final-round data only.
+Plan-only CLI by default; training needs explicit `--execute`. Alpha pilot and
+noise grid are provisional and require review; owner delegated execution to other
+agents, explicitly forbidding this implementation session from launching runs.
+Per-trajectory manifests, partition histograms, provenance, local locks and atomic
+outputs support independent seed/ratio/mechanism shards and resume. Partial attack
+trajectories retrain; complete trajectories skip. No target-list sharding of IN.
+Analysis distinguishes paired concordance from target-stratified ROC AUC and
+resamples whole seed blocks (no CI below five seeds; no privacy-certification claim).
+Tests: `uv run pytest experiments/auc_frontier/ experiments/cia/tests -q` — 140 passed,
+synthetic/mocked tests only, no dataset download/training or real-data evaluation.
+Next: execution agents review protocol, run alpha pilot after authorization, obtain
+alpha choice, then discovery and selected confirmation seeds. Budget 768 trainings
+without vanilla attack reference; 873 including it. No new results or report yet.
+
 
 **`feature/colab-multi-account` (in progress, 2026-09-22, macOS laptop).** Reworks
 `scripts/colab/run_experiment.py` so several Google accounts can drive 8+ Colab GPUs at once:
@@ -137,7 +157,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| _(none)_ | Nothing currently running on a GPU. | — |
+| New EuroSAT frontier | macOS laptop: implementation and synthetic tests complete; execution delegated to other agents. | Not launched |
 
 ## What's established on `master`
 
