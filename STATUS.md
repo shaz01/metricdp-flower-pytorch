@@ -20,13 +20,16 @@ protocol are in its `README.md`. EuroSAT-only, label-Dirichlet non-IID, 48 canon
 clients, one shared IN per seed/ratio/mechanism plus per-target removal OUT models.
 Preserves attack measurements every round (1–100), analyzes final-round data only.
 Plan-only CLI by default; training needs explicit `--execute`. The owner requested
-Colab execution; provisional alpha pilot started at alpha=.3, seed=42 on lab2
-(A100, session `auc-alpha03-s42-retry`, source `ed4eb9a`). The initial session
+Colab execution; four A100 pilot shards are running: alpha=.1, .3, 1, 10,
+each seed=42, two per account (default and lab2). Each shard has a separate
+`results/new_auc_frontier_eurosat/alpha_pilot/alpha-<value>-seed-42/` directory.
+The .3 retry uses source `ed4eb9a`; the other shards use `04f5fcd`. The initial session
 `auc-alpha03-s42` on default failed before training: Colab's credential-free
 snapshot has no `.git`, breaking runner provenance lookup. Fixed by passing the
-controller's source commit through the worker; tests pass. Check the first
-session's failed-artifact collection and the retry via Colab `sweep`. Remaining
-pilot alphas/seeds and the noise grid still require review; do not select alpha
+controller's source commit through the worker; tests pass. The failed session
+was collected and its pre-training artifacts removed from results. Monitor all
+four shards with Colab `sweep`; pilot seeds 43/44 and the noise grid remain.
+Do not select alpha
 from a single seed.
 Per-trajectory manifests, partition histograms, provenance, local locks and atomic
 outputs support independent seed/ratio/mechanism shards and resume. Partial attack
@@ -163,8 +166,9 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `auc-alpha03-s42-retry` | Colab lab2 A100: alpha=.3 seed=42 vanilla IN pilot; results under `results/new_auc_frontier_eurosat/alpha_pilot/alpha-0.3-seed-42/`. | Running (round 1/100 at last check) |
-| `auc-alpha03-s42` | Colab default: failed before training on missing `.git` in snapshot; controller collecting failure artifacts. | Failed; collection pending |
+| `auc-alpha01-s42`, `auc-alpha1-s42` | Colab default: alpha=.1 and 1, seed=42 vanilla IN pilots; separate per-shard result directories. | Running |
+| `auc-alpha03-s42-retry`, `auc-alpha10-s42` | Colab lab2: alpha=.3 and 10, seed=42 vanilla IN pilots; separate per-shard result directories. | Running |
+| `auc-alpha03-s42` | Colab default: failed before training on missing `.git` in snapshot; failure artifacts collected then removed from results. | Failed/closed |
 
 ## What's established on `master`
 
