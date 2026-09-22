@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `runs/new-auc-frontier-eurosat`
-**Last updated:** 2026-09-22, macOS laptop (EuroSAT 12-run alpha pilot collected)
+**Last updated:** 2026-09-23, macOS laptop (EuroSAT frontier first wave running on Colab)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -14,7 +14,15 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-**`runs/new-auc-frontier-eurosat` (alpha pilot collected; awaiting owner's alpha choice).**
+**`runs/new-auc-frontier-eurosat` (owner chose alpha .3; first frontier wave running).**
+First wave (4 trainings, source `b815aba`): global-dp and metric-privacy at
+noise ratio .001546, seed 42, one shared IN (fixed panel targets 0–9 evaluated at
+every round 1–100) plus one OUT dropping target 0 each, in disjoint shards
+`results/new_auc_frontier_eurosat/frontier/<mechanism>-r0.001546-seed-42-{in,out-0}/`.
+The runner gained `--adjacency in|out|both` and `--out-targets` (panel/IN manifest
+unchanged); analysis now finds nested shards and rejects the partial wave as
+unbalanced. Nothing beyond these four is authorized yet.
+Earlier pilot state follows.
 New isolated experiment under `experiments/auc_frontier/`; protocol is in its
 `README.md`. EuroSAT, label-Dirichlet non-IID, 48 canonical clients, 100 rounds.
 All 12 vanilla IN pilot trajectories (alpha=.1,.3,1,10 × seeds 42–44) were
@@ -167,6 +175,7 @@ section.
 | Command | What | Status |
 | --- | --- | --- |
 | EuroSAT alpha pilot | Colab default/lab2 A100: 12 vanilla IN trajectories, alpha=.1,.3,1,10 × seeds 42–44; all results collected. | Done (remove next update) |
+| EuroSAT frontier wave 1 | Colab default A100 ×2 (global-dp IN, metric-privacy OUT-0) + lab2 A100 ×2 (metric-privacy IN, global-dp OUT-0); alpha .3, ratio .001546, seed 42. | Running |
 
 ## What's established on `master`
 
