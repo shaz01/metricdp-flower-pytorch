@@ -25,7 +25,27 @@ class FrontierCombo(Combo):
         }, sort_keys=True))
 
 
-def build_combos(*, alpha, seeds, targets, clients, privacy, ratios, pilot=False):
+ADJACENCIES = ("both", "in", "out")
+
+
+def build_combos(*, alpha, seeds, targets, clients, privacy, ratios, pilot=False,
+                 adjacency="both", out_targets=None):
+    """Build trajectories. ``targets`` is the fixed panel every shared IN evaluates.
+
+    ``adjacency``/``out_targets`` only select which trajectories this process
+    trains (for sharding across machines); they never change the IN panel.
+    """
+    if adjacency not in ADJACENCIES:
+        raise ValueError("Unknown adjacency selection")
+    if out_targets is not None:
+        if adjacency == "in" or pilot:
+            raise ValueError("--out-targets requires OUT trajectories (adjacency both/out)")
+        if not out_targets or len(set(out_targets)) != len(out_targets):
+            raise ValueError("Provide distinct OUT targets")
+        if not set(out_targets) <= set(targets):
+            raise ValueError("OUT targets must belong to the fixed --targets panel")
+    if pilot and adjacency != "both":
+        raise ValueError("Alpha pilot trains only IN; adjacency selection does not apply")
     if not math.isfinite(alpha) or alpha <= 0 or clients < 2:
         raise ValueError("Require finite alpha > 0 and clients >= 2")
     if not seeds or len(set(seeds)) != len(seeds):
@@ -40,6 +60,11 @@ def build_combos(*, alpha, seeds, targets, clients, privacy, ratios, pilot=False
         ratios = [0.0]
     elif not ratios or len(set(ratios)) != len(ratios) or any(not math.isfinite(r) or r <= 0 for r in ratios):
         raise ValueError("Provide distinct finite positive noise ratios")
+    if pilot:
+        selected = [None]
+    else:
+        outs = [t for t in targets if out_targets is None or t in out_targets]
+        selected = ([None] if adjacency != "out" else []) + (outs if adjacency != "in" else [])
     return [FrontierCombo(
         name_prefix=f"eurosat-dirichlet-a{alpha!r}-{'in' if target is None else f'out-{target}'}-r{ratio!r}",
         num_clients=clients - (target is not None), partition="non-iid", privacy=privacy,
@@ -48,7 +73,7 @@ def build_combos(*, alpha, seeds, targets, clients, privacy, ratios, pilot=False
         data_module="experiments.auc_frontier.data:create_data_module",
         model_module="experiments.reproduce.eurosat_cnn:create_model",
         alpha=alpha, canonical_clients=clients, out_target=target, noise_ratio=ratio,
-    ) for ratio in ratios for seed in seeds for target in ([None] if pilot else [None, *targets])]
+    ) for ratio in ratios for seed in seeds for target in selected]
 
 
 def atomic_json(path, value):
@@ -118,12 +143,17 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
         })
         # A partial evaluation may have consumed checkpoints: retrain the entire
         # trajectory, rather than mixing measurements from separate executions.
+        import time
+        started = time.monotonic()
         for _, success, paths in iter_combos(
             [combo], output_dir=folder, max_parallel_clients=max_parallel_clients,
             force=True, log=print, checkpoint_rounds=rounds,
         ):
             if not success:
                 raise RuntimeError(f"Training failed: {combo.run_name()}")
+            trained = time.monotonic()
+            print(f"[FRONTIER] training finished in {trained - started:.1f}s; "
+                  f"evaluating {len(chosen)} target(s) x {len(rounds)} rounds", flush=True)
             shadows = {}
             for target in chosen:
                 base = DirichletEuroSAT(combo.alpha)
@@ -143,14 +173,25 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
                                      noisy_loss=noisy_loss, shadow_size=size))
                 atomic_json(report, rows)
                 path.unlink()  # only after ALL targets at this round are persisted
-            atomic_json(folder / "complete.json", {"complete": True})
+                print(f"[FRONTIER EVAL {round_number}/{len(rounds)}] targets={len(chosen)} "
+                      f"elapsed={time.monotonic() - trained:.1f}s", flush=True)
+            finished = time.monotonic()
+            atomic_json(folder / "complete.json", {
+                "complete": True, "training_seconds": round(trained - started, 1),
+                "evaluation_seconds": round(finished - trained, 1),
+            })
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--alpha", type=float, required=True)
     parser.add_argument("--seeds", type=int, nargs="+", required=True)
-    parser.add_argument("--targets", type=int, nargs="+", default=list(range(20)))
+    parser.add_argument("--targets", type=int, nargs="+", default=list(range(20)),
+                        help="Fixed target panel; every shared IN evaluates all of them")
+    parser.add_argument("--adjacency", choices=ADJACENCIES, default="both",
+                        help="Train only IN, only OUT, or both (sharding; panel unchanged)")
+    parser.add_argument("--out-targets", type=int, nargs="+",
+                        help="Subset of --targets whose OUT trajectories to train")
     parser.add_argument("--clients", type=int, default=48)
     parser.add_argument("--privacy", choices=("vanilla", "global-dp", "metric-privacy"), required=True)
     parser.add_argument("--ratios", type=float, nargs="+")
@@ -163,8 +204,10 @@ def main():
         parser.error("--max-parallel-clients must be positive")
     combos = build_combos(alpha=args.alpha, seeds=args.seeds, targets=args.targets,
                           clients=args.clients, privacy=args.privacy, ratios=args.ratios,
-                          pilot=args.alpha_pilot)
+                          pilot=args.alpha_pilot, adjacency=args.adjacency,
+                          out_targets=args.out_targets)
     print(json.dumps({"training_runs": len(combos), "execute": args.execute,
+                      "target_panel": args.targets, "adjacency": args.adjacency,
                       "rounds_recorded": [1, HYPERPARAMS.rounds],
                       "run_names": [c.run_name() for c in combos]}, indent=2))
     if args.execute:

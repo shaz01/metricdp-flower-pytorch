@@ -127,6 +127,15 @@ and completion marker. Local process locks reject concurrent writes to the same
 trajectory. Across machines assign disjoint trajectories; filesystem locks do not
 coordinate separate machines. Copy whole completed directories when collecting.
 
+To shard one setting's IN and OUT trajectories across GPUs without changing
+the panel, keep `--targets` fixed and add `--adjacency in` (shared IN only,
+still evaluating every panel target) or `--adjacency out --out-targets 0`
+(only the listed OUT trajectories; each must belong to `--targets`). Default
+`--adjacency both` trains all 1+K trajectories. Give each shard its own
+`--output` directory, e.g. `frontier/<mechanism>-r<ratio>-seed-<seed>-in` and
+`...-out-<target>`; analysis searches manifests recursively. `complete.json`
+records wall-clock `training_seconds` and `evaluation_seconds`.
+
 Reissuing the same command skips complete measurements; incomplete trajectories
 retrain in full, because some checkpoints may already have been deleted. Existing
 complete runs with a different target list are rejected; expanding K needs a new

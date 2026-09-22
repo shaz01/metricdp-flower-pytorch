@@ -47,7 +47,8 @@ def summarize(in_loss, out_loss, resamples=2000):
 
 def analyze(root, seed_filter=None):
     groups = defaultdict(dict)
-    for path in sorted(root.glob("*/manifest.json")):
+    # Collected Colab shards nest trajectories: <root>/<shard>/<run_name>/manifest.json.
+    for path in sorted(root.rglob("manifest.json")):
         manifest = json.loads(path.read_text())
         if manifest["pilot"] or (seed_filter is not None and manifest["seed"] not in seed_filter):
             continue

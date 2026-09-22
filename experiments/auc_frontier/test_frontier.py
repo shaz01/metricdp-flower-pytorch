@@ -96,3 +96,47 @@ def test_every_round_every_target_and_resume(tmp_path, monkeypatch):
     assert len(calls) == 2
     with pytest.raises(ValueError, match="Manifest mismatch"):
         execute([combo], [0], tmp_path, 1)
+
+
+def test_adjacency_selection_keeps_fixed_panel(tmp_path, monkeypatch):
+    panel = list(range(10))
+    names = lambda runs: [(c.out_target, c.privacy) for c in runs]
+    assert names(combos(targets=panel, adjacency="in")) == [(None, "global-dp")] * 2
+    out = combos(targets=panel, adjacency="out", out_targets=[0], seeds=[42])
+    assert names(out) == [(0, "global-dp")]
+    assert out[0].noise_multiplier == 0.001 * 47
+    assert len(combos(targets=panel, out_targets=[0, 3], seeds=[42])) == 3
+    assert len(combos(targets=panel, seeds=[42])) == 11
+    for bad in ({"adjacency": "in", "out_targets": [0]}, {"out_targets": [10]},
+                {"out_targets": [0, 0]}, {"adjacency": "sideways"}):
+        with pytest.raises(ValueError):
+            combos(targets=panel, **bad)
+    with pytest.raises(ValueError):
+        combos(privacy="vanilla", pilot=True, adjacency="in")
+    # Shared IN manifest records (and evaluates) the whole panel.
+    import experiments.cia.iter_combos as training
+    import experiments.auc_frontier.data as data
+    from experiments.cia import cia
+    import metricdp_pytorch.utils.device as device
+    monkeypatch.setattr(data, "partition_summary", lambda *args: {})
+    monkeypatch.setattr(device, "resolve_device", lambda: "cpu")
+    def fake_training(runs, **kwargs):
+        paths = tuple(kwargs["output_dir"] / f"{r}.pt" for r in kwargs["checkpoint_rounds"])
+        for path in paths:
+            path.touch()
+        yield runs[0], True, paths
+    monkeypatch.setattr(training, "iter_combos", fake_training)
+    monkeypatch.setattr(cia, "eval_model", lambda path, **kwargs: (1.0, 2.0, 3.0, 10))
+    selected = [replace(c, hyperparams=replace(c.hyperparams, rounds=2)) for c in
+                combos(targets=panel, seeds=[42], adjacency="in")
+                + combos(targets=panel, seeds=[42], adjacency="out", out_targets=[0])]
+    execute(selected[:1], panel, tmp_path / "in", 1)
+    execute(selected[1:], panel, tmp_path / "out", 1)
+    in_manifest = json.loads(next((tmp_path / "in").glob("*/manifest.json")).read_text())
+    out_manifest = json.loads(next((tmp_path / "out").glob("*/manifest.json")).read_text())
+    assert in_manifest["targets"] == panel and in_manifest["out_target"] is None
+    assert out_manifest["targets"] == [0] and out_manifest["out_target"] == 0
+    rows = json.loads(next((tmp_path / "in").glob("*/measurements.json")).read_text())
+    assert {(r["round"], r["target"]) for r in rows} == {(r, t) for r in (1, 2) for t in panel}
+    marker = json.loads(next((tmp_path / "in").glob("*/complete.json")).read_text())
+    assert marker["complete"] is True and "evaluation_seconds" in marker
