@@ -550,7 +550,7 @@ def _detach(session: str, command: list[str]) -> int:
 
 
 def _controller_command(subcommand: str, session: str, poll_seconds: int) -> list[str]:
-    return [
+    command = [
         sys.executable,
         str(Path(__file__).resolve()),
         subcommand,
@@ -559,6 +559,10 @@ def _controller_command(subcommand: str, session: str, poll_seconds: int) -> lis
         "--poll-seconds",
         str(poll_seconds),
     ]
+    # A detached waiter must supervise in its own process, not detach again.
+    if subcommand == "wait":
+        command.append("--attach")
+    return command
 
 
 # --------------------------------------------------------------------------- #
