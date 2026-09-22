@@ -54,6 +54,12 @@ def test_module_arguments_without_delimiter_are_unchanged() -> None:
     assert _forwarded_module_args(["value"]) == ["value"]
 
 
+def test_detached_waiter_does_not_recursively_detach() -> None:
+    command = run_experiment._controller_command("wait", "session", 240)
+    assert command[-1] == "--attach"
+    assert "--attach" not in run_experiment._controller_command("launch", "session", 240)
+
+
 def test_results_path_must_stay_under_results() -> None:
     assert run_experiment._validate_results_path("results/cia/run").parts[0] == "results"
     for bad in ("/tmp/run", "results/../etc", "reports/run"):
