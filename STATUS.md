@@ -15,6 +15,24 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
+**`feature/colab-multi-account` (in progress, 2026-09-22, macOS laptop).** Reworks
+`scripts/colab/run_experiment.py` so several Google accounts can drive 8+ Colab GPUs at once:
+per-account `HOME` isolation (`~/.colab-accounts/<name>/`, since `colab_cli` hardcodes its token
+path), `--account auto` slot selection under a per-account cap, detached-by-default controllers,
+a `sweep` command that probes every session and auto-collects runs whose controller died, and a
+`.colab/commit.lock` around Git commits only — collection stays lock-free so a vanishing VM never
+blocks a download. Pushing is no longer automatic. Covered by `tests/test_colab_controller.py`
+and a new `tests/test_colab_end_to_end.py` that drives the real remote helpers against a fake
+`colab` CLI. **Not yet exercised against a second real account** — waiting on the project owner to
+create one.
+
+Unrelated pre-existing breakage seen while verifying: the full `uv run pytest` run aborts inside
+`experiments/reproduce/tests/test_paper_loss.py` (torch/MPS `Fatal Python error: Aborted`). It
+reproduces on a clean `master` worktree and passes when that file runs alone, so it is not caused
+by this branch.
+
+---
+
 **`feature/auc-targeted-noise-sweep` is complete (2026-09-01) and merged into `master`.** See
 `reports/auc_targeted_noise_sweep.md` for the full writeup and "What's established" below for the
 summary — not repeated here to avoid drifting out of sync.
@@ -119,7 +137,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| _(none)_ | Nothing currently running. | — |
+| _(none)_ | Nothing currently running on a GPU. | — |
 
 ## What's established on `master`
 

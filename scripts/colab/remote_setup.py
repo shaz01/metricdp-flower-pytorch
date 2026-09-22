@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -9,8 +10,9 @@ import tarfile
 import tomllib
 from pathlib import Path
 
-ARCHIVE = Path("/content/metricdp-source.tar.gz")
-PROJECT_ROOT = Path("/content/metricdp-pytorch")
+CONTENT = Path(os.environ.get("METRICDP_COLAB_CONTENT", "/content"))
+ARCHIVE = CONTENT / "metricdp-source.tar.gz"
+PROJECT_ROOT = CONTENT / "metricdp-pytorch"
 
 
 def main() -> None:

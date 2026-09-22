@@ -125,10 +125,19 @@ CIA protection -- should hold.
 ## Colab CLI workflow
 
 `scripts/colab/run_experiment.py` runs a Python experiment module on a named
-Colab session, prints a live `nvidia-smi` snapshot while it trains, downloads
-the designated result directory, commits only that directory, pushes the
-current branch, and finally releases the VM. Git credentials never leave the
-local machine.
+Colab session, downloads the designated result directory, and commits only that
+directory. Git credentials never leave the local machine, and nothing is pushed
+automatically.
+
+Controllers detach by default, and each Colab account gets its own `HOME` under
+`~/.colab-accounts/<account>/`, so several accounts can run several GPUs at
+once. See `.agents/skills/running-experiments-colab/SKILL.md` for the full
+workflow.
+
+```bash
+uv run python scripts/colab/run_experiment.py accounts
+uv run python scripts/colab/run_experiment.py login --account lab2
+```
 
 The determinism check is a copy of the contest configuration with only seed
 42. It executes the three privacy configurations twice under distinct
@@ -144,19 +153,22 @@ uv run python scripts/colab/run_experiment.py run \
   --commit-message "results(cia): add Colab determinism check"
 ```
 
-The command stays attached so collection and pushing cannot be skipped. From
-another terminal, inspect the training log and GPU utilization at any time:
+The command returns once the launch is recorded; a detached controller owns the
+session from there. Observe every session at once with:
 
 ```bash
-uv run python scripts/colab/run_experiment.py status --session cia-determinism
+uv run python scripts/colab/run_experiment.py sweep
 ```
 
-If local monitoring is interrupted, the remote supervisor keeps training.
-Resume the automatic collect/push/stop finalizer with:
+`sweep` probes each session, collects finished runs whose controller has died,
+relaunches waiters for orphaned runs, and flags what needs a human.
+`status --session cia-determinism` prints one session's full probe including
+`nvidia-smi`.
 
-```bash
-uv run python scripts/colab/run_experiment.py wait --session cia-determinism
-```
+Collection is lock-free so a disappearing VM never blocks a download; only the
+Git commit is serialized, through `.colab/commit.lock`, and each run commits
+exactly its own `--results` directory. Push the resulting commits yourself once
+a batch has landed.
 
 Use `collect` for a job that has already finished or `stop` to explicitly
 release an abandoned VM. Colab source archives exclude notebooks and are
