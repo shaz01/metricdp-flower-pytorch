@@ -72,6 +72,7 @@ def main() -> None:
                 text=True,
                 env={
                     **os.environ,
+                    "METRICDP_SOURCE_COMMIT": config["source_commit"],
                     "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
                     "PYTHONHASHSEED": "0",
                 },

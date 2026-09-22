@@ -104,12 +104,15 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
         atomic_json(folder / "partitions.json", partition_summary(
             combo.alpha, combo.canonical_clients, combo.seed,
         ))
+        import os
         import subprocess
         import sys
-        revision = subprocess.run(
-            ["git", "-C", str(Path(__file__).resolve().parents[2]), "rev-parse", "HEAD"],
-            capture_output=True, text=True, check=True,
-        ).stdout.strip()
+        revision = os.environ.get("METRICDP_SOURCE_COMMIT")
+        if revision is None:
+            revision = subprocess.run(
+                ["git", "-C", str(Path(__file__).resolve().parents[2]), "rev-parse", "HEAD"],
+                capture_output=True, text=True, check=True,
+            ).stdout.strip()
         atomic_json(folder / "provenance.json", {
             "commit": revision, "python": sys.version, "device": str(device),
         })
