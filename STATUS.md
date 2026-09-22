@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `runs/new-auc-frontier-eurosat`
-**Last updated:** 2026-09-22, macOS laptop (EuroSAT alpha pilot started on Colab)
+**Last updated:** 2026-09-22, macOS laptop (EuroSAT 12-run alpha pilot collected)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -14,27 +14,24 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-**`runs/new-auc-frontier-eurosat` (alpha pilot in progress).**
-New isolated experiment under `experiments/auc_frontier/`; handoff commands and
-protocol are in its `README.md`. EuroSAT-only, label-Dirichlet non-IID, 48 canonical
-clients, one shared IN per seed/ratio/mechanism plus per-target removal OUT models.
-Preserves attack measurements every round (1–100), analyzes final-round data only.
-Plan-only CLI by default; training needs explicit `--execute`. The owner requested
-Colab execution: seven pilot trajectories collected and verified complete
-(seed 42 for all four alphas; seed 43 for .1, 1 and 10). Four more A100 shards
-are underway: .1/44 and 1/44 on default; 10/44 and .3/43 retry on lab2.
-Each shard has a separate `results/new_auc_frontier_eurosat/alpha_pilot/alpha-<value>-seed-<seed>/`
-directory. The initial session
-`auc-alpha03-s42` on default failed before training: Colab's credential-free
-snapshot has no `.git`, breaking runner provenance lookup. Fixed by passing the
-controller's source commit through the worker; tests pass. The failed session
-was collected and its pre-training artifacts removed from results. A later
-.3/43 run lost its Colab CLI local handle around round 90 and the remote VM
-subsequently disappeared without collected results; it is being retried.
-A detached-waiter recursion encountered in recovery was fixed (`578cb0f`,
-50 relevant tests passed). Monitor the running shards with Colab `sweep`;
-.3/44 and the owner's alpha decision remain. Do not select alpha
-from a single seed.
+**`runs/new-auc-frontier-eurosat` (alpha pilot collected; awaiting owner's alpha choice).**
+New isolated experiment under `experiments/auc_frontier/`; protocol is in its
+`README.md`. EuroSAT, label-Dirichlet non-IID, 48 canonical clients, 100 rounds.
+All 12 vanilla IN pilot trajectories (alpha=.1,.3,1,10 × seeds 42–44) were
+collected from default/lab2 A100 Colab accounts, each with successful exit and
+completion marker at `results/new_auc_frontier_eurosat/alpha_pilot/alpha-<value>-seed-<seed>/`.
+Mean round-100 accuracy: .1=88.0%, .3=88.9%, 1=90.0%, 10=90.6%; across the
+three partitions per alpha, mean dominant-class client share: .671, .459,
+.298, .165 respectively. Accuracy improved 3.9–6.9pp from round 50 to 100
+on completed pilot curves, so no round-50 plateau. The owner must choose
+scientifically meaningful alpha and lock/revise the provisional ratio grid
+before the defended discovery sweep; do not choose by privacy outcome.
+An initial launch failed before training because Colab snapshots lack `.git`;
+source revision is now passed via worker environment (`ed4eb9a`). A .3/43
+session lost its CLI handle/VM late in training; a fresh session retrained
+and collected it. Failed pre-training artifacts were removed from results.
+Recovery exposed a detached-waiter recursion, fixed in `578cb0f` (50 relevant
+tests passed). No active Colab sessions; the lost local state is terminal.
 Per-trajectory manifests, partition histograms, provenance, local locks and atomic
 outputs support independent seed/ratio/mechanism shards and resume. Partial attack
 trajectories retrain; complete trajectories skip. No target-list sharding of IN.
@@ -42,10 +39,10 @@ Analysis distinguishes paired concordance from target-stratified ROC AUC and
 resamples whole seed blocks (no CI below five seeds; no privacy-certification claim).
 Tests: `uv run pytest experiments/auc_frontier/ experiments/cia/tests -q` — 140 passed,
 synthetic/mocked tests only, no dataset download/training or real-data evaluation.
-Next: monitor the Colab pilot, run the remaining pilot grid, inspect learning curves
-and partition summaries, obtain the owner's alpha choice, then discovery and
-selected confirmation seeds. Budget 768 trainings
-without vanilla attack reference; 873 including it. No new results or report yet.
+Next: obtain owner's alpha choice and lock/revise ratios; then run defended
+discovery and selected confirmation seeds. Budget 768 trainings without vanilla
+attack reference; 873 including it (12 pilot runs included). Pilot results exist;
+no attack results or experiment-finished report yet.
 
 
 **`feature/colab-multi-account` (in progress, 2026-09-22, macOS laptop).** Reworks
@@ -56,8 +53,7 @@ a `sweep` command that probes every session and auto-collects runs whose control
 `.colab/commit.lock` around Git commits only — collection stays lock-free so a vanishing VM never
 blocks a download. Pushing is no longer automatic. Covered by `tests/test_colab_controller.py`
 and a new `tests/test_colab_end_to_end.py` that drives the real remote helpers against a fake
-`colab` CLI. **Not yet exercised against a second real account** — waiting on the project owner to
-create one.
+`colab` CLI. Exercised on default and lab2 during the EuroSAT alpha pilot.
 
 Unrelated pre-existing breakage seen while verifying: the full `uv run pytest` run aborts inside
 `experiments/reproduce/tests/test_paper_loss.py` (torch/MPS `Fatal Python error: Aborted`). It
@@ -170,9 +166,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `auc-alpha01-s44`, `auc-alpha1-s44` | Colab default A100: alpha=.1 and 1, seed=44 pilots. | Running |
-| `auc-alpha10-s44`, `auc-alpha03-s43-retry` | Colab lab2 A100: alpha=10 seed=44 and alpha=.3 seed=43 retry. | Launching/running |
-| `auc-alpha03-s43` | Colab lab2: CLI lost session handle; remote VM vanished, no collected data; retry above. | Lost/error |
+| EuroSAT alpha pilot | Colab default/lab2 A100: 12 vanilla IN trajectories, alpha=.1,.3,1,10 × seeds 42–44; all results collected. | Done (remove next update) |
 
 ## What's established on `master`
 
