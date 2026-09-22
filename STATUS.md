@@ -1,8 +1,7 @@
 # Project Status
 
 **Branch:** `runs/new-auc-frontier-eurosat`
-**Last updated:** 2026-09-22, macOS laptop (new EuroSAT frontier implementation;
-no experiment runs launched)
+**Last updated:** 2026-09-22, macOS laptop (EuroSAT alpha pilot started on Colab)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -15,14 +14,20 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-**`runs/new-auc-frontier-eurosat` (implementation ready for review; NOT RUN).**
+**`runs/new-auc-frontier-eurosat` (alpha pilot in progress).**
 New isolated experiment under `experiments/auc_frontier/`; handoff commands and
 protocol are in its `README.md`. EuroSAT-only, label-Dirichlet non-IID, 48 canonical
 clients, one shared IN per seed/ratio/mechanism plus per-target removal OUT models.
 Preserves attack measurements every round (1–100), analyzes final-round data only.
-Plan-only CLI by default; training needs explicit `--execute`. Alpha pilot and
-noise grid are provisional and require review; owner delegated execution to other
-agents, explicitly forbidding this implementation session from launching runs.
+Plan-only CLI by default; training needs explicit `--execute`. The owner requested
+Colab execution; provisional alpha pilot started at alpha=.3, seed=42 on lab2
+(A100, session `auc-alpha03-s42-retry`, source `ed4eb9a`). The initial session
+`auc-alpha03-s42` on default failed before training: Colab's credential-free
+snapshot has no `.git`, breaking runner provenance lookup. Fixed by passing the
+controller's source commit through the worker; tests pass. Check the first
+session's failed-artifact collection and the retry via Colab `sweep`. Remaining
+pilot alphas/seeds and the noise grid still require review; do not select alpha
+from a single seed.
 Per-trajectory manifests, partition histograms, provenance, local locks and atomic
 outputs support independent seed/ratio/mechanism shards and resume. Partial attack
 trajectories retrain; complete trajectories skip. No target-list sharding of IN.
@@ -30,8 +35,9 @@ Analysis distinguishes paired concordance from target-stratified ROC AUC and
 resamples whole seed blocks (no CI below five seeds; no privacy-certification claim).
 Tests: `uv run pytest experiments/auc_frontier/ experiments/cia/tests -q` — 140 passed,
 synthetic/mocked tests only, no dataset download/training or real-data evaluation.
-Next: execution agents review protocol, run alpha pilot after authorization, obtain
-alpha choice, then discovery and selected confirmation seeds. Budget 768 trainings
+Next: monitor the Colab pilot, run the remaining pilot grid, inspect learning curves
+and partition summaries, obtain the owner's alpha choice, then discovery and
+selected confirmation seeds. Budget 768 trainings
 without vanilla attack reference; 873 including it. No new results or report yet.
 
 
@@ -157,7 +163,8 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| New EuroSAT frontier | macOS laptop: implementation and synthetic tests complete; execution delegated to other agents. | Not launched |
+| `auc-alpha03-s42-retry` | Colab lab2 A100: alpha=.3 seed=42 vanilla IN pilot; results under `results/new_auc_frontier_eurosat/alpha_pilot/alpha-0.3-seed-42/`. | Running (round 1/100 at last check) |
+| `auc-alpha03-s42` | Colab default: failed before training on missing `.git` in snapshot; controller collecting failure artifacts. | Failed; collection pending |
 
 ## What's established on `master`
 
