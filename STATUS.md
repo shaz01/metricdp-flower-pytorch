@@ -20,16 +20,20 @@ protocol are in its `README.md`. EuroSAT-only, label-Dirichlet non-IID, 48 canon
 clients, one shared IN per seed/ratio/mechanism plus per-target removal OUT models.
 Preserves attack measurements every round (1–100), analyzes final-round data only.
 Plan-only CLI by default; training needs explicit `--execute`. The owner requested
-Colab execution; four A100 pilot shards are running: alpha=.1, .3, 1, 10,
-each seed=42, two per account (default and lab2). Each shard has a separate
-`results/new_auc_frontier_eurosat/alpha_pilot/alpha-<value>-seed-42/` directory.
-The .3 retry uses source `ed4eb9a`; the other shards use `04f5fcd`. The initial session
+Colab execution: seven pilot trajectories collected and verified complete
+(seed 42 for all four alphas; seed 43 for .1, 1 and 10). Four more A100 shards
+are underway: .1/44 and 1/44 on default; 10/44 and .3/43 retry on lab2.
+Each shard has a separate `results/new_auc_frontier_eurosat/alpha_pilot/alpha-<value>-seed-<seed>/`
+directory. The initial session
 `auc-alpha03-s42` on default failed before training: Colab's credential-free
 snapshot has no `.git`, breaking runner provenance lookup. Fixed by passing the
 controller's source commit through the worker; tests pass. The failed session
-was collected and its pre-training artifacts removed from results. Monitor all
-four shards with Colab `sweep`; pilot seeds 43/44 and the noise grid remain.
-Do not select alpha
+was collected and its pre-training artifacts removed from results. A later
+.3/43 run lost its Colab CLI local handle around round 90 and the remote VM
+subsequently disappeared without collected results; it is being retried.
+A detached-waiter recursion encountered in recovery was fixed (`578cb0f`,
+50 relevant tests passed). Monitor the running shards with Colab `sweep`;
+.3/44 and the owner's alpha decision remain. Do not select alpha
 from a single seed.
 Per-trajectory manifests, partition histograms, provenance, local locks and atomic
 outputs support independent seed/ratio/mechanism shards and resume. Partial attack
@@ -166,9 +170,9 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `auc-alpha01-s42`, `auc-alpha1-s42` | Colab default: alpha=.1 and 1, seed=42 vanilla IN pilots; separate per-shard result directories. | Running |
-| `auc-alpha03-s42-retry`, `auc-alpha10-s42` | Colab lab2: alpha=.3 and 10, seed=42 vanilla IN pilots; separate per-shard result directories. | Running |
-| `auc-alpha03-s42` | Colab default: failed before training on missing `.git` in snapshot; failure artifacts collected then removed from results. | Failed/closed |
+| `auc-alpha01-s44`, `auc-alpha1-s44` | Colab default A100: alpha=.1 and 1, seed=44 pilots. | Running |
+| `auc-alpha10-s44`, `auc-alpha03-s43-retry` | Colab lab2 A100: alpha=10 seed=44 and alpha=.3 seed=43 retry. | Launching/running |
+| `auc-alpha03-s43` | Colab lab2: CLI lost session handle; remote VM vanished, no collected data; retry above. | Lost/error |
 
 ## What's established on `master`
 
