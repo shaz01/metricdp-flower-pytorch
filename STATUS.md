@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `runs/new-auc-frontier-eurosat`
-**Last updated:** 2026-09-23, macOS laptop (EuroSAT frontier first wave collected)
+**Last updated:** 2026-09-23, macOS laptop (EuroSAT frontier OUT 1–9 waves running)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -31,7 +31,10 @@ Colab CLI runtime-proxy tokens expire after 3600 s; the CLI then gets 404, prune
 session and kills its keep-alive while the VM keeps running. Both IN sessions (~78 min)
 hit this; they were re-registered from the live assignment list and then collected.
 Sessions over 60 min need a controller fix or a manual re-register. No active sessions.
-Nothing beyond these four is authorized yet. Earlier pilot state follows.
+Owner then authorized only the remaining OUT targets 1–9 for both mechanisms (18
+trajectories, same setting, ≤4 concurrent A100s on default/lab2), shards
+`frontier/<mechanism>-r0.001546-seed-42-out-<t>/`; running from source `24a5f2a`.
+No other ratios/seeds authorized. Earlier pilot state follows.
 New isolated experiment under `experiments/auc_frontier/`; protocol is in its
 `README.md`. EuroSAT, label-Dirichlet non-IID, 48 canonical clients, 100 rounds.
 All 12 vanilla IN pilot trajectories (alpha=.1,.3,1,10 × seeds 42–44) were
@@ -183,6 +186,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| EuroSAT frontier OUT 1–9 | Colab default/lab2 A100, ≤4 concurrent: 18 OUT trajectories (global-dp, metric-privacy × targets 1–9), alpha .3, ratio .001546, seed 42. | Running |
 | EuroSAT frontier wave 1 | Colab default A100 ×2 (global-dp IN, metric-privacy OUT-0) + lab2 A100 ×2 (metric-privacy IN, global-dp OUT-0); alpha .3, ratio .001546, seed 42; all collected, sessions released. | Done (remove next update) |
 
 ## What's established on `master`
