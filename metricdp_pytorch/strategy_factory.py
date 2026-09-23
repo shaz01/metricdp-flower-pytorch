@@ -30,6 +30,8 @@ AGGREGATION_METHODS = (
     "fedyogi",
 )
 PRIVACY_MODES = ("vanilla", "global-dp", "metric-privacy")
+# Opt-in only; deliberately NOT part of PRIVACY_MODES, which existing sweeps iterate.
+EXPERIMENTAL_PRIVACY_MODES = ("influence-noise",)
 
 FEDOPT_ETA_0 = 0.01
 FEDOPT_ETA_DECAY = 0.15
@@ -218,6 +220,9 @@ def make_strategy(
     fraction_evaluate: float,
     noise_multiplier: float,
     clipping_norm: float,
+    influence_fraction: float | None = None,
+    influence_cap: float | None = None,
+    seed: int | None = None,
 ) -> Strategy:
     """Construct an aggregation strategy and apply the selected DP wrapper."""
     strategy = make_base_strategy(
@@ -240,5 +245,18 @@ def make_strategy(
             noise_multiplier=noise_multiplier,
             clipping_norm=clipping_norm,
             num_sampled_clients=num_clients,
+        )
+    if privacy == "influence-noise":
+        if influence_fraction is None or influence_cap is None or seed is None:
+            raise ValueError("influence-noise requires influence_fraction, influence_cap and seed")
+        from metricdp_pytorch.influence_noise import InfluenceNoiseServerSideFixedClipping
+        return InfluenceNoiseServerSideFixedClipping(
+            strategy,
+            noise_multiplier=noise_multiplier,
+            clipping_norm=clipping_norm,
+            num_sampled_clients=num_clients,
+            fraction=influence_fraction,
+            influence_cap=influence_cap,
+            seed=seed,
         )
     raise ValueError(f"Unknown privacy mode {privacy!r}; choose from {PRIVACY_MODES}.")

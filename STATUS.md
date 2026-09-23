@@ -1,7 +1,7 @@
 # Project Status
 
-**Branch:** `runs/new-auc-frontier-eurosat`
-**Last updated:** 2026-09-23, macOS laptop (EuroSAT frontier OUT 1–9 waves running)
+**Branch:** `feature/influence-noise-pilot` (from `runs/new-auc-frontier-eurosat` @ `1b846ef`)
+**Last updated:** 2026-09-23 ~22:00 CEST, macOS laptop (influence-noise pilot implemented; launch blocked)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -13,6 +13,17 @@ section (including the Currently running table) updates more often, at "worth a 
 granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
+
+**`feature/influence-noise-pilot` (separate worktree; EMPIRICAL, no DP claim).**
+Influence-directed matched-energy aggregate noise, `metricdp_pytorch/influence_noise.py`,
+opt-in privacy mode `influence-noise` (not in `PRIVACY_MODES`); runner and protocol in
+`experiments/influence_noise_pilot/README.md`. Authorized pilot: seed 42, alpha .3,
+targets 0–9, f ∈ {0, .5}, IN + 10 OUT each (22 trainings), ≤2 A100 on **lab4 only**
+(default/lab2 belong to the main coordinator). Synthetic tests pass (26 new; also under
+pinned flwr 1.38.0/numpy 2.1.3). **Nothing launched:** lab4's stored refresh token was
+granted only openid/email/profile (no `colaboratory`/`cloud-platform`/`drive.file`), so
+every Colab CLI refresh fails `invalid_scope`; lab4 needs an owner re-login with all
+scopes checked. Currently running: nothing from this branch.
 
 **`runs/new-auc-frontier-eurosat` (owner chose alpha .3; seed-42 target panel complete).**
 First wave (4 trainings, source `b815aba`): global-dp and metric-privacy at

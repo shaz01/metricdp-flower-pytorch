@@ -170,7 +170,15 @@ def run(
             load_model(str(config["model-module"])).state_dict()
         )
 
+    influence = {}
+    if str(config["privacy"]) == "influence-noise":
+        influence = {
+            "influence_fraction": float(config["influence-fraction"]),
+            "influence_cap": float(config["influence-cap"]),
+            "seed": int(config.get("seed", 42)),
+        }
     strategy = create_paper_strategy(
+        **influence,
         aggregation=str(config["aggregation"]),
         privacy=str(config["privacy"]),
         num_clients=int(config["num-clients"]),
@@ -266,6 +274,9 @@ def main(grid: Grid, context: Context) -> None:
             "client_weights": str(config.get("client-weights", "")),
             "noise_multiplier": float(config.get("noise-multiplier", 0.01)),
             "clipping_norm": float(config.get("clipping-norm", 5.0)),
+            **({"influence_fraction": float(config["influence-fraction"]),
+                "influence_cap": float(config["influence-cap"])}
+               if str(config["privacy"]) == "influence-noise" else {}),
             "initialization_pretrained": bool(initialization_losses),
             "initialization_epochs": len(initialization_losses),
             "initialization_final_loss": (

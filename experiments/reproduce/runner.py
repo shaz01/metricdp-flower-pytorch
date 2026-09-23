@@ -24,7 +24,11 @@ from typing import Any
 os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
 
 from metricdp_pytorch.utils.runtime import RUN_CONFIG_ENV
-from metricdp_pytorch.strategy_factory import AGGREGATION_METHODS, PRIVACY_MODES
+from metricdp_pytorch.strategy_factory import (
+    AGGREGATION_METHODS,
+    EXPERIMENTAL_PRIVACY_MODES,
+    PRIVACY_MODES,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -56,7 +60,9 @@ def _parser() -> argparse.ArgumentParser:
         default="homogeneous",
         help="partition mode interpreted by the selected data module",
     )
-    parser.add_argument("--privacy", choices=PRIVACY_MODES, default="vanilla")
+    parser.add_argument(
+        "--privacy", choices=PRIVACY_MODES + EXPERIMENTAL_PRIVACY_MODES, default="vanilla"
+    )
     parser.add_argument(
         "--aggregation", choices=AGGREGATION_METHODS, default="fedavg"
     )
@@ -76,6 +82,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--noise-multiplier", type=float, required=True)
     parser.add_argument("--clipping-norm", type=float, required=True)
+    parser.add_argument("--influence-fraction", type=float,
+                        help="influence-noise only: orientation fraction f in [0, 1]")
+    parser.add_argument("--influence-cap", type=float,
+                        help="influence-noise only: fixed L2 cap on leave-one-out influence")
     parser.add_argument(
         "--partition-profile",
         default="auto",
@@ -192,6 +202,16 @@ def _validate(args: argparse.Namespace) -> None:
     ):
         if fraction is not None and not 0.0 < fraction < 1.0:
             raise ValueError(f"{name} must be in (0, 1).")
+    influence_given = args.influence_fraction is not None or args.influence_cap is not None
+    if args.privacy == "influence-noise":
+        if args.influence_fraction is None or args.influence_cap is None:
+            raise ValueError("influence-noise requires --influence-fraction and --influence-cap.")
+        if not 0.0 <= args.influence_fraction <= 1.0:
+            raise ValueError("influence-fraction must be in [0, 1].")
+        if not math.isfinite(args.influence_cap) or args.influence_cap <= 0:
+            raise ValueError("influence-cap must be finite and positive.")
+    elif influence_given:
+        raise ValueError("--influence-* flags apply only to --privacy influence-noise.")
     if args.client_weights:
         weights = [part.strip() for part in args.client_weights.split(",") if part.strip()]
         if len(weights) != args.num_clients:
@@ -254,6 +274,9 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
             "checkpoint-rounds": sorted(args.checkpoint_rounds),
         }
     )
+    if args.privacy == "influence-noise":
+        config["influence-fraction"] = args.influence_fraction
+        config["influence-cap"] = args.influence_cap
     if args.target_partition_id is not None:
         config["target-partition-id"] = args.target_partition_id
     if args.shadow_fraction is not None:
