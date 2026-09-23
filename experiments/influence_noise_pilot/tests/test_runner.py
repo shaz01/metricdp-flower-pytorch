@@ -68,3 +68,10 @@ def test_protocol_mismatch_rejected(tmp_path, monkeypatch):
     with pytest.raises(ValueError):
         runner.execute([combo], [0], tmp_path, 6)
     assert len(calls) == 2
+
+
+def test_spearman_descriptive_helper():
+    from experiments.influence_noise_pilot.summarize import spearman
+    assert spearman([1, 2, 3], [10, 20, 30]) == pytest.approx(1.0)
+    assert spearman([1, 2, 3], [3, 2, 1]) == pytest.approx(-1.0)
+    assert spearman([1, 1, 1], [1, 2, 3]) is None
