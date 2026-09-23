@@ -92,5 +92,6 @@ confirmatory analysis; f = 0 and f = .5 stay fixed and are not altered mid-arm.
 Execution (lab4 only, ≤2 A100): the two IN runs launch first; each arm's OUT runs
 start only after that arm's IN is collected and validated (exit 0, torch 2.10.0 on
 A100, 1000 finite measurement rows, 100 rounds of finite influence diagnostics,
-evaluation JSON). One retry per trajectory; failed attempts are quarantined under
-`results/influence_noise_pilot/failed/`.
+evaluation JSON). One retry per trajectory; raw failed artifacts move to gitignored local
+`.colab/quarantine/`, and only a small metadata JSON is committed under
+`results/influence_noise_pilot/failures/`.
