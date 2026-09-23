@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/influence-noise-pilot` (from `runs/new-auc-frontier-eurosat` @ `1b846ef`)
-**Last updated:** 2026-09-23 ~22:00 CEST, macOS laptop (influence-noise pilot implemented; launch blocked)
+**Last updated:** 2026-09-23 23:25 CEST, macOS laptop (influence-noise pilot INs training on lab4)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -16,14 +16,19 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 **`feature/influence-noise-pilot` (separate worktree; EMPIRICAL, no DP claim).**
 Influence-directed matched-energy aggregate noise, `metricdp_pytorch/influence_noise.py`,
-opt-in privacy mode `influence-noise` (not in `PRIVACY_MODES`); runner and protocol in
-`experiments/influence_noise_pilot/README.md`. Authorized pilot: seed 42, alpha .3,
-targets 0–9, f ∈ {0, .5}, IN + 10 OUT each (22 trainings), ≤2 A100 on **lab4 only**
-(default/lab2 belong to the main coordinator). Synthetic tests pass (26 new; also under
-pinned flwr 1.38.0/numpy 2.1.3). **Nothing launched:** lab4's stored refresh token was
-granted only openid/email/profile (no `colaboratory`/`cloud-platform`/`drive.file`), so
-every Colab CLI refresh fails `invalid_scope`; lab4 needs an owner re-login with all
-scopes checked. Currently running: nothing from this branch.
+opt-in privacy mode `influence-noise` (not in `PRIVACY_MODES`); protocol, gates and the
+predeclared optional f=.05 arm in `experiments/influence_noise_pilot/README.md`.
+Pilot: seed 42, alpha .3, targets 0–9, f ∈ {0, .5}, IN + 10 OUT each (22 trainings),
+**lab4 only, ≤2 A100** (default/lab2/lab3 belong to the main coordinator). lab4 re-login
+fixed 23:05; both IN runs launched 23:13 CEST from source `0c0bcd1`, verified on
+A100-SXM4-40GB, torch 2.10.0+cu128, finite influence diagnostics. A local lab4 token
+refresher and a lab4 backfill queue (`.colab/queue_lab4.py`, untracked; logs in
+`.colab/logs/`) run on the macOS laptop. The queue launches each arm's OUT 0–9 after its IN
+validates, pushes result commits, and retries each run at most once.
+
+| Session | Machine/account | State |
+|---|---|---|
+| inp-f0p0-s42-in, inp-f0p5-s42-in | Colab lab4 A100 (controlled from macOS laptop) | training |
 
 **`runs/new-auc-frontier-eurosat` (owner chose alpha .3; seed-42 target panel complete).**
 First wave (4 trainings, source `b815aba`): global-dp and metric-privacy at
