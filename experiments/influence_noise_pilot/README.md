@@ -78,3 +78,19 @@ partial trajectory). `influence_protocol.json` pins `f`, cap, `τ`, RNG scheme a
 client mapping; a mismatch refuses to write into an existing trajectory.
 
 Tests (synthetic only): `uv run pytest experiments/influence_noise_pilot`.
+
+## Predeclared optional third arm (recorded 2026-09-23 ~23:20 CEST, before any outcome)
+
+After all 22 f ∈ {0, .5} trajectories validate, an f = .05 arm (seed 42, IN + OUT
+0–9, same protocol) may run on the same two lab4 slots — only as a whole arm and
+only if its projected makespan ((90 + 10 × 50) / 2 min + 30 min collection margin)
+ends before 2026-09-24 15:00 CEST; otherwise it is not started at all. Motivation
+is the known pre-run anisotropy (influence-direction noise std ~16–100× τ at
+f = .5), not any pilot result. It is an exploratory fixed-energy contrast, not a
+confirmatory analysis; f = 0 and f = .5 stay fixed and are not altered mid-arm.
+
+Execution (lab4 only, ≤2 A100): the two IN runs launch first; each arm's OUT runs
+start only after that arm's IN is collected and validated (exit 0, torch 2.10.0 on
+A100, 1000 finite measurement rows, 100 rounds of finite influence diagnostics,
+evaluation JSON). One retry per trajectory; failed attempts are quarantined under
+`results/influence_noise_pilot/failed/`.
