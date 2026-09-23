@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/influence-noise-pilot` (from `runs/new-auc-frontier-eurosat` @ `1b846ef`)
-**Last updated:** 2026-09-23 23:25 CEST, macOS laptop (influence-noise pilot INs training on lab4)
+**Last updated:** 2026-09-24 00:50 CEST, macOS laptop (influence-noise pilot OUT backfill running on lab4)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -28,7 +28,8 @@ validates, pushes result commits, and retries each run at most once.
 
 | Session | Machine/account | State |
 |---|---|---|
-| inp-f0p0-s42-in, inp-f0p5-s42-in | Colab lab4 A100 (controlled from macOS laptop) | training |
+| f0/f.5 IN | Colab lab4 A100 | collected+validated 00:36/00:40 (`8e8535e`, `1681039`) |
+| inp-f0p5-s42-out-0, inp-f0p0-s42-out-0 | Colab lab4 A100 (controlled from macOS laptop) | training; queue backfills OUT 1–9 |
 
 **`runs/new-auc-frontier-eurosat` (owner chose alpha .3; seed-42 target panel complete).**
 First wave (4 trainings, source `b815aba`): global-dp and metric-privacy at
