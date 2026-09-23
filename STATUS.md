@@ -14,7 +14,7 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-**`runs/new-auc-frontier-eurosat` (owner chose alpha .3; first frontier wave collected).**
+**`runs/new-auc-frontier-eurosat` (owner chose alpha .3; seed-42 target panel complete).**
 First wave (4 trainings, source `b815aba`): global-dp and metric-privacy at
 noise ratio .001546, seed 42, one shared IN (fixed panel targets 0–9 evaluated at
 every round 1–100) plus one OUT dropping target 0 each, in disjoint shards
@@ -30,11 +30,23 @@ One IN/OUT pair per mechanism is not an attack estimate. Known controller fault:
 Colab CLI runtime-proxy tokens expire after 3600 s; the CLI then gets 404, prunes the
 session and kills its keep-alive while the VM keeps running. Both IN sessions (~78 min)
 hit this; they were re-registered from the live assignment list and then collected.
-Sessions over 60 min need a controller fix or a manual re-register. No active sessions.
-Owner then authorized only the remaining OUT targets 1–9 for both mechanisms (18
-trajectories, same setting, ≤4 concurrent A100s on default/lab2), shards
-`frontier/<mechanism>-r0.001546-seed-42-out-<t>/`; running from source `24a5f2a`.
-No other ratios/seeds authorized. Earlier pilot state follows.
+Sessions over 60 min need a controller fix or manual re-register. Owner then authorized
+only the remaining OUT targets 1–9 for both mechanisms (18 trajectories, ≤4 A100s
+on default/lab2), shards `frontier/<mechanism>-r0.001546-seed-42-out-<t>/`.
+All 18 are collected and pushed (targets 1–9, each mechanism; commits in branch history
+through `47d62c1`); no retries/duplicates, no token expiry, no active sessions.
+Verification across all 22 trajectories: A100, exit 0, markers, all round/target rows,
+finite clean/noisy/aggregate losses, consistent partitions. Analyzer succeeds for seed 42.
+Round-100 clean-loss IN−OUT signs: global-dp IN lower on 7/10 targets, mean difference
+−0.03635; metric-privacy 6/10, mean −0.03290. Noisy-loss IN−OUT means −1.8538 and
+−1.1058 respectively (IN lower on 9/10 targets in both modes). Final IN accuracy:
+88.00% global-dp, 84.30% metric-privacy. Mean OUT accuracy over targets 0–9:
+87.71% (range 86.74–88.44) global-dp; 85.35% (84.22–86.59) metric-privacy.
+The per-target raw clean/noisy differences are in the measurement artifacts; one seed
+is descriptive only: no CI, privacy claim, or independent-sample multiplication.
+OUT cost averaged ~39.7–40.4 min training plus 3.3 min evaluation; targets 1–9 used
+~13.35 GPU-hours total. Nothing beyond these 22 trajectories is authorized. Earlier
+pilot state follows.
 New isolated experiment under `experiments/auc_frontier/`; protocol is in its
 `README.md`. EuroSAT, label-Dirichlet non-IID, 48 canonical clients, 100 rounds.
 All 12 vanilla IN pilot trajectories (alpha=.1,.3,1,10 × seeds 42–44) were
@@ -186,7 +198,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| EuroSAT frontier OUT 1–9 | Colab default/lab2 A100, ≤4 concurrent: 18 OUT trajectories (global-dp, metric-privacy × targets 1–9), alpha .3, ratio .001546, seed 42. | Running |
+| EuroSAT frontier OUT 1–9 | Colab default/lab2 A100, ≤4 concurrent: 18 OUT trajectories (global-dp, metric-privacy × targets 1–9), alpha .3, ratio .001546, seed 42. | Done (remove next update) |
 | EuroSAT frontier wave 1 | Colab default A100 ×2 (global-dp IN, metric-privacy OUT-0) + lab2 A100 ×2 (metric-privacy IN, global-dp OUT-0); alpha .3, ratio .001546, seed 42; all collected, sessions released. | Done (remove next update) |
 
 ## What's established on `master`
