@@ -21,6 +21,16 @@ STATUS_PATH = CONTENT / "metricdp-colab-status.json"
 LOG_PATH = CONTENT / "metricdp-colab-training.log"
 ARCHIVE_PATH = CONTENT / "metricdp-colab-results.tar.gz"
 PROJECT_ROOT = CONTENT / "metricdp-pytorch"
+RUNTIME_PATH = CONTENT / "metricdp-colab-runtime.json"
+FREEZE_PATH = CONTENT / "metricdp-colab-pip-freeze.txt"
+
+
+def _runtime() -> dict[str, object] | None:
+    """Pinned-runtime report written by remote_setup, if any."""
+    try:
+        return json.loads(RUNTIME_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
 
 
 def _now() -> str:
@@ -58,8 +68,11 @@ def main() -> None:
         "python": sys.version,
         "platform": platform.platform(),
         "gpu_before": _gpu_snapshot(),
+        "runtime": _runtime(),
     }
     _write_status(status)
+    if FREEZE_PATH.exists():
+        shutil.copy2(FREEZE_PATH, result_dir / "colab_pip_freeze.txt")
     returncode = 1
     error: str | None = None
     try:
