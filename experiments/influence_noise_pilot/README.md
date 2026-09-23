@@ -83,7 +83,8 @@ Tests (synthetic only): `uv run pytest experiments/influence_noise_pilot`.
 
 After all 22 f ∈ {0, .5} trajectories validate, an f = .05 arm (seed 42, IN + OUT
 0–9, same protocol) may run on the same two lab4 slots — only as a whole arm and
-only if its projected makespan ((90 + 10 × 50) / 2 min + 30 min collection margin)
+only if its projected makespan ((90 + 10 × 55) / 2 min + 30 min collection margin;
+OUT estimate raised from 50 to 55 min after observed ~52 min launch-to-collect)
 ends before 2026-09-24 15:00 CEST; otherwise it is not started at all. Motivation
 is the known pre-run anisotropy (influence-direction noise std ~16–100× τ at
 f = .5), not any pilot result. It is an exploratory fixed-energy contrast, not a
