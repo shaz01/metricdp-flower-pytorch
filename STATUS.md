@@ -25,7 +25,9 @@ It is a research handoff, not a completed-experiment report. No defense code or 
 results exist yet. Section 3.6 now records the first read-only diagnostic of existing scalar
 logs: CIFAR-10 confirmation seeds have similar distance/noise ratios but varied attack scores;
 Alzheimer and Fashion-MNIST collapse cases have many skipped rounds. The missing quantity is
-clipped update geometry. Next: specify the compact Gram-matrix pilot and its run budget.
+clipped update geometry. The handoff now proposes a bounded 10-round Fashion-MNIST/non-IID
+geometry pilot and records where Flower exposes clipped, weighted updates. Next: review that
+pilot design, then instrument and run it.
 
 `reports/auc_frontier.html` remains the primary empirical reference. The handoff records important
 qualifications to older summaries below: only 1 of the 10 landed curves has a three-seed mean

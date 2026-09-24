@@ -253,6 +253,27 @@ direction reveals participation to the attacker. That requires subsequent shadow
 stronger held-out attack evaluation, and possibly separately retained vectors or evaluation-only
 projections at selected checkpoints.
 
+**Concrete first-pilot proposal for review:** run one 10-round, 48-client Fashion-MNIST/non-IID
+FedAvg trajectory at seed 42 using the already studied low noise ratio `0.0006691085733778867`.
+This uses the smallest model in the frontier (168,676 parameters) and a healthy, strongly leaky
+historical setting. It is a geometry feasibility run, so its 10-round output cannot be compared
+as an attack-AUC result against the existing 100-round frontier. At each round, retain the
+client IDs and example counts, `G`, aggregate-alignment inner products, and singular values
+derived from `G`; record whether clipping or aggregation failed. Cap the diagnostic to the
+chosen run so this quadratic client calculation does not change all future experiments.
+Inspect runtime and disk use before selecting any second case. A later contrast could use the
+same dataset's high-noise collapse setting, but that has not been scheduled.
+
+**Implementation point checked against installed Flower 1.32.1:**
+`DifferentialPrivacyServerSideFixedClipping.aggregate_train` clips each successful reply's
+model arrays in place before delegating to FedAvg. `FedAvg.aggregate_train` then weights those
+arrays by the MetricRecord's `num-examples` field. A diagnostic wrapper can read the clipped
+replies after the base aggregation succeeds and calculate the weighted `u_i`/`v_i` values
+without altering aggregation. Preserve the current deterministic client-ID ordering and omit
+the geometry for skipped/failed rounds. The first implementation should expose an explicit
+opt-in switch rather than adding an `n²` diagnostic to every production round. The precise
+switch location and output schema belong in the implementation plan.
+
 ## 4. Candidates discussed and current selection
 
 | Candidate | Proposed server change | Motivation | Main uncertainty | Decision |
