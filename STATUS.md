@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/influence-noise-pilot` (from `runs/new-auc-frontier-eurosat` @ `1b846ef`)
-**Last updated:** 2026-09-24 02:10 CEST, macOS laptop (f=.5 paused by utility screen; f0 + f.05 queue on lab4)
+**Last updated:** 2026-09-24 03:57 CEST, macOS laptop (f.05 passed screen; f0 + f.05 OUT queue on lab4)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -30,9 +30,14 @@ Owner-authorized early stop (02:05 CEST 24 Sep): utility screen in the pilot REA
 (IN 70.8% vs f=0 86.0%), no new f=.5 OUT runs. The queue runs f=0 OUT 1–9 and the f=.05 IN; f=.05
 OUT runs start only if its IN passes the screen. Collected: f0 IN/OUT-0, f.5 IN/OUT-0.
 
+f=.05 IN passed the screen at 03:53 (85.19% vs 86.00%; largest class recall drop is annual crop land,
+12.0 pp); its OUT 0–9 are queued alternating with f=0 OUT 2–9. The screen uses the server test
+split for selection/development, so that split is not held out for these arms. Collected: f0 IN/OUT 0–1,
+f.5 IN/OUT 0–1 (arm stopped), f.05 IN. One startup hang (f0 OUT-2) was released and retried.
+
 | Session | Machine/account | State |
 |---|---|---|
-| inp-f0p0-s42-out-1, inp-f0p5-s42-out-1 (last f=.5 run) | Colab lab4 A100 (macOS laptop controller) | training |
+| inp-f0p0-s42-out-2-r2, inp-f0p05-s42-out-0 | Colab lab4 A100 (macOS laptop controller) | training / launching |
 
 **`runs/new-auc-frontier-eurosat` (owner chose alpha .3; seed-42 target panel complete).**
 First wave (4 trainings, source `b815aba`): global-dp and metric-privacy at
