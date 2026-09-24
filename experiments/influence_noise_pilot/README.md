@@ -102,6 +102,11 @@ evaluation JSON). One retry per trajectory; raw failed artifacts move to gitigno
 Supersedes the whole-arm 22-trajectory gate. Declared before any f = .05 outcome.
 This is a **utility screen, not a privacy claim**.
 
+**Split limitation:** the screen uses the server final-test split, the same split used to
+report accuracy. That makes it selection/development use of the test split, so the
+split is not a pristine held-out confirmatory test for these arms. Protocol and split
+are unchanged; this is recorded as a limitation only.
+
 Criterion: an arm fails if its seed-42 IN model, on the round-100 server
 final-test split (`*.evaluation.json`, `server_final_test`, n = 1350), has
 (a) accuracy more than 5 pp below the f = 0 IN, or (b) recall more than 20 pp below
