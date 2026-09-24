@@ -1,8 +1,8 @@
 # Project Status
 
-**Branch:** `master`
-**Last updated:** 2026-09-08, CUDA workstation (`feature/auc-targeted-noise-sweep` is complete,
-merged into `master`, and deleted — see `git log` for anything more recent)
+**Branch:** `feature/cia-influence-defense`
+**Last updated:** 2026-09-24, CUDA workstation (server-side CIA defense research direction
+selected; handoff documented; no new experiment running)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -14,6 +14,24 @@ section (including the Currently running table) updates more often, at "worth a 
 granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
+
+**Server-side CIA defense: noise shaped by client influence.** The project owner selected this
+as the first research direction, with client training unchanged. Work is on
+`feature/cia-influence-defense`, branched from master at `92845be`.
+Read **[reports/cia_influence_defense_research_direction.md](reports/cia_influence_defense_research_direction.md)**
+before resuming: it preserves the candidate mechanisms, selected direction, influence formula,
+open design/evaluation questions, artifact map, literature pointers, and proposed next steps.
+It is a research handoff, not a completed-experiment report. No defense code or new training
+results exist yet. Next: agree on a small diagnostic/prototype design and its experiment budget.
+
+`reports/auc_frontier.html` remains the primary empirical reference. The handoff records important
+qualifications to older summaries below: only 1 of the 10 landed curves has a three-seed mean
+attack score within the target band; Fashion-MNIST's homogeneous anchor rejection compares
+seed-42 attempts with a three-seed vanilla mean even though seed-42 vanilla also scores 1.0.
+The plotted score is a paired round-matched statistic, distinct from ordinary pooled ROC AUC.
+Read the handoff's evidence section before interpreting those labels as defense outcomes.
+
+### Prior work context
 
 **`feature/auc-targeted-noise-sweep` is complete (2026-09-01) and merged into `master`.** See
 `reports/auc_targeted_noise_sweep.md` for the full writeup and "What's established" below for the
@@ -119,7 +137,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| _(none)_ | Nothing currently running. | — |
+| _(none)_ | No experiment launched for the new CIA defense direction. | Research design pending |
 
 ## What's established on `master`
 
