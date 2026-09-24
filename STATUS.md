@@ -1,8 +1,8 @@
 # Project Status
 
 **Branch:** `feature/cia-influence-defense`
-**Last updated:** 2026-09-24, CUDA workstation (10-round influence-geometry pilot completed;
-owner authorized the raw JSON artifact push)
+**Last updated:** 2026-09-24, CUDA workstation (owner parked the influence-shaped defense
+direction after the first geometry pilot; no experiment running)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -15,8 +15,9 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-**Server-side CIA defense: noise shaped by client influence.** The project owner selected this
-as the first research direction, with client training unchanged. Work is on
+**Parked: server-side CIA defense using client influence.** The project owner selected this
+as the first research direction, with client training unchanged, then chose to stop here and
+explore a different direction next. This work remains on
 `feature/cia-influence-defense`, branched from master at `92845be`.
 Read **[reports/cia_influence_defense_research_direction.md](reports/cia_influence_defense_research_direction.md)**
 before resuming: it preserves the candidate mechanisms, selected direction, influence formula,
@@ -34,8 +35,8 @@ final server accuracy was 94.15%. The top five directions explain 27.3–33.8% o
 energy, so a tiny basis would omit much of the measured removal-effect geometry. This is not
 an attack score or defense result. The owner explicitly authorized pushing the two pilot JSON
 artifacts containing per-client diagnostics; the report preserves their interpretation and the
-run command. Next: link geometry to attack sensitivity and decide on the first noise rule and
-controls.
+run command. Do not continue this line or launch another influence experiment unless the owner
+chooses to revisit it. The next research direction has not yet been selected.
 
 `reports/auc_frontier.html` remains the primary empirical reference. The handoff records important
 qualifications to older summaries below: only 1 of the 10 landed curves has a three-seed mean
@@ -150,7 +151,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `cia-influence-pilot` (`/tmp/cia-influence-pilot-20260924.log`) | 10-round, 48-client Fashion-MNIST/non-IID IN influence-geometry pilot on CUDA workstation GPU 0; JSON output in `results/cia_influence_defense/pilot/` | Done 2026-09-24 17:35 local time; JSON artifacts validated and approved for push |
+| _(none)_ | No experiment running; the influence direction is parked. | Awaiting selection of a new direction |
 
 ## What's established on `master`
 

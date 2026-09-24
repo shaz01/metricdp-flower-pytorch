@@ -6,7 +6,7 @@
 
 **Starting commit on master:** `92845be` (`Merge branch 'feature/auc-targeted-noise-sweep'`)
 
-**State:** scalar diagnostic complete; opt-in geometry probe implemented; first CUDA pilot complete.
+**State:** first CUDA geometry pilot complete; influence-shaped defense direction parked by owner.
 
 **Primary empirical reference:** [auc_frontier.html](auc_frontier.html).
 
@@ -17,20 +17,24 @@ diagnostic in section 3.6 reanalyzes existing runs, and the first geometry pilot
 training result. No defense mechanism or CIA comparison result exists yet.
 
 The owner selected **server-side changes only** and accepted **noise shaped by client influence**
-as the first direction to explore. The other candidates below remain alternatives or controls.
+as the first direction to explore. After the pilot, the owner chose to leave this line here and
+go further in a different direction. This report preserves the work for possible later return;
+it is not a request to continue influence experiments now. The other candidates below remain
+ideas or possible controls, not new selections.
 Selecting a direction does not mean its formula, experimental budget, or success criteria have
 already been settled. The owner alone decides when the experiment is finished.
 
 ## 1. Start here in a new session
 
 1. Read [AGENTS.md](../AGENTS.md), [STATUS.md](../STATUS.md), this report, and recent git history.
-2. Work on `feature/cia-influence-defense`; keep its work and eventual results on this branch
-   until the owner declares the experiment finished. Do not merge early.
+2. This line is parked on `feature/cia-influence-defense`; retain its code, data, and report
+   there until the owner decides its disposition. Do not merge it or treat the experiment as
+   finished merely because work paused. A distinct new experiment should use its own branch.
 3. Use [auc_frontier.html](auc_frontier.html) as the common reference for the research discussion.
    Read its raw points and the qualifications in section 3, rather than equating a `landed`
    status with confirmed protection.
-4. Read the section 3.6 pilot observations, then resume with the design questions in section 6.
-   Specify and review the first defense prototype before a larger experiment.
+4. If the owner later reopens this line, read the section 3.6 pilot observations and the design
+   questions in section 6 before specifying a defense prototype. No further work is scheduled.
 5. Update this report's decision log and `STATUS.md` as meaningful work progresses. Commit and
    push at those milestones. Record machine roles, never hostnames, IP addresses, or usernames.
 
@@ -483,10 +487,10 @@ The following distinctions are essential:
 13. What is the contribution relative to existing influence estimation, adaptive clipping,
     directional noise, and inference-defense literature? Novelty is still unverified.
 
-## 7. Proposed next steps and decision points
+## 7. Steps if this direction is revisited
 
-This is the sequence after the bounded pilot above. A larger experiment matrix and budget have
-not been set.
+These are preserved options, not active work. A larger experiment matrix and budget have not
+been set.
 
 1. **Use the completed first diagnostic.** Section 3.6 compares selected existing scalar logs,
    attack gaps, and confirmation seeds. It identifies what the logs can and cannot answer.
@@ -509,9 +513,9 @@ not been set.
    If directions do not help, revisit influence-limiting aggregation rather than silently changing
    the selected research story.
 
-The geometry measurement is now implemented as an opt-in probe. The 10-round pilot is complete.
-A defense mechanism, full attack comparison, and larger
-experiment budget still require a separate design decision; do not silently treat this
+The geometry measurement is implemented as an opt-in probe, and the 10-round pilot is complete.
+A defense mechanism, full attack comparison, and larger experiment budget would require a new
+decision if this direction is revisited; do not silently treat this
 diagnostic as evidence that the proposed noise covariance works.
 
 ## 8. Available artifacts and implementation map
@@ -630,10 +634,12 @@ Sum `metric-dp-aggregation-collapsed` in `train_metrics` and inspect
 | 2026-09-24 | First 10-round IN-only geometry pilot finished on local CUDA GPU 0; all ten Gram diagnostics present and final server accuracy 94.15% | Pilot artifacts and cautious interpretation recorded above; no CIA score or defense comparison |
 | 2026-09-24 | Automatic approval review rejected a push of the raw pilot JSON files because they contain per-client metrics and the remote destination was unverified | Raw artifacts kept local; report summary can be pushed separately |
 | 2026-09-24 | Owner explicitly authorized pushing the two raw pilot JSON files to the repository's GitHub origin | Add them to `feature/cia-influence-defense`; predictions NPZ remains ignored |
+| 2026-09-24 | The two authorized pilot JSON files and updated handoff were pushed in `c797f25` | Full Gram matrices available on the branch; predictions NPZ remains ignored |
+| 2026-09-24 | Owner chose to leave the influence-shaped direction here and go further in a different direction | Park this branch; no additional influence experiment scheduled and no completion or merge declared |
 
-**Next interaction:** use the pilot geometry and section 6 to choose and scrutinize the first
-noise rule and its controls. Add an attack-linked measurement before treating a low-dimensional
-noise basis as promising.
+**Current decision:** stop this influence-shaped line after the pilot and choose a different
+research direction in a future discussion. If this line is ever resumed, add an attack-linked
+measurement before treating a low-dimensional noise basis as promising.
 Do not claim that a defense, formal guarantee, novelty assessment, or new defense finding is
 already complete.
 
