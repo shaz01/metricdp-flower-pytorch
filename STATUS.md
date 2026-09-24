@@ -1,8 +1,8 @@
 # Project Status
 
 **Branch:** `feature/cia-influence-defense`
-**Last updated:** 2026-09-24, CUDA workstation (10-round influence-geometry pilot running
-on GPU 0 in detached session `cia-influence-pilot`)
+**Last updated:** 2026-09-24, CUDA workstation (10-round influence-geometry pilot completed;
+artifact analysis added to the living research handoff)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -21,17 +21,21 @@ as the first research direction, with client training unchanged. Work is on
 Read **[reports/cia_influence_defense_research_direction.md](reports/cia_influence_defense_research_direction.md)**
 before resuming: it preserves the candidate mechanisms, selected direction, influence formula,
 open design/evaluation questions, artifact map, literature pointers, and proposed next steps.
-It is a research handoff, not a completed-experiment report. No defense mechanism or new training
-results exist yet. Section 3.6 records the first read-only diagnostic of existing scalar
+It is a research handoff, not a completed-experiment report. No defense mechanism or new CIA
+attack result exists yet. Section 3.6 records the first read-only diagnostic of existing scalar
 logs: CIFAR-10 confirmation seeds have similar distance/noise ratios but varied attack scores;
-Alzheimer and Fashion-MNIST collapse cases have many skipped rounds. The missing quantity is
-clipped update geometry. An opt-in `--record-influence-geometry` flag now captures this geometry
+Alzheimer and Fashion-MNIST collapse cases have many skipped rounds. That gap motivated an
+opt-in `--record-influence-geometry` flag that captures clipped update geometry
 in `metric-privacy`/`fedavg` runs with up to 64 clients; the handoff gives the output schema and
-exact command for a bounded 10-round Fashion-MNIST/non-IID IN pilot. The local NVIDIA driver is
-visible only outside the filesystem sandbox. The pilot is running locally on GPU 0; use the
-detached session and log in the Currently running table to monitor it. The earlier remote SSH
-attempt failed, but it is no longer needed. Next: validate all ten round diagnostics and
-resource cost, analyze the geometry, then decide on the first noise rule and controls.
+exact command and results for a bounded 10-round Fashion-MNIST/non-IID IN pilot. The local
+NVIDIA driver is visible only outside the filesystem sandbox. The pilot completed on GPU 0.
+All ten rounds recorded finite, symmetric Gram matrices, and the
+final server accuracy was 94.15%. The top five directions explain 27.3–33.8% of influence
+energy, so a tiny basis would omit much of the measured removal-effect geometry. This is not
+an attack score or defense result. Raw JSON artifacts remain on this workstation: automatic
+approval review rejected pushing their per-client metrics to the remote repository. The report
+preserves the measured summary and command for other agents. Next: link geometry to attack
+sensitivity and decide on the first noise rule and controls.
 
 `reports/auc_frontier.html` remains the primary empirical reference. The handoff records important
 qualifications to older summaries below: only 1 of the 10 landed curves has a three-seed mean
@@ -146,7 +150,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `cia-influence-pilot` (`/tmp/cia-influence-pilot-20260924.log`) | 10-round, 48-client Fashion-MNIST/non-IID IN influence-geometry pilot on CUDA workstation GPU 0; output `results/cia_influence_defense/pilot/` | Running; started 2026-09-24 17:31 local time |
+| `cia-influence-pilot` (`/tmp/cia-influence-pilot-20260924.log`) | 10-round, 48-client Fashion-MNIST/non-IID IN influence-geometry pilot on CUDA workstation GPU 0; local output `results/cia_influence_defense/pilot/` | Done 2026-09-24 17:35 local time; artifacts validated locally, remote push blocked |
 
 ## What's established on `master`
 

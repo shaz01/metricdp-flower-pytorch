@@ -6,15 +6,15 @@
 
 **Starting commit on master:** `92845be` (`Merge branch 'feature/auc-targeted-noise-sweep'`)
 
-**State:** scalar diagnostic complete; opt-in geometry probe implemented; CUDA pilot running.
+**State:** scalar diagnostic complete; opt-in geometry probe implemented; first CUDA pilot complete.
 
 **Primary empirical reference:** [auc_frontier.html](auc_frontier.html).
 
 This is a living research and continuity report requested by the project owner. It is **not
 a completed-experiment report**. It records the discussion, evidence, candidates, questions,
 and next steps so work can continue in another chat or on another machine. The 2026-09-24
-diagnostic in section 3.6 reanalyzes existing runs. A measurement probe is implemented; no new
-defense mechanism or training result exists yet.
+diagnostic in section 3.6 reanalyzes existing runs, and the first geometry pilot now has a
+training result. No defense mechanism or CIA comparison result exists yet.
 
 The owner selected **server-side changes only** and accepted **noise shaped by client influence**
 as the first direction to explore. The other candidates below remain alternatives or controls.
@@ -29,8 +29,8 @@ already been settled. The owner alone decides when the experiment is finished.
 3. Use [auc_frontier.html](auc_frontier.html) as the common reference for the research discussion.
    Read its raw points and the qualifications in section 3, rather than equating a `landed`
    status with confirmed protection.
-4. Monitor the section 3.6 CUDA pilot, inspect its output, then resume with the design questions
-   in section 6. Specify and review the first defense prototype before a larger experiment.
+4. Read the section 3.6 pilot observations, then resume with the design questions in section 6.
+   Specify and review the first defense prototype before a larger experiment.
 5. Update this report's decision log and `STATUS.md` as meaningful work progresses. Commit and
    push at those milestones. Record machine roles, never hostnames, IP addresses, or usernames.
 
@@ -321,12 +321,52 @@ all ten `train_metrics` rounds have `metric-dp-influence-recorded=1`, that store
 to one, that the Gram matrix is symmetric and positive semidefinite to numerical tolerance,
 and that the timing/disk cost is acceptable. Then analyze spectral concentration, alignment
 with the aggregate, and per-client influence magnitude before choosing a noise rule. The branch
-revision containing the instrumentation is `9a973bb`. The pilot was started locally at
-2026-09-24 17:31 (local time) on GPU 0 in detached `tmux` session `cia-influence-pilot`; its
-operational log is `/tmp/cia-influence-pilot-20260924.log`. The GPU devices are available to
-this process only outside the filesystem sandbox. The earlier remote SSH attempt failed before
-checkout or GPU inspection, but remote access is not required for this pilot. A started process
-is not a result: verify all ten round artifacts before interpreting the geometry.
+revision containing the instrumentation is `9a973bb`. The pilot ran locally from approximately
+17:31 to 17:35 on 2026-09-24 (local time) on GPU 0 in detached `tmux` session
+`cia-influence-pilot`; the session ended normally. The operational log is
+`/tmp/cia-influence-pilot-20260924.log` (local and untracked). The GPU devices were available
+to the process outside the filesystem sandbox; this explains the earlier false conclusion
+from sandboxed `nvidia-smi`. The earlier remote SSH attempt failed before checkout or GPU
+inspection, but remote access was not needed for this pilot.
+
+**Observed pilot output.** The locally stored [run JSON](../results/cia_influence_defense/pilot/fashion-noniid-in-seed42-geometry-10r.json)
+and [evaluation JSON](../results/cia_influence_defense/pilot/fashion-noniid-in-seed42-geometry-10r.evaluation.json)
+contain the real values below. These raw files remain local because automatic approval review
+rejected pushing per-client training diagnostics to the remote GitHub repository; a remote agent
+must rerun the command or obtain an approved artifact transfer to inspect the full Gram matrices.
+All ten rounds have 48 sorted client IDs and
+`metric-dp-influence-recorded=1`; their weights sum to one, each Gram matrix is symmetric,
+finite, and positive semidefinite to numerical tolerance (smallest eigenvalue across rounds
+at least `-2.7e-18`). The evaluation's postprocessed accuracy agrees with the recorded final
+server accuracy of **94.15%**. The predictions NPZ was produced locally but is excluded by the
+repository's `results/**/*.npz` ignore rule; the geometry and aggregate metrics are in the
+local JSON artifacts.
+
+| Round | Clients clipped | Top 1 influence energy | Top 5 influence energy | Target ID 0 norm rank / 48 | Target norm / median | Server accuracy |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 22 | 9.0% | 30.7% | 16 | 1.32 | 84.20% |
+| 2 | 0 | 9.4% | 33.8% | 11 | 1.47 | 89.20% |
+| 3 | 0 | 7.0% | 30.2% | 12 | 1.44 | 90.95% |
+| 4 | 0 | 6.5% | 28.4% | 11 | 1.50 | 91.90% |
+| 5 | 0 | 6.3% | 28.0% | 14 | 1.38 | 92.60% |
+| 6 | 0 | 6.2% | 28.4% | 11 | 1.47 | 93.10% |
+| 7 | 0 | 6.2% | 28.0% | 16 | 1.36 | 93.25% |
+| 8 | 0 | 5.9% | 27.3% | 16 | 1.34 | 93.60% |
+| 9 | 0 | 6.1% | 27.6% | 12 | 1.37 | 93.75% |
+| 10 | 0 | 6.0% | 27.9% | 13 | 1.35 | 94.15% |
+
+Here "energy" means the sum of the largest eigenvalues of `G` divided by `trace(G)`,
+equivalently the squared singular-value share of the matrix of `v_i` vectors. Rank 1 means
+largest removal-effect norm. In this one healthy trajectory, no single direction dominates:
+the top five explain only 27.3–33.8% of influence energy, although the span is structurally
+at most 47-dimensional. Target ID 0 has an above-median removal effect, but its rank stays
+between 11 and 16 rather than standing out as the largest. These facts constrain the simplest
+"noise only in the top few directions" proposal: a small basis would discard most measured
+influence energy. They do **not** show whether the discarded directions carry CIA signal,
+whether the full influence-shaped covariance protects against CIA, or how any candidate trades
+privacy against accuracy. The pilot has no OUT adjacency and no attack score. Next analyze
+alignment and target-loss sensitivity before selecting a covariance rule, and use independent
+seeds and held-out attacks for any defense claim.
 
 ## 4. Candidates discussed and current selection
 
@@ -449,9 +489,9 @@ not been set.
 
 1. **Use the completed first diagnostic.** Section 3.6 compares selected existing scalar logs,
    attack gaps, and confirmation seeds. It identifies what the logs can and cannot answer.
-2. **Run and inspect the compact geometry pilot.** Use the section 3.6 command on CUDA. Check
-   completeness, Gram consistency, spectral concentration, clipping status, runtime, and disk
-   use before extending the budget. The raw clipped vectors are not stored.
+2. **Use the completed compact geometry pilot.** Section 3.6 records completeness, Gram
+   consistency, spectral concentration, clipping status, and its limited interpretation. The
+   raw clipped vectors are not stored. Do not infer protection from the geometry alone.
 3. **Choose the simplest prototype that answers the hypothesis.** Keep client training fixed.
    Start from a clearly specified FedAvg server operation and include all data-dependent parts
    in the counterfactual analysis.
@@ -468,7 +508,7 @@ not been set.
    If directions do not help, revisit influence-limiting aggregation rather than silently changing
    the selected research story.
 
-The geometry measurement is now implemented as an opt-in probe. The 10-round pilot is running.
+The geometry measurement is now implemented as an opt-in probe. The 10-round pilot is complete.
 A defense mechanism, full attack comparison, and larger
 experiment budget still require a separate design decision; do not silently treat this
 diagnostic as evidence that the proposed noise covariance works.
@@ -495,7 +535,8 @@ yet. Keep the current frontier and original result artifacts intact for comparis
 
 Use `uv run` for Python commands. CUDA is the reference experimental platform given the documented
 MPS reproducibility problems. The CUDA pilot is the first training run exercising this
-instrumentation; no test suite has been run for it.
+instrumentation; its artifact checks are described in section 3.6. No test suite has been run
+for it.
 
 ## 9. Initial literature pointers and novelty limits
 
@@ -585,9 +626,12 @@ Sum `metric-dp-aggregation-collapsed` in `train_metrics` and inspect
 | 2026-09-24 | Implemented opt-in post-clipping influence geometry and specified a 10-round IN-only pilot | CUDA pilot pending; no defense or new result claimed |
 | 2026-09-24 | Pushed probe revision `9a973bb`; configured remote GPU SSH rejected available public key | No checkout/GPU inspection or pilot launch occurred |
 | 2026-09-24 | User clarified local CUDA availability; outside-sandbox checks found two RTX 5000 Ada GPUs and PyTorch CUDA access; started 10-round IN pilot on idle GPU 0 | Running in `cia-influence-pilot`; results pending |
+| 2026-09-24 | First 10-round IN-only geometry pilot finished on local CUDA GPU 0; all ten Gram diagnostics present and final server accuracy 94.15% | Pilot artifacts and cautious interpretation recorded above; no CIA score or defense comparison |
+| 2026-09-24 | Automatic approval review rejected a push of the raw pilot JSON files because they contain per-client metrics and the remote destination was unverified | Raw artifacts kept local; report summary can be pushed separately |
 
-**Next interaction:** monitor the running pilot, validate its artifact, inspect the geometry and
-resource cost, then use section 6 to choose and scrutinize the first noise rule and its controls.
+**Next interaction:** use the pilot geometry and section 6 to choose and scrutinize the first
+noise rule and its controls. Add an attack-linked measurement before treating a low-dimensional
+noise basis as promising.
 Do not claim that a defense, formal guarantee, novelty assessment, or new defense finding is
 already complete.
 
