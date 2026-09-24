@@ -96,3 +96,27 @@ A100, 1000 finite measurement rows, 100 rounds of finite influence diagnostics,
 evaluation JSON). One retry per trajectory; raw failed artifacts move to gitignored local
 `.colab/quarantine/`, and only a small metadata JSON is committed under
 `results/influence_noise_pilot/failures/`.
+
+## Exploratory utility screen and early stop (owner-authorized 2026-09-24 02:05 CEST)
+
+Supersedes the whole-arm 22-trajectory gate. Declared before any f = .05 outcome.
+This is a **utility screen, not a privacy claim**.
+
+Criterion: an arm fails if its seed-42 IN model, on the round-100 server
+final-test split (`*.evaluation.json`, `server_final_test`, n = 1350), has
+(a) accuracy more than 5 pp below the f = 0 IN, or (b) recall more than 20 pp below
+the f = 0 IN for any of the 10 classes. A failing arm launches no new OUT runs;
+already-running ones finish and are collected. No other f is searched after a failure.
+
+- **f = .5 (post-hoc, decided after its IN/OUT-0 were seen): fails.** IN accuracy
+  70.81% vs 86.00% (−15.2 pp); recall drops > 20 pp for annual crop land
+  (91.8→15.8%), brushland/shrubland (73.1→39.7%), river (74.2→46.1%). OUT-0 (for
+  context only): 70.67% vs 87.70%. New f = .5 OUT launches were paused at 02:06 CEST
+  with OUT 0 collected and OUT 1 still running. The f = .5 data are partial
+  (targets 0–1), are not comparable to full 10-target curves, and must not be
+  pooled with them.
+- **f = 0**: continues through OUT 0–9 (shared baseline). The f = 0 control uses
+  its own RNG and clipping path, so it is not interchangeable with the main
+  global-dp runs.
+- **f = .05 (predeclared arm)**: IN runs first. Its OUT 0–9 launch only if the
+  IN passes the criterion above.
