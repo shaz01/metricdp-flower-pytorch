@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/influence-noise-pilot` (from `runs/new-auc-frontier-eurosat` @ `1b846ef`)
-**Last updated:** 2026-09-24 00:50 CEST, macOS laptop (influence-noise pilot OUT backfill running on lab4)
+**Last updated:** 2026-09-24 02:10 CEST, macOS laptop (f=.5 paused by utility screen; f0 + f.05 queue on lab4)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -26,10 +26,13 @@ refresher and a lab4 backfill queue (`.colab/queue_lab4.py`, untracked; logs in
 `.colab/logs/`) run on the macOS laptop. The queue launches each arm's OUT 0–9 after its IN
 validates, pushes result commits, and retries each run at most once.
 
+Owner-authorized early stop (02:05 CEST 24 Sep): utility screen in the pilot README; f=.5 fails
+(IN 70.8% vs f=0 86.0%), no new f=.5 OUT runs. The queue runs f=0 OUT 1–9 and the f=.05 IN; f=.05
+OUT runs start only if its IN passes the screen. Collected: f0 IN/OUT-0, f.5 IN/OUT-0.
+
 | Session | Machine/account | State |
 |---|---|---|
-| f0/f.5 IN | Colab lab4 A100 | collected+validated 00:36/00:40 (`8e8535e`, `1681039`) |
-| inp-f0p5-s42-out-0, inp-f0p0-s42-out-0 | Colab lab4 A100 (controlled from macOS laptop) | training; queue backfills OUT 1–9 |
+| inp-f0p0-s42-out-1, inp-f0p5-s42-out-1 (last f=.5 run) | Colab lab4 A100 (macOS laptop controller) | training |
 
 **`runs/new-auc-frontier-eurosat` (owner chose alpha .3; seed-42 target panel complete).**
 First wave (4 trainings, source `b815aba`): global-dp and metric-privacy at
