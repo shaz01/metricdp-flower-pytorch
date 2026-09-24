@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 import json
 import math
 from pathlib import Path
@@ -17,19 +17,26 @@ class FrontierCombo(Combo):
     canonical_clients: int
     out_target: int | None
     noise_ratio: float
+    partition_seed: int | None = None  # None: ``seed`` controls data layout too
+
+    @property
+    def layout_seed(self) -> int:
+        return self.seed if self.partition_seed is None else self.partition_seed
 
     def runner_args(self, **kwargs):
-        return (*super().runner_args(**kwargs), "--partition-profile", json.dumps({
-            "alpha": self.alpha, "clients": self.canonical_clients,
-            "out_target": self.out_target,
-        }, sort_keys=True))
+        profile = {"alpha": self.alpha, "clients": self.canonical_clients,
+                   "out_target": self.out_target}
+        if self.partition_seed is not None:
+            profile["partition_seed"] = self.partition_seed
+        return (*super().runner_args(**kwargs), "--partition-profile",
+                json.dumps(profile, sort_keys=True))
 
 
 ADJACENCIES = ("both", "in", "out")
 
 
 def build_combos(*, alpha, seeds, targets, clients, privacy, ratios, pilot=False,
-                 adjacency="both", out_targets=None):
+                 adjacency="both", out_targets=None, partition_seed=None):
     """Build trajectories. ``targets`` is the fixed panel every shared IN evaluates.
 
     ``adjacency``/``out_targets`` only select which trajectories this process
@@ -37,6 +44,9 @@ def build_combos(*, alpha, seeds, targets, clients, privacy, ratios, pilot=False
     """
     if adjacency not in ADJACENCIES:
         raise ValueError("Unknown adjacency selection")
+    if partition_seed is not None and (isinstance(partition_seed, bool)
+                                       or not isinstance(partition_seed, int) or partition_seed < 0):
+        raise ValueError("partition_seed must be a non-negative integer")
     if out_targets is not None:
         if adjacency == "in" or pilot:
             raise ValueError("--out-targets requires OUT trajectories (adjacency both/out)")
@@ -65,14 +75,17 @@ def build_combos(*, alpha, seeds, targets, clients, privacy, ratios, pilot=False
     else:
         outs = [t for t in targets if out_targets is None or t in out_targets]
         selected = ([None] if adjacency != "out" else []) + (outs if adjacency != "in" else [])
+    layout = "" if partition_seed is None else f"-p{partition_seed}"
     return [FrontierCombo(
-        name_prefix=f"eurosat-dirichlet-a{alpha!r}-{'in' if target is None else f'out-{target}'}-r{ratio!r}",
+        name_prefix=(f"eurosat-dirichlet-a{alpha!r}{layout}-"
+                     f"{'in' if target is None else f'out-{target}'}-r{ratio!r}"),
         num_clients=clients - (target is not None), partition="non-iid", privacy=privacy,
         aggregation="fedavg", seed=seed,
         noise_multiplier=ratio * (clients - (target is not None)), hyperparams=HYPERPARAMS,
         data_module="experiments.auc_frontier.data:create_data_module",
         model_module="experiments.reproduce.eurosat_cnn:create_model",
         alpha=alpha, canonical_clients=clients, out_target=target, noise_ratio=ratio,
+        partition_seed=partition_seed,
     ) for ratio in ratios for seed in seeds for target in selected]
 
 
@@ -116,6 +129,8 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
                     "targets": list(chosen), "rounds": combo.hyperparams.rounds,
                     "pilot": pilot, "schema": 1, "hyperparams": asdict(combo.hyperparams),
                     "run_name": combo.run_name(), "score_direction": "lower loss indicates IN"}
+        if combo.partition_seed is not None:
+            manifest["partition_seed"] = combo.partition_seed
         manifest_path = folder / "manifest.json"
         if manifest_path.exists() and json.loads(manifest_path.read_text()) != manifest:
             raise ValueError(f"Manifest mismatch: {folder}; use a separate output directory")
@@ -127,7 +142,7 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
         if (folder / "complete.json").exists() and {(r["round"], r["target"]) for r in rows} == expected:
             continue
         atomic_json(folder / "partitions.json", partition_summary(
-            combo.alpha, combo.canonical_clients, combo.seed,
+            combo.alpha, combo.canonical_clients, combo.layout_seed,
         ))
         import os
         import subprocess
@@ -154,9 +169,12 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
             trained = time.monotonic()
             print(f"[FRONTIER] training finished in {trained - started:.1f}s; "
                   f"evaluating {len(chosen)} target(s) x {len(rounds)} rounds", flush=True)
+            # Evaluation data (shadow subsets, server test split) follows the
+            # layout seed, so every training seed is scored on identical records.
+            eval_combo = replace(combo, seed=combo.layout_seed)
             shadows = {}
             for target in chosen:
-                base = DirichletEuroSAT(combo.alpha)
+                base = DirichletEuroSAT(combo.alpha, partition_seed=combo.partition_seed)
                 kwargs = dict(num_clients=combo.canonical_clients, target_partition_id=target,
                               shadow_fraction=0.10, partition_mode="non-iid", partition_profile="auto")
                 shadows[target] = (ShadowDataModule(base, **kwargs),
@@ -166,7 +184,7 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
                 for target, (clean, noisy) in shadows.items():
                     aggregate, clean_loss, noisy_loss, size = cia.eval_model(
                         path, clean_data_module=clean, noisy_data_module=noisy,
-                        device=device, combo=combo,
+                        device=device, combo=eval_combo,
                     )
                     rows.append(dict(round=round_number, target=target,
                                      aggregate_loss=aggregate, clean_loss=clean_loss,
@@ -195,6 +213,8 @@ def main():
     parser.add_argument("--clients", type=int, default=48)
     parser.add_argument("--privacy", choices=("vanilla", "global-dp", "metric-privacy"), required=True)
     parser.add_argument("--ratios", type=float, nargs="+")
+    parser.add_argument("--partition-seed", type=int,
+                        help="Fix data layout independently of --seeds (training randomness only)")
     parser.add_argument("--alpha-pilot", action="store_true")
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--max-parallel-clients", type=int, default=6)
@@ -205,7 +225,7 @@ def main():
     combos = build_combos(alpha=args.alpha, seeds=args.seeds, targets=args.targets,
                           clients=args.clients, privacy=args.privacy, ratios=args.ratios,
                           pilot=args.alpha_pilot, adjacency=args.adjacency,
-                          out_targets=args.out_targets)
+                          out_targets=args.out_targets, partition_seed=args.partition_seed)
     print(json.dumps({"training_runs": len(combos), "execute": args.execute,
                       "target_panel": args.targets, "adjacency": args.adjacency,
                       "rounds_recorded": [1, HYPERPARAMS.rounds],

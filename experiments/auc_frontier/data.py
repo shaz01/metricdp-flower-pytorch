@@ -37,24 +37,43 @@ def dirichlet_partitions(labels: tuple[int, ...], clients: int, alpha: float, se
 
 
 class DirichletEuroSAT(EurosatDataModule):
-    def __init__(self, alpha, **kwargs):
+    """Label-Dirichlet EuroSAT.
+
+    ``partition_seed`` fixes the data layout (client partitions, each client's
+    train/test split, server evaluation split) independently of the training
+    seed. The training seed passed per call then controls only training
+    randomness (batch order here; model init and noise elsewhere). ``None``
+    keeps the original behaviour, where one seed controls both.
+    """
+
+    def __init__(self, alpha, partition_seed=None, **kwargs):
         super().__init__(**kwargs)
         self.alpha = alpha
+        self.partition_seed = partition_seed
+
+    def _layout_seed(self, seed):
+        return seed if self.partition_seed is None else self.partition_seed
 
     def client_loaders(self, partition_id, *, num_partitions, partition_mode,
                        batch_size, seed, partition_profile="auto", client_weights=None,
                        max_samples=0):
         if partition_mode != "non-iid" or client_weights is not None:
             raise ValueError("This experiment requires label-Dirichlet non-IID without weights")
+        layout = self._layout_seed(seed)
         split = self.dataset["train"]
         labels = labels_from_records(split, label_column="label")
-        parts = dirichlet_partitions(tuple(labels), num_partitions, self.alpha, seed)
+        parts = dirichlet_partitions(tuple(labels), num_partitions, self.alpha, layout)
         selected = cap_indices(parts[partition_id], max_samples)
-        train, test = split_stratified(labels, selected, self.train_fraction, seed=seed + partition_id)
+        train, test = split_stratified(labels, selected, self.train_fraction, seed=layout + partition_id)
         return tuple(make_indexed_loader(
             EurosatDataset(split, augment=augment), indices, batch_size=batch_size,
             shuffle=augment, seed=seed + partition_id,
         ) for indices, augment in ((train, True), (test, False)))
+
+    def server_loaders(self, *, batch_size, seed, max_samples=0):
+        return super().server_loaders(
+            batch_size=batch_size, seed=self._layout_seed(seed), max_samples=max_samples,
+        )
 
 
 def partition_summary(alpha, clients, seed):
@@ -72,7 +91,8 @@ def partition_summary(alpha, clients, seed):
 
 def create_data_module(config):
     settings = json.loads(config["partition-profile"])
-    module = DirichletEuroSAT(settings["alpha"], cache_dir=config.get("data-cache-dir") or None)
+    module = DirichletEuroSAT(settings["alpha"], partition_seed=settings.get("partition_seed"),
+                              cache_dir=config.get("data-cache-dir") or None)
     target = settings["out_target"]
     factory = in_remove if target is None else out_remove
     return factory(module, canonical_num_partitions=settings["clients"],
