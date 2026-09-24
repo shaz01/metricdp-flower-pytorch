@@ -329,18 +329,19 @@ to the process outside the filesystem sandbox; this explains the earlier false c
 from sandboxed `nvidia-smi`. The earlier remote SSH attempt failed before checkout or GPU
 inspection, but remote access was not needed for this pilot.
 
-**Observed pilot output.** The locally stored [run JSON](../results/cia_influence_defense/pilot/fashion-noniid-in-seed42-geometry-10r.json)
+**Observed pilot output.** The [run JSON](../results/cia_influence_defense/pilot/fashion-noniid-in-seed42-geometry-10r.json)
 and [evaluation JSON](../results/cia_influence_defense/pilot/fashion-noniid-in-seed42-geometry-10r.evaluation.json)
-contain the real values below. These raw files remain local because automatic approval review
-rejected pushing per-client training diagnostics to the remote GitHub repository; a remote agent
-must rerun the command or obtain an approved artifact transfer to inspect the full Gram matrices.
+contain the real values below. The owner explicitly authorized pushing these two raw JSON files,
+including their per-client training diagnostics, to the branch's GitHub origin after automatic
+approval review initially blocked that push. Other agents can inspect the full Gram matrices
+from the branch without rerunning the pilot.
 All ten rounds have 48 sorted client IDs and
 `metric-dp-influence-recorded=1`; their weights sum to one, each Gram matrix is symmetric,
 finite, and positive semidefinite to numerical tolerance (smallest eigenvalue across rounds
 at least `-2.7e-18`). The evaluation's postprocessed accuracy agrees with the recorded final
 server accuracy of **94.15%**. The predictions NPZ was produced locally but is excluded by the
 repository's `results/**/*.npz` ignore rule; the geometry and aggregate metrics are in the
-local JSON artifacts.
+JSON artifacts.
 
 | Round | Clients clipped | Top 1 influence energy | Top 5 influence energy | Target ID 0 norm rank / 48 | Target norm / median | Server accuracy |
 |---:|---:|---:|---:|---:|---:|---:|
@@ -628,6 +629,7 @@ Sum `metric-dp-aggregation-collapsed` in `train_metrics` and inspect
 | 2026-09-24 | User clarified local CUDA availability; outside-sandbox checks found two RTX 5000 Ada GPUs and PyTorch CUDA access; started 10-round IN pilot on idle GPU 0 | Running in `cia-influence-pilot`; results pending |
 | 2026-09-24 | First 10-round IN-only geometry pilot finished on local CUDA GPU 0; all ten Gram diagnostics present and final server accuracy 94.15% | Pilot artifacts and cautious interpretation recorded above; no CIA score or defense comparison |
 | 2026-09-24 | Automatic approval review rejected a push of the raw pilot JSON files because they contain per-client metrics and the remote destination was unverified | Raw artifacts kept local; report summary can be pushed separately |
+| 2026-09-24 | Owner explicitly authorized pushing the two raw pilot JSON files to the repository's GitHub origin | Add them to `feature/cia-influence-defense`; predictions NPZ remains ignored |
 
 **Next interaction:** use the pilot geometry and section 6 to choose and scrutinize the first
 noise rule and its controls. Add an attack-linked measurement before treating a low-dimensional

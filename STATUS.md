@@ -2,7 +2,7 @@
 
 **Branch:** `feature/cia-influence-defense`
 **Last updated:** 2026-09-24, CUDA workstation (10-round influence-geometry pilot completed;
-artifact analysis added to the living research handoff)
+owner authorized the raw JSON artifact push)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -32,10 +32,10 @@ NVIDIA driver is visible only outside the filesystem sandbox. The pilot complete
 All ten rounds recorded finite, symmetric Gram matrices, and the
 final server accuracy was 94.15%. The top five directions explain 27.3–33.8% of influence
 energy, so a tiny basis would omit much of the measured removal-effect geometry. This is not
-an attack score or defense result. Raw JSON artifacts remain on this workstation: automatic
-approval review rejected pushing their per-client metrics to the remote repository. The report
-preserves the measured summary and command for other agents. Next: link geometry to attack
-sensitivity and decide on the first noise rule and controls.
+an attack score or defense result. The owner explicitly authorized pushing the two pilot JSON
+artifacts containing per-client diagnostics; the report preserves their interpretation and the
+run command. Next: link geometry to attack sensitivity and decide on the first noise rule and
+controls.
 
 `reports/auc_frontier.html` remains the primary empirical reference. The handoff records important
 qualifications to older summaries below: only 1 of the 10 landed curves has a three-seed mean
@@ -150,7 +150,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `cia-influence-pilot` (`/tmp/cia-influence-pilot-20260924.log`) | 10-round, 48-client Fashion-MNIST/non-IID IN influence-geometry pilot on CUDA workstation GPU 0; local output `results/cia_influence_defense/pilot/` | Done 2026-09-24 17:35 local time; artifacts validated locally, remote push blocked |
+| `cia-influence-pilot` (`/tmp/cia-influence-pilot-20260924.log`) | 10-round, 48-client Fashion-MNIST/non-IID IN influence-geometry pilot on CUDA workstation GPU 0; JSON output in `results/cia_influence_defense/pilot/` | Done 2026-09-24 17:35 local time; JSON artifacts validated and approved for push |
 
 ## What's established on `master`
 
