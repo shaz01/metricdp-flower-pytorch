@@ -125,3 +125,14 @@ already-running ones finish and are collected. No other f is searched after a fa
   global-dp runs.
 - **f = .05 (predeclared arm)**: IN runs first. Its OUT 0–9 launch only if the
   IN passes the criterion above.
+
+## Resource change for the last seven OUT runs (2026-09-24 09:15 CEST)
+
+From 08:25 CEST, Colab rejected every lab4 A100 allocation (quota/entitlement). Those
+attempts never got a VM or started training. Their metadata is marked
+`allocation-rejected` with `counts_as_scientific_attempt: false`. The 18 collected
+trajectories are unaffected. The seven missing OUT runs (f = 0 targets 7–9; f = .05
+targets 6–9) run on lab2 A100s after the main coordinator hands lab2 back. They use the
+same branch source, algorithm, parameters and pinned runtime (validated torch 2.10.0 on an
+A100). Only the account changes, and it is recorded in each `colab_run.json`. Final pilot
+total: 25 trajectories (f = 0: 11, f = .05: 11, f = .5: 3, early-stopped).
