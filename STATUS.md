@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/cia-influence-defense`
-**Last updated:** 2026-09-24, CUDA workstation (influence geometry probe implemented;
+**Last updated:** 2026-09-24, local workstation (influence geometry probe committed;
 10-round CUDA pilot specified but not launched)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -28,8 +28,9 @@ Alzheimer and Fashion-MNIST collapse cases have many skipped rounds. The missing
 clipped update geometry. An opt-in `--record-influence-geometry` flag now captures this geometry
 in `metric-privacy`/`fedavg` runs with up to 64 clients; the handoff gives the output schema and
 exact command for a bounded 10-round Fashion-MNIST/non-IID IN pilot. The local NVIDIA driver is
-unavailable. Next: run the pilot on a CUDA machine, inspect its geometry/cost, then decide on
-the first noise rule and controls.
+unavailable. The configured remote GPU SSH connection rejected the available public key before
+its checkout or GPU could be inspected. Next: restore remote access or use another CUDA machine,
+run the pilot, inspect its geometry/cost, then decide on the first noise rule and controls.
 
 `reports/auc_frontier.html` remains the primary empirical reference. The handoff records important
 qualifications to older summaries below: only 1 of the 10 landed curves has a three-seed mean
@@ -144,7 +145,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| _(none)_ | 10-round Fashion-MNIST influence-geometry pilot specified; no experiment launched. | Awaiting CUDA machine |
+| _(none)_ | 10-round Fashion-MNIST influence-geometry pilot specified; no experiment launched. | Remote GPU access unavailable |
 
 ## What's established on `master`
 

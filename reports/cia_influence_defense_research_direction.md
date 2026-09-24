@@ -322,7 +322,11 @@ to one, that the Gram matrix is symmetric and positive semidefinite to numerical
 and that the timing/disk cost is acceptable. Then analyze spectral concentration, alignment
 with the aggregate, and per-client influence magnitude before choosing a noise rule. No new
 training result has been produced by this branch yet: this local machine's NVIDIA driver is
-unavailable, so the CUDA pilot remains to be run elsewhere.
+unavailable. The configured remote GPU SSH connection also rejected the available public key
+before checkout or GPU inspection, so the CUDA pilot remains unstarted. The branch revision
+containing the instrumentation is `9a973bb`; fetch `feature/cia-influence-defense` before using
+the command on a machine with CUDA access. Do not interpret the failed SSH connection as a
+training failure.
 
 ## 4. Candidates discussed and current selection
 
@@ -579,6 +583,7 @@ Sum `metric-dp-aggregation-collapsed` in `train_metrics` and inspect
 | 2026-09-24 | Owner requested a separate branch and a report for future agents | This branch and report created |
 | 2026-09-24 | Owner asked to start; read-only scalar diagnostic compared selected existing stages and identified missing clipped-update geometry | Findings and next measurement recorded in section 3.6; no new run |
 | 2026-09-24 | Implemented opt-in post-clipping influence geometry and specified a 10-round IN-only pilot | CUDA pilot pending; no defense or new result claimed |
+| 2026-09-24 | Pushed probe revision `9a973bb`; configured remote GPU SSH rejected available public key | No checkout/GPU inspection or pilot launch occurred |
 
 **Next interaction:** run the specified pilot on a CUDA machine, inspect the geometry and
 resource cost, then use section 6 to choose and scrutinize the first noise rule and its controls.
