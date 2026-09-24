@@ -6,14 +6,15 @@
 
 **Starting commit on master:** `92845be` (`Merge branch 'feature/auc-targeted-noise-sweep'`)
 
-**State:** research direction selected; mechanism design and experiments remain open.
+**State:** first read-only diagnostic complete; compact geometry probe proposed; no new training.
 
 **Primary empirical reference:** [auc_frontier.html](auc_frontier.html).
 
 This is a living research and continuity report requested by the project owner. It is **not
 a completed-experiment report**. It records the discussion, evidence, candidates, questions,
-and next steps so work can continue in another chat or on another machine. No new defense has
-been implemented, no training has been launched, and no new defense results exist.
+and next steps so work can continue in another chat or on another machine. The 2026-09-24
+diagnostic in section 3.6 reanalyzes existing runs only. No new defense has been implemented,
+no training has been launched, and no new defense results exist.
 
 The owner selected **server-side changes only** and accepted **noise shaped by client influence**
 as the first direction to explore. The other candidates below remain alternatives or controls.
@@ -195,6 +196,63 @@ The resulting interpretation is more cautious than parts of the older report nar
 These qualifications apply when reading the existing reports and STATUS historical summaries;
 those historical files have not been rewritten as part of this handoff.
 
+### 3.6 First diagnostic: what existing scalar logs can tell us
+
+**Question:** do the currently logged distance, clipping, and noise measures distinguish
+trajectories with different CIA scores? This was a read-only comparison of selected existing
+`search_state.json`, `cia.json`, and per-trajectory run JSONs on 2026-09-24. Each row below uses
+the seed-42 IN trajectory's `train_metrics` for the server diagnostics; attack score and accuracy
+come from the saved IN/OUT stage. `d+` is the median of strictly positive finite raw
+`metric-dp-distance` values. The noise/signal ratio is the median of finite logged per-round
+`dp-noise-to-signal-ratio` values. Skips count `metric-dp-aggregation-collapsed` rounds out of
+the trajectory's round budget. These medians summarize different parts of the same training
+history; none is an independent seed-level uncertainty estimate.
+
+| Dataset / partition, metric privacy | Noise ratio | Seed | Accuracy | Attack score | Median `d+` | Median noise/signal | Skipped rounds |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Alzheimer / homogeneous, low noise | 0.00007783 | 42 | 91.3% | 0.909 | 0.489 | 3.13 | 0/100 |
+| Alzheimer / homogeneous, collapsed endpoint | 0.00498142 | 42 | 8.4% | 0.818 | 0.422 | 117.13 | 68/100 |
+| Fashion-MNIST / non-IID, low noise | 0.00066911 | 42 | 94.9% | 1.000 | 0.667 | 2.98 | 0/100 |
+| Fashion-MNIST / non-IID, collapsed endpoint | 0.042823 | 42 | 25.0% | 0.545 | 0.645 | 124.13 | 96/100 |
+| CIFAR-10 / homogeneous, same landing ratio | 0.005 | 42 | 48.5% | 0.550 | 1.026 | 13.58 | 0/20 |
+| CIFAR-10 / homogeneous, same landing ratio | 0.005 | 43 | 44.9% | 0.900 | 1.029 | 13.75 | 0/20 |
+| CIFAR-10 / homogeneous, same landing ratio | 0.005 | 44 | 44.4% | 0.700 | 1.022 | 14.12 | 0/20 |
+
+Three observations guide the next probe:
+
+1. **The scalar distance and median noise ratio do not determine the measured attack score.**
+   CIFAR-10's three confirmation seeds have closely similar median distance (1.022–1.029) and
+   noise/signal ratio (13.58–14.12) at the same noise setting, while the attack score spans
+   0.550–0.900. Their target partitions, learned trajectories, and noise draws differ, so this
+   is a diagnostic contrast, not proof that distance has zero predictive value. The median
+   matched shadow-loss gap (`OUT loss - IN loss`) also varies across those seeds: approximately
+   0.0075, 0.0634, and 0.0245.
+2. **Collapse is observable in the per-round diagnostics.** The Alzheimer endpoint skips 68
+   IN rounds and 70 OUT rounds; the Fashion-MNIST endpoint skips 96 rounds in both. A positive
+   distance median conceals zero-distance or unusable rounds because `d+` excludes zero. Attack
+   scores from these collapsed states cannot establish that a working model was protected.
+3. **The existing logs cannot test the selected directional hypothesis.** `dp-update-norms-before-clipping`
+   records magnitudes, and metric privacy records pairwise **pre-clipping** distances. It does not
+   retain clipped update vectors, their inner products, or the resulting per-client removal
+   vectors `v_i`. Checkpoints are deleted after attack evaluation. No offline reconstruction of
+   the clipped influence directions from these scalar artifacts is justified.
+
+The comparison uses one historically selected target (canonical ID 0) and a seed-42 search
+path, so it should guide measurement design rather than rank new defenses. It also compares
+noise/signal ratios measured against aggregate update magnitude, not a privacy parameter.
+
+**Smallest next server measurement:** during FedAvg aggregation, form each already-clipped
+`u_i`, its existing example-count weight `a_i`, and the round aggregate `u_bar` in memory.
+Compute the Gram matrix `G_ij = <v_i, v_j>` for all client-removal effects `v_i`, plus
+`<v_i, u_bar>`, `||u_bar||`, client weights, and a record of clipping/skip status. These
+summaries permit a small-matrix spectrum and individual influence/aggregate-alignment analysis
+without retaining millions of model coordinates. Sort by canonical client ID for determinism.
+Emit compact per-round summaries for an initial, bounded pilot; do not add full updates or a
+new noise rule to the first geometry diagnostic. A Gram matrix alone cannot prove that a
+direction reveals participation to the attacker. That requires subsequent shadow-loss or
+stronger held-out attack evaluation, and possibly separately retained vectors or evaluation-only
+projections at selected checkpoints.
+
 ## 4. Candidates discussed and current selection
 
 | Candidate | Proposed server change | Motivation | Main uncertainty | Decision |
@@ -314,14 +372,13 @@ The following distinctions are essential:
 These are proposals for the next discussion, not a launched experiment matrix or an instruction
 to spend an unspecified training budget.
 
-1. **Agree on a diagnostic study.** Use existing scalar logs to relate clipping, distance,
-   signal/noise ratio, utility, and clean/noisy shadow-loss separation. Identify a small set of
-   healthy and failing cases. Alzheimer supplies strong leakage and collapse cases; CIFAR-10
-   supplies large endpoint tradeoffs; EuroSAT supplies a comparatively stable utility case.
-2. **Specify missing instrumentation.** Collect clipped update geometry or sufficient Gram
-   matrices in a small new run. Existing logs do not preserve update directions or full model
-   checkpoints. Do not plan directional analysis as though those tensors were already saved.
-   Prefer compact spectra/projections and explicitly chosen retention over saving every tensor.
+1. **Use the completed first diagnostic.** Section 3.6 compares selected existing scalar logs,
+   attack gaps, and confirmation seeds. It identifies what the logs can and cannot answer.
+2. **Specify the compact geometry pilot.** Capture clipped update influence as a per-round Gram
+   matrix and alignment summaries as described in section 3.6. A small, initially bounded run
+   is preferable to instrumenting every historical curve. Choose the dataset/round/seed budget
+   and how diagnostics are stored before training. Do not plan directional analysis as though
+   clipped update vectors were already saved.
 3. **Choose the simplest prototype that answers the hypothesis.** Keep client training fixed.
    Start from a clearly specified FedAvg server operation and include all data-dependent parts
    in the counterfactual analysis.
@@ -449,11 +506,12 @@ Sum `metric-dp-aggregation-collapsed` in `train_metrics` and inspect
 | 2026-09-24 | Discussed influence-shaped noise, influence-limiting aggregation, and stabilization of existing calibration | All retained in this report |
 | 2026-09-24 | Owner accepted influence-shaped noise as the first direction to try | Direction selected; exact mechanism open |
 | 2026-09-24 | Owner requested a separate branch and a report for future agents | This branch and report created |
+| 2026-09-24 | Owner asked to start; read-only scalar diagnostic compared selected existing stages and identified missing clipped-update geometry | Findings and next measurement recorded in section 3.6; no new run |
 
-**Next interaction:** turn the selected hypothesis into a small, concrete diagnostic/prototype
-design, resolve the most consequential questions in section 6, and agree on its implementation
-and experiment budget. Do not claim that a defense, formal guarantee, novelty assessment, or
-new experimental finding is already complete.
+**Next interaction:** use section 3.6 to turn the proposed clipped-update Gram measurement into a
+small, concrete pilot design, resolve the most consequential questions in section 6, and agree
+on its implementation and experiment budget. Do not claim that a defense, formal guarantee,
+novelty assessment, or new defense finding is already complete.
 
 This report was drafted with AI assistance from the project owner's discussion, repository
 artifacts, source paper, and the explicitly limited literature search described above.

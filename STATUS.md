@@ -1,8 +1,8 @@
 # Project Status
 
 **Branch:** `feature/cia-influence-defense`
-**Last updated:** 2026-09-24, CUDA workstation (server-side CIA defense research direction
-selected; handoff documented; no new experiment running)
+**Last updated:** 2026-09-24, CUDA workstation (server-side CIA defense direction selected;
+read-only diagnostic added to handoff; no new experiment running)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -22,7 +22,10 @@ Read **[reports/cia_influence_defense_research_direction.md](reports/cia_influen
 before resuming: it preserves the candidate mechanisms, selected direction, influence formula,
 open design/evaluation questions, artifact map, literature pointers, and proposed next steps.
 It is a research handoff, not a completed-experiment report. No defense code or new training
-results exist yet. Next: agree on a small diagnostic/prototype design and its experiment budget.
+results exist yet. Section 3.6 now records the first read-only diagnostic of existing scalar
+logs: CIFAR-10 confirmation seeds have similar distance/noise ratios but varied attack scores;
+Alzheimer and Fashion-MNIST collapse cases have many skipped rounds. The missing quantity is
+clipped update geometry. Next: specify the compact Gram-matrix pilot and its run budget.
 
 `reports/auc_frontier.html` remains the primary empirical reference. The handoff records important
 qualifications to older summaries below: only 1 of the 10 landed curves has a three-seed mean
