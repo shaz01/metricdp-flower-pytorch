@@ -1,8 +1,8 @@
 # Project Status
 
 **Branch:** `feature/cia-influence-defense`
-**Last updated:** 2026-09-24, local workstation (influence geometry probe committed;
-10-round CUDA pilot specified but not launched)
+**Last updated:** 2026-09-24, CUDA workstation (10-round influence-geometry pilot running
+on GPU 0 in detached session `cia-influence-pilot`)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -28,9 +28,10 @@ Alzheimer and Fashion-MNIST collapse cases have many skipped rounds. The missing
 clipped update geometry. An opt-in `--record-influence-geometry` flag now captures this geometry
 in `metric-privacy`/`fedavg` runs with up to 64 clients; the handoff gives the output schema and
 exact command for a bounded 10-round Fashion-MNIST/non-IID IN pilot. The local NVIDIA driver is
-unavailable. The configured remote GPU SSH connection rejected the available public key before
-its checkout or GPU could be inspected. Next: restore remote access or use another CUDA machine,
-run the pilot, inspect its geometry/cost, then decide on the first noise rule and controls.
+visible only outside the filesystem sandbox. The pilot is running locally on GPU 0; use the
+detached session and log in the Currently running table to monitor it. The earlier remote SSH
+attempt failed, but it is no longer needed. Next: validate all ten round diagnostics and
+resource cost, analyze the geometry, then decide on the first noise rule and controls.
 
 `reports/auc_frontier.html` remains the primary empirical reference. The handoff records important
 qualifications to older summaries below: only 1 of the 10 landed curves has a three-seed mean
@@ -145,7 +146,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| _(none)_ | 10-round Fashion-MNIST influence-geometry pilot specified; no experiment launched. | Remote GPU access unavailable |
+| `cia-influence-pilot` (`/tmp/cia-influence-pilot-20260924.log`) | 10-round, 48-client Fashion-MNIST/non-IID IN influence-geometry pilot on CUDA workstation GPU 0; output `results/cia_influence_defense/pilot/` | Running; started 2026-09-24 17:31 local time |
 
 ## What's established on `master`
 

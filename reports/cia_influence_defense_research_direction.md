@@ -6,7 +6,7 @@
 
 **Starting commit on master:** `92845be` (`Merge branch 'feature/auc-targeted-noise-sweep'`)
 
-**State:** scalar diagnostic complete; opt-in geometry probe implemented; CUDA pilot not run.
+**State:** scalar diagnostic complete; opt-in geometry probe implemented; CUDA pilot running.
 
 **Primary empirical reference:** [auc_frontier.html](auc_frontier.html).
 
@@ -29,7 +29,7 @@ already been settled. The owner alone decides when the experiment is finished.
 3. Use [auc_frontier.html](auc_frontier.html) as the common reference for the research discussion.
    Read its raw points and the qualifications in section 3, rather than equating a `landed`
    status with confirmed protection.
-4. Run the section 3.6 pilot on CUDA, inspect its output, then resume with the design questions
+4. Monitor the section 3.6 CUDA pilot, inspect its output, then resume with the design questions
    in section 6. Specify and review the first defense prototype before a larger experiment.
 5. Update this report's decision log and `STATUS.md` as meaningful work progresses. Commit and
    push at those milestones. Record machine roles, never hostnames, IP addresses, or usernames.
@@ -296,7 +296,7 @@ rule or make a privacy claim. It depends on the installed Flower 1.32.1 wrapper 
 replies to their clipped values before returning from aggregation. A future Flower upgrade
 needs that behavior rechecked.
 
-The exact proposed **IN-only, geometry-only** pilot command from the repository root is:
+The exact **IN-only, geometry-only** pilot command from the repository root is:
 
 ```bash
 uv run python -m experiments.reproduce.runner \
@@ -320,13 +320,13 @@ scorer and cannot yield a 10-round AUC comparable with `auc_frontier.html`. Firs
 all ten `train_metrics` rounds have `metric-dp-influence-recorded=1`, that stored weights sum
 to one, that the Gram matrix is symmetric and positive semidefinite to numerical tolerance,
 and that the timing/disk cost is acceptable. Then analyze spectral concentration, alignment
-with the aggregate, and per-client influence magnitude before choosing a noise rule. No new
-training result has been produced by this branch yet: this local machine's NVIDIA driver is
-unavailable. The configured remote GPU SSH connection also rejected the available public key
-before checkout or GPU inspection, so the CUDA pilot remains unstarted. The branch revision
-containing the instrumentation is `9a973bb`; fetch `feature/cia-influence-defense` before using
-the command on a machine with CUDA access. Do not interpret the failed SSH connection as a
-training failure.
+with the aggregate, and per-client influence magnitude before choosing a noise rule. The branch
+revision containing the instrumentation is `9a973bb`. The pilot was started locally at
+2026-09-24 17:31 (local time) on GPU 0 in detached `tmux` session `cia-influence-pilot`; its
+operational log is `/tmp/cia-influence-pilot-20260924.log`. The GPU devices are available to
+this process only outside the filesystem sandbox. The earlier remote SSH attempt failed before
+checkout or GPU inspection, but remote access is not required for this pilot. A started process
+is not a result: verify all ten round artifacts before interpreting the geometry.
 
 ## 4. Candidates discussed and current selection
 
@@ -468,8 +468,8 @@ not been set.
    If directions do not help, revisit influence-limiting aggregation rather than silently changing
    the selected research story.
 
-The geometry measurement is now implemented as an opt-in probe. The 10-round pilot is specified
-above but has not been launched. A defense mechanism, full attack comparison, and larger
+The geometry measurement is now implemented as an opt-in probe. The 10-round pilot is running.
+A defense mechanism, full attack comparison, and larger
 experiment budget still require a separate design decision; do not silently treat this
 diagnostic as evidence that the proposed noise covariance works.
 
@@ -494,8 +494,8 @@ a better fit with the existing CIA modules. These directories do not exist as ne
 yet. Keep the current frontier and original result artifacts intact for comparison.
 
 Use `uv run` for Python commands. CUDA is the reference experimental platform given the documented
-MPS reproducibility problems. The instrumentation has not been exercised in a training run or
-test suite on this machine; treat the CUDA pilot as the first operational check.
+MPS reproducibility problems. The CUDA pilot is the first training run exercising this
+instrumentation; no test suite has been run for it.
 
 ## 9. Initial literature pointers and novelty limits
 
@@ -584,8 +584,9 @@ Sum `metric-dp-aggregation-collapsed` in `train_metrics` and inspect
 | 2026-09-24 | Owner asked to start; read-only scalar diagnostic compared selected existing stages and identified missing clipped-update geometry | Findings and next measurement recorded in section 3.6; no new run |
 | 2026-09-24 | Implemented opt-in post-clipping influence geometry and specified a 10-round IN-only pilot | CUDA pilot pending; no defense or new result claimed |
 | 2026-09-24 | Pushed probe revision `9a973bb`; configured remote GPU SSH rejected available public key | No checkout/GPU inspection or pilot launch occurred |
+| 2026-09-24 | User clarified local CUDA availability; outside-sandbox checks found two RTX 5000 Ada GPUs and PyTorch CUDA access; started 10-round IN pilot on idle GPU 0 | Running in `cia-influence-pilot`; results pending |
 
-**Next interaction:** run the specified pilot on a CUDA machine, inspect the geometry and
+**Next interaction:** monitor the running pilot, validate its artifact, inspect the geometry and
 resource cost, then use section 6 to choose and scrutinize the first noise rule and its controls.
 Do not claim that a defense, formal guarantee, novelty assessment, or new defense finding is
 already complete.
