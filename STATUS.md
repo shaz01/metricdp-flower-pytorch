@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `runs/new-auc-frontier-eurosat`
-**Last updated:** 2026-09-24 02:15 CEST, macOS laptop (deadline-directed training; queue revised to preserve original runs)
+**Last updated:** 2026-09-24 10:50 CEST, macOS laptop (main queue collected; runtime metadata correction; pilot finishing)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -14,7 +14,31 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-### Current handoff (2026-09-24 02:15 CEST)
+### Current handoff (2026-09-24 10:50 CEST)
+
+**Correction verified directly against all 54 original training JSONs:** their
+`metadata.library_versions` consistently records torch **2.11.0+cu128**, torchvision
+**0.26.0+cu128**, flwr **1.38.0**, numpy **2.1.3**, scikit-learn **1.9.1**.
+Earlier claims that these versions were unrecorded were incorrect: agents checked
+controller/provenance metadata but overlooked training-result metadata. The failing
+diagnostic image was reported as torch 2.11.0+cu130, not the same recorded build.
+A full old pip freeze/cuDNN capture is absent; that narrower limitation does not
+invalidate old data. Do not repeat the broader 'unknown torch version' claim.
+
+**Main queue now collected:** 54 original + 22 pinned overlap/reference + 12
+mixed-environment seed-44 OUTs = **88** verified attack trajectories, plus 12 alpha
+pilots. The pinned 22 comprise vanilla seed 42 IN+OUT0–9 (11), GDP IN+OUT0–3 (5),
+and metric IN+OUT0–4 (6). Both seed-44 panels are complete with explicit mixed
+pairings. Main scheduler stopped; handoff receipt at 10:36 CEST authorized lab2
+for the influence pilot, which launched its remaining seven OUTs there.
+`reports/eurosat_frontier_progress.html` and its generator (`5f51a71`) are provisional
+visualizations, NOT a finished-experiment report. Refresh after the pilot's final
+collections. At 10:36 the pilot had 18 collected of the revised 25-run plan: f=0
+IN+OUT0–6, f=.05 IN+OUT0–5, f=.5 IN+OUT0–1 (early stopped). f=.05 passed the
+predeclared utility screen (85.19% vs f=0 86.00%); its attack outcomes still need
+complete panels. lab4 exhausted A100 availability; lab2 is the only working pair.
+
+#### Earlier overnight allocation notes (historical; superseded where noted)
 
 Owner authorizes useful training until **2026-09-24 15:00 CEST**, not a declaration
 that either experiment is finished. Alpha **.3**, noise ratio **.001546**, target
@@ -22,8 +46,8 @@ panel **0–9**, rounds **1–100** recorded; final-round analysis primary.
 
 - **Preserve original results:** `frontier/` has 54 verified trajectories: 44 form
   complete seeds 42/43 × global-dp/metric-privacy; 10 form partial seed 44 (IN +
-  OUT 0–3 each). Missing exact library versions is a reproducibility limitation,
-  NOT grounds for discarding these results. Old seed-42/43 paired concordance:
+  OUT 0–3 each). These results are preserved; library versions are recorded as
+  corrected in the current handoff above. Old seed-42/43 paired concordance:
   global-dp .70/.50, metric-privacy .60/.30; target-stratified cross-seed AUC
   .575/.45. Two seeds only, no precision/privacy-certification claims.
 - Repeated round-1 SIGFPE in Colab torch 2.11 stopped training. A pinned torch
@@ -239,8 +263,8 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| Main frontier queue | Colab A100 account-role lab2, ≤2 usable slots; vanilla seed 42 then missing seed-44 OUTs, pinned runtime. | Running; inspect live scheduler before launching |
-| Influence pilot queue | Colab A100 account-role lab4, ≤2 slots; f=0 reference and screened f=.05; separate feature branch. | Running; f=.5 early-stopped, in-flight jobs finish |
+| Main frontier queue | 88 attack trajectories collected; scheduler exited, lab2 handed to pilot after zero-active verification. | Done with allocated queue; not experiment-finished declaration |
+| Influence pilot queue | Colab A100 account-role lab2, ≤2 slots after lab4 allocation refusals; seven remaining f=0/.05 OUTs; separate feature branch. | Running; receipt checked and first two launched 10:36 CEST |
 | Additional capacity | default units exhausted; lab3 rejects A100 allocation despite repaired login. | Blocked, no purchase authorized |
 
 ## What's established on `master`
