@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `runs/new-auc-frontier-eurosat`
-**Last updated:** 2026-09-23, macOS laptop (EuroSAT frontier OUT 1–9 waves running)
+**Last updated:** 2026-09-24 02:15 CEST, macOS laptop (deadline-directed training; queue revised to preserve original runs)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -13,6 +13,47 @@ section (including the Currently running table) updates more often, at "worth a 
 granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
+
+### Current handoff (2026-09-24 02:15 CEST)
+
+Owner authorizes useful training until **2026-09-24 15:00 CEST**, not a declaration
+that either experiment is finished. Alpha **.3**, noise ratio **.001546**, target
+panel **0–9**, rounds **1–100** recorded; final-round analysis primary.
+
+- **Preserve original results:** `frontier/` has 54 verified trajectories: 44 form
+  complete seeds 42/43 × global-dp/metric-privacy; 10 form partial seed 44 (IN +
+  OUT 0–3 each). Missing exact library versions is a reproducibility limitation,
+  NOT grounds for discarding these results. Old seed-42/43 paired concordance:
+  global-dp .70/.50, metric-privacy .60/.30; target-stratified cross-seed AUC
+  .575/.45. Two seeds only, no precision/privacy-certification claims.
+- Repeated round-1 SIGFPE in Colab torch 2.11 stopped training. A pinned torch
+  2.10/CUDA12.8 canary succeeded; setup now verifies dependencies and records
+  runtime/pip-freeze (`af3e6e3`). This does NOT establish that successful old VMs
+  changed versions during the original experiment. New results remain separately
+  identified in `frontier_torch210/`; 15 verified as of the 01:55 snapshot.
+- **Owner rejected blanket reruns.** Scheduler now skips already-completed old
+  defense runs; already-running overlap runs finish. Priority: six missing vanilla
+  seed-42 OUTs (4–9), then twelve missing seed-44 defense OUTs (4–9 both modes)
+  under `frontier_torch210_s44_mixedenv/`, then vanilla seed 43 only if its whole
+  panel fits. Mixed-environment seed 44 must be labeled, not silently pooled.
+  New/old seed-42 overlap shows some paired signs change on small loss margins;
+  it is a sensitivity diagnostic, not an environment-equivalence test.
+- **Capacity:** lab2 currently has two usable A100 slots for the main queue.
+  Owner says default exhausted compute units. lab3 auth repaired but A100
+  allocations fail. lab4's two slots are reserved for the separate influence pilot.
+  No purchases or account changes by agents. Proxy-token refreshers preserve
+  >1h sessions; controller double-collect/setup hangs need monitoring.
+- **Influence pilot:** separate `feature/influence-noise-pilot` worktree/branch.
+  Matched-energy f=.5 IN accuracy 70.81% vs f=0 86.00%, severe class-recall losses.
+  Owner authorized early stopping: no new f=.5 OUTs, already-running jobs finish.
+  Parent selected f=.05 as next arm; pre-outcome utility screen gates its OUTs.
+  f=0 reference continues. No alternative scientific decisions delegated to agent.
+- Both queues have detached schedulers; recheck `.colab`/remote state before any
+  launch to avoid duplicates. Execution agents monitor and collect, parent chooses
+  scientific allocation. No narrative final report yet. Deadline handoff needs
+  actual artifacts/coverage/failed attempts/runtime labels and VM shutdown audit.
+
+### Historical snapshot (superseded by current handoff above)
 
 **`runs/new-auc-frontier-eurosat` (owner chose alpha .3; seed-42 target panel complete).**
 First wave (4 trainings, source `b815aba`): global-dp and metric-privacy at
@@ -198,8 +239,9 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| EuroSAT frontier OUT 1–9 | Colab default/lab2 A100, ≤4 concurrent: 18 OUT trajectories (global-dp, metric-privacy × targets 1–9), alpha .3, ratio .001546, seed 42. | Done (remove next update) |
-| EuroSAT frontier wave 1 | Colab default A100 ×2 (global-dp IN, metric-privacy OUT-0) + lab2 A100 ×2 (metric-privacy IN, global-dp OUT-0); alpha .3, ratio .001546, seed 42; all collected, sessions released. | Done (remove next update) |
+| Main frontier queue | Colab A100 account-role lab2, ≤2 usable slots; vanilla seed 42 then missing seed-44 OUTs, pinned runtime. | Running; inspect live scheduler before launching |
+| Influence pilot queue | Colab A100 account-role lab4, ≤2 slots; f=0 reference and screened f=.05; separate feature branch. | Running; f=.5 early-stopped, in-flight jobs finish |
+| Additional capacity | default units exhausted; lab3 rejects A100 allocation despite repaired login. | Blocked, no purchase authorized |
 
 ## What's established on `master`
 
