@@ -77,6 +77,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--noise-multiplier", type=float, required=True)
     parser.add_argument("--clipping-norm", type=float, required=True)
     parser.add_argument(
+        "--record-influence-geometry",
+        action="store_true",
+        help="record post-clipping client-removal geometry (metric-privacy/fedavg only)",
+    )
+    parser.add_argument(
         "--partition-profile",
         default="auto",
         help="optional profile interpreted by the selected data module",
@@ -162,6 +167,12 @@ def _project_defaults() -> dict[str, Any]:
 
 
 def _validate(args: argparse.Namespace) -> None:
+    if args.record_influence_geometry and (
+        args.privacy != "metric-privacy" or args.aggregation != "fedavg"
+    ):
+        raise ValueError("influence geometry requires metric-privacy with fedavg.")
+    if args.record_influence_geometry and args.num_clients > 64:
+        raise ValueError("influence geometry supports at most 64 clients.")
     if args.num_clients < 2:
         raise ValueError("num-clients must be at least two.")
     if not 0.0 < args.fraction_evaluate <= 1.0:
@@ -245,6 +256,7 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
             "max-test-samples": max_test_samples,
             "noise-multiplier": args.noise_multiplier,
             "clipping-norm": args.clipping_norm,
+            "record-influence-geometry": args.record_influence_geometry,
             "data-module": args.data_module,
             "model-module": args.model_module,
             "data-cache-dir": cache_dir,

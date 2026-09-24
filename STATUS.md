@@ -1,8 +1,8 @@
 # Project Status
 
 **Branch:** `feature/cia-influence-defense`
-**Last updated:** 2026-09-24, CUDA workstation (server-side CIA defense direction selected;
-read-only diagnostic added to handoff; no new experiment running)
+**Last updated:** 2026-09-24, CUDA workstation (influence geometry probe implemented;
+10-round CUDA pilot specified but not launched)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -21,13 +21,15 @@ as the first research direction, with client training unchanged. Work is on
 Read **[reports/cia_influence_defense_research_direction.md](reports/cia_influence_defense_research_direction.md)**
 before resuming: it preserves the candidate mechanisms, selected direction, influence formula,
 open design/evaluation questions, artifact map, literature pointers, and proposed next steps.
-It is a research handoff, not a completed-experiment report. No defense code or new training
-results exist yet. Section 3.6 now records the first read-only diagnostic of existing scalar
+It is a research handoff, not a completed-experiment report. No defense mechanism or new training
+results exist yet. Section 3.6 records the first read-only diagnostic of existing scalar
 logs: CIFAR-10 confirmation seeds have similar distance/noise ratios but varied attack scores;
 Alzheimer and Fashion-MNIST collapse cases have many skipped rounds. The missing quantity is
-clipped update geometry. The handoff now proposes a bounded 10-round Fashion-MNIST/non-IID
-geometry pilot and records where Flower exposes clipped, weighted updates. Next: review that
-pilot design, then instrument and run it.
+clipped update geometry. An opt-in `--record-influence-geometry` flag now captures this geometry
+in `metric-privacy`/`fedavg` runs with up to 64 clients; the handoff gives the output schema and
+exact command for a bounded 10-round Fashion-MNIST/non-IID IN pilot. The local NVIDIA driver is
+unavailable. Next: run the pilot on a CUDA machine, inspect its geometry/cost, then decide on
+the first noise rule and controls.
 
 `reports/auc_frontier.html` remains the primary empirical reference. The handoff records important
 qualifications to older summaries below: only 1 of the 10 landed curves has a three-seed mean
@@ -142,7 +144,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| _(none)_ | No experiment launched for the new CIA defense direction. | Research design pending |
+| _(none)_ | 10-round Fashion-MNIST influence-geometry pilot specified; no experiment launched. | Awaiting CUDA machine |
 
 ## What's established on `master`
 

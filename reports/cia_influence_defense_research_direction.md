@@ -6,15 +6,15 @@
 
 **Starting commit on master:** `92845be` (`Merge branch 'feature/auc-targeted-noise-sweep'`)
 
-**State:** first read-only diagnostic complete; compact geometry probe proposed; no new training.
+**State:** scalar diagnostic complete; opt-in geometry probe implemented; CUDA pilot not run.
 
 **Primary empirical reference:** [auc_frontier.html](auc_frontier.html).
 
 This is a living research and continuity report requested by the project owner. It is **not
 a completed-experiment report**. It records the discussion, evidence, candidates, questions,
 and next steps so work can continue in another chat or on another machine. The 2026-09-24
-diagnostic in section 3.6 reanalyzes existing runs only. No new defense has been implemented,
-no training has been launched, and no new defense results exist.
+diagnostic in section 3.6 reanalyzes existing runs. A measurement probe is implemented; no new
+defense mechanism or training result exists yet.
 
 The owner selected **server-side changes only** and accepted **noise shaped by client influence**
 as the first direction to explore. The other candidates below remain alternatives or controls.
@@ -29,8 +29,8 @@ already been settled. The owner alone decides when the experiment is finished.
 3. Use [auc_frontier.html](auc_frontier.html) as the common reference for the research discussion.
    Read its raw points and the qualifications in section 3, rather than equating a `landed`
    status with confirmed protection.
-4. Resume with the design questions in section 6. The next useful deliverable is a concrete
-   diagnostic/prototype proposal, followed by an agreed implementation and experiment plan.
+4. Run the section 3.6 pilot on CUDA, inspect its output, then resume with the design questions
+   in section 6. Specify and review the first defense prototype before a larger experiment.
 5. Update this report's decision log and `STATUS.md` as meaningful work progresses. Commit and
    push at those milestones. Record machine roles, never hostnames, IP addresses, or usernames.
 
@@ -271,8 +271,58 @@ arrays by the MetricRecord's `num-examples` field. A diagnostic wrapper can read
 replies after the base aggregation succeeds and calculate the weighted `u_i`/`v_i` values
 without altering aggregation. Preserve the current deterministic client-ID ordering and omit
 the geometry for skipped/failed rounds. The first implementation should expose an explicit
-opt-in switch rather than adding an `n²` diagnostic to every production round. The precise
-switch location and output schema belong in the implementation plan.
+opt-in switch rather than adding an `n²` diagnostic to every production round. The switch and
+output schema now follow.
+
+**Instrumentation now on this branch (2026-09-24):** pass
+`--record-influence-geometry` to `experiments.reproduce.runner`. It is restricted to
+`metric-privacy` with `fedavg` and at most 64 clients; other runs keep the default off. After
+Flower clips the client models and aggregates, the server reconstructs each clipped update
+relative to the pre-round global model, uses Flower's `num-examples` weights, and records the
+client-removal effect `v_i` defined in section 5.1. The round's `train_metrics` contains:
+
+| Field suffix after `metric-dp-influence-` | Meaning |
+|---|---|
+| `recorded` | 1 when a successful aggregate has geometry, 0 for a collapsed aggregate; absent if Flower returns early on client errors |
+| `client-ids`, `example-counts`, `weights` | Same client order, sorted by logical ID; weights sum to one |
+| `client-count`, `gram-flat` | `n`, then all `n²` values of `<v_i,v_j>` in row-major order |
+| `align-with-aggregate`, `aggregate-norm` | `<v_i,u_bar>` for each client and `||u_bar||` |
+| `singular-values` | Descending singular values of the client-removal-effect matrix, obtained from the Gram eigenvalues |
+
+Existing `dp-client-clipped`, `dp-update-norms-before-clipping`, and
+`metric-dp-aggregation-collapsed` fields provide clipping/skip context. This is a private
+server diagnostic with a quadratic number of logged values; it does not alter the output noise
+rule or make a privacy claim. It depends on the installed Flower 1.32.1 wrapper mutating the
+replies to their clipped values before returning from aggregation. A future Flower upgrade
+needs that behavior rechecked.
+
+The exact proposed **IN-only, geometry-only** pilot command from the repository root is:
+
+```bash
+uv run python -m experiments.reproduce.runner \
+  --partition non-iid --privacy metric-privacy --aggregation fedavg \
+  --num-clients 48 --rounds 10 --local-epochs 5 --batch-size 32 \
+  --learning-rate 0.001 --seed 42 \
+  --noise-multiplier 0.03211721152213856 --clipping-norm 5 \
+  --initialization-epochs 20 \
+  --data-module experiments.cia.scripts.fashion_mnist_remove:create_in_remove \
+  --model-module experiments.reproduce.fashion_mnist_cnn:create_model \
+  --max-parallel-clients 6 --record-influence-geometry \
+  --output-dir results/cia_influence_defense/pilot \
+  --run-name fashion-noniid-in-seed42-geometry-10r
+```
+
+The multiplier above is 48 times the historical ratio `0.0006691085733778867`, matching
+the existing 48-client IN trajectory. The expected result is
+`results/cia_influence_defense/pilot/fashion-noniid-in-seed42-geometry-10r.json`, with its
+ordinary evaluation artifacts beside it. This command does not run OUT adjacency or the CIA
+scorer and cannot yield a 10-round AUC comparable with `auc_frontier.html`. First inspect that
+all ten `train_metrics` rounds have `metric-dp-influence-recorded=1`, that stored weights sum
+to one, that the Gram matrix is symmetric and positive semidefinite to numerical tolerance,
+and that the timing/disk cost is acceptable. Then analyze spectral concentration, alignment
+with the aggregate, and per-client influence magnitude before choosing a noise rule. No new
+training result has been produced by this branch yet: this local machine's NVIDIA driver is
+unavailable, so the CUDA pilot remains to be run elsewhere.
 
 ## 4. Candidates discussed and current selection
 
@@ -390,16 +440,14 @@ The following distinctions are essential:
 
 ## 7. Proposed next steps and decision points
 
-These are proposals for the next discussion, not a launched experiment matrix or an instruction
-to spend an unspecified training budget.
+This is the sequence after the bounded pilot above. A larger experiment matrix and budget have
+not been set.
 
 1. **Use the completed first diagnostic.** Section 3.6 compares selected existing scalar logs,
    attack gaps, and confirmation seeds. It identifies what the logs can and cannot answer.
-2. **Specify the compact geometry pilot.** Capture clipped update influence as a per-round Gram
-   matrix and alignment summaries as described in section 3.6. A small, initially bounded run
-   is preferable to instrumenting every historical curve. Choose the dataset/round/seed budget
-   and how diagnostics are stored before training. Do not plan directional analysis as though
-   clipped update vectors were already saved.
+2. **Run and inspect the compact geometry pilot.** Use the section 3.6 command on CUDA. Check
+   completeness, Gram consistency, spectral concentration, clipping status, runtime, and disk
+   use before extending the budget. The raw clipped vectors are not stored.
 3. **Choose the simplest prototype that answers the hypothesis.** Keep client training fixed.
    Start from a clearly specified FedAvg server operation and include all data-dependent parts
    in the counterfactual analysis.
@@ -416,9 +464,10 @@ to spend an unspecified training budget.
    If directions do not help, revisit influence-limiting aggregation rather than silently changing
    the selected research story.
 
-Only after agreeing on a concrete prototype/probe and implementation plan should the next agent
-implement or launch it. The owner asked this session to preserve the ideas and create the branch;
-that has not specified an experiment budget or finalized the algorithm.
+The geometry measurement is now implemented as an opt-in probe. The 10-round pilot is specified
+above but has not been launched. A defense mechanism, full attack comparison, and larger
+experiment budget still require a separate design decision; do not silently treat this
+diagnostic as evidence that the proposed noise covariance works.
 
 ## 8. Available artifacts and implementation map
 
@@ -441,7 +490,8 @@ a better fit with the existing CIA modules. These directories do not exist as ne
 yet. Keep the current frontier and original result artifacts intact for comparison.
 
 Use `uv run` for Python commands. CUDA is the reference experimental platform given the documented
-MPS reproducibility problems. No test suite was run for this documentation-only handoff.
+MPS reproducibility problems. The instrumentation has not been exercised in a training run or
+test suite on this machine; treat the CUDA pilot as the first operational check.
 
 ## 9. Initial literature pointers and novelty limits
 
@@ -528,11 +578,12 @@ Sum `metric-dp-aggregation-collapsed` in `train_metrics` and inspect
 | 2026-09-24 | Owner accepted influence-shaped noise as the first direction to try | Direction selected; exact mechanism open |
 | 2026-09-24 | Owner requested a separate branch and a report for future agents | This branch and report created |
 | 2026-09-24 | Owner asked to start; read-only scalar diagnostic compared selected existing stages and identified missing clipped-update geometry | Findings and next measurement recorded in section 3.6; no new run |
+| 2026-09-24 | Implemented opt-in post-clipping influence geometry and specified a 10-round IN-only pilot | CUDA pilot pending; no defense or new result claimed |
 
-**Next interaction:** use section 3.6 to turn the proposed clipped-update Gram measurement into a
-small, concrete pilot design, resolve the most consequential questions in section 6, and agree
-on its implementation and experiment budget. Do not claim that a defense, formal guarantee,
-novelty assessment, or new defense finding is already complete.
+**Next interaction:** run the specified pilot on a CUDA machine, inspect the geometry and
+resource cost, then use section 6 to choose and scrutinize the first noise rule and its controls.
+Do not claim that a defense, formal guarantee, novelty assessment, or new defense finding is
+already complete.
 
 This report was drafted with AI assistance from the project owner's discussion, repository
 artifacts, source paper, and the explicitly limited literature search described above.

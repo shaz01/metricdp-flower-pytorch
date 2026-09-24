@@ -8,6 +8,7 @@ from flwr.app import Array, ArrayRecord, Message, MetricRecord
 from flwr.common import log
 from flwr.serverapp.strategy import (
     DifferentialPrivacyServerSideFixedClipping,
+    FedAvg,
     Strategy,
 )
 from flwr.supercore.differential_privacy import (
@@ -30,6 +31,7 @@ from metricdp_pytorch.dp_diagnostics import (
 # 120 rounds during the CIFAR-100 client-scaling experiment). Above this
 # many clients, omit the raw lists and keep only the summary statistics.
 MAX_CLIENTS_FOR_PAIRWISE_LOGGING = 64
+MAX_CLIENTS_FOR_INFLUENCE_GEOMETRY = 64
 
 
 def pairwise_model_distances(models: Sequence[ArrayRecord]) -> list[float]:
@@ -65,6 +67,76 @@ def maximum_pairwise_model_distance(models: Sequence[ArrayRecord]) -> float:
     return max(pairwise_model_distances(models))
 
 
+def clipped_influence_geometry(
+    replies: Sequence[Message],
+    *,
+    current_arrays: ArrayRecord,
+    arrayrecord_key: str = "arrays",
+    weighted_by_key: str = "num-examples",
+) -> dict[str, float | int | list[float] | list[int]]:
+    """Summarize weighted client-removal effects from already-clipped replies.
+
+    The caller must invoke this after Flower's server-side DP wrapper has
+    clipped the replies in place. This is a server-private research diagnostic,
+    not part of the released model or a privacy guarantee.
+    """
+    if len(replies) > MAX_CLIENTS_FOR_INFLUENCE_GEOMETRY:
+        raise ValueError("Influence geometry is limited to 64 clients per round.")
+
+    reference = current_arrays.to_numpy_ndarrays()
+    rows: list[tuple[int, float, np.ndarray]] = []
+    for reply in replies:
+        metrics = next(iter(reply.content.metric_records.values()))
+        client_id = int(metrics["client-id"])
+        count = float(metrics[weighted_by_key])
+        model = reply.content[arrayrecord_key]
+        arrays = model.to_numpy_ndarrays()
+        if len(arrays) != len(reference) or any(
+            value.shape != initial.shape
+            for value, initial in zip(arrays, reference, strict=True)
+        ):
+            raise ValueError("Clipped client model and server model shapes differ.")
+        update = np.concatenate(
+            [
+                np.subtract(value, initial, dtype=np.float64).ravel()
+                for value, initial in zip(arrays, reference, strict=True)
+            ]
+        )
+        rows.append((client_id, count, update))
+    rows.sort(key=lambda row: row[0])
+    counts = np.asarray([count for _, count, _ in rows], dtype=np.float64)
+    if len(set(client_id for client_id, _, _ in rows)) != len(rows):
+        raise ValueError("Influence geometry requires unique client IDs.")
+    if len(rows) < 2 or not np.all(np.isfinite(counts)) or np.any(counts <= 0):
+        raise ValueError("Influence geometry requires two positive finite client weights.")
+    weights = counts / counts.sum()
+    if np.any(weights >= 1.0):
+        raise ValueError("Every client must have a positive removal denominator.")
+
+    updates = np.stack([update for _, _, update in rows])
+    aggregate_update = weights @ updates
+    effects = (weights / (1.0 - weights))[:, None] * (
+        updates - aggregate_update
+    )
+    gram = effects @ effects.T
+    gram = (gram + gram.T) / 2.0
+    singular_values = np.sqrt(np.maximum(np.linalg.eigvalsh(gram), 0.0))[::-1]
+    return {
+        "metric-dp-influence-client-ids": [client_id for client_id, _, _ in rows],
+        "metric-dp-influence-example-counts": counts.tolist(),
+        "metric-dp-influence-weights": weights.tolist(),
+        "metric-dp-influence-gram-flat": gram.ravel().tolist(),
+        "metric-dp-influence-align-with-aggregate": (
+            effects @ aggregate_update
+        ).tolist(),
+        "metric-dp-influence-aggregate-norm": float(
+            np.linalg.norm(aggregate_update)
+        ),
+        "metric-dp-influence-singular-values": singular_values.tolist(),
+        "metric-dp-influence-client-count": len(rows),
+    }
+
+
 class MetricPrivacyServerSideFixedClipping(
     DifferentialPrivacyServerSideFixedClipping
 ):
@@ -86,6 +158,7 @@ class MetricPrivacyServerSideFixedClipping(
         clipping_norm: float,
         num_sampled_clients: int,
         arrayrecord_key: str = "arrays",
+        record_influence_geometry: bool = False,
     ) -> None:
         super().__init__(
             strategy=strategy,
@@ -94,6 +167,14 @@ class MetricPrivacyServerSideFixedClipping(
             num_sampled_clients=num_sampled_clients,
         )
         self.arrayrecord_key = arrayrecord_key
+        if record_influence_geometry and not isinstance(strategy, FedAvg):
+            raise ValueError("Influence geometry currently requires FedAvg.")
+        if (
+            record_influence_geometry
+            and num_sampled_clients > MAX_CLIENTS_FOR_INFLUENCE_GEOMETRY
+        ):
+            raise ValueError("Influence geometry is limited to 64 clients per round.")
+        self.record_influence_geometry = record_influence_geometry
         self.current_distance: float | None = None
         self.current_noise_stdv: float | None = None
         self.current_round_diagnostics: dict[str, float | int] = {}
@@ -246,10 +327,25 @@ class MetricPrivacyServerSideFixedClipping(
                 server_round,
             )
             diagnostics["metric-dp-aggregation-collapsed"] = 1.0
+            if self.record_influence_geometry:
+                diagnostics["metric-dp-influence-recorded"] = 0.0
             return None, add_diagnostics(None, diagnostics)
 
         diagnostics["metric-dp-aggregation-collapsed"] = 0.0
         diagnostics.update(self.current_round_diagnostics)
+        if self.record_influence_geometry:
+            diagnostics["metric-dp-influence-recorded"] = float(
+                aggregated_arrays is not None
+            )
+            if aggregated_arrays is not None:
+                diagnostics.update(
+                    clipped_influence_geometry(
+                        reply_list,
+                        current_arrays=self.current_arrays,
+                        arrayrecord_key=self.arrayrecord_key,
+                        weighted_by_key=self.strategy.weighted_by_key,
+                    )
+                )
         if self.current_noise_stdv is not None:
             diagnostics["metric-dp-noise-stdv"] = self.current_noise_stdv
         return aggregated_arrays, add_diagnostics(aggregated_metrics, diagnostics)

@@ -218,8 +218,13 @@ def make_strategy(
     fraction_evaluate: float,
     noise_multiplier: float,
     clipping_norm: float,
+    record_influence_geometry: bool = False,
 ) -> Strategy:
     """Construct an aggregation strategy and apply the selected DP wrapper."""
+    if record_influence_geometry and (
+        privacy != "metric-privacy" or aggregation != "fedavg"
+    ):
+        raise ValueError("Influence geometry requires metric-privacy with fedavg.")
     strategy = make_base_strategy(
         aggregation,
         num_clients=num_clients,
@@ -240,5 +245,6 @@ def make_strategy(
             noise_multiplier=noise_multiplier,
             clipping_norm=clipping_norm,
             num_sampled_clients=num_clients,
+            record_influence_geometry=record_influence_geometry,
         )
     raise ValueError(f"Unknown privacy mode {privacy!r}; choose from {PRIVACY_MODES}.")

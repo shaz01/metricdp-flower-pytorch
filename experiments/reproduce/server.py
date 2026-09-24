@@ -177,6 +177,7 @@ def run(
         fraction_evaluate=float(config.get("fraction-evaluate", 1.0)),
         noise_multiplier=float(config.get("noise-multiplier", 0.01)),
         clipping_norm=float(config.get("clipping-norm", 5.0)),
+        record_influence_geometry=bool(config.get("record-influence-geometry", False)),
     )
     return strategy.start(
         grid=grid,
@@ -266,6 +267,9 @@ def main(grid: Grid, context: Context) -> None:
             "client_weights": str(config.get("client-weights", "")),
             "noise_multiplier": float(config.get("noise-multiplier", 0.01)),
             "clipping_norm": float(config.get("clipping-norm", 5.0)),
+            "record_influence_geometry": bool(
+                config.get("record-influence-geometry", False)
+            ),
             "initialization_pretrained": bool(initialization_losses),
             "initialization_epochs": len(initialization_losses),
             "initialization_final_loss": (
