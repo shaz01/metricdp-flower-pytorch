@@ -109,7 +109,7 @@ The 16 terminal states are ten landed, four collapsed-before-target, and two anc
 
 ## 5. Questions for the forthcoming literature review
 
-The review has not started; its form is awaiting the owner's reply to the ARS review-form note. No new mechanism has been selected and no novelty claim has been established.
+At the time of this audit, the review form was awaiting the owner's reply. The owner subsequently requested both systematic and integrative review and confirmed the protocol; version 1 is now available at [the literature-review handoff](literature_review/README.md). No new mechanism has been selected and no novelty claim has been established.
 
 The owner's research direction suggests these extraction questions for each relevant source:
 

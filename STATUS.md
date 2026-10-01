@@ -1,8 +1,8 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-01, local research review (project evidence audit; client-side noise
-literature review is the next step — see `git log` for anything more recent)
+**Last updated:** 2026-10-01, client-side noise literature review version 1 and provisional plan
+(see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -27,8 +27,13 @@ was reproduced byte-for-byte and all 110 recorded stage entries were checked aga
 losses/accuracy files without discrepancies. Its "round-matched AUC" is folded paired
 concordance, and 9/10 landed curves have three-seed mean scores above 0.55. Treat it as an
 exploratory utility/leakage baseline, not a validated demonstration of CIA neutralization.
-The literature-review form is awaiting the owner's reply; no new experiments have been launched
-or new mechanism selected. The historical next steps below are context, not the active agenda.
+The owner requested both systematic and integrative review and confirmed the protocol. Version 1
+is in `research/literature_review/README.md`: 31 included primary source families, technique
+explanations, bounded search/screening records, synthesis and a provisional research plan.
+Closest pending full methods: FACP and FedFR-ADP. Next: resolve those comparators, specify the
+client-participation game, and analyze distribution construction before choosing a mechanism.
+No new experiments have been launched or new mechanism selected. The historical next steps
+below are context, not the active agenda.
 
 **`feature/auc-targeted-noise-sweep` is complete (2026-09-01) and merged into `master`.** See
 `reports/auc_targeted_noise_sweep.md` for the full writeup and "What's established" below for the
@@ -222,6 +227,8 @@ section.
 
 ## Where to look
 
+- `research/literature_review/README.md` — systematic/integrative review, technique tutorials,
+  agent handoff and provisional new research plan.
 - `research/project_evidence_audit.md` — verified starting evidence for the new client-side
   noise research direction; the obsolete local roadmap was retired on 2026-10-01.
 - `reports/*.md`, `reports/*.tex` — narrative writeups; source of truth over this file for
