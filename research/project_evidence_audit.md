@@ -121,3 +121,7 @@ The owner's research direction suggests these extraction questions for each rele
 - What would distinguish a new proposal from existing adaptive noise calibration, local/distributed privacy, and data-dependent perturbation work? This remains a question to investigate, not an asserted gap.
 
 The subsequent roadmap should take the frontier as a reproducible exploratory baseline and define stronger measurement before making claims of superior CIA protection. Moving noise to clients and improving its distribution are separate design choices that should be distinguishable in future comparisons.
+
+## Subsequent threat/evaluation audit
+
+The [threat specification review](threat_specification_review.md) records additional verified findings: sample-count weighted FedAvg versus client-count noise scaling, application-visible world-dependent runtime configuration, and active-ID remapping of surviving clients' training seeds. These refine sensitivity and paired-run interpretations without changing the verified frontier arithmetic. The [construction obligations](noise_construction_proof_obligations.md) derive candidate controls; no new mechanism has been implemented.

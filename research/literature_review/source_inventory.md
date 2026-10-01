@@ -59,3 +59,11 @@ Generated from the family ledgers on 2026-10-01. Inclusion means methods relevan
 | ROOT-A03 | [Enhanced Source Inference Attacks in Federated Learning](https://www.ijcai.org/proceedings/2025/0536.pdf) | Related boundary attack; methods not inspected |
 | ROOT-A04 | [DP-KFC: Data-Free Preconditioning for Differentially Private Deep Learning](https://proceedings.mlr.press/v306/van-den-bosch26a.html) | Potential public geometry baseline; methods not inspected |
 | ROOT-A05 | [CoSIFL](https://arxiv.org/abs/2509.23190) | Related client/source inference candidate, precise methods and title to resolve |
+
+## Subsequent read-status updates
+
+See [FACP partial methods](facp_followup.md) and [FedFR-ADP access assessment](fedfr_followup.md). Both remain pending complete methods; version-1 screening counts are unchanged.
+
+## Owner-directed non-Gaussian extension
+
+Four additional primary sources were assessed after version 1: [Geng–Viswanath staircase](https://arxiv.org/abs/1212.1186), [Hardt–Talwar geometry](https://arxiv.org/abs/0907.3754), [Joseph–Yu constructions](https://proceedings.mlr.press/v247/joseph24a.html) and [Gilani et al. optimized noise](https://proceedings.mlr.press/v267/gilani25a.html). Selected methods/read scopes and appraisal are in [non-Gaussian foundations](non_gaussian_foundations.md) and [optimized-noise assessment](optimized_noise_followup.md). These are supplemental inclusions, not part of the frozen 31-family version-1 count.

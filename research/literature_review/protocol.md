@@ -66,3 +66,7 @@ Report limitations: restricted repositories/search interface; English/open-acces
 - Secure aggregation protects upload visibility but not automatically the released-model participation signal. Include it as a trust/placement mechanism, with appropriate qualification.
 - Client-specific covariance may itself reveal private information. Inspect its construction and composition rather than assuming additive noise is enough.
 - A bounded web-index search cannot establish that no relevant work exists. Retain the search limits alongside any novelty statement.
+
+## Follow-up scope clarification, 2026-10-01
+
+The owner explicitly proposed a potentially new non-Gaussian mechanism/distribution. Non-Gaussian construction is now an explicit research track alongside Gaussian controls, with focused geometric/optimal-noise and RDP-distribution-optimization retrieval. This supplements the original broad additive-perturbation scope; version-1 counts remain frozen, and follow-up logs/read scopes are linked from [next-step handoff](next_step_handoff.md). No pooling, exhaustive-coverage or novelty claim is added.

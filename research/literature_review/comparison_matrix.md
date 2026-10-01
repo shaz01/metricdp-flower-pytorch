@@ -1,6 +1,6 @@
 # Mechanism comparison and critical appraisal
 
-2026-10-01. This adapted computational rubric replaces unsuitable clinical risk-of-bias scoring. No aggregate quality score is used. “Methods read” means selected algorithm/theory/experiment sections were inspected, not all proofs independently validated. Source-card links provide evidence and exact locators. Experiment reproducibility, code completeness and uncertainty reporting were not uniformly audited; those dimensions remain not assessed unless explicitly noted.
+2026-10-01. The [follow-up supplement](next_step_handoff.md) updates comparator read status and threat assumptions without changing this version-1 source inventory. This adapted computational rubric replaces unsuitable clinical risk-of-bias scoring. No aggregate quality score is used. “Methods read” means selected algorithm/theory/experiment sections were inspected, not all proofs independently validated. Source-card links provide evidence and exact locators. Experiment reproducibility, code completeness and uncertainty reporting were not uniformly audited; those dimensions remain not assessed unless explicitly noted.
 
 ## Construction and guarantee matrix
 

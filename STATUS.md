@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-01, dedicated branch for client-specific noise research
+**Last updated:** 2026-10-01, staged results synced; comparator and threat/construction follow-up
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -35,8 +35,15 @@ exploratory utility/leakage baseline, not a validated demonstration of CIA neutr
 The owner requested both systematic and integrative review and confirmed the protocol. Version 1
 is in `research/literature_review/README.md`: 31 included primary source families, technique
 explanations, bounded search/screening records, synthesis and a provisional research plan.
-Closest pending full methods: FACP and FedFR-ADP. Next: resolve those comparators, specify the
-client-participation game, and analyze distribution construction before choosing a mechanism.
+Follow-up: `research/literature_review/next_step_handoff.md`. FACP now has a partial primary-
+methods assessment; FedFR-ADP remains preview-only. Complete methods are still pending.
+`research/threat_specification_review.md` specifies candidate games and verifies weighting,
+metadata and active-ID seed issues; `research/noise_construction_proof_obligations.md` derives
+reference noise controls and estimation obligations. Next: settle the hidden event/observer
+contract, then fully specify public/protected-history and private/population candidate laws.
+The owner-authorized 141 staged result files were committed and pushed as `1081ff7`.
+The owner broadened the design to potentially new non-Gaussian mechanisms/distributions; see
+`research/non_gaussian_mechanism_research.md`. Gaussian is a control, not a requirement.
 No new experiments have been launched or new mechanism selected. The historical next steps
 below are context, not the active agenda.
 

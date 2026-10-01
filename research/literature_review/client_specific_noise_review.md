@@ -1,6 +1,6 @@
 # Integrative review: constructing client-specific noise for participation privacy
 
-Version 1, 2026-10-01. This is the detailed conceptual synthesis accompanying a bounded systematic search. It integrates inspected primary methods with the repository's verified evidence. Source-specific claims and equations live in linked technique cards; the design implications here are our deductions. No new protection technique has been implemented or demonstrated superior.
+Version 1, 2026-10-01. Subsequent comparator/threat work is documented in the [next-step supplement](next_step_handoff.md); initial search counts remain fixed. This is the detailed conceptual synthesis accompanying a bounded systematic search. It integrates inspected primary methods with the repository's verified evidence. Source-specific claims and equations live in linked technique cards; the design implications here are our deductions. No new protection technique has been implemented or demonstrated superior.
 
 ## What the project evidence actually asks us to solve
 

@@ -2,6 +2,12 @@
 
 Version 1, 2026-10-01. The owner requested both systematic and integrative review and confirmed the protocol. This package provides a bounded, documented search, methods-level technique explanations and a provisional research plan. It is not an exhaustive novelty certificate or a claim that any candidate already beats metric-inspired server noise.
 
+## Follow-up after version 1
+
+The [FACP partial-method assessment](facp_followup.md) and [FedFR-ADP access assessment](fedfr_followup.md) update the nearest-comparator evidence. FACP remains pending a complete artifact, but its auxiliary-statistics accounting exclusion is now confirmed from primary methods. FedFR-ADP remains preview-only. The [threat specification](../threat_specification_review.md) and [construction/proof obligations](../noise_construction_proof_obligations.md) develop the next research step. See [follow-up handoff](next_step_handoff.md) for new findings and preserved version-1 search counts.
+
+The owner also opened the direction to **new non-Gaussian mechanisms/distributions**. See [expanded mechanism research](../non_gaussian_mechanism_research.md), [non-Gaussian foundations](non_gaussian_foundations.md) and [optimized noise](optimized_noise_followup.md). Gaussian remains a control, not a design restriction.
+
 ## Reading order for the project owner
 
 1. [Detailed integrative review](client_specific_noise_review.md) — the main document: what the literature means for our question and why the construction problem matters.

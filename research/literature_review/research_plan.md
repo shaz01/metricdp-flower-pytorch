@@ -4,7 +4,7 @@
 
 ## 1. Resolve closest prior art and define the contribution
 
-Acquire FACP and FedFR-ADP full methods, inspect private-statistic acquisition, adjacency, distribution law, accounting and threat model. Resolve the remaining pending sources in the ledger according to relevance. Do not describe category/source inference as participation inference. Compare against PAC/PAC-Private, Residual-PAC and time-adaptive spending before claiming novelty.
+Acquire FACP and FedFR-ADP full methods, inspect private-statistic acquisition, adjacency, distribution law, accounting and threat model. Resolve the remaining pending sources in the ledger according to relevance. Do not describe category/source inference as participation inference. Compare against PAC/PAC-Private, Residual-PAC, optimal/geometric non-Gaussian noise, RDP-optimized distributions and time-adaptive spending before claiming novelty.
 
 **Deliverable:** a one-page contribution statement specifying which construction, guarantee and evaluation is new relative to each nearest method. If the proposal duplicates a known estimator/sampler, change the contribution to the missing client-participation analysis rather than rename the mechanism.
 
@@ -20,7 +20,7 @@ Compare fixed server isotropic noise against independent client isotropic shares
 
 **Deliverable:** an algebraic equivalence statement and a small sampler/aggregation verification when implementation starts. If a measured advantage appears under supposedly equal laws, diagnose the implementation or threat difference before treating it as a discovery.
 
-## 4. Investigate three distribution-construction routes separately
+## 4. Investigate distribution-construction routes without restricting the law to Gaussian
 
 | Route | Construction | Guarantee task | Why start here |
 |---|---|---|---|
@@ -28,7 +28,9 @@ Compare fixed server isotropic noise against independent client isotropic shares
 | B: private local estimation | Per-layer/diagonal or low-rank projected gradient statistics; account the estimator | Whole-client treatment of estimate and upload, including covariance changes | Directly addresses the proposed local construction question |
 | C: modeled client distribution | Simulate client perturbations/populations; PAC-style covariance or learned sampler | Explicit population and attacker conditioning; empirical audit of approximation | Allows useful distribution-dependent claims if worst-case utility is prohibitive |
 
-For each route write an executable mathematical recipe: estimator input/sample count; basis; regularization; clipping; covariance-to-sampler factors; minimum eigenvalue; update frequency; and temporal/accounting rule. Avoid full dense covariance initially. Gradient variance, utility curvature and participation sensitivity are candidate signals to compare, not interchangeable definitions.
+The owner explicitly broadened the direction to a potentially new mechanism/distribution. Investigate non-Gaussian and optimized laws along each route; Gaussian is the baseline. See [non-Gaussian mechanism research](../non_gaussian_mechanism_research.md), [geometric/staircase sources](non_gaussian_foundations.md) and [RDP-optimized noise](optimized_noise_followup.md). Separate geometry, density shape, private estimation and aggregation-law design.
+
+For each route write an executable mathematical recipe: estimator input/sample count; basis; regularization; clipping; density/sampler or covariance factors; support and tail behavior; minimum eigenvalue where relevant; update frequency; and temporal/accounting rule. Avoid full dense covariance initially. Gradient variance, utility curvature and participation sensitivity are candidate signals to compare, not interchangeable definitions.
 
 **Deliverable:** two or three fully specified candidates with computational costs and failure cases. Reject candidates whose guarantee relies on a record-level estimator while claiming whole-client DP, or whose private calibration law is unanalyzed.
 
