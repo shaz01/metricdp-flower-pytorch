@@ -1,7 +1,7 @@
 # Project Status
 
-**Branch:** `master`
-**Last updated:** 2026-10-01, client-side noise literature review version 1 and provisional plan
+**Branch:** `feature/client-specific-noise`
+**Last updated:** 2026-10-01, dedicated branch for client-specific noise research
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -14,6 +14,11 @@ section (including the Currently running table) updates more often, at "worth a 
 granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
+
+**Working branch:** `feature/client-specific-noise`. The owner requested a separate branch for
+this research. The initial audit and literature-review version 1 were already committed on
+`master`; further research and implementation stay on this branch until the owner declares
+the work finished. No experiments were launched during the branch transition.
 
 **Research direction reset (2026-10-01).** The owner wants to investigate client-side noise
 sampled from a separately constructed distribution for each client, aiming to improve CIA
