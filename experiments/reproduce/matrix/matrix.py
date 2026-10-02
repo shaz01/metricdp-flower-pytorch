@@ -21,6 +21,7 @@ class Matrix:
     hyperparams: Hyperparams
     data_module: str
     model_module: str
+    dirichlet_alphas: tuple[float, ...] = (0.5,)
 
     def list_combos(self, *, name_prefix: str, num_clients: int) -> list[Combo]:
         """List every meaningful combo in this matrix.
@@ -41,12 +42,14 @@ class Matrix:
                 hyperparams=self.hyperparams,
                 data_module=self.data_module,
                 model_module=self.model_module,
+                dirichlet_alpha=dirichlet_alpha,
             )
-            for partition, privacy, aggregation, seed in product(
+            for partition, privacy, aggregation, seed, dirichlet_alpha in product(
                 self.partitions,
                 self.privacy_modes,
                 self.aggregations,
                 self.seeds,
+                self.dirichlet_alphas,
             )
             for noise_multiplier in (
                 self.noise_multipliers[:1]

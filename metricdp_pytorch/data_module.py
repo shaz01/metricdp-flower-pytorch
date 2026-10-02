@@ -23,6 +23,7 @@ class FederatedDataModule(Protocol):
         seed: int,
         partition_profile: str = "auto",
         client_weights: Sequence[float] | None = None,
+        dirichlet_alpha: float = 0.5,
         max_samples: int = 0,
     ) -> tuple[DataLoader, DataLoader]:
         """Return one client's local train and held-out loaders."""

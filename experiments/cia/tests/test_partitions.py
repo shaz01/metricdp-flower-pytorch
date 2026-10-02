@@ -37,10 +37,11 @@ class RecordingDataModule:
         seed: int,
         partition_profile: str = "auto",
         client_weights: Sequence[float] | None = None,
+        dirichlet_alpha: float = 0.5,
         max_samples: int = 0,
     ) -> tuple[DataLoader, DataLoader]:
         del partition_mode, batch_size, seed, partition_profile, client_weights
-        del max_samples
+        del dirichlet_alpha, max_samples
         self.client_calls.append((partition_id, num_partitions))
         return self.loader, self.loader
 
@@ -71,9 +72,10 @@ class SeededDataModule:
         seed: int,
         partition_profile: str = "auto",
         client_weights: Sequence[float] | None = None,
+        dirichlet_alpha: float = 0.5,
         max_samples: int = 0,
     ) -> tuple[DataLoader, DataLoader]:
-        del partition_mode, partition_profile, client_weights
+        del partition_mode, partition_profile, client_weights, dirichlet_alpha
         partitions = balanced_stratified_partitions(
             self.labels, num_partitions, seed=seed
         )

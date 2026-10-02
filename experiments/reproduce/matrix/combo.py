@@ -23,6 +23,7 @@ class Combo:
     hyperparams: Hyperparams
     data_module: str
     model_module: str
+    dirichlet_alpha: float = 0.5
 
     def run_name(self) -> str:
         """Build the complete deterministic name from this combo's parameters."""
@@ -30,8 +31,13 @@ class Combo:
         data_module_name = module_path.rsplit(".", 1)[-1]
         model_path = self.model_module.rsplit(":", 1)[0]
         model_suffix = f"__{model_path.rsplit('.', 1)[-1]}"
+        partition_suffix = (
+            f"__alpha-{format_noise(self.dirichlet_alpha)}"
+            if self.partition == "dirichlet"
+            else ""
+        )
         return (
-            f"{self.name_prefix}__{self.partition}__{self.privacy}__"
+            f"{self.name_prefix}__{self.partition}{partition_suffix}__{self.privacy}__"
             f"{self.aggregation}__clients-{self.num_clients}__seed-{self.seed}__"
             f"nm{format_noise(self.noise_multiplier)}__"
             f"clip{self.hyperparams.clipping_norm:g}__"
@@ -62,6 +68,8 @@ class Combo:
             str(self.num_clients),
             "--partition",
             self.partition,
+            "--dirichlet-alpha",
+            str(self.dirichlet_alpha),
             "--privacy",
             self.privacy,
             "--aggregation",

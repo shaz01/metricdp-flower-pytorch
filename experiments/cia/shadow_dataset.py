@@ -20,6 +20,7 @@ def _configured_data_module(
             "target-partition-id": target_partition_id,
             "shadow-fraction": shadow_fraction,
             "seed": combo.seed,
+            "dirichlet-alpha": combo.dirichlet_alpha,
         },
     )
 
@@ -51,6 +52,7 @@ def _shadow_dataset(
         shadow_fraction=shadow_fraction,
         partition_mode=combo.partition,
         partition_profile="auto",
+        dirichlet_alpha=combo.dirichlet_alpha,
     )
 
 
@@ -102,4 +104,5 @@ def noisy_shadow_dataset(
         shadow_fraction=shadow_fraction,
         partition_mode=combo.partition,
         partition_profile="auto",
+        dirichlet_alpha=combo.dirichlet_alpha,
     )

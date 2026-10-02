@@ -63,9 +63,10 @@ class PaperCiaDataModule(AlzheimerDataModule):
         seed: int,
         partition_profile: str = "auto",
         client_weights: Sequence[float] | None = None,
+        dirichlet_alpha: float = 0.5,
         max_samples: int = 0,
     ) -> tuple[DataLoader, DataLoader]:
-        del partition_mode, partition_profile
+        del partition_mode, partition_profile, dirichlet_alpha
         if num_partitions != PAPER_CIA_NUM_CLIENTS:
             raise ValueError("The exact paper CIA distribution requires three clients.")
         if client_weights is not None:

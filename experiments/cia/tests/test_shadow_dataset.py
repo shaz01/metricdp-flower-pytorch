@@ -41,9 +41,10 @@ class SeededTestDataModule:
         seed: int,
         partition_profile: str = "auto",
         client_weights=None,
+        dirichlet_alpha: float = 0.5,
         max_samples: int = 0,
     ) -> tuple[DataLoader, DataLoader]:
-        del partition_mode, partition_profile, client_weights
+        del partition_mode, partition_profile, client_weights, dirichlet_alpha
         partitions = balanced_stratified_partitions(
             self.labels, num_partitions, seed=seed
         )

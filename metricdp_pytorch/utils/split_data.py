@@ -57,6 +57,136 @@ def balanced_stratified_partitions(
     return partitions
 
 
+def dirichlet_label_partitions(
+    labels: Sequence[int],
+    num_partitions: int,
+    *,
+    seed: int,
+    alpha: float = 0.5,
+    min_partition_size: int = 1,
+    max_attempts: int = 1_000,
+) -> list[list[int]]:
+    """Allocate each class across clients with symmetric Dirichlet proportions.
+
+    For every label, independently draw a client-probability vector from
+    ``Dirichlet(alpha)`` and allocate that label's shuffled examples with a
+    multinomial draw. Smaller ``alpha`` produces stronger label and quantity
+    heterogeneity; larger values approach an IID split. The complete allocation
+    is redrawn until every client has at least ``min_partition_size`` examples,
+    matching the usual conditioned-Dirichlet construction used in federated
+    learning experiments.
+
+    Every input index is assigned exactly once. Identical inputs and seeds
+    produce identical partitions.
+    """
+    if num_partitions < 1:
+        raise ValueError("num_partitions must be positive.")
+    if not np.isfinite(alpha) or alpha <= 0.0:
+        raise ValueError("alpha must be positive and finite.")
+    if min_partition_size < 1:
+        raise ValueError("min_partition_size must be positive.")
+    if max_attempts < 1:
+        raise ValueError("max_attempts must be positive.")
+
+    label_array = np.asarray(labels)
+    if label_array.ndim != 1:
+        raise ValueError("labels must be one-dimensional.")
+    if len(label_array) < num_partitions * min_partition_size:
+        raise ValueError(
+            "The dataset is too small for the requested minimum partition size "
+            f"({len(label_array)} examples, {num_partitions} partitions, "
+            f"minimum {min_partition_size})."
+        )
+
+    rng = np.random.default_rng(seed)
+    class_indices = [
+        np.flatnonzero(label_array == label) for label in np.unique(label_array)
+    ]
+    for _attempt in range(max_attempts):
+        partitions: list[list[int]] = [[] for _ in range(num_partitions)]
+        for indices in class_indices:
+            shuffled = indices.copy()
+            rng.shuffle(shuffled)
+            proportions = rng.dirichlet(np.full(num_partitions, alpha))
+            counts = rng.multinomial(len(shuffled), proportions)
+            offset = 0
+            for partition_id, count in enumerate(counts):
+                next_offset = offset + int(count)
+                partitions[partition_id].extend(shuffled[offset:next_offset].tolist())
+                offset = next_offset
+
+        if min(map(len, partitions)) >= min_partition_size:
+            for partition in partitions:
+                rng.shuffle(partition)
+            return partitions
+
+    raise RuntimeError(
+        "Could not draw a Dirichlet allocation satisfying min_partition_size "
+        f"after {max_attempts} attempts; increase alpha, lower the minimum, or "
+        "reduce the number of partitions."
+    )
+
+
+def label_shard_partitions(
+    labels: Sequence[int],
+    num_partitions: int,
+    *,
+    seed: int,
+    shards_per_partition: int = 4,
+) -> list[list[int]]:
+    """Create balanced partitions with strong, deterministic label skew.
+
+    This follows the pathological non-IID construction introduced by the
+    original FedAvg experiments: shuffle examples within each class, arrange
+    those class blocks consecutively, split the sequence into small mostly
+    single-label shards, then give each client a seeded random selection of
+    shards. Four shards per client retains strong skew while providing many
+    more distinct class mixtures than the classic two-shard setup -- important
+    when a CIA target should not have an identical two-label twin in a 48- or
+    100-client federation. Client sizes remain closely balanced.
+
+    Every input index is assigned exactly once. Partition sizes differ by at
+    most ``shards_per_partition`` because NumPy's shard sizes differ by at
+    most one.
+    """
+    if num_partitions < 1:
+        raise ValueError("num_partitions must be positive.")
+    if shards_per_partition < 1:
+        raise ValueError("shards_per_partition must be positive.")
+
+    label_array = np.asarray(labels)
+    if label_array.ndim != 1:
+        raise ValueError("labels must be one-dimensional.")
+    num_shards = num_partitions * shards_per_partition
+    if len(label_array) < num_shards:
+        raise ValueError(
+            "The dataset must contain at least one example per label shard "
+            f"({len(label_array)} examples for {num_shards} shards)."
+        )
+
+    rng = np.random.default_rng(seed)
+    class_blocks: list[np.ndarray] = []
+    for label in np.unique(label_array):
+        indices = np.flatnonzero(label_array == label)
+        rng.shuffle(indices)
+        class_blocks.append(indices)
+    label_ordered = np.concatenate(class_blocks)
+    shards = list(np.array_split(label_ordered, num_shards))
+    shard_order = rng.permutation(num_shards)
+
+    partitions: list[list[int]] = []
+    for partition_id in range(num_partitions):
+        first = partition_id * shards_per_partition
+        selected = [
+            shards[shard_id]
+            for shard_id in shard_order[first : first + shards_per_partition]
+        ]
+        indices = np.concatenate(selected).copy()
+        rng.shuffle(indices)
+        partitions.append(indices.tolist())
+    return partitions
+
+
 def partition_by_class_counts(
     labels: Sequence[int],
     counts_by_partition: Sequence[Sequence[int]],
