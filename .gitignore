@@ -11,25 +11,25 @@ outputs/
 /experiments/**/results/**/*.pt
 # cia_eurosat_scaling produces 36 IN/OUT trajectories (18 per group), each with its own
 # ~17.5MB evaluation.json -- ~630MB total, decided against committing given the volume
-# (unlike experiments/contest_at_scale/eurosat/results/accuracy/'s single accuracy-sweep evaluation.json per combo, which
+# (unlike results/contest_at_scale/eurosat/results/accuracy/'s single accuracy-sweep evaluation.json per combo, which
 # was small enough in isolation to keep). Result/report JSONs (cia_in.json, cia_out.json,
 # per-trajectory .json result files, .pt checkpoints already covered above) are unaffected.
-/experiments/contest_at_scale/eurosat/results/attack/*.evaluation.json
+/results/contest_at_scale/eurosat/results/attack/*.evaluation.json
 # Raw full-output logs, not the small progress/summary logs -- matches the established
 # convention (checked directly against master: results/48client_scaling/,
 # results/cia_client_scaling/, etc. commit sweep_progress.log-style summaries but never a raw
 # stdout capture). 27-28MB each for the CIA groups, 9.3MB for the accuracy sweep.
-/experiments/contest_at_scale/eurosat/results/accuracy/sweep_stdout.log
-/experiments/contest_at_scale/eurosat/results/attack/stdout_*.log
+/results/contest_at_scale/eurosat/results/accuracy/sweep_stdout.log
+/results/contest_at_scale/eurosat/results/attack/stdout_*.log
 # cifar100_scaling evaluation JSONs persist per-class ROC curves across 100 classes,
 # producing 230-400MB files that blow past GitHub's 100MB push limit.
-/experiments/contest_at_scale/cifar100/results/accuracy/*.evaluation.json
+/results/contest_at_scale/cifar100/results/accuracy/*.evaluation.json
 # Same 100-class model/blowup as above, for the CIA IN/OUT trajectories against it.
-/experiments/contest_at_scale/cifar100/results/attack/*.evaluation.json
+/results/contest_at_scale/cifar100/results/attack/*.evaluation.json
 # auc_target_sweep produces one evaluation.json per stage per run (~4.8MB each, EuroSAT
 # alone hit 16 in the pilot curve) across up to 16 curves x ~17 stages x 2 runs -- same
 # volume concern as the cia_eurosat_scaling/cifar100_scaling exclusions above.
-/experiments/contest_at_scale/auc_target_sweep/results/**/*.evaluation.json
+/results/contest_at_scale/auc_target_sweep/results/**/*.evaluation.json
 final_model.pt
 *.fab
 .DS_Store

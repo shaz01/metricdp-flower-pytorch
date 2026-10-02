@@ -3,7 +3,7 @@
 Unlike every other dataset plugin in this repo (cifar10.py, fashion_mnist.py,
 alzheimer.py), which all subset to four classes to match the paper's model,
 this one keeps all 100 fine-grained classes. See
-experiments/contest_at_scale/cifar100/ for the experiment that uses it.
+results/contest_at_scale/cifar100/ for the experiment that uses it.
 """
 
 from __future__ import annotations

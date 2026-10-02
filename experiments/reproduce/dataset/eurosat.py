@@ -2,11 +2,11 @@
 
 A genuinely different domain from every other dataset plugin in this repo (Alzheimer MRI,
 CIFAR-10, CIFAR-100, Fashion-MNIST) -- chosen as a simpler comparison point for the accuracy
-sweep methodology developed for CIFAR-100 (see experiments/contest_at_scale/cifar100/), avoiding both
+sweep methodology developed for CIFAR-100 (see results/contest_at_scale/cifar100/), avoiding both
 CIFAR-10 (a teammate's part of the project) and the MNIST family. Like CIFAR-100, all classes
 are used -- EuroSAT only has 10 to begin with, no subsetting needed.
 
-See experiments/contest_at_scale/eurosat/ for the experiment that uses it.
+See results/contest_at_scale/eurosat/ for the experiment that uses it.
 """
 
 from __future__ import annotations

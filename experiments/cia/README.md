@@ -39,23 +39,23 @@ module, without duplicating shadow-split logic.
 `experiments.cia.scripts.runner` has never existed in this repo (verified with
 `git log --all -- experiments/cia/scripts/runner.py`, which returns no commits). The corrected
 Table 9 partition and shadow-loss comparison described above are exercised today by
-`experiments/contest_at_scale/plan_suite/planned_runs.py`'s Alzheimer groups, which checkpoint every round from 1
+`results/contest_at_scale/plan_suite/planned_runs.py`'s Alzheimer groups, which checkpoint every round from 1
 through 20 (rather than training a single isolated round) for the 3-client, non-IID, FedAvg
 matrix:
 
 ```bash
-uv run python -m experiments.contest_at_scale.plan_suite.planned_runs --group alzheimer-in-remove \
-  --output-dir experiments/contest_at_scale/plan_suite/results/alzheimer/in_remove
-uv run python -m experiments.contest_at_scale.plan_suite.planned_runs --group alzheimer-out-remove \
-  --output-dir experiments/contest_at_scale/plan_suite/results/alzheimer/out_remove
+uv run python -m results.contest_at_scale.plan_suite.planned_runs --group alzheimer-in-remove \
+  --output-dir results/contest_at_scale/plan_suite/results/alzheimer/in_remove
+uv run python -m results.contest_at_scale.plan_suite.planned_runs --group alzheimer-out-remove \
+  --output-dir results/contest_at_scale/plan_suite/results/alzheimer/out_remove
 ```
 
 Each group runs 9 real training runs (3 privacy modes x 3 seeds), downloading/reusing the cached
 Alzheimer MRI dataset. Results are written to `<output-dir>/<group-name>/cia.json`; the
 `server_round == 1` rows are the first-round, single-shot values Tables 9-12 describe. Committed
 results already exist at
-`experiments/contest_at_scale/plan_suite/results/alzheimer/in_remove/alzheimer-in-remove/cia.json` and
-`experiments/contest_at_scale/plan_suite/results/alzheimer/out_remove/alzheimer-out-remove/cia.json`.
+`results/contest_at_scale/plan_suite/results/alzheimer/in_remove/alzheimer-in-remove/cia.json` and
+`results/contest_at_scale/plan_suite/results/alzheimer/out_remove/alzheimer-out-remove/cia.json`.
 
 ## Multi-round CIA (Table 13)
 
@@ -78,9 +78,9 @@ reported as mean and population standard deviation over rounds 16-20.
 No `scripts/multi_round.py` runner has ever existed in this repo (verified against every
 branch's history) -- the paragraphs above describe the intended protocol, and the AUC-scoring
 math they refer to is real and implemented in
-`experiments/contest_at_scale/plan_suite/reports/build_alzheimer_cia_report.py` (`auc`, `pooled_auc`,
+`results/contest_at_scale/plan_suite/reports/build_alzheimer_cia_report.py` (`auc`, `pooled_auc`,
 `round_matched_auc`, `attack_scores`), but nothing ever wired it to an actual
-training/checkpointing runner until `experiments/contest_at_scale/cifar100/cifar100_scaling.py` (see "CIFAR-100
+training/checkpointing runner until `results/contest_at_scale/cifar100/cifar100_scaling.py` (see "CIFAR-100
 multi-round CIA" below), which now trains three seeds (42, 43, 44) matching this section's protocol.
 
 ## 48-client checkpoint comparison
@@ -115,7 +115,7 @@ The paper's Table 10 (FedAvg) and Table 11 (FedYogi) report, per privacy
 mode: aggregated test loss, target shadow loss, and the relative
 difference. Table 12 reports test loss only, across all six aggregation
 strategies. Compare the `server_round == 1` rows in
-`experiments/contest_at_scale/plan_suite/results/alzheimer/in_remove/alzheimer-in-remove/cia.json` (see "Running the
+`results/contest_at_scale/plan_suite/results/alzheimer/in_remove/alzheimer-in-remove/cia.json` (see "Running the
 first-round attack" above) against those tables. Exact
 numeric parity is not expected (different hardware/library versions, and
 the paper doesn't specify all stochastic-seed details), but the qualitative
@@ -148,8 +148,8 @@ exact equality after removing only the deliberately different run name:
 uv run python scripts/colab/run_experiment.py run \
   --session cia-determinism \
   --gpu L4 \
-  --module experiments.contest_at_scale.check_determinism.check_determinism \
-  --results experiments/contest_at_scale/check_determinism/results \
+  --module results.contest_at_scale.check_determinism.check_determinism \
+  --results results/contest_at_scale/check_determinism/results \
   --commit-message "results(cia): add Colab determinism check"
 ```
 
@@ -188,8 +188,8 @@ uv pip install \
 
 ## CIFAR-100 multi-round CIA
 
-`experiments/contest_at_scale/cifar100/cifar100_scaling.py` attacks all 6 combos from the 100-client/250-round
-CIFAR-100 sweep (`experiments/contest_at_scale/cifar100/results/accuracy/`): a matched IN-remove (target participates, 100
+`results/contest_at_scale/cifar100/cifar100_scaling.py` attacks all 6 combos from the 100-client/250-round
+CIFAR-100 sweep (`results/contest_at_scale/cifar100/results/accuracy/`): a matched IN-remove (target participates, 100
 clients) and OUT-remove (target excluded, 99 clients) trajectory per combo, checkpointed at round
 1 and every 10th round through 250. Three seeds (42, 43, 44), matching the three-seed
 protocol used elsewhere in this file.
@@ -200,15 +200,15 @@ concurrently against the same report file, so each group writes its own
 same GPU:
 
 ```bash
-CUDA_VISIBLE_DEVICES=1 uv run python -m experiments.contest_at_scale.cifar100.cifar100_scaling --group in
-CUDA_VISIBLE_DEVICES=1 uv run python -m experiments.contest_at_scale.cifar100.cifar100_scaling --group out
+CUDA_VISIBLE_DEVICES=1 uv run python -m results.contest_at_scale.cifar100.cifar100_scaling --group in
+CUDA_VISIBLE_DEVICES=1 uv run python -m results.contest_at_scale.cifar100.cifar100_scaling --group out
 ```
 
-Outputs go to `experiments/contest_at_scale/cifar100/results/attack/`. After both groups finish, merge them into
+Outputs go to `results/contest_at_scale/cifar100/results/attack/`. After both groups finish, merge them into
 round-matched AUC per combo:
 
 ```bash
-uv run python -m experiments.contest_at_scale.cifar100.cifar100_scaling_analysis
+uv run python -m results.contest_at_scale.cifar100.cifar100_scaling_analysis
 ```
 
-Writes `experiments/contest_at_scale/cifar100/results/attack/cia_analysis.json`.
+Writes `results/contest_at_scale/cifar100/results/attack/cia_analysis.json`.
