@@ -87,7 +87,7 @@ multi-round CIA" below), which now trains three seeds (42, 43, 44) matching this
 
 The scalable CIA experiment originally lived in `experiments/cia/client_scaling.py`; that file
 was deleted 2026-08-03 during the `experiments/cia/scripts/` reorganization and never replaced,
-though its result data (`results/cia_client_scaling/`) is still committed. Its protocol -- one
+and its result data (`results/cia_client_scaling/`) is frozen at tag `freeze/2026-10-02` (see `FREEZE.md`). Its protocol -- one
 trajectory per combo (target participates), shadow-vs-test loss compared at "first-round" and
 "post-convergence" checkpoints -- is reconstructed here from that data rather than from surviving
 code.

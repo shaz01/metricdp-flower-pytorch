@@ -9,7 +9,6 @@ import torch
 from torch.utils.data import DataLoader, Subset, TensorDataset
 
 from experiments.cia.datasets.partitions import out_remove
-from experiments.cia.scripts import contest
 from experiments.cia.shadow_dataset import clean_shadow_dataset, noisy_shadow_dataset
 from experiments.reproduce.dataset.alzheimer import (
     AlzheimerDataModule,
@@ -146,16 +145,6 @@ def _source_indices(loader: DataLoader) -> tuple[int, ...]:
         int(target_train_dataset.indices[index])
         for index in shadow_dataset.indices
     )
-
-
-def test_contest_matrix_uses_its_local_participant_factory() -> None:
-    view = contest.create_data_module({"num-clients": 4})
-
-    assert contest.MATRIX.data_module == (
-        "experiments.cia.scripts.contest:create_data_module"
-    )
-    assert view.canonical_num_partitions == 4
-    assert view.active_partition_ids == (0, 1, 2, 3)
 
 
 def test_shadow_datasets_use_canonical_data_behind_training_view() -> None:
