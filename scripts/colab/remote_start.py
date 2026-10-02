@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
 
-WORKER = Path("/content/metricdp-colab-worker.py")
+CONTENT = Path(os.environ.get("METRICDP_COLAB_CONTENT", "/content"))
+WORKER = CONTENT / "metricdp-colab-worker.py"
 
 
 def main() -> None:
