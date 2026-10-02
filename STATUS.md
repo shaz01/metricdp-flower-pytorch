@@ -1,7 +1,8 @@
 # Project Status
 
-**Branch:** `feature/dirichlet-splitter`
-**Last updated:** 2026-08-20, local development machine (Colab CIA sweep complete)
+**Branch:** `master`
+**Last updated:** 2026-10-01, client-side noise literature review version 1 and provisional plan
+(see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -14,30 +15,33 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-`feature/dirichlet-splitter` is pushed to `origin`. Its 8-canonical-client Dirichlet CIFAR-10 removal-CIA sweep completed on Colab A100s: 25 matched `(IN-remove, OUT-remove)` chunks / 50 trajectories, all seed 42, 20 rounds, and 5 local epochs. Alphas 0.1 and 1.5 cover all three privacy modes at ratios 0.0025/0.004/0.00625; alpha 3 covers global-DP and metric-privacy at all three ratios, plus the single vanilla ratio-0.0025 chunk (the other two alpha-3 vanilla ratios were deliberately omitted because vanilla is ratio-independent). Every chunk was collected, committed, pushed, and its VM released; `colab sessions` is empty. Results are under `results/dirichlet/cifar10/8_clients/`. Do not stage the unrelated `mail.pdf` or untracked presentation files.
+**Research direction reset (2026-10-01).** The owner wants to investigate client-side noise
+sampled from a separately constructed distribution for each client, aiming to improve CIA
+protection relative to server-side metric calibration. Distribution construction remains an
+open question; a careful literature review precedes mechanism selection and the new roadmap.
+The old local `docs/RESEARCH_ROADMAP.md` was removed with owner authorization as irrelevant.
+This deletion does not propagate to other machines because `docs/` is gitignored.
 
-`feature/dirichlet-splitter` is a local branch with two explicit label-heterogeneity modes across
-all six dataset plugins. The earlier `label-skew` mode (commit `9e18afe`) uses four seeded,
-mostly single-label shards per client and stays closely size-balanced. The new `dirichlet` mode
-(commit `3ff14c9`) performs class-wise symmetric Dirichlet allocation and exposes concentration
-end-to-end as `--dirichlet-alpha` (default 0.5; smaller means stronger label and quantity skew).
-Alpha is included in run names, training metadata, detailed-evaluation reconstruction, CIA shadow
-reconstruction, and CIA result provenance, so sweeps cannot silently collide or repartition during
-postprocessing. A real CIFAR-10 n=100/seed-42/default-alpha loader check produced 251 target
-records (200 train/51 held out) and target-vs-global TV about 0.50; broader direct partition checks
-showed expected alpha-dependent heterogeneity. Existing `non-iid` quantity skew is unchanged.
-A Dirichlet-only CIFAR-10 removal-CIA entry point now lives at
-`experiments/cia/scripts/cifar10_dirichlet.py` (commit `db3b02e`). It requires an explicit
-`--dirichlet-alpha`, exposes no non-Dirichlet partition choice, and writes under
-`results/dirichlet/cifar10/{n}_clients/`. Commit `6a52000` adds an automatically unique child
-folder keyed by alpha, privacy, adjacency selection, seeds, and noise ratio, allowing disjoint
-chunks to run concurrently without racing on `cia.json` or `progress.log`. The original
-`cifar10_remove.py` is unchanged. Nothing pushed and nothing running. Tests: all 118 CIA tests
-pass; 274/274 non-MPS-fatal tests
-passed before adding this isolated runner, when the pre-existing
-`experiments/reproduce/tests/test_paper_loss.py` native abort is excluded.
+Catch-up findings and source pointers: `research/project_evidence_audit.md`. The frontier HTML
+was reproduced byte-for-byte and all 110 recorded stage entries were checked against raw attack
+losses/accuracy files without discrepancies. Its "round-matched AUC" is folded paired
+concordance, and 9/10 landed curves have three-seed mean scores above 0.55. Treat it as an
+exploratory utility/leakage baseline, not a validated demonstration of CIA neutralization.
+The owner requested both systematic and integrative review and confirmed the protocol. Version 1
+is in `research/literature_review/README.md`: 31 included primary source families, technique
+explanations, bounded search/screening records, synthesis and a provisional research plan.
+Closest pending full methods: FACP and FedFR-ADP. Next: resolve those comparators, specify the
+client-participation game, and analyze distribution construction before choosing a mechanism.
+No new experiments have been launched or new mechanism selected. The historical next steps
+below are context, not the active agenda.
 
-On `master`, nothing currently running. `reports/accuracy_vs_roc_auc.html` (refreshed 2026-08-15) was sent to
+**`feature/auc-targeted-noise-sweep` is complete (2026-09-01) and merged into `master`.** See
+`reports/auc_targeted_noise_sweep.md` for the full writeup and "What's established" below for the
+summary — not repeated here to avoid drifting out of sync.
+
+---
+
+Nothing else currently running. `reports/accuracy_vs_roc_auc.html` (refreshed 2026-08-15) was sent to
 the project supervisor for review; his feedback asked for a step back from the numbers-heavy
 format toward two plain-language, plot-supported claims: (1) more clients → lower CIA attack AUC,
 especially vanilla, and (2) DP noise lowers attack AUC at a heavy accuracy cost. **New follow-up
@@ -135,10 +139,23 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| _(none)_ | All requested Dirichlet CIA chunks collected and Colab sessions released. | — |
+| _(none)_ | Nothing currently running. | — |
 
 ## What's established on `master`
 
+- **AUC-targeted noise sweep** (`reports/auc_targeted_noise_sweep.md`, `reports/auc_frontier.html`):
+  4 datasets (EuroSAT n=48, Alzheimer n=48, Fashion-MNIST n=48, CIFAR-10 n=100) x 2 partition modes
+  x 2 privacy modes = 16 curves, each an autonomous search for the noise multiplier that pushes CIA
+  round-matched attack AUC to ~0.5 (10 landed, 4 collapsed-before-target, 2 anchor-not-found — see
+  the report for the full per-curve table). Noise-to-neutralize-attack cost is dataset/partition/
+  mechanism-dependent, not a single number: EuroSAT reaches the target cheaply in all 4
+  combinations; CIFAR-10 reaches it in all 4 but the accuracy cost swings from negligible
+  (non-iid/global-dp) to severe (homogeneous/global-dp, pushed to near-random accuracy); Alzheimer
+  and Fashion-MNIST/homogeneous show the sweep's clearest negative result — several combinations
+  break the model before the attack is ever actually neutralized, and Fashion-MNIST/homogeneous
+  (both privacy modes) never found a usable low-noise anchor at all in the range searched.
+  Metric-privacy's cost advantage over global-DP shows up clearly on CIFAR-10/homogeneous but
+  reverses on CIFAR-10/non-iid — no blanket "metric-privacy is cheaper" claim survives this data.
 - The metric-privacy mechanism reproduces the source paper at 4 clients — the effect is barely
   visible at the paper's `noise_multiplier=0.01` (`reports/paper_reproduction.md`).
 - A genuine, previously unpublished effect exists at 8 clients: metric-privacy beats global-DP by
@@ -210,8 +227,10 @@ section.
 
 ## Where to look
 
-- `docs/RESEARCH_ROADMAP.md` — canonical multi-session research plan (gitignored — not on every
-  machine by default; copy it manually if a fresh checkout is missing it).
+- `research/literature_review/README.md` — systematic/integrative review, technique tutorials,
+  agent handoff and provisional new research plan.
+- `research/project_evidence_audit.md` — verified starting evidence for the new client-side
+  noise research direction; the obsolete local roadmap was retired on 2026-10-01.
 - `reports/*.md`, `reports/*.tex` — narrative writeups; source of truth over this file for
   anything beyond a one-line summary.
 - `results/<name>/` — raw run data; `results/archive/` — superseded data kept for comparison.

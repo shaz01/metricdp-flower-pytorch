@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EuroSAT Attack-AUC-vs-Accuracy Frontier</title>
+  <style>
+    :root { color-scheme: light; font-family: Arial, Helvetica, sans-serif; }
+    body { max-width: 1180px; margin: 0 auto; padding: 28px; color: #111; background: #fff; }
+    header { border-bottom: 1px solid #bbb; margin-bottom: 28px; }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    h2 { margin-top: 36px; padding-bottom: 6px; border-bottom: 1px solid #ccc; font-size: 21px; }
+    h3 { font-size: 17px; margin: 0 0 4px; }
+    p, li { line-height: 1.45; }
+    .meta, .note { color: #444; font-size: 14px; }
+    .status { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+    .badge { font-size: 12px; padding: 3px 10px; border-radius: 100px; border: 1px solid #bbb; color: #444; }
+    .badge.done { border-color: #1a7a3c; color: #1a7a3c; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; }
+    .panel { border: 1px solid #ccc; padding: 12px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+    th, td { border-bottom: 1px solid #ddd; padding: 6px 8px; text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child, th:nth-child(2), td:nth-child(2), th:nth-child(5), td:nth-child(5) { text-align: left; }
+    thead th { border-bottom: 2px solid #888; }
+    svg { width: 100%; height: auto; display: block; }
+    .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 12px; }
+    .key { display: inline-flex; align-items: center; gap: 5px; }
+    .swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+    .swatch.ring { background: none; border: 2px solid; }
+    footer { margin-top: 36px; padding-top: 10px; border-top: 1px solid #bbb; font-size: 12px; color: #555; }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+    @media print { body { max-width: none; padding: 12mm; } section { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+<header>
+  <h1>EuroSAT: Attack AUC vs. Accuracy Frontier</h1>
+  <p class="meta">AUC-targeted noise sweep. X-axis: round-matched clean-shadow attack AUC (direction-reversal
+  allowed). Y-axis: model accuracy. Shaded band: AUC 0.45&ndash;0.55, the target &mdash; attack performance
+  indistinguishable from a coin flip. Faint dots: single-seed search steps. Solid dots: 3-seed confirmation
+  runs at the noise level each curve landed on.</p>
+  <div class="status">
+    <span class="badge done">EuroSAT &middot; 4/4 curves landed</span>
+    <span class="badge">Alzheimer &middot; in progress</span>
+    <span class="badge">Fashion-MNIST &middot; queued</span>
+    <span class="badge">CIFAR-10 &middot; queued</span>
+  </div>
+</header>
+
+<section id="frontier">
+  <h2>Frontier by partition</h2>
+  <div class="grid"><div class="panel"><h3>Homogeneous partition</h3><p class="note">vanilla reference &middot; accuracy 90.0% &middot; auc 60.6%</p><svg viewBox="0 0 460 360" role="img" aria-label="Homogeneous partition: attack AUC vs accuracy"><rect x="73.2" y="16" width="63.9" height="298" fill="#f2f2f2"/><line x1="105.1" y1="16" x2="105.1" y2="314" stroke="#ddd"/><text x="105.1" y="330" text-anchor="middle" font-size="11">0.5</text><line x1="169.1" y1="16" x2="169.1" y2="314" stroke="#ddd"/><text x="169.1" y="330" text-anchor="middle" font-size="11">0.6</text><line x1="233.0" y1="16" x2="233.0" y2="314" stroke="#ddd"/><text x="233.0" y="330" text-anchor="middle" font-size="11">0.7</text><line x1="297.0" y1="16" x2="297.0" y2="314" stroke="#ddd"/><text x="297.0" y="330" text-anchor="middle" font-size="11">0.8</text><line x1="360.9" y1="16" x2="360.9" y2="314" stroke="#ddd"/><text x="360.9" y="330" text-anchor="middle" font-size="11">0.9</text><line x1="424.8" y1="16" x2="424.8" y2="314" stroke="#ddd"/><text x="424.8" y="330" text-anchor="middle" font-size="11">1.0</text><line x1="54" y1="272.9" x2="444" y2="272.9" stroke="#ddd"/><text x="46" y="275.9" text-anchor="end" font-size="11">80%</text><line x1="54" y1="190.7" x2="444" y2="190.7" stroke="#ddd"/><text x="46" y="193.7" text-anchor="end" font-size="11">84%</text><line x1="54" y1="108.5" x2="444" y2="108.5" stroke="#ddd"/><text x="46" y="111.5" text-anchor="end" font-size="11">88%</text><line x1="54" y1="26.3" x2="444" y2="26.3" stroke="#ddd"/><text x="46" y="29.3" text-anchor="end" font-size="11">92%</text><line x1="54" y1="16" x2="54" y2="314" stroke="#555"/><line x1="54" y1="314" x2="444" y2="314" stroke="#555"/><text x="249.0" y="354" text-anchor="middle" font-size="12">Attack AUC</text><text x="14" y="165.0" text-anchor="middle" font-size="12" transform="rotate(-90 14 165.0)">Accuracy</text><circle cx="173.0" cy="68.1" r="6" fill="none" stroke="#111" stroke-width="2"/><circle cx="134.2" cy="87.2" r="5" fill="#2166ac" fill-opacity="1"/><circle cx="308.6" cy="69.7" r="5" fill="#2166ac" fill-opacity="1"/><circle cx="250.5" cy="72.7" r="5" fill="#2166ac" fill-opacity="1"/><circle cx="192.3" cy="91.0" r="3.5" fill="#b2182b" fill-opacity="0.55"/><circle cx="366.7" cy="129.8" r="3.5" fill="#b2182b" fill-opacity="0.55"/><circle cx="134.2" cy="263.0" r="5" fill="#b2182b" fill-opacity="1"/><circle cx="134.2" cy="142.7" r="5" fill="#b2182b" fill-opacity="1"/><circle cx="192.3" cy="135.1" r="5" fill="#b2182b" fill-opacity="1"/></svg></div><div class="panel"><h3>Non-IID partition</h3><p class="note">vanilla reference &middot; accuracy 90.9% &middot; auc 81.8%</p><svg viewBox="0 0 460 360" role="img" aria-label="Non-IID partition: attack AUC vs accuracy"><rect x="73.2" y="16" width="63.9" height="298" fill="#f2f2f2"/><line x1="105.1" y1="16" x2="105.1" y2="314" stroke="#ddd"/><text x="105.1" y="330" text-anchor="middle" font-size="11">0.5</text><line x1="169.1" y1="16" x2="169.1" y2="314" stroke="#ddd"/><text x="169.1" y="330" text-anchor="middle" font-size="11">0.6</text><line x1="233.0" y1="16" x2="233.0" y2="314" stroke="#ddd"/><text x="233.0" y="330" text-anchor="middle" font-size="11">0.7</text><line x1="297.0" y1="16" x2="297.0" y2="314" stroke="#ddd"/><text x="297.0" y="330" text-anchor="middle" font-size="11">0.8</text><line x1="360.9" y1="16" x2="360.9" y2="314" stroke="#ddd"/><text x="360.9" y="330" text-anchor="middle" font-size="11">0.9</text><line x1="424.8" y1="16" x2="424.8" y2="314" stroke="#ddd"/><text x="424.8" y="330" text-anchor="middle" font-size="11">1.0</text><line x1="54" y1="272.9" x2="444" y2="272.9" stroke="#ddd"/><text x="46" y="275.9" text-anchor="end" font-size="11">80%</text><line x1="54" y1="190.7" x2="444" y2="190.7" stroke="#ddd"/><text x="46" y="193.7" text-anchor="end" font-size="11">84%</text><line x1="54" y1="108.5" x2="444" y2="108.5" stroke="#ddd"/><text x="46" y="111.5" text-anchor="end" font-size="11">88%</text><line x1="54" y1="26.3" x2="444" y2="26.3" stroke="#ddd"/><text x="46" y="29.3" text-anchor="end" font-size="11">92%</text><line x1="54" y1="16" x2="54" y2="314" stroke="#555"/><line x1="54" y1="314" x2="444" y2="314" stroke="#555"/><text x="249.0" y="354" text-anchor="middle" font-size="12">Attack AUC</text><text x="14" y="165.0" text-anchor="middle" font-size="12" transform="rotate(-90 14 165.0)">Accuracy</text><circle cx="308.6" cy="48.3" r="6" fill="none" stroke="#111" stroke-width="2"/><circle cx="366.7" cy="71.9" r="3.5" fill="#2166ac" fill-opacity="0.55"/><circle cx="134.2" cy="94.0" r="5" fill="#2166ac" fill-opacity="1"/><circle cx="250.5" cy="65.9" r="5" fill="#2166ac" fill-opacity="1"/><circle cx="192.3" cy="78.8" r="5" fill="#2166ac" fill-opacity="1"/><circle cx="366.7" cy="68.1" r="3.5" fill="#b2182b" fill-opacity="0.55"/><circle cx="192.3" cy="112.3" r="3.5" fill="#b2182b" fill-opacity="0.55"/><circle cx="134.2" cy="180.8" r="5" fill="#b2182b" fill-opacity="1"/><circle cx="192.3" cy="119.1" r="5" fill="#b2182b" fill-opacity="1"/><circle cx="134.2" cy="110.0" r="5" fill="#b2182b" fill-opacity="1"/></svg></div></div>
+  <div class="legend">
+    <span class="key"><span class="swatch ring" style="border-color:#111"></span>Vanilla (no defense)</span>
+    <span class="key"><span class="swatch" style="background:#2166ac"></span>Global-DP</span>
+    <span class="key"><span class="swatch" style="background:#b2182b"></span>Metric-privacy</span>
+  </div>
+</section>
+
+<section id="data">
+  <h2>Every point</h2>
+  <div class="panel"><table><thead><tr><th>Partition</th><th>Mechanism</th><th>Noise ratio</th><th>Seed</th><th>Role</th><th>Attack AUC (%)</th><th>Accuracy (%)</th></tr></thead><tbody><tr><td>homogeneous</td><td>Vanilla</td><td>&mdash;</td><td>&mdash;</td><td>reference</td><td>60.6</td><td>90.0</td></tr><tr><td>homogeneous</td><td>Global-DP</td><td>7.731e-04</td><td>42</td><td>landed</td><td>54.5</td><td>89.0</td></tr><tr><td>homogeneous</td><td>Global-DP</td><td>7.731e-04</td><td>43</td><td>confirm</td><td>81.8</td><td>89.9</td></tr><tr><td>homogeneous</td><td>Global-DP</td><td>7.731e-04</td><td>44</td><td>confirm</td><td>72.7</td><td>89.7</td></tr><tr><td>homogeneous</td><td>Metric-privacy</td><td>3.865e-04</td><td>42</td><td>search</td><td>63.6</td><td>88.9</td></tr><tr><td>homogeneous</td><td>Metric-privacy</td><td>7.731e-04</td><td>42</td><td>search</td><td>90.9</td><td>87.0</td></tr><tr><td>homogeneous</td><td>Metric-privacy</td><td>1.546e-03</td><td>42</td><td>landed</td><td>54.5</td><td>80.5</td></tr><tr><td>homogeneous</td><td>Metric-privacy</td><td>1.546e-03</td><td>43</td><td>confirm</td><td>54.5</td><td>86.3</td></tr><tr><td>homogeneous</td><td>Metric-privacy</td><td>1.546e-03</td><td>44</td><td>confirm</td><td>63.6</td><td>86.7</td></tr><tr><td>non-iid</td><td>Vanilla</td><td>&mdash;</td><td>&mdash;</td><td>reference</td><td>81.8</td><td>90.9</td></tr><tr><td>non-iid</td><td>Global-DP</td><td>7.731e-04</td><td>42</td><td>search</td><td>90.9</td><td>89.8</td></tr><tr><td>non-iid</td><td>Global-DP</td><td>1.546e-03</td><td>42</td><td>landed</td><td>54.5</td><td>88.7</td></tr><tr><td>non-iid</td><td>Global-DP</td><td>1.546e-03</td><td>43</td><td>confirm</td><td>72.7</td><td>90.1</td></tr><tr><td>non-iid</td><td>Global-DP</td><td>1.546e-03</td><td>44</td><td>confirm</td><td>63.6</td><td>89.4</td></tr><tr><td>non-iid</td><td>Metric-privacy</td><td>3.865e-04</td><td>42</td><td>search</td><td>90.9</td><td>90.0</td></tr><tr><td>non-iid</td><td>Metric-privacy</td><td>7.731e-04</td><td>42</td><td>search</td><td>63.6</td><td>87.8</td></tr><tr><td>non-iid</td><td>Metric-privacy</td><td>1.546e-03</td><td>42</td><td>landed</td><td>54.5</td><td>84.5</td></tr><tr><td>non-iid</td><td>Metric-privacy</td><td>1.546e-03</td><td>43</td><td>confirm</td><td>63.6</td><td>87.5</td></tr><tr><td>non-iid</td><td>Metric-privacy</td><td>1.546e-03</td><td>44</td><td>confirm</td><td>54.5</td><td>87.9</td></tr></tbody></table></div>
+</section>
+
+<footer>Source: committed JSON artifacts under <code>results/auc_target_sweep/eurosat/</code>
+(<code>search_state.json</code> per partition/privacy, <code>vanilla_reference.json</code> per partition).
+Generated by <code>reports/build_eurosat_auc_frontier.py</code> &mdash; interim, EuroSAT only; the sweep
+also covers Alzheimer, Fashion-MNIST, and CIFAR-10, still running at generation time.</footer>
+</body>
+</html>

@@ -26,6 +26,7 @@ from experiments.cia.datasets.partitions import (
     in_remove,
     out_remove,
 )
+from experiments.cia.result import CiaResult
 from experiments.cia.shadow_dataset import clean_shadow_dataset, noisy_shadow_dataset
 from experiments.reproduce.dataset.cifar10 import Cifar10DataModule
 from experiments.reproduce.matrix import Combo, Hyperparams
@@ -41,7 +42,8 @@ CANONICAL_NUM_CLIENTS = 10
 TARGET_PARTITION_ID = 0
 
 ADJACENCIES = ("in-remove", "out-remove")
-PARTITION_MODE = "non-iid"
+PARTITION_MODES = ("homogeneous", "non-iid")
+PARTITION_MODE = "non-iid"  # default, kept for backward compatibility
 PRIVACY_MODES = ("vanilla", "global-dp", "metric-privacy")
 SEEDS = (42,)
 
@@ -143,6 +145,7 @@ def build_combos(
     seeds: Sequence[int] = SEEDS,
     canonical_num_clients: int = CANONICAL_NUM_CLIENTS,
     noise_ratio: float | None = None,
+    partition: str = PARTITION_MODE,
 ) -> list[Combo]:
     """Build the full adjacency x privacy x seed trajectory list."""
     if canonical_num_clients < 2:
@@ -153,6 +156,8 @@ def build_combos(
     for privacy in privacy_modes:
         if privacy not in PRIVACY_MODES:
             raise ValueError(f"privacy mode must come from {PRIVACY_MODES}.")
+    if partition not in PARTITION_MODES:
+        raise ValueError(f"partition must come from {PARTITION_MODES}.")
     if noise_ratio is not None and noise_ratio <= 0:
         raise ValueError("noise_ratio must be positive when provided.")
 
@@ -160,7 +165,7 @@ def build_combos(
         Combo(
             name_prefix=f"cifar10-{adjacency}",
             num_clients=_active_clients(adjacency, canonical_num_clients),
-            partition=PARTITION_MODE,
+            partition=partition,
             privacy=privacy,
             aggregation="fedavg",
             seed=seed,
@@ -177,6 +182,45 @@ def build_combos(
         for privacy in privacy_modes
         for seed in seeds
     ]
+
+
+def run_stage(
+    *,
+    privacy: str,
+    partition: str,
+    seed: int,
+    noise_ratio: float | None,
+    canonical_num_clients: int,
+    output_dir: Path,
+    max_parallel_clients: int | None = None,
+    force: bool = False,
+) -> list[CiaResult]:
+    """Run one IN+OUT stage (both adjacencies, one seed, one privacy mode)."""
+    output_dir = output_dir.resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    combos = build_combos(
+        privacy_modes=(privacy,),
+        seeds=(seed,),
+        canonical_num_clients=canonical_num_clients,
+        noise_ratio=noise_ratio,
+        partition=partition,
+    )
+    return run_attack(
+        combos=combos,
+        output_dir=output_dir / "runs",
+        log_path=output_dir / "runs" / "progress.log",
+        max_parallel_clients=max_parallel_clients or min(canonical_num_clients, 6),
+        force=force,
+        start_message=(
+            f"CIFAR-10 stage ({privacy}, {partition}, seed={seed}, "
+            f"noise_ratio={noise_ratio}): {len(combos)} trajectories"
+        ),
+        clean_data_module_factory=_clean_shadow,
+        noisy_data_module_factory=_noisy_shadow,
+        device=resolve_device(),
+        checkpoint_rounds=CHECKPOINT_ROUNDS,
+        report_name="cia.json",
+    )
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -213,6 +257,11 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--partition",
+        choices=PARTITION_MODES,
+        default=PARTITION_MODE,
+    )
+    parser.add_argument(
         "--max-parallel-clients",
         type=int,
         help="Defaults to min(clients, 8).",  # TODO: tune per machine.
@@ -232,6 +281,7 @@ def main() -> None:
         seeds=args.seed,
         canonical_num_clients=args.clients,
         noise_ratio=args.noise_ratio,
+        partition=args.partition,
     )
     results = run_attack(
         combos=combos,
