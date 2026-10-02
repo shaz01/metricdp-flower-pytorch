@@ -1,6 +1,6 @@
 """Multi-round CIA (IN vs OUT) against the EuroSAT 48-client/100-round sweep.
 
-Attacks all 6 combos from results/eurosat_scaling/ ({homogeneous, non-iid} x {vanilla,
+Attacks all 6 combos from experiments/contest_at_scale/results/eurosat_scaling/ ({homogeneous, non-iid} x {vanilla,
 global-dp, metric-privacy} x fedavg, n=48, r=100) across 3 seeds (42, 43, 44) -- 18 trajectories
 per group. A matched IN-remove (target participates, 48 clients) and OUT-remove (target
 excluded, 47 clients) trajectory per combo, checkpointed at round 1 and every 10th round through
@@ -50,7 +50,7 @@ from experiments.reproduce.matrix import Combo, Hyperparams
 from metricdp_pytorch.utils.device import resolve_device
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "results" / "cia_eurosat_scaling"
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "cia_eurosat_scaling"
 
 PARTITION_MODES = ("homogeneous", "non-iid")
 PRIVACY_MODES = ("vanilla", "global-dp", "metric-privacy")

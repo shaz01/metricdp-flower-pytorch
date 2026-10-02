@@ -33,7 +33,7 @@ from experiments.reproduce.matrix import Combo, Hyperparams
 from metricdp_pytorch.utils.device import resolve_device
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "results" / "cia" / "cifar10_remove"
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "cia" / "cifar10_remove"
 
 # Default canonical federation size; override with --clients. The IN view runs
 # all canonical clients, the OUT view runs the same partitioning minus the

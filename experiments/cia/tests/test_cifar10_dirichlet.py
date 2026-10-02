@@ -101,7 +101,7 @@ def test_cli_requires_dirichlet_alpha() -> None:
 
 def test_results_path_is_derived_from_client_count() -> None:
     assert cifar10_dirichlet.RESULTS_ROOT == (
-        cifar10_dirichlet.PROJECT_ROOT / "results" / "dirichlet" / "cifar10"
+        cifar10_dirichlet.PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "dirichlet" / "cifar10"
     )
 
 

@@ -8,7 +8,7 @@
 
 Runs the same IN-remove vs. OUT-remove Client Inference Attack methodology already built and run
 against CIFAR-100 (`experiments/cia/scripts/cifar100_scaling.py`) against the EuroSAT accuracy
-sweep (`reports/eurosat_accuracy_sweep.md`), to measure whether — and how much — this repo's
+sweep (`experiments/contest_at_scale/reports/eurosat_accuracy_sweep.md`), to measure whether — and how much — this repo's
 metric-privacy and global-DP mechanisms suppress membership-inference leakage on a genuinely
 different dataset. Explicitly deferred at accuracy-sweep design time
 (`docs/superpowers/specs/2026-08-12-eurosat-scaling-design.md`: "CIA attack experiment on EuroSAT
@@ -24,7 +24,7 @@ different dataset. Explicitly deferred at accuracy-sweep design time
 - **Matrix:** `{homogeneous, non-iid} × {vanilla, global-dp, metric-privacy}`, `fedavg`-only — 6
   combos × 3 seeds = 18 trajectories per group (IN, OUT), 36 total.
 - **`noise_multiplier = 0.03710712210729851`** — reused directly from the accuracy sweep's own
-  empirical calibration (see `reports/eurosat_accuracy_sweep.md`); no separate calibration step
+  empirical calibration (see `experiments/contest_at_scale/reports/eurosat_accuracy_sweep.md`); no separate calibration step
   for CIA, mirroring how CIFAR-100's CIA reused its own accuracy sweep's calibrated value.
 - **Hyperparameters:** identical to the accuracy sweep (`clipping_norm=5.0`, `local_epochs=5`,
   `batch_size=32`, `learning_rate=0.001`, `initialization_epochs=20`, `rounds=100`; no
@@ -61,7 +61,7 @@ seeds (33 round-matched pairs per combo), for both shadow-loss score variants:
 | non-iid | metric-privacy | 0.606 | 0.522 (0.379–0.663) | 0.212 | 0.440 (0.301–0.582) |
 
 Full data, including both score keys and per-combo raw round-matched-AUC values, is in
-`results/cia_eurosat_scaling/cia_analysis.json`.
+`experiments/contest_at_scale/results/cia_eurosat_scaling/cia_analysis.json`.
 
 ## Observations
 
@@ -93,7 +93,7 @@ Full data, including both score keys and per-combo raw round-matched-AUC values,
 
 ## Data location
 
-`results/cia_eurosat_scaling/` — `cia_in.json`/`cia_out.json` (aggregate per-round-per-trajectory
+`experiments/contest_at_scale/results/cia_eurosat_scaling/` — `cia_in.json`/`cia_out.json` (aggregate per-round-per-trajectory
 rows, 198 each), `cia_analysis.json` (the round-matched AUC summary above), 36 per-trajectory
 result JSONs, and `progress_in.log`/`progress_out.log`. Per-trajectory `.evaluation.json` files
 (~630MB total across 36 trajectories) are gitignored — not committed, given the volume, unlike

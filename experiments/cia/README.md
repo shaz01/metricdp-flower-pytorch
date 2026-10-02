@@ -45,17 +45,17 @@ matrix:
 
 ```bash
 uv run python -m experiments.cia.scripts.planned_runs --group alzheimer-in-remove \
-  --output-dir results/planned_runs/alzheimer/in_remove
+  --output-dir experiments/contest_at_scale/results/planned_runs/alzheimer/in_remove
 uv run python -m experiments.cia.scripts.planned_runs --group alzheimer-out-remove \
-  --output-dir results/planned_runs/alzheimer/out_remove
+  --output-dir experiments/contest_at_scale/results/planned_runs/alzheimer/out_remove
 ```
 
 Each group runs 9 real training runs (3 privacy modes x 3 seeds), downloading/reusing the cached
 Alzheimer MRI dataset. Results are written to `<output-dir>/<group-name>/cia.json`; the
 `server_round == 1` rows are the first-round, single-shot values Tables 9-12 describe. Committed
 results already exist at
-`results/planned_runs/alzheimer/in_remove/alzheimer-in-remove/cia.json` and
-`results/planned_runs/alzheimer/out_remove/alzheimer-out-remove/cia.json`.
+`experiments/contest_at_scale/results/planned_runs/alzheimer/in_remove/alzheimer-in-remove/cia.json` and
+`experiments/contest_at_scale/results/planned_runs/alzheimer/out_remove/alzheimer-out-remove/cia.json`.
 
 ## Multi-round CIA (Table 13)
 
@@ -115,7 +115,7 @@ The paper's Table 10 (FedAvg) and Table 11 (FedYogi) report, per privacy
 mode: aggregated test loss, target shadow loss, and the relative
 difference. Table 12 reports test loss only, across all six aggregation
 strategies. Compare the `server_round == 1` rows in
-`results/planned_runs/alzheimer/in_remove/alzheimer-in-remove/cia.json` (see "Running the
+`experiments/contest_at_scale/results/planned_runs/alzheimer/in_remove/alzheimer-in-remove/cia.json` (see "Running the
 first-round attack" above) against those tables. Exact
 numeric parity is not expected (different hardware/library versions, and
 the paper doesn't specify all stochastic-seed details), but the qualitative
@@ -149,7 +149,7 @@ uv run python scripts/colab/run_experiment.py run \
   --session cia-determinism \
   --gpu L4 \
   --module experiments.cia.scripts.check_determinism \
-  --results results/cia/check_determinism \
+  --results experiments/contest_at_scale/results/cia/check_determinism \
   --commit-message "results(cia): add Colab determinism check"
 ```
 
@@ -189,7 +189,7 @@ uv pip install \
 ## CIFAR-100 multi-round CIA
 
 `experiments/cia/scripts/cifar100_scaling.py` attacks all 6 combos from the 100-client/250-round
-CIFAR-100 sweep (`results/cifar100_scaling/`): a matched IN-remove (target participates, 100
+CIFAR-100 sweep (`experiments/contest_at_scale/results/cifar100_scaling/`): a matched IN-remove (target participates, 100
 clients) and OUT-remove (target excluded, 99 clients) trajectory per combo, checkpointed at round
 1 and every 10th round through 250. Three seeds (42, 43, 44), matching the three-seed
 protocol used elsewhere in this file.
@@ -204,11 +204,11 @@ CUDA_VISIBLE_DEVICES=1 uv run python -m experiments.cia.scripts.cifar100_scaling
 CUDA_VISIBLE_DEVICES=1 uv run python -m experiments.cia.scripts.cifar100_scaling --group out
 ```
 
-Outputs go to `results/cia_cifar100_scaling/`. After both groups finish, merge them into
+Outputs go to `experiments/contest_at_scale/results/cia_cifar100_scaling/`. After both groups finish, merge them into
 round-matched AUC per combo:
 
 ```bash
 uv run python -m experiments.cia.scripts.cifar100_scaling_analysis
 ```
 
-Writes `results/cia_cifar100_scaling/cia_analysis.json`.
+Writes `experiments/contest_at_scale/results/cia_cifar100_scaling/cia_analysis.json`.

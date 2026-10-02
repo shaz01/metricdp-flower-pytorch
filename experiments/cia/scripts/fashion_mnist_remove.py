@@ -28,7 +28,7 @@ from experiments.reproduce.matrix import Combo, Hyperparams
 from metricdp_pytorch.utils.device import resolve_device
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "results" / "cia" / "fashion_mnist_remove"
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "cia" / "fashion_mnist_remove"
 
 CANONICAL_NUM_CLIENTS = 48
 TARGET_PARTITION_ID = 0

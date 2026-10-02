@@ -33,7 +33,7 @@ from experiments.cia.scripts.score_stage import score_stage
 from experiments.reproduce.matrix.combo import format_noise
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-RESULTS_ROOT = PROJECT_ROOT / "results" / "auc_target_sweep"
+RESULTS_ROOT = PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "auc_target_sweep"
 
 TARGET_BAND = (0.45, 0.55)
 ANCHOR_TOLERANCE = 0.10  # widened from 0.03 post-pilot (2026-08-18): the EuroSAT

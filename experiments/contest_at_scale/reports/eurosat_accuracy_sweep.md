@@ -90,13 +90,13 @@ random-baseline starting point:
 
 ## Data location
 
-`results/eurosat_scaling/` — one `{run_name}.json` (round-by-round metric history) and
+`experiments/contest_at_scale/results/eurosat_scaling/` — one `{run_name}.json` (round-by-round metric history) and
 `{run_name}.evaluation.json` (detailed per-class evaluation) per combo, plus `sweep_progress.log`.
 An earlier 3-round smoke-test combo (`...n48__r3.*`) is also present, kept for provenance; it is
 not part of the real 100-round sweep and should not be read as a result.
 
 ## What this does not cover
 
-No Client Inference Attack was run as part of this sweep — see `reports/eurosat_cia.md` for that,
+No Client Inference Attack was run as part of this sweep — see `experiments/contest_at_scale/reports/eurosat_cia.md` for that,
 a separate follow-on experiment built once this sweep's results existed (it reuses this sweep's
 calibrated `noise_multiplier` directly, without a separate calibration step).

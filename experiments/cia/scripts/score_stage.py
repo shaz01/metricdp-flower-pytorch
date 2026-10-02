@@ -4,7 +4,7 @@ Given one stage's ``CiaResult`` rows (both adjacencies, one seed, one privacy
 mode -- exactly what a per-dataset ``run_stage()`` returns) and the directory
 those runs were written to, compute the round-matched clean-shadow attack AUC
 (with direction-reversal) and the averaged final-round accuracy. Ports the
-scoring logic already established in ``reports/build_cia_takeaways.py``
+scoring logic already established in ``experiments/contest_at_scale/reports/build_cia_takeaways.py``
 (``round_matched_auc_from_rows``/``late_accuracy``) into a single reusable,
 dataset-agnostic place instead of that logic living per-dataset.
 """

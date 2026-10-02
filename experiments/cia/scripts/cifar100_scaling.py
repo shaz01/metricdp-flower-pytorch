@@ -1,6 +1,6 @@
 """Multi-round CIA (IN vs OUT) against the CIFAR-100 100-client/250-round sweep.
 
-Attacks all 6 combos from results/cifar100_scaling/ ({homogeneous, non-iid} x {vanilla,
+Attacks all 6 combos from experiments/contest_at_scale/results/cifar100_scaling/ ({homogeneous, non-iid} x {vanilla,
 global-dp, metric-privacy} x fedavg, n=100, r=250) across 3 seeds (42, 43, 44) -- 18 trajectories
 per group. A matched IN-remove (target participates,
 100 clients) and OUT-remove (target excluded, 99 clients) trajectory per combo, checkpointed at
@@ -41,7 +41,7 @@ from experiments.reproduce.matrix import Combo, Hyperparams
 from metricdp_pytorch.utils.device import resolve_device
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "results" / "cia_cifar100_scaling"
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "cia_cifar100_scaling"
 
 PARTITION_MODES = ("homogeneous", "non-iid")
 PRIVACY_MODES = ("vanilla", "global-dp", "metric-privacy")
@@ -53,7 +53,7 @@ SEEDS = (42, 43, 44)  # matches this repo's standard 3-seed CIA convention (plan
 # (docs/superpowers/specs/2026-08-09-cia-cifar100-design.md) -- pointing this script at the
 # same report files lets run_attack's existing resumability skip those 6 already-complete
 # combos per group and only train the 12 new seed-43/44 combos.
-NOISE_MULTIPLIER = 0.0182  # same calibration as results/cifar100_scaling/, reused for both
+NOISE_MULTIPLIER = 0.0182  # same calibration as experiments/contest_at_scale/results/cifar100_scaling/, reused for both
 # the 100-client IN trajectory and the 99-client OUT trajectory -- matches existing precedent
 # (planned_runs.py's alzheimer-in/out-remove groups do the same across a +-1 client difference).
 SHADOW_FRACTION = 0.10

@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-RESULTS_DIR = PROJECT_ROOT / "results" / "planned_runs" / "cifar"
+RESULTS_DIR = PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "planned_runs" / "cifar"
 SWEEP_DIR = RESULTS_DIR / "noise_sweep"
 VALIDATION_DIR = RESULTS_DIR / "validation_48"
 REPORT_STEM = "cifar_noise_sweep_48_validation_report"
@@ -257,7 +257,7 @@ Ratio & 3-client Global-DP & 3-client Metric-privacy & 48-client Global-DP & 48-
 \end{{table}}
 
 \vfill
-\begin{{center}}\small Source: \texttt{{results/planned\_runs/cifar/noise\_sweep/}} and \texttt{{results/planned\_runs/cifar/validation\_48/}}\end{{center}}
+\begin{{center}}\small Source: \texttt{{experiments/contest\_at\_scale/results/planned\_runs/cifar/noise\_sweep/}} and \texttt{{experiments/contest\_at\_scale/results/planned\_runs/cifar/validation\_48/}}\end{{center}}
 \end{{document}}
 """
 

@@ -42,7 +42,7 @@ from metricdp_pytorch.utils.device import resolve_device
 from metricdp_pytorch.utils.split_data import partition_by_class_counts
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "results" / "planned_runs"
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "planned_runs"
 
 SEEDS = (42, 43, 44)
 PRIVACY_MODES = ("vanilla", "global-dp", "metric-privacy")

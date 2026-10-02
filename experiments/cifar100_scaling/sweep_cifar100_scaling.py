@@ -27,7 +27,7 @@ the project supervisor's own CNNCIFAR100 reference architecture (3 blocks
 of 2x[Conv3x3-GroupNorm-ReLU], channels 128/256/512, global-average-pooled
 classifier, 4,631,268 params -- see experiments/reproduce/cifar100_cnn.py's
 docstring for the adaptation record), now this project's one CIFAR-100
-model. results/cifar100_scaling/ was cleared of all prior results on
+model. experiments/contest_at_scale/results/cifar100_scaling/ was cleared of all prior results on
 2026-08-08 as part of this consolidation -- every earlier result (v1-v3's
 plain-CNN runs, the DenseNet+SELU architecture's runs, and the supervisor
 model's own earlier narrower client-count/round-count grid, formerly under
@@ -98,7 +98,7 @@ NOISE_MULTIPLIER = 0.0182  # calibrated for this model's 4,631,268 params,
 # predecessor (4.6M params, no skip connections, heavy 50% dropout, 100-way
 # thin client splits) -- not frozen.
 MAX_PARALLEL_CLIENTS = 16
-OUTPUT_DIR = PROJECT_ROOT / "results" / "cifar100_scaling"
+OUTPUT_DIR = PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "cifar100_scaling"
 LOG_PATH = OUTPUT_DIR / "sweep_progress.log"
 
 # Fixed hyperparameters across the whole sweep. Only --round-counts varies

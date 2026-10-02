@@ -22,7 +22,7 @@ from experiments.reproduce.matrix import Combo, Hyperparams, is_complete, run_co
 from metricdp_pytorch.utils.device import resolve_device
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "results" / "planned_runs" / "cifar_chunks"
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "planned_runs" / "cifar_chunks"
 
 SEEDS = (42, 43, 44)
 PRIVACY_MODES = ("vanilla", "global-dp", "metric-privacy")

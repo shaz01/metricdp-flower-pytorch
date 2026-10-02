@@ -36,16 +36,16 @@ No new experiments have been launched or new mechanism selected. The historical 
 below are context, not the active agenda.
 
 **`feature/auc-targeted-noise-sweep` is complete (2026-09-01) and merged into `master`.** See
-`reports/auc_targeted_noise_sweep.md` for the full writeup and "What's established" below for the
+`experiments/contest_at_scale/reports/auc_targeted_noise_sweep.md` for the full writeup and "What's established" below for the
 summary — not repeated here to avoid drifting out of sync.
 
 ---
 
-Nothing else currently running. `reports/accuracy_vs_roc_auc.html` (refreshed 2026-08-15) was sent to
+Nothing else currently running. `experiments/contest_at_scale/reports/accuracy_vs_roc_auc.html` (refreshed 2026-08-15) was sent to
 the project supervisor for review; his feedback asked for a step back from the numbers-heavy
 format toward two plain-language, plot-supported claims: (1) more clients → lower CIA attack AUC,
 especially vanilla, and (2) DP noise lowers attack AUC at a heavy accuracy cost. **New follow-up
-report, 2026-08-16: `reports/cia_takeaways.html`** (generator: `reports/build_cia_takeaways.py`,
+report, 2026-08-16: `experiments/contest_at_scale/reports/cia_takeaways.html`** (generator: `experiments/contest_at_scale/reports/build_cia_takeaways.py`,
 independent of `build_accuracy_vs_roc_auc.py` — recomputes everything from source rather than
 reusing the old script's embedded numbers) builds one plot per claim, one plot per dataset where
 data exists, and checked both claims against the actual numbers rather than assuming them true:
@@ -58,7 +58,7 @@ data exists, and checked both claims against the actual numbers rather than assu
   sweep, EuroSAT, CIFAR-100, Alzheimer, Fashion-MNIST — 6 checks, 6/6 show DP attack AUC ≤
   vanilla's) but "heavy cost" is dataset-dependent, not universal: real on CIFAR-100 (~8pp) and
   CIFAR-10 under high noise (~20pp for global-dp), negligible on EuroSAT/Fashion-MNIST (<2pp).
-- Old `reports/accuracy_vs_roc_auc.html` was left as-is (not overwritten) per explicit instruction
+- Old `experiments/contest_at_scale/reports/accuracy_vs_roc_auc.html` was left as-is (not overwritten) per explicit instruction
   to generate a new file instead — both now exist; `cia_takeaways.html` is the one to send back to
   the supervisor.
 - Housekeeping: 4 remote branches confirmed fully merged into `origin/master` (0 unique commits
@@ -69,8 +69,8 @@ data exists, and checked both claims against the actual numbers rather than assu
 Separately, both `feature/eurosat-scaling` (the EuroSAT accuracy sweep and its CIA attack) and
 `feature/cifar100-scaling` (the CIFAR-100 accuracy sweep and its CIA attack) are complete, merged
 into `master`, and deleted (locally and on `origin`) — see "What's established" below and
-`reports/eurosat_accuracy_sweep.md`/`reports/eurosat_cia.md`/
-`reports/cifar-100_and_eurosat_results.tex` for the full writeups.
+`experiments/contest_at_scale/reports/eurosat_accuracy_sweep.md`/`experiments/contest_at_scale/reports/eurosat_cia.md`/
+`experiments/contest_at_scale/reports/cifar-100_and_eurosat_results.tex` for the full writeups.
 
 **CIFAR-100 CIA multi-seed retry was dropped.** The seed-42 single-seed CIA run (6/6 combos, 0
 failures) was complete and reportable. A follow-on rerun to add seeds 43/44 — for a properly
@@ -80,10 +80,10 @@ persistent, severe GPU VRAM contention on this shared machine. Four separate ret
 recovering 1-3 of the failing combos, with diminishing returns, despite reducing
 `--max-parallel-clients` 16→6→10 and fixing a real `dp_diagnostics.py` crash-on-client-error bug
 along the way) never reached a complete 3-seed run. Decision: drop seeds 43/44 entirely and keep
-only the complete seed-42 data. `results/cia_cifar100_scaling/cia_in.json`/`cia_out.json`/
+only the complete seed-42 data. `experiments/contest_at_scale/results/cia_cifar100_scaling/cia_in.json`/`cia_out.json`/
 `cia_analysis.json` and the 12 per-trajectory result JSONs now hold seed-42-only data for all 6
 combos; the 22 seed-43/44 per-trajectory JSONs were deleted.
-`reports/cifar-100_and_eurosat_results.tex`'s CIFAR-100 CIA table reflects this (a single
+`experiments/contest_at_scale/reports/cifar-100_and_eurosat_results.tex`'s CIFAR-100 CIA table reflects this (a single
 seed-42-only table, all 6 combos scored, replacing the earlier 3-seed-pooled table that had two
 "in progress" `global-dp` rows).
 
@@ -117,9 +117,9 @@ only client count this sweep runs — see the `NOISE_MULTIPLIER` comment in
 verification run: noise-to-signal ratio 1.001 at n=100.
 
 Full sweep and CIA results (tables, protocol, discussion) are in "What's established" below and
-`reports/cifar-100_and_eurosat_results.tex` — not repeated here to avoid drifting out of sync with
-those. Raw data: sweep JSONs at `results/cifar100_scaling/*.json`; CIA raw/analysis JSONs at
-`results/cia_cifar100_scaling/`. Both experiments' `.evaluation.json`/`.predictions.npz`
+`experiments/contest_at_scale/reports/cifar-100_and_eurosat_results.tex` — not repeated here to avoid drifting out of sync with
+those. Raw data: sweep JSONs at `experiments/contest_at_scale/results/cifar100_scaling/*.json`; CIA raw/analysis JSONs at
+`experiments/contest_at_scale/results/cia_cifar100_scaling/`. Both experiments' `.evaluation.json`/`.predictions.npz`
 artifacts stay local-only, gitignored (see `.gitignore` comment) — they blow past GitHub's 100MB
 push limit.
 
@@ -143,7 +143,7 @@ section.
 
 ## What's established on `master`
 
-- **AUC-targeted noise sweep** (`reports/auc_targeted_noise_sweep.md`, `reports/auc_frontier.html`):
+- **AUC-targeted noise sweep** (`experiments/contest_at_scale/reports/auc_targeted_noise_sweep.md`, `experiments/contest_at_scale/reports/auc_frontier.html`):
   4 datasets (EuroSAT n=48, Alzheimer n=48, Fashion-MNIST n=48, CIFAR-10 n=100) x 2 partition modes
   x 2 privacy modes = 16 curves, each an autonomous search for the noise multiplier that pushes CIA
   round-matched attack AUC to ~0.5 (10 landed, 4 collapsed-before-target, 2 anchor-not-found — see
@@ -196,7 +196,7 @@ section.
 - `reports/first_round_cia.md` is stale — says "no result data yet," but `results/cia_client_scaling/`
   has real trained models and partial attack scores. Needs a rewrite, not done yet. The Flower-1.32
   port-equivalence check (`reports/port_equivalence.md`) still has no committed result data.
-- **CIFAR-100 accuracy sweep + CIA** (`reports/cifar-100_and_eurosat_results.tex`): `n=100`
+- **CIFAR-100 accuracy sweep + CIA** (`experiments/contest_at_scale/reports/cifar-100_and_eurosat_results.tex`): `n=100`
   clients, 250 rounds, `fedavg`, `noise_multiplier=0.0182`. Accuracy sweep: 6/6 combos, 0 failed,
   21.4–29.1% accuracy (100-class task, ~1% random-baseline) — metric-privacy roughly ties
   global-dp (within ~0.6pp either way), both DP modes ~7–8pp below vanilla, partition mode barely
@@ -208,7 +208,7 @@ section.
   `global-dp` shows more leakage than `metric-privacy` in every partition/shadow combination on
   this seed. Every 95% CI includes 0.5 (single-seed, underpowered), so read this as a directional
   pattern, not a statistically confirmed ranking.
-- **EuroSAT accuracy sweep + CIA** (`reports/eurosat_accuracy_sweep.md`, `reports/eurosat_cia.md`):
+- **EuroSAT accuracy sweep + CIA** (`experiments/contest_at_scale/reports/eurosat_accuracy_sweep.md`, `experiments/contest_at_scale/reports/eurosat_cia.md`):
   a comparison point on satellite land-use imagery (10-class, genuinely different domain from
   CIFAR-10/CIFAR-100/Fashion-MNIST/Alzheimer), `n=48`. Accuracy sweep: 6/6 combos, 0 failed,
   87.5–90.7% accuracy across all combos; `non-iid` partitioning slightly *outperformed*

@@ -14,7 +14,7 @@ results therefore say which ratios retain classification utility; they do not
 establish the privacy or attack behavior of the subsequent full runs.
 
 All values below are read from the recorded run and evaluation JSON artifacts
-under `results/planned_runs/cifar/`.  Each configuration has one calibration
+under `experiments/contest_at_scale/results/planned_runs/cifar/`.  Each configuration has one calibration
 seed (42), so differences should be treated as directional rather than as
 multi-seed estimates.
 
@@ -134,7 +134,7 @@ at both 3 and 48 clients before selecting it for the full grid.
 
 ### Source artifacts
 
-- `results/planned_runs/cifar/noise_sweep/`
-- `results/planned_runs/cifar/validation_48/`
+- `experiments/contest_at_scale/results/planned_runs/cifar/noise_sweep/`
+- `experiments/contest_at_scale/results/planned_runs/cifar/validation_48/`
 - `experiments/cia/scripts/cifar_chunks.py`
 - `PLAN.md` (the "Update: unblocking above blockers" section)

@@ -13,7 +13,7 @@ This is a project catch-up and evidence audit, not a new experiment report or a 
 - CIFAR-100 CIA retains seed 42 only after unsuccessful multi-seed retries. EuroSAT's earlier CIA has three seeds. Neither should be silently pooled with the newer frontier, which changes the reporting convention and noise search.
 - `STATUS.md` records no running experiments. Remote machines were not contacted in this audit, so that is recorded status, not a live remote-process check.
 
-Sources: [status](../STATUS.md), [constant-compute report](../reports/constant_compute_scaling.md), [noise sweep](../reports/noise_by_clients.md), [scaling report](../reports/client_count_scaling.md), [EuroSAT CIA](../reports/eurosat_cia.md), [CIFAR-100/EuroSAT writeup](../reports/cifar-100_and_eurosat_results.tex), and the corresponding `results/` directories.
+Sources: [status](../STATUS.md), [constant-compute report](../reports/constant_compute_scaling.md), [noise sweep](../reports/noise_by_clients.md), [scaling report](../reports/client_count_scaling.md), [EuroSAT CIA](../experiments/contest_at_scale/reports/eurosat_cia.md), [CIFAR-100/EuroSAT writeup](../experiments/contest_at_scale/reports/cifar-100_and_eurosat_results.tex), and the corresponding `results/` directories.
 
 ### Documentation that needs historical context
 
@@ -47,7 +47,7 @@ The original Table 13 attack computes pooled ROC-AUC over IN and OUT round score
 
 ## 3. What auc_frontier.html actually contains
 
-Sources: [frontier](../reports/auc_frontier.html), [generator](../reports/build_auc_frontier.py), [sweep report](../reports/auc_targeted_noise_sweep.md), [raw states](../results/auc_target_sweep/), [search controller](../experiments/cia/scripts/auc_target_search.py), [scoring implementation](../experiments/cia/scripts/score_stage.py).
+Sources: [frontier](../experiments/contest_at_scale/reports/auc_frontier.html), [generator](../experiments/contest_at_scale/reports/build_auc_frontier.py), [sweep report](../experiments/contest_at_scale/reports/auc_targeted_noise_sweep.md), [raw states](../experiments/contest_at_scale/results/auc_target_sweep/), [search controller](../experiments/cia/scripts/auc_target_search.py), [scoring implementation](../experiments/cia/scripts/score_stage.py).
 
 The HTML is a static, self-contained SVG scatter presentation with navigation and a point table. It shows eight panels: four datasets by two partitions, each containing global-DP, metric-calibration, and a vanilla reference. Lower horizontal position and higher vertical position are preferable. The title uses "frontier", but the generator plots search/confirmation points; it does not calculate a statistically validated Pareto envelope.
 
@@ -101,7 +101,7 @@ The 16 terminal states are ten landed, four collapsed-before-target, and two anc
 
 ## 4. Evidence verification performed
 
-- Rebuilt the HTML to a temporary path using the existing generator and current JSON files. Output was byte-identical to `reports/auc_frontier.html`; the existing report was not overwritten.
+- Rebuilt the HTML to a temporary path using the existing generator and current JSON files. Output was byte-identical to `experiments/contest_at_scale/reports/auc_frontier.html`; the existing report was not overwritten.
 - Recomputed all 110 state entries, including repeated anchor/search entries, from their raw `runs/cia.json` losses and per-trajectory final-round accuracy JSONs. All matched the recorded state values within 1e-12.
 - The non-vanilla raw directories used for this check contain 95 distinct stage runs: 31 Alzheimer, 21 CIFAR-10, 21 EuroSAT, and 22 Fashion-MNIST. IN and OUT checkpoint indices matched for every inspected stage.
 - Inspected the search state machine, scoring code, removal-adjacency runners, partition functions, mechanism code, original-paper methods/threat-model/attack sections, and rendered PDF page 6 to verify its equation/prose discrepancy.

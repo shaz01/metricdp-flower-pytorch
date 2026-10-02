@@ -15,8 +15,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 ROOT = Path(__file__).resolve().parents[3]
-FULL_DIR = ROOT / "results" / "planned_runs" / "cifar" / "full"
-OUT_DIR = ROOT / "results" / "planned_runs" / "cifar"
+FULL_DIR = ROOT / "experiments" / "contest_at_scale" / "results" / "planned_runs" / "cifar" / "full"
+OUT_DIR = ROOT / "experiments" / "contest_at_scale" / "results" / "planned_runs" / "cifar"
 STEM = "cifar_full_cia_report"
 OUT_TEX = OUT_DIR / f"{STEM}.tex"
 OUT_PDF = OUT_DIR / f"{STEM}.pdf"
@@ -250,11 +250,11 @@ Completed IN/OUT trajectories & 42 / 42 & 42 / 42 & 42 / 42 \\
 \end{{table}}
 {pages}
 \clearpage
-\begin{{center}}\includegraphics[width=0.94\textwidth]{{results/planned_runs/cifar/{OUT_PNG.name}}}\end{{center}}
+\begin{{center}}\includegraphics[width=0.94\textwidth]{{experiments/contest_at_scale/results/planned_runs/cifar/{OUT_PNG.name}}}\end{{center}}
 \clearpage
-\begin{{center}}\includegraphics[width=0.94\textwidth]{{results/planned_runs/cifar/{OUT_DISTANCE_PNG.name}}}\end{{center}}
+\begin{{center}}\includegraphics[width=0.94\textwidth]{{experiments/contest_at_scale/results/planned_runs/cifar/{OUT_DISTANCE_PNG.name}}}\end{{center}}
 \vfill
-\begin{{center}}\small Source: \texttt{{results/planned\_runs/cifar/full/}}\end{{center}}
+\begin{{center}}\small Source: \texttt{{experiments/contest\_at\_scale/results/planned\_runs/cifar/full/}}\end{{center}}
 \end{{document}}
 """
 

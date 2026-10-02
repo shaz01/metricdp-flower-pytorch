@@ -4,7 +4,7 @@
 num_clients``, so that Flower's global-DP noise standard deviation
 (``nm * clipping_norm / n``) stays at ``ratio * clipping_norm`` no matter how
 many clients participate.  The ratios committed under
-``results/planned_runs/cifar`` (0.0025, 0.003333, 0.00625) were calibrated on
+``experiments/contest_at_scale/results/planned_runs/cifar`` (0.0025, 0.003333, 0.00625) were calibrated on
 the **4-class** CIFAR model; this repo's scaling work has since moved to the
 full 10-class model, whose loss scale and update norms differ, so those ratios
 cannot simply be carried over.  This sweep re-locates the usable band on the
@@ -21,7 +21,7 @@ multiplier by the measured maximum pairwise client distance ``d``
 (``metricdp_strategy.py``), so it injects ``ratio * clipping_norm / d``.  Since
 ``d`` shrinks as clients are added -- measured at roughly 1.6-2.0 at n=3 down
 to 0.81-0.87 at n=48 on the 4-class runs, see
-``results/client_scaling/noise_scaling_diagnostics.json`` -- a fixed ratio
+``experiments/contest_at_scale/results/client_scaling/noise_scaling_diagnostics.json`` -- a fixed ratio
 quietly gives metric-privacy less noise than global-DP at small ``n`` and more
 at large ``n``:
 
@@ -34,7 +34,7 @@ at large ``n``:
   arm's own ``metric-dp-distance`` diagnostic at the same client count.
 
 Runs use the IN-replace participant view, matching the accuracy-only
-calibration already committed under ``results/planned_runs/cifar`` and the
+calibration already committed under ``experiments/contest_at_scale/results/planned_runs/cifar`` and the
 adjacency Stage B's CIA will use, so a calibrated ratio transfers directly.
 
 One chunk per session keeps Colab units small:
@@ -57,7 +57,7 @@ from experiments.reproduce.matrix import Combo, Hyperparams
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_OUTPUT_ROOT = (
-    PROJECT_ROOT / "results" / "client_scaling" / "cifar10_ratio_sweep"
+    PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "client_scaling" / "cifar10_ratio_sweep"
 )
 
 CLIENT_COUNTS = (8, 48, 100)

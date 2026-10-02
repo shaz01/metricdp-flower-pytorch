@@ -20,11 +20,11 @@ from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_ROOTS = (
-    PROJECT_ROOT / "results" / "cia" / "cifar10_remove",
-    PROJECT_ROOT / "results" / "client_scaling" / "cifar10_homogeneous",
-    PROJECT_ROOT / "results" / "planned_runs" / "cifar",
+    PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "cia" / "cifar10_remove",
+    PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "client_scaling" / "cifar10_homogeneous",
+    PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "planned_runs" / "cifar",
 )
-DEFAULT_OUTPUT = PROJECT_ROOT / "results" / "client_scaling" / "noise_scaling_diagnostics.json"
+DEFAULT_OUTPUT = PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "client_scaling" / "noise_scaling_diagnostics.json"
 
 # Sidecar artifacts that live beside run JSONs but are not run JSONs.
 SKIP_SUFFIXES = (".evaluation.json",)

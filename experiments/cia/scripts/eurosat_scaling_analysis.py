@@ -1,6 +1,6 @@
 """Merge the EuroSAT CIA IN/OUT result files and compute round-matched AUC.
 
-Reads results/cia_eurosat_scaling/cia_in.json and cia_out.json (written separately by
+Reads experiments/contest_at_scale/results/cia_eurosat_scaling/cia_in.json and cia_out.json (written separately by
 experiments.cia.scripts.eurosat_scaling --group in|out, so the two runs never race on a shared
 report file), pairs each (partition, privacy) combo's IN and OUT trajectories at their shared
 checkpoint rounds, and reports round-matched AUC plus a bootstrap 95% interval -- same scoring
@@ -30,7 +30,7 @@ from experiments.cia.reports.build_alzheimer_cia_report import (
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_RESULTS_DIR = PROJECT_ROOT / "results" / "cia_eurosat_scaling"
+DEFAULT_RESULTS_DIR = PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "cia_eurosat_scaling"
 BOOTSTRAP_SEED = 42  # RNG seed for the percentile bootstrap resampling -- unrelated to the
 # experiment's own training seeds (42, 43, 44), which pooled_rows/round_matched_auc already
 # hard-code internally.

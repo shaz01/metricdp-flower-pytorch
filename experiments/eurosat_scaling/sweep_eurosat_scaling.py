@@ -70,7 +70,7 @@ NOISE_MULTIPLIER = 0.03710712210729851  # calibrated for this model's 289,194 pa
 # though the raw signal norm wasn't), so the value was kept as calibrated.
 
 MAX_PARALLEL_CLIENTS = 16
-OUTPUT_DIR = PROJECT_ROOT / "results" / "eurosat_scaling"
+OUTPUT_DIR = PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "eurosat_scaling"
 LOG_PATH = OUTPUT_DIR / "sweep_progress.log"
 
 SEED = 42

@@ -2,7 +2,7 @@
 
 The report reads the IN/OUT planned-run artifacts, reproduces the paper's
 single-round and multi-round reference tables, and emits an editable LaTeX
-source plus a compiled PDF under the corresponding ``results/planned_runs/<dataset>`` directory.
+source plus a compiled PDF under the corresponding ``experiments/contest_at_scale/results/planned_runs/<dataset>`` directory.
 
 Usage:
     uv run python experiments/cia/reports/build_alzheimer_cia_report.py --dataset cifar
@@ -31,7 +31,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 DATASET = "alzheimer"
 DATASET_LABEL = "Alzheimer"
 CLASS_LABELS = ("Mild", "Moderate", "Non-demented", "Very mild")
-RESULTS_DIR = REPO_ROOT / "results" / "planned_runs" / DATASET
+RESULTS_DIR = REPO_ROOT / "experiments" / "contest_at_scale" / "results" / "planned_runs" / DATASET
 IN_DIR = RESULTS_DIR / "in_remove" / f"{DATASET}-in-remove"
 OUT_DIR = RESULTS_DIR / "out_remove" / f"{DATASET}-out-remove"
 OUT_TEX = RESULTS_DIR / f"{DATASET}_cia_report.tex"
@@ -71,7 +71,7 @@ def configure_dataset(dataset: str) -> None:
         raise ValueError(f"unsupported dataset: {dataset}")
     DATASET = dataset
     DATASET_LABEL, CLASS_LABELS = presets[dataset]
-    RESULTS_DIR = REPO_ROOT / "results" / "planned_runs" / dataset
+    RESULTS_DIR = REPO_ROOT / "experiments" / "contest_at_scale" / "results" / "planned_runs" / dataset
     IN_DIR = RESULTS_DIR / "in_remove" / f"{dataset}-in-remove"
     OUT_DIR = RESULTS_DIR / "out_remove" / f"{dataset}-out-remove"
     report_stem = f"{dataset}_transfer_cia_report" if dataset in {"cifar", "fashion"} else f"{dataset}_cia_report"
@@ -758,7 +758,7 @@ The {CLASS_LABELS[1]} class remains rare everywhere (0.5--1.5\%), so it contribu
 \clearpage
 \begin{{figure}}[p]
 \centering
-\includegraphics[width=0.96\textwidth]{{results/planned_runs/{DATASET}/{OUT_PNG.name}}}
+\includegraphics[width=0.96\textwidth]{{experiments/contest_at_scale/results/planned_runs/{DATASET}/{OUT_PNG.name}}}
 \caption{{CIA score trajectories. Each panel uses raw scores $s_r=-\mathcal{{L}}(W^{{(r)}},D_x)$ and
 the shared y-axis range $[-4, 0.2]$.}}
 \end{{figure}}
@@ -766,7 +766,7 @@ the shared y-axis range $[-4, 0.2]$.}}
 \clearpage
 \begin{{figure}}[p]
 \centering
-\includegraphics[width=0.94\textwidth]{{results/planned_runs/{DATASET}/{OUT_DISTANCE_PNG.name}}}
+\includegraphics[width=0.94\textwidth]{{experiments/contest_at_scale/results/planned_runs/{DATASET}/{OUT_DISTANCE_PNG.name}}}
 \caption{{Metric-privacy maximum pairwise client-model distance recorded before each server aggregation.}}
 \end{{figure}}
 
@@ -842,7 +842,7 @@ ranking.
 
 \section*{{Data provenance}}
 All ``ours'' values are computed directly from the {DATASET_LABEL} IN/OUT artifacts under
-\texttt{{results/planned\_runs/{DATASET}}}. Published reference values are transcribed from
+\texttt{{experiments/contest\_at\_scale/results/planned\_runs/{DATASET}}}. Published reference values are transcribed from
 Sainz-Pardo Diaz et al., \emph{{Metric-privacy-inspired noise calibration in federated learning:
 Improving convergence and preventing client inference attacks}}, Tables 10, 12, and 13.
 

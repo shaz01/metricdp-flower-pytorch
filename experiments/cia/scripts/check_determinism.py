@@ -21,7 +21,7 @@ from experiments.reproduce.matrix import Hyperparams, Matrix
 from metricdp_pytorch.utils.device import resolve_device
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-OUTPUT_DIR = PROJECT_ROOT / "results" / "cia" / "check_determinism"
+OUTPUT_DIR = PROJECT_ROOT / "experiments" / "contest_at_scale" / "results" / "cia" / "check_determinism"
 
 NUM_CLIENTS = 4
 TARGET_PARTITION_ID = 0

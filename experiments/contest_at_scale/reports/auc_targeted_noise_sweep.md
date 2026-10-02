@@ -5,13 +5,13 @@
 **Spec/plan:** `docs/superpowers/specs/2026-08-17-auc-targeted-noise-sweep-design.md`,
 `docs/superpowers/plans/2026-08-17-auc-targeted-noise-sweep.md` (both gitignored, not
 in git history — see `AGENTS.md`'s "Working across machines" section).
-**Interactive report:** `reports/auc_frontier.html` (build script: `reports/build_auc_frontier.py`).
-**Raw data:** `results/auc_target_sweep/<dataset>/<partition>/{global-dp,metric-privacy}/search_state.json`,
-`results/auc_target_sweep/<dataset>/<partition>/vanilla_reference.json`.
+**Interactive report:** `experiments/contest_at_scale/reports/auc_frontier.html` (build script: `experiments/contest_at_scale/reports/build_auc_frontier.py`).
+**Raw data:** `experiments/contest_at_scale/results/auc_target_sweep/<dataset>/<partition>/{global-dp,metric-privacy}/search_state.json`,
+`experiments/contest_at_scale/results/auc_target_sweep/<dataset>/<partition>/vanilla_reference.json`.
 
 ## Motivation
 
-Direct request from the project supervisor, on top of the earlier `reports/cia_takeaways.html`
+Direct request from the project supervisor, on top of the earlier `experiments/contest_at_scale/reports/cia_takeaways.html`
 finding that DP noise lowers CIA attack AUC "at a real accuracy cost" that varies a lot by dataset:
 
 > Can you vary the parameters in a way that take you down to attack AUC = 0.5 roughly? I want
@@ -30,7 +30,7 @@ fixed 3-seed reference point per (dataset, partition), not swept.
 its own established CIA precedent at n=100).
 
 **Attack metric:** round-matched clean-shadow AUC with direction-reversal (`max(auc, 1 - auc)`),
-matching the convention already established in `reports/build_cia_takeaways.py`.
+matching the convention already established in `experiments/contest_at_scale/reports/build_cia_takeaways.py`.
 
 **Autonomous per-curve search**, run unattended (no human decision between stages):
 1. **Low-noise anchor** — starting from each dataset's existing noise-to-signal-ratio≈1
