@@ -35,26 +35,6 @@ client-participation game, and analyze distribution construction before choosing
 No new experiments have been launched or new mechanism selected. The historical next steps
 below are context, not the active agenda.
 
----
-
-**`feature/colab-multi-account` (ready for review, 2026-10-02, macOS laptop).** Reworks
-`scripts/colab/run_experiment.py` so several Google accounts can drive 8+ Colab GPUs at once:
-per-account `HOME` isolation (`~/.colab-accounts/<name>/`, since `colab_cli` hardcodes its token
-path), `--account auto` slot selection under a per-account cap, detached-by-default controllers,
-a `sweep` command that probes every session and auto-collects runs whose controller died, and a
-`.colab/commit.lock` around Git commits only. Pushing is no longer automatic. Also carries the
-fixes found while running the EuroSAT frontier on four accounts (2026-09-22..24): pinned and
-recorded remote runtime (torch 2.10.0/cu128; Colab's torch 2.11/cu130 image crashed in round 1),
-a runtime-proxy token refresher for sessions over 1 h, a waiter-recursion fix, source revision
-passed to the worker, and `login --begin/--code` for accounts owned by someone else. Covered by
-`tests/test_colab_*.py`. Account tokens stay local under `~/.colab-accounts/`, never in git.
-
-Unrelated pre-existing breakage: the full `uv run pytest` run can abort inside
-`experiments/reproduce/tests/test_paper_loss.py` (torch/MPS `Fatal Python error: Aborted`); it
-passes when that file runs alone.
-
----
-
 **`feature/auc-targeted-noise-sweep` is complete (2026-09-01) and merged into `master`.** See
 `reports/auc_targeted_noise_sweep.md` for the full writeup and "What's established" below for the
 summary — not repeated here to avoid drifting out of sync.
@@ -159,7 +139,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| _(none)_ | Nothing currently running on a GPU. | — |
+| _(none)_ | Nothing currently running. | — |
 
 ## What's established on `master`
 
