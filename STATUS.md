@@ -36,7 +36,7 @@ No new experiments have been launched or new mechanism selected. The historical 
 below are context, not the active agenda.
 
 **`feature/auc-targeted-noise-sweep` is complete (2026-09-01) and merged into `master`.** See
-`results/contest_at_scale/auc_target_sweep/reports/auc_targeted_noise_sweep.md` for the full writeup and "What's established" below for the
+`results/contest_at_scale/auc_frontier/reports/auc_targeted_noise_sweep.md` for the full writeup and "What's established" below for the
 summary — not repeated here to avoid drifting out of sync.
 
 ---
@@ -143,7 +143,7 @@ section.
 
 ## What's established on `master`
 
-- **AUC-targeted noise sweep** (`results/contest_at_scale/auc_target_sweep/reports/auc_targeted_noise_sweep.md`, `results/contest_at_scale/auc_target_sweep/reports/auc_frontier.html`):
+- **AUC-targeted noise sweep** (`results/contest_at_scale/auc_frontier/reports/auc_targeted_noise_sweep.md`, `results/contest_at_scale/auc_frontier/reports/auc_frontier.html`):
   4 datasets (EuroSAT n=48, Alzheimer n=48, Fashion-MNIST n=48, CIFAR-10 n=100) x 2 partition modes
   x 2 privacy modes = 16 curves, each an autonomous search for the noise multiplier that pushes CIA
   round-matched attack AUC to ~0.5 (10 landed, 4 collapsed-before-target, 2 anchor-not-found — see

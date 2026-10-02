@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from experiments.cia.result import CiaResult
-from results.contest_at_scale.auc_target_sweep import score_stage
+from results.contest_at_scale.auc_frontier import score_stage
 
 
 def _result(run_name: str, server_round: int, clean_loss: float) -> CiaResult:

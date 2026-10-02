@@ -5,7 +5,7 @@ All tests here use a fake ``run_and_score`` callable -- no real training.
 
 from __future__ import annotations
 
-from results.contest_at_scale.auc_target_sweep.auc_target_search import (
+from results.contest_at_scale.auc_frontier.auc_target_search import (
     StageResult,
     find_low_noise_anchor,
     step_up_to_target,

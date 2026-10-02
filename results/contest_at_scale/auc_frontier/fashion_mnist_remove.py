@@ -28,7 +28,7 @@ from experiments.reproduce.matrix import Combo, Hyperparams
 from metricdp_pytorch.utils.device import resolve_device
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "results" / "contest_at_scale" / "auc_target_sweep" / "results" / "fashion_mnist_remove"
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "results" / "contest_at_scale" / "auc_frontier" / "results" / "fashion_mnist_remove"
 
 CANONICAL_NUM_CLIENTS = 48
 TARGET_PARTITION_ID = 0
@@ -107,7 +107,7 @@ def _noisy_shadow(combo: Combo) -> Any:
 
 
 def _data_module(adjacency: str) -> str:
-    module = "results.contest_at_scale.auc_target_sweep.fashion_mnist_remove"
+    module = "results.contest_at_scale.auc_frontier.fashion_mnist_remove"
     return f"{module}:create_in_remove" if adjacency == "in-remove" else (
         f"{module}:create_out_remove"
     )

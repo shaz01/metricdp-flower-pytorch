@@ -124,7 +124,7 @@ def _noisy_shadow(combo: Combo) -> Any:
 
 
 # This script was experiments/cia/scripts/cifar10_remove.py; keep that token in
-# run names so committed results (here and in auc_target_sweep) still resolve.
+# run names so committed results (here and in auc_frontier) still resolve.
 DATA_TAG = "cifar10_remove"
 
 

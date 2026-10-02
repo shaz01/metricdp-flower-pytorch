@@ -13,7 +13,7 @@ the thin real-training glue that wires the state machine to a per-dataset
 without repeating completed stages.
 
 Usage:
-    uv run python -m results.contest_at_scale.auc_target_sweep.auc_target_search \\
+    uv run python -m results.contest_at_scale.auc_frontier.auc_target_search \\
       --dataset eurosat --partition homogeneous --privacy global-dp
 """
 
@@ -29,11 +29,11 @@ from pathlib import Path
 from typing import Any
 
 from experiments.cia.result import CiaResult
-from results.contest_at_scale.auc_target_sweep.score_stage import score_stage
+from results.contest_at_scale.auc_frontier.score_stage import score_stage
 from experiments.reproduce.matrix.combo import format_noise
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-RESULTS_ROOT = PROJECT_ROOT / "results" / "contest_at_scale" / "auc_target_sweep" / "results"
+RESULTS_ROOT = PROJECT_ROOT / "results" / "contest_at_scale" / "auc_frontier" / "results"
 
 TARGET_BAND = (0.45, 0.55)
 ANCHOR_TOLERANCE = 0.10  # widened from 0.03 post-pilot (2026-08-18): the EuroSAT
@@ -62,19 +62,19 @@ class DatasetSpec:
 
 DATASET_REGISTRY: dict[str, DatasetSpec] = {
     "alzheimer": DatasetSpec(
-        module="results.contest_at_scale.auc_target_sweep.alzheimer_remove",
+        module="results.contest_at_scale.auc_frontier.alzheimer_remove",
         canonical_num_clients=48,
         starting_noise_ratio=7.783466863014625e-05,
         random_baseline_accuracy=0.25,
     ),
     "fashion-mnist": DatasetSpec(
-        module="results.contest_at_scale.auc_target_sweep.fashion_mnist_remove",
+        module="results.contest_at_scale.auc_frontier.fashion_mnist_remove",
         canonical_num_clients=48,
         starting_noise_ratio=0.0006691085733778867,
         random_baseline_accuracy=0.25,
     ),
     "eurosat": DatasetSpec(
-        module="results.contest_at_scale.auc_target_sweep.eurosat_remove",
+        module="results.contest_at_scale.auc_frontier.eurosat_remove",
         canonical_num_clients=48,
         starting_noise_ratio=0.0007730650439020523,
         random_baseline_accuracy=0.10,

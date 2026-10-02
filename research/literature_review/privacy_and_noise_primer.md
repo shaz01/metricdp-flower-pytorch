@@ -192,7 +192,7 @@ Repeated uploads also require privacy composition or a direct adaptive-transcrip
 
 ## 9. What the existing frontier can and cannot establish
 
-**Repository evidence.** [score_stage.py](../../results/contest_at_scale/auc_target_sweep/score_stage.py) uses
+**Repository evidence.** [score_stage.py](../../results/contest_at_scale/auc_frontier/score_stage.py) uses
 $q=K^{-1}\sum_t[1(s_t^{IN}>s_t^{OUT})+\tfrac12 1(s_t^{IN}=s_t^{OUT})]$ and reports
 $\max(q,1-q)$, with
 $s=-\text{clean shadow loss}$. Utility is the average final server accuracy across the IN and OUT runs. This differs from ordinary ROC-AUC on independent attack trials. The fold selects direction on the scored data; checkpoints are dependent. See the [evidence audit](../project_evidence_audit.md) for verified values and constraints.

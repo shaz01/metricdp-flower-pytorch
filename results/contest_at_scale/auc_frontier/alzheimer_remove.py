@@ -1,17 +1,14 @@
-"""Parametrized EuroSAT removal-adjacency CIA stage runner.
+"""Parametrized Alzheimer-MRI removal-adjacency CIA stage runner.
 
-Companion to ``cifar10_remove.py``, same shape: one invocation trains and
-attacks both adjacencies (IN keeps the target, OUT drops it) for one privacy
-mode, one partition mode, at a caller-supplied noise ratio. Distinct from
-``results/contest_at_scale/eurosat/eurosat_scaling.py``, which is a separate,
-already-committed fixed-batch script (all 6 combos x 3 seeds, hardcoded
-noise multiplier) -- that script is left untouched; this one exists so the
-AUC-targeted noise search (``auc_target_search.py``) can request one stage
-at a time at an arbitrary noise level.
+Same shape as ``eurosat_remove.py``/``cifar10_remove.py``: one invocation
+trains and attacks both adjacencies for one privacy mode, one partition mode,
+at a caller-supplied noise ratio, for the AUC-targeted noise search
+(``auc_target_search.py``).
 
-``--clients`` sets the *canonical* federation size, defaulting to 48 (the
-only client count the EuroSAT accuracy sweep and CIA scaling experiments use
--- see ``results/contest_at_scale/eurosat/sweep_eurosat_scaling.py``).
+``--clients`` defaults to 48. The Alzheimer-MRI dataset is small (~5,120 train
+images across 4 classes, heavily imbalanced -- one class has only 49 images
+total), so per-client data is thin at this client count; this is a deliberate
+part of what the sweep studies, not an oversight.
 """
 
 from __future__ import annotations
@@ -29,12 +26,12 @@ from experiments.cia.datasets.partitions import (
 )
 from experiments.cia.result import CiaResult
 from experiments.cia.shadow_dataset import clean_shadow_dataset, noisy_shadow_dataset
-from experiments.reproduce.dataset.eurosat import EurosatDataModule
+from experiments.reproduce.dataset.alzheimer import AlzheimerDataModule
 from experiments.reproduce.matrix import Combo, Hyperparams
 from metricdp_pytorch.utils.device import resolve_device
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "results" / "contest_at_scale" / "auc_target_sweep" / "results" / "eurosat_remove"
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "results" / "contest_at_scale" / "auc_frontier" / "results" / "alzheimer_remove"
 
 CANONICAL_NUM_CLIENTS = 48
 TARGET_PARTITION_ID = 0
@@ -50,9 +47,14 @@ CHECKPOINT_ROUNDS = (1,) + tuple(range(10, ROUNDS + 1, 10))
 SHADOW_FRACTION = 0.10
 NOISE_STD_FRACTION = 0.20
 
-NOISE_MULTIPLIER = 0.03710712210729851  # reused unmodified from
-# results/contest_at_scale/eurosat/sweep_eurosat_scaling.py's own empirical calibration
-# (289,194 params, n=48, target noise-to-signal ratio ~1).
+NOISE_MULTIPLIER = 0.00373606409424702  # calibrated 2026-08-17 for this
+# model's 6,517,476 params at n=48. Derivation: target noise-to-signal ratio
+# ~1, using noise_l2_norm ~= stdv * sqrt(param_count) and
+# stdv = noise_multiplier * clipping_norm / num_sampled_clients. Measured
+# directly on this model (n=48, homogeneous, global-dp, 3 rounds): signal
+# update norm (post-clip, post-aggregation, pre-noise) = 0.9935341638694208,
+# giving target_noise_multiplier = signal_norm * 48 / (5.0 * sqrt(6517476))
+# = 0.00373606409424702.
 
 HYPERPARAMS = Hyperparams(
     clipping_norm=5.0,
@@ -78,7 +80,7 @@ def _canonical_clients(config: Mapping[str, Any], adjacency: str) -> int:
 
 def create_in_remove(config: Mapping[str, Any]) -> PartitionViewDataModule:
     return in_remove(
-        EurosatDataModule(cache_dir=_cache_dir(config)),
+        AlzheimerDataModule(cache_dir=_cache_dir(config)),
         canonical_num_partitions=_canonical_clients(config, "in-remove"),
         target_partition_id=TARGET_PARTITION_ID,
     )
@@ -86,7 +88,7 @@ def create_in_remove(config: Mapping[str, Any]) -> PartitionViewDataModule:
 
 def create_out_remove(config: Mapping[str, Any]) -> PartitionViewDataModule:
     return out_remove(
-        EurosatDataModule(cache_dir=_cache_dir(config)),
+        AlzheimerDataModule(cache_dir=_cache_dir(config)),
         canonical_num_partitions=_canonical_clients(config, "out-remove"),
         target_partition_id=TARGET_PARTITION_ID,
     )
@@ -108,7 +110,7 @@ def _noisy_shadow(combo: Combo) -> Any:
 
 
 def _data_module(adjacency: str) -> str:
-    module = "results.contest_at_scale.auc_target_sweep.eurosat_remove"
+    module = "results.contest_at_scale.auc_frontier.alzheimer_remove"
     return f"{module}:create_in_remove" if adjacency == "in-remove" else (
         f"{module}:create_out_remove"
     )
@@ -144,7 +146,7 @@ def build_combos(
 
     return [
         Combo(
-            name_prefix=f"eurosat-{adjacency}",
+            name_prefix=f"alzheimer-{adjacency}",
             num_clients=_active_clients(adjacency, canonical_num_clients),
             partition=partition,
             privacy=privacy,
@@ -157,7 +159,7 @@ def build_combos(
             ),
             hyperparams=HYPERPARAMS,
             data_module=_data_module(adjacency),
-            model_module="experiments.reproduce.eurosat_cnn:create_model",
+            model_module="experiments.reproduce.paper_cnn:create_model",
         )
         for adjacency in adjacencies
         for privacy in privacy_modes
@@ -192,7 +194,7 @@ def run_stage(
         max_parallel_clients=max_parallel_clients or min(canonical_num_clients, 6),
         force=force,
         start_message=(
-            f"EuroSAT stage ({privacy}, {partition}, seed={seed}, "
+            f"Alzheimer stage ({privacy}, {partition}, seed={seed}, "
             f"noise_ratio={noise_ratio}): {len(combos)} trajectories"
         ),
         clean_data_module_factory=_clean_shadow,
@@ -238,7 +240,7 @@ def main() -> None:
         max_parallel_clients=args.max_parallel_clients or min(args.clients, 6),
         force=args.force,
         start_message=(
-            f"EuroSAT removal CIA chunk ({args.privacy}, clients={args.clients}, "
+            f"Alzheimer removal CIA chunk ({args.privacy}, clients={args.clients}, "
             f"noise_ratio={args.noise_ratio}): {len(combos)} trajectories"
         ),
         clean_data_module_factory=_clean_shadow,

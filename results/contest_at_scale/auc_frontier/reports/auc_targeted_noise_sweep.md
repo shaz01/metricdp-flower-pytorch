@@ -5,9 +5,9 @@
 **Spec/plan:** `docs/superpowers/specs/2026-08-17-auc-targeted-noise-sweep-design.md`,
 `docs/superpowers/plans/2026-08-17-auc-targeted-noise-sweep.md` (both gitignored, not
 in git history — see `AGENTS.md`'s "Working across machines" section).
-**Interactive report:** `results/contest_at_scale/auc_target_sweep/reports/auc_frontier.html` (build script: `results/contest_at_scale/auc_target_sweep/reports/build_auc_frontier.py`).
-**Raw data:** `results/contest_at_scale/auc_target_sweep/results/<dataset>/<partition>/{global-dp,metric-privacy}/search_state.json`,
-`results/contest_at_scale/auc_target_sweep/results/<dataset>/<partition>/vanilla_reference.json`.
+**Interactive report:** `results/contest_at_scale/auc_frontier/reports/auc_frontier.html` (build script: `results/contest_at_scale/auc_frontier/reports/build_auc_frontier.py`).
+**Raw data:** `results/contest_at_scale/auc_frontier/results/<dataset>/<partition>/{global-dp,metric-privacy}/search_state.json`,
+`results/contest_at_scale/auc_frontier/results/<dataset>/<partition>/vanilla_reference.json`.
 
 ## Motivation
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from results.contest_at_scale.auc_target_sweep import fashion_mnist_remove
+from results.contest_at_scale.auc_frontier import fashion_mnist_remove
 
 
 def test_build_combos_defaults_to_canonical_client_count() -> None:
