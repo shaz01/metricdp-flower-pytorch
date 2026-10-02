@@ -1,8 +1,8 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-09-08, CUDA workstation (`feature/auc-targeted-noise-sweep` is complete,
-merged into `master`, and deleted — see `git log` for anything more recent)
+**Last updated:** 2026-10-01, client-side noise literature review version 1 and provisional plan
+(see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
 another — starting work on this repo. It reflects the branch it's committed on; check out the
@@ -15,21 +15,43 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-**`feature/colab-multi-account` (in progress, 2026-09-22, macOS laptop).** Reworks
+**Research direction reset (2026-10-01).** The owner wants to investigate client-side noise
+sampled from a separately constructed distribution for each client, aiming to improve CIA
+protection relative to server-side metric calibration. Distribution construction remains an
+open question; a careful literature review precedes mechanism selection and the new roadmap.
+The old local `docs/RESEARCH_ROADMAP.md` was removed with owner authorization as irrelevant.
+This deletion does not propagate to other machines because `docs/` is gitignored.
+
+Catch-up findings and source pointers: `research/project_evidence_audit.md`. The frontier HTML
+was reproduced byte-for-byte and all 110 recorded stage entries were checked against raw attack
+losses/accuracy files without discrepancies. Its "round-matched AUC" is folded paired
+concordance, and 9/10 landed curves have three-seed mean scores above 0.55. Treat it as an
+exploratory utility/leakage baseline, not a validated demonstration of CIA neutralization.
+The owner requested both systematic and integrative review and confirmed the protocol. Version 1
+is in `research/literature_review/README.md`: 31 included primary source families, technique
+explanations, bounded search/screening records, synthesis and a provisional research plan.
+Closest pending full methods: FACP and FedFR-ADP. Next: resolve those comparators, specify the
+client-participation game, and analyze distribution construction before choosing a mechanism.
+No new experiments have been launched or new mechanism selected. The historical next steps
+below are context, not the active agenda.
+
+---
+
+**`feature/colab-multi-account` (ready for review, 2026-10-02, macOS laptop).** Reworks
 `scripts/colab/run_experiment.py` so several Google accounts can drive 8+ Colab GPUs at once:
 per-account `HOME` isolation (`~/.colab-accounts/<name>/`, since `colab_cli` hardcodes its token
 path), `--account auto` slot selection under a per-account cap, detached-by-default controllers,
 a `sweep` command that probes every session and auto-collects runs whose controller died, and a
-`.colab/commit.lock` around Git commits only — collection stays lock-free so a vanishing VM never
-blocks a download. Pushing is no longer automatic. Covered by `tests/test_colab_controller.py`
-and a new `tests/test_colab_end_to_end.py` that drives the real remote helpers against a fake
-`colab` CLI. **Not yet exercised against a second real account** — waiting on the project owner to
-create one.
+`.colab/commit.lock` around Git commits only. Pushing is no longer automatic. Also carries the
+fixes found while running the EuroSAT frontier on four accounts (2026-09-22..24): pinned and
+recorded remote runtime (torch 2.10.0/cu128; Colab's torch 2.11/cu130 image crashed in round 1),
+a runtime-proxy token refresher for sessions over 1 h, a waiter-recursion fix, source revision
+passed to the worker, and `login --begin/--code` for accounts owned by someone else. Covered by
+`tests/test_colab_*.py`. Account tokens stay local under `~/.colab-accounts/`, never in git.
 
-Unrelated pre-existing breakage seen while verifying: the full `uv run pytest` run aborts inside
-`experiments/reproduce/tests/test_paper_loss.py` (torch/MPS `Fatal Python error: Aborted`). It
-reproduces on a clean `master` worktree and passes when that file runs alone, so it is not caused
-by this branch.
+Unrelated pre-existing breakage: the full `uv run pytest` run can abort inside
+`experiments/reproduce/tests/test_paper_loss.py` (torch/MPS `Fatal Python error: Aborted`); it
+passes when that file runs alone.
 
 ---
 
@@ -225,8 +247,10 @@ section.
 
 ## Where to look
 
-- `docs/RESEARCH_ROADMAP.md` — canonical multi-session research plan (gitignored — not on every
-  machine by default; copy it manually if a fresh checkout is missing it).
+- `research/literature_review/README.md` — systematic/integrative review, technique tutorials,
+  agent handoff and provisional new research plan.
+- `research/project_evidence_audit.md` — verified starting evidence for the new client-side
+  noise research direction; the obsolete local roadmap was retired on 2026-10-01.
 - `reports/*.md`, `reports/*.tex` — narrative writeups; source of truth over this file for
   anything beyond a one-line summary.
 - `results/<name>/` — raw run data; `results/archive/` — superseded data kept for comparison.
