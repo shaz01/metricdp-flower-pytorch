@@ -23,7 +23,7 @@ reorganization.
 - `scale_controlled/`, `scale_controlled_epochs/`: constant-compute scaling (CUDA redo)
 - `archive/`: constant-compute scaling, MPS-era v1/v2
 - `noise_by_clients/`: noise-multiplier × client-count sweep
-- `cia/check_determinism/`: Aug 4 Colab check that two same-seed runs match exactly (frozen later, on owner request)
+- `cia/check_determinism/`: Aug 4 Colab check that two same-seed runs match exactly (frozen later, at Olcay's request)
 
 ### Reports (`reports/…`)
 
