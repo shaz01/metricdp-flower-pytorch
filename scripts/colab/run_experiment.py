@@ -829,6 +829,20 @@ def show_accounts(args: argparse.Namespace) -> None:
 def login(args: argparse.Namespace) -> None:
     account = colab_accounts.validate_account(args.account)
     colab_accounts.prepare_account(account)
+    if args.begin:
+        url = colab_accounts.begin_login(account)
+        print(
+            f"Send this link to whoever owns the account for {account!r}. They sign "
+            "in, approve, and read back the code Google shows them:\n\n"
+            f"{url}\n\n"
+            "Then finish with: login --account "
+            f"{account} --code <CODE>"
+        )
+        return
+    if args.code:
+        email = colab_accounts.finish_login(account, args.code) or "(email unknown)"
+        print(f"Account {account!r} is logged in as {email}")
+        return
     print(
         f"Authorizing account {account!r} with HOME="
         f"{colab_accounts.account_home(account)}.\n"
@@ -933,6 +947,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     login_parser = subparsers.add_parser("login", help="authorize one Colab account")
     login_parser.add_argument("--account", required=True)
+    login_parser.add_argument(
+        "--begin",
+        action="store_true",
+        help="print an approval link to hand to the account owner, then exit",
+    )
+    login_parser.add_argument(
+        "--code", help="authorization code returned by a --begin approval"
+    )
 
     for name in ("status", "collect", "stop"):
         subparser = subparsers.add_parser(name)

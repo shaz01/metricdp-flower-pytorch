@@ -8,16 +8,38 @@ here builds that environment; nothing else in the controller touches ``HOME``.
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 import os
 import re
+import secrets
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 DEFAULT_ACCOUNT = "default"
+
+# Colab's own public installed-app client, shipped in colab_cli/oauth_config.json.
+# The "secret" is public by design for installed apps; the paired landing page is
+# the only redirect URI Google accepts for it.
+OAUTH_CLIENT_ID = (
+    "764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com"
+)
+OAUTH_CLIENT_SECRET = "d-FL95Q19q7MQmFpd7hHD0Ty"
+AUTH_URI = "https://accounts.google.com/o/oauth2/auth"
+TOKEN_URI = "https://oauth2.googleapis.com/token"
+REDIRECT_URI = "https://sdk.cloud.google.com/applicationdefaultauthcode.html"
+SCOPES = (
+    "openid",
+    "https://www.googleapis.com/auth/userinfo.profile",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/cloud-platform",
+    "https://www.googleapis.com/auth/colaboratory",
+    "https://www.googleapis.com/auth/drive.file",
+)
 ACCOUNT_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
 _ACCOUNTS_DIR_VARIABLE = "METRICDP_COLAB_ACCOUNTS_DIR"
 
@@ -164,6 +186,102 @@ def resolve_email(account: str) -> str | None:
         json.dumps({"email": email}) + "\n", encoding="utf-8"
     )
     return str(email)
+
+
+def pending_login_path(account: str) -> Path:
+    return config_dir(account) / "metricdp-login.json"
+
+
+def begin_login(account: str) -> str:
+    """Start a copy-paste OAuth flow and return the URL to approve.
+
+    The PKCE verifier is stored locally, so only this machine can redeem the
+    code the approver reads back. Nothing secret travels in the URL, which makes
+    it safe to hand to whoever owns the account being added.
+    """
+    prepare_account(account)
+    verifier = secrets.token_urlsafe(64)
+    challenge = (
+        base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest())
+        .decode()
+        .rstrip("=")
+    )
+    state = secrets.token_urlsafe(16)
+    pending_login_path(account).write_text(
+        json.dumps({"verifier": verifier, "state": state, "started_at": _now()}) + "\n",
+        encoding="utf-8",
+    )
+    query = urllib.parse.urlencode(
+        {
+            "response_type": "code",
+            "client_id": OAUTH_CLIENT_ID,
+            "redirect_uri": REDIRECT_URI,
+            "scope": " ".join(SCOPES),
+            "state": state,
+            "code_challenge": challenge,
+            "code_challenge_method": "S256",
+            "prompt": "consent",
+            "token_usage": "remote",
+            "access_type": "offline",
+        }
+    )
+    return f"{AUTH_URI}?{query}"
+
+
+def finish_login(account: str, code: str) -> str | None:
+    """Redeem an authorization code and write colab_cli's token file."""
+    pending = _read_json(pending_login_path(account))
+    verifier = pending.get("verifier")
+    if not verifier:
+        raise RuntimeError(
+            f"No pending login for account {account!r}; start one with --begin."
+        )
+    payload = urllib.parse.urlencode(
+        {
+            "grant_type": "authorization_code",
+            "code": code.strip(),
+            "client_id": OAUTH_CLIENT_ID,
+            "client_secret": OAUTH_CLIENT_SECRET,
+            "code_verifier": verifier,
+            "redirect_uri": REDIRECT_URI,
+        }
+    ).encode()
+    request = urllib.request.Request(
+        TOKEN_URI,
+        data=payload,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            granted = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as error:
+        detail = error.read().decode("utf-8", "replace")
+        raise RuntimeError(f"Authorization code was rejected: {detail}") from None
+    if not granted.get("refresh_token"):
+        raise RuntimeError(
+            "Google returned no refresh token; the code was probably already used."
+        )
+    expiry = datetime.now(UTC) + timedelta(seconds=int(granted.get("expires_in", 3600)))
+    token = {
+        "token": granted["access_token"],
+        "refresh_token": granted["refresh_token"],
+        "token_uri": TOKEN_URI,
+        "client_id": OAUTH_CLIENT_ID,
+        "client_secret": OAUTH_CLIENT_SECRET,
+        "scopes": list(SCOPES),
+        "universe_domain": "googleapis.com",
+        "account": "",
+        "expiry": expiry.replace(tzinfo=None).isoformat() + "Z",
+    }
+    path = token_path(account)
+    path.write_text(json.dumps(token) + "\n", encoding="utf-8")
+    path.chmod(0o600)
+    pending_login_path(account).unlink(missing_ok=True)
+    return resolve_email(account)
+
+
+def _now() -> str:
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def known_accounts() -> list[str]:
