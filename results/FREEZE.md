@@ -1,27 +1,12 @@
 # Frozen experiments
 
 On 2026-10-02 every experiment that ran before the Aug 4 determinism fixes was removed from the
-working tree. Those fixes were: sorted client replies (`eb98bd2`, `244fc19`), per-round seeds
-(`e3382a1`), and seeded model init (`bb107b1`). Runs made before them can't be reproduced
-bit-for-bit, so their numbers come with no reproducibility guarantee. They are still in history,
-but nothing new should build on them.
-
-`scale_controlled`, `scale_controlled_epochs` and `noise_by_clients` already had the reply-sort
-fix. They did not have the seed fixes, so they are frozen too.
+working tree. 
 
 ## Where the frozen state lives
 
 The annotated tag **`freeze/2026-10-02`** points at `e6419e8`, the last master commit before the
-reorganization. It holds every path listed below.
-
-```bash
-git show freeze/2026-10-02:<path>              # read one file
-git checkout freeze/2026-10-02 -- <path>       # restore a file or folder into the tree
-git log freeze/2026-10-02 -- <path>            # original commit messages / provenance
-```
-
-The commit messages that originally added this data are still in history and give each run's
-context.
+reorganization. 
 
 ## Frozen paths
 
@@ -38,6 +23,7 @@ context.
 - `scale_controlled/`, `scale_controlled_epochs/`: constant-compute scaling (CUDA redo)
 - `archive/`: constant-compute scaling, MPS-era v1/v2
 - `noise_by_clients/`: noise-multiplier × client-count sweep
+- `cia/check_determinism/`: Aug 4 Colab check that two same-seed runs match exactly (frozen later, on owner request)
 
 ### Reports (`reports/…`)
 
@@ -59,6 +45,7 @@ context.
 - `experiments/client_scaling/sweep_scale_controlled.py`, `sweep_scale_controlled_epochs.py`: constant-compute scaling
 - `experiments/client_scaling/sweep_noise_by_clients.py`: noise-by-clients
 - `experiments/client_scaling/scripts/contest_4_client.py`: 4-client contest run
+- `experiments/cia/scripts/check_determinism.py`: determinism check
 - `experiments/cia/scripts/contest.py` and its test in `experiments/cia/tests/test_shadow_dataset.py`: contest CIA matrix
 
 `experiments/client_scaling/sweep_runner.py` is still used and was kept.

@@ -87,7 +87,7 @@ multi-round CIA" below), which now trains three seeds (42, 43, 44) matching this
 
 The scalable CIA experiment originally lived in `experiments/cia/client_scaling.py`; that file
 was deleted 2026-08-03 during the `experiments/cia/scripts/` reorganization and never replaced,
-and its result data (`results/cia_client_scaling/`) is frozen at tag `freeze/2026-10-02` (see `FREEZE.md`). Its protocol -- one
+and its result data (`results/cia_client_scaling/`) is frozen at tag `freeze/2026-10-02` (see `results/FREEZE.md`). Its protocol -- one
 trajectory per combo (target participates), shadow-vs-test loss compared at "first-round" and
 "post-convergence" checkpoints -- is reconstructed here from that data rather than from surviving
 code.
@@ -139,7 +139,7 @@ uv run python scripts/colab/run_experiment.py accounts
 uv run python scripts/colab/run_experiment.py login --account lab2
 ```
 
-The determinism check is a copy of the contest configuration with only seed
+The determinism check (frozen; restore with `git checkout freeze/2026-10-02 -- experiments/cia/scripts/check_determinism.py results/cia/check_determinism`) is a copy of the contest configuration with only seed
 42. It executes the three privacy configurations twice under distinct
 `check-determinism-run-1` and `check-determinism-run-2` names, then requires
 exact equality after removing only the deliberately different run name:
@@ -148,8 +148,8 @@ exact equality after removing only the deliberately different run name:
 uv run python scripts/colab/run_experiment.py run \
   --session cia-determinism \
   --gpu L4 \
-  --module results.contest_at_scale.check_determinism.check_determinism \
-  --results results/contest_at_scale/check_determinism/results \
+  --module experiments.cia.scripts.check_determinism \
+  --results results/cia/check_determinism \
   --commit-message "results(cia): add Colab determinism check"
 ```
 
