@@ -36,7 +36,7 @@ No new experiments have been launched or new mechanism selected. The historical 
 below are context, not the active agenda.
 
 **`feature/auc-targeted-noise-sweep` is complete (2026-09-01) and merged into `master`.** See
-`experiments/contest_at_scale/reports/auc_targeted_noise_sweep.md` for the full writeup and "What's established" below for the
+`experiments/contest_at_scale/auc_target_sweep/reports/auc_targeted_noise_sweep.md` for the full writeup and "What's established" below for the
 summary — not repeated here to avoid drifting out of sync.
 
 ---
@@ -69,7 +69,7 @@ data exists, and checked both claims against the actual numbers rather than assu
 Separately, both `feature/eurosat-scaling` (the EuroSAT accuracy sweep and its CIA attack) and
 `feature/cifar100-scaling` (the CIFAR-100 accuracy sweep and its CIA attack) are complete, merged
 into `master`, and deleted (locally and on `origin`) — see "What's established" below and
-`experiments/contest_at_scale/reports/eurosat_accuracy_sweep.md`/`experiments/contest_at_scale/reports/eurosat_cia.md`/
+`experiments/contest_at_scale/eurosat/reports/eurosat_accuracy_sweep.md`/`experiments/contest_at_scale/eurosat/reports/eurosat_cia.md`/
 `experiments/contest_at_scale/reports/cifar-100_and_eurosat_results.tex` for the full writeups.
 
 **CIFAR-100 CIA multi-seed retry was dropped.** The seed-42 single-seed CIA run (6/6 combos, 0
@@ -80,7 +80,7 @@ persistent, severe GPU VRAM contention on this shared machine. Four separate ret
 recovering 1-3 of the failing combos, with diminishing returns, despite reducing
 `--max-parallel-clients` 16→6→10 and fixing a real `dp_diagnostics.py` crash-on-client-error bug
 along the way) never reached a complete 3-seed run. Decision: drop seeds 43/44 entirely and keep
-only the complete seed-42 data. `experiments/contest_at_scale/results/cia_cifar100_scaling/cia_in.json`/`cia_out.json`/
+only the complete seed-42 data. `experiments/contest_at_scale/cifar100/results/attack/cia_in.json`/`cia_out.json`/
 `cia_analysis.json` and the 12 per-trajectory result JSONs now hold seed-42-only data for all 6
 combos; the 22 seed-43/44 per-trajectory JSONs were deleted.
 `experiments/contest_at_scale/reports/cifar-100_and_eurosat_results.tex`'s CIFAR-100 CIA table reflects this (a single
@@ -98,7 +98,7 @@ client updates reinforcing rather than averaging out). **Per project-owner direc
 replaced** with the current model (v5): an adaptation of the project supervisor's own `CNNCIFAR100`
 reference architecture (3 blocks of 2x[Conv3x3-GroupNorm-ReLU], channels 128/256/512,
 global-average-pooled classifier, 4,631,268 params, 0 buffers — see
-`experiments/cifar100_scaling/sweep_cifar100_scaling.py`'s docstring for the full model-history
+`experiments/contest_at_scale/cifar100/sweep_cifar100_scaling.py`'s docstring for the full model-history
 record and `experiments/reproduce/cifar100_cnn.py`'s docstring for the adaptation details). This
 consolidation also removed the separate `feature/cifar100-scaling-supervisor` branch/worktree that
 had briefly held this model in isolation (merged into this branch, then deleted) and cleared every
@@ -113,13 +113,13 @@ schedule was tried and dropped — a decaying LR eventually drops client updates
 back up against `noise_multiplier`, fighting the whole point of tuning it — so the sweep uses a
 fixed LR instead. `noise_multiplier=0.0182`, calibrated specifically for this model at n=100 (the
 only client count this sweep runs — see the `NOISE_MULTIPLIER` comment in
-`experiments/cifar100_scaling/sweep_cifar100_scaling.py` for the full derivation), confirmed via a
+`experiments/contest_at_scale/cifar100/sweep_cifar100_scaling.py` for the full derivation), confirmed via a
 verification run: noise-to-signal ratio 1.001 at n=100.
 
 Full sweep and CIA results (tables, protocol, discussion) are in "What's established" below and
 `experiments/contest_at_scale/reports/cifar-100_and_eurosat_results.tex` — not repeated here to avoid drifting out of sync with
-those. Raw data: sweep JSONs at `experiments/contest_at_scale/results/cifar100_scaling/*.json`; CIA raw/analysis JSONs at
-`experiments/contest_at_scale/results/cia_cifar100_scaling/`. Both experiments' `.evaluation.json`/`.predictions.npz`
+those. Raw data: sweep JSONs at `experiments/contest_at_scale/cifar100/results/accuracy/*.json`; CIA raw/analysis JSONs at
+`experiments/contest_at_scale/cifar100/results/attack/`. Both experiments' `.evaluation.json`/`.predictions.npz`
 artifacts stay local-only, gitignored (see `.gitignore` comment) — they blow past GitHub's 100MB
 push limit.
 
@@ -143,7 +143,7 @@ section.
 
 ## What's established on `master`
 
-- **AUC-targeted noise sweep** (`experiments/contest_at_scale/reports/auc_targeted_noise_sweep.md`, `experiments/contest_at_scale/reports/auc_frontier.html`):
+- **AUC-targeted noise sweep** (`experiments/contest_at_scale/auc_target_sweep/reports/auc_targeted_noise_sweep.md`, `experiments/contest_at_scale/auc_target_sweep/reports/auc_frontier.html`):
   4 datasets (EuroSAT n=48, Alzheimer n=48, Fashion-MNIST n=48, CIFAR-10 n=100) x 2 partition modes
   x 2 privacy modes = 16 curves, each an autonomous search for the noise multiplier that pushes CIA
   round-matched attack AUC to ~0.5 (10 landed, 4 collapsed-before-target, 2 anchor-not-found — see
@@ -208,7 +208,7 @@ section.
   `global-dp` shows more leakage than `metric-privacy` in every partition/shadow combination on
   this seed. Every 95% CI includes 0.5 (single-seed, underpowered), so read this as a directional
   pattern, not a statistically confirmed ranking.
-- **EuroSAT accuracy sweep + CIA** (`experiments/contest_at_scale/reports/eurosat_accuracy_sweep.md`, `experiments/contest_at_scale/reports/eurosat_cia.md`):
+- **EuroSAT accuracy sweep + CIA** (`experiments/contest_at_scale/eurosat/reports/eurosat_accuracy_sweep.md`, `experiments/contest_at_scale/eurosat/reports/eurosat_cia.md`):
   a comparison point on satellite land-use imagery (10-class, genuinely different domain from
   CIFAR-10/CIFAR-100/Fashion-MNIST/Alzheimer), `n=48`. Accuracy sweep: 6/6 combos, 0 failed,
   87.5–90.7% accuracy across all combos; `non-iid` partitioning slightly *outperformed*

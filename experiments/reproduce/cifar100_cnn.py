@@ -7,7 +7,7 @@ classifier). Replaced an earlier DenseNet+SELU architecture (v4, built and
 verified for robustness to clipping-related weight-space update-magnitude
 freezes found in this repo's original plain 3/4-block CNN line, v1-v3),
 per project-owner direction consolidating this repo on a single CIFAR-100
-model. See experiments/cifar100_scaling/sweep_cifar100_scaling.py's
+model. See experiments/contest_at_scale/cifar100/sweep_cifar100_scaling.py's
 docstring for the full model-history record.
 
 Two changes from the supervisor's supplied source, both required for this

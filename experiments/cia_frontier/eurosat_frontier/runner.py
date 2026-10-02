@@ -8,7 +8,7 @@ import math
 from pathlib import Path
 
 from experiments.reproduce.matrix import Combo
-from experiments.cia.scripts.eurosat_remove import HYPERPARAMS
+from experiments.contest_at_scale.auc_target_sweep.eurosat_remove import HYPERPARAMS
 
 
 # kw_only: Combo now ends with a defaulted field (dirichlet_alpha), so required

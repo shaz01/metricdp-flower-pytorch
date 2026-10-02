@@ -16,7 +16,7 @@ import math
 from pathlib import Path
 
 from experiments.cia_frontier.eurosat_frontier.runner import ADJACENCIES, FrontierCombo, atomic_json, build_combos
-from experiments.cia.scripts.eurosat_remove import HYPERPARAMS
+from experiments.contest_at_scale.auc_target_sweep.eurosat_remove import HYPERPARAMS
 from metricdp_pytorch.influence_noise import RNG_DOMAIN_TAG, isotropic_stdv
 
 ALPHA = 0.3

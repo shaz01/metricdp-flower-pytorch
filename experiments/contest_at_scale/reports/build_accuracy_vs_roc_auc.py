@@ -10,13 +10,13 @@ import json
 import statistics
 from pathlib import Path
 
-from experiments.cia.reports import build_alzheimer_cia_report as transfer
+from experiments.contest_at_scale.plan_suite.reports import build_alzheimer_cia_report as transfer
 
 
-ROOT = Path(__file__).resolve().parents[1]  # experiments/contest_at_scale/ (holds results/ and reports/)
+ROOT = Path(__file__).resolve().parents[1]  # experiments/contest_at_scale/ (group root; results live in each experiment folder)
 OUTPUT = ROOT / "reports" / "accuracy_vs_roc_auc.html"
-CIFAR10_REMOVE_DIR = ROOT / "results" / "cia" / "cifar10_remove"
-CIFAR10_RATIO_SWEEP_DIR = ROOT / "results" / "cia" / "cifar10_remove_ratio_sweep"
+CIFAR10_REMOVE_DIR = ROOT / "cifar10" / "results" / "1_fixed_multiplier" / "attack"
+CIFAR10_RATIO_SWEEP_DIR = ROOT / "cifar10" / "results" / "3_fixed_ratio"
 METHODS = ("vanilla", "global-dp", "metric-privacy")
 LABELS = {
     "vanilla": "Vanilla",
@@ -177,7 +177,7 @@ def scaling_snapshot(
     seeds: int,
     pairs: int,
 ) -> dict:
-    directory = ROOT / "results" / directory_name
+    directory = ROOT / directory_name
     analysis = json.loads((directory / "cia_analysis.json").read_text())
     by_privacy = {
         row["privacy"]: row
@@ -211,7 +211,7 @@ def load_snapshots() -> list[dict]:
         scaling_snapshot(
             dataset="EuroSAT",
             clients=48,
-            directory_name="cia_eurosat_scaling",
+            directory_name="eurosat/results/attack",
             prefix="eurosat",
             seeds=3,
             pairs=33,
@@ -219,7 +219,7 @@ def load_snapshots() -> list[dict]:
         scaling_snapshot(
             dataset="CIFAR-100",
             clients=100,
-            directory_name="cia_cifar100_scaling",
+            directory_name="cifar100/results/attack",
             prefix="cifar100",
             seeds=1,
             pairs=26,
@@ -378,7 +378,7 @@ TEMPLATE = r'''<!doctype html>
 </section>
 
 <footer>
-  Attack metric: clean-shadow raw-loss ROC AUC, reported after allowing the attacker to reverse its score direction; the same-round value is the primary check. Accuracy is averaged over matched IN/OUT trajectories (late rounds for 20-round experiments; final checkpoints for EuroSAT/CIFAR-100). The CIFAR-10 plots use only actual CIFAR-10 artifacts under <code>experiments/contest_at_scale/results/cia/cifar10_remove/</code> and <code>experiments/contest_at_scale/results/cia/cifar10_remove_ratio_sweep/</code>; no <code>experiments/contest_at_scale/results/planned_runs/cifar/</code> artifact is used. CIFAR-100 has one seed and should be treated as preliminary.
+  Attack metric: clean-shadow raw-loss ROC AUC, reported after allowing the attacker to reverse its score direction; the same-round value is the primary check. Accuracy is averaged over matched IN/OUT trajectories (late rounds for 20-round experiments; final checkpoints for EuroSAT/CIFAR-100). The CIFAR-10 plots use only actual CIFAR-10 artifacts under <code>experiments/contest_at_scale/cifar10/results/1_fixed_multiplier/attack/</code> and <code>experiments/contest_at_scale/cifar10/results/3_fixed_ratio/</code>; no <code>experiments/contest_at_scale/plan_suite/results/cifar/</code> artifact is used. CIFAR-100 has one seed and should be treated as preliminary.
 </footer>
 
 <script id="report-data" type="application/json">__DATA__</script>

@@ -4,7 +4,7 @@ Date: 2026-10-01. This document distinguishes verified repository observations f
 
 ## 1. Verified evidence baseline
 
-Sources: [project audit](../project_evidence_audit.md), [scorer](../../experiments/cia/scripts/score_stage.py), [search controller](../../experiments/cia/scripts/auc_target_search.py), [frontier generator](../../experiments/contest_at_scale/reports/build_auc_frontier.py), [raw states](../../experiments/contest_at_scale/results/auc_target_sweep/), and [initial paper](../../papers/Initial-Paper.pdf), Section 7.4.2/Table 13.
+Sources: [project audit](../project_evidence_audit.md), [scorer](../../experiments/contest_at_scale/auc_target_sweep/score_stage.py), [search controller](../../experiments/contest_at_scale/auc_target_sweep/auc_target_search.py), [frontier generator](../../experiments/contest_at_scale/auc_target_sweep/reports/build_auc_frontier.py), [raw states](../../experiments/contest_at_scale/auc_target_sweep/results/), and [initial paper](../../papers/Initial-Paper.pdf), Section 7.4.2/Table 13.
 
 An independent arithmetic check on 2026-10-01 recomputed all 110 recorded anchor/search/confirmation entries from `runs/cia.json` and each trajectory's final-round server accuracy. All matched their state values to 1e-12; IN and OUT checkpoint indices matched. This verifies the recorded arithmetic, not the training or statistical interpretation.
 
