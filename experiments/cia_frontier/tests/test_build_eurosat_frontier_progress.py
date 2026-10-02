@@ -1,4 +1,4 @@
-"""Synthetic tests for reports/build_eurosat_frontier_progress.py (no real data, no GPU)."""
+"""Synthetic tests for experiments/cia_frontier/reports/build_eurosat_frontier_progress.py (no real data, no GPU)."""
 from __future__ import annotations
 
 import importlib.util

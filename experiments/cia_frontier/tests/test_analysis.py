@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from experiments.auc_frontier.analyze import analyze
+from experiments.cia_frontier.analyze import analyze
 
 
 def test_final_only_and_incomplete_rejection(tmp_path):

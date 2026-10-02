@@ -4,9 +4,9 @@ from dataclasses import replace
 
 import numpy as np
 
-import experiments.auc_frontier.data as data
-from experiments.auc_frontier.data import DirichletEuroSAT, create_data_module
-from experiments.auc_frontier.runner import build_combos, execute
+import experiments.cia_frontier.data as data
+from experiments.cia_frontier.data import DirichletEuroSAT, create_data_module
+from experiments.cia_frontier.runner import build_combos, execute
 
 
 def plan(**kwargs):

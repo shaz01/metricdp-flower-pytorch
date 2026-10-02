@@ -15,7 +15,7 @@ import json
 import math
 from pathlib import Path
 
-from experiments.auc_frontier.runner import ADJACENCIES, FrontierCombo, atomic_json, build_combos
+from experiments.cia_frontier.runner import ADJACENCIES, FrontierCombo, atomic_json, build_combos
 from experiments.cia.scripts.eurosat_remove import HYPERPARAMS
 from metricdp_pytorch.influence_noise import RNG_DOMAIN_TAG, isotropic_stdv
 
@@ -30,7 +30,7 @@ PARAMETER_COUNT = 289_194  # EurosatCNN, float parameters only; no buffers
 PROTOCOL_SCHEMA = 1
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class InfluenceCombo(FrontierCombo):
     influence_fraction: float
     influence_cap: float
@@ -91,7 +91,7 @@ def protocol(combo: InfluenceCombo) -> dict:
 
 
 def execute(combos, targets, output, max_parallel_clients):
-    from experiments.auc_frontier.runner import execute as frontier_execute
+    from experiments.cia_frontier.runner import execute as frontier_execute
     for combo in combos:
         folder = output / combo.run_name()
         folder.mkdir(parents=True, exist_ok=True)
@@ -112,7 +112,7 @@ def main(argv=None):
     parser.add_argument("--out-targets", type=int, nargs="+")
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--max-parallel-clients", type=int, default=6)
-    parser.add_argument("--output", type=Path, default=Path("results/influence_noise_pilot"))
+    parser.add_argument("--output", type=Path, default=Path("experiments/cia_frontier/results/influence_noise"))
     args = parser.parse_args(argv)
     if args.max_parallel_clients < 1:
         parser.error("--max-parallel-clients must be positive")

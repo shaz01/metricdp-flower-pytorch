@@ -4,9 +4,9 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from experiments.auc_frontier.data import create_data_module, dirichlet_partitions
-from experiments.auc_frontier.runner import build_combos, execute
-from experiments.auc_frontier.analyze import statistics, summarize
+from experiments.cia_frontier.data import create_data_module, dirichlet_partitions
+from experiments.cia_frontier.runner import build_combos, execute
+from experiments.cia_frontier.analyze import statistics, summarize
 
 
 def combos(**kwargs):
@@ -61,7 +61,7 @@ def test_metrics_not_folded_and_cluster_interval():
 
 def test_every_round_every_target_and_resume(tmp_path, monkeypatch):
     import experiments.cia.iter_combos as training
-    import experiments.auc_frontier.data as data
+    import experiments.cia_frontier.data as data
     monkeypatch.setattr(data, "partition_summary", lambda *args: {})
     from experiments.cia import cia
     import metricdp_pytorch.utils.device as device
@@ -115,7 +115,7 @@ def test_adjacency_selection_keeps_fixed_panel(tmp_path, monkeypatch):
         combos(privacy="vanilla", pilot=True, adjacency="in")
     # Shared IN manifest records (and evaluates) the whole panel.
     import experiments.cia.iter_combos as training
-    import experiments.auc_frontier.data as data
+    import experiments.cia_frontier.data as data
     from experiments.cia import cia
     import metricdp_pytorch.utils.device as device
     monkeypatch.setattr(data, "partition_summary", lambda *args: {})
@@ -140,3 +140,26 @@ def test_adjacency_selection_keeps_fixed_panel(tmp_path, monkeypatch):
     assert {(r["round"], r["target"]) for r in rows} == {(r, t) for r in (1, 2) for t in panel}
     marker = json.loads(next((tmp_path / "in").glob("*/complete.json")).read_text())
     assert marker["complete"] is True and "evaluation_seconds" in marker
+
+
+def test_combo_subclass_keeps_master_combo_and_historical_run_names():
+    """FrontierCombo/InfluenceCombo must define on top of master's Combo (which ends with
+    a defaulted ``dirichlet_alpha``) and still reproduce the committed run names."""
+    from experiments.cia_frontier.influence_noise.runner import build_influence_combos
+    from experiments.cia_frontier.runner import FrontierCombo
+    from experiments.reproduce.matrix.combo import Combo
+
+    assert issubclass(FrontierCombo, Combo)
+    (gdp_in,) = build_combos(alpha=0.3, seeds=[42], targets=list(range(10)), clients=48,
+                             privacy="global-dp", ratios=[0.001546], adjacency="in")
+    assert gdp_in.dirichlet_alpha == 0.5 and gdp_in.partition == "non-iid"
+    assert gdp_in.run_name() == (
+        "eurosat-dirichlet-a0.3-in-r0.001546__non-iid__global-dp__fedavg__clients-48__seed-42"
+        "__nm0p074208__clip5__rounds-100__epochs-5__data__eurosat_cnn")
+    (pilot_in,) = build_influence_combos(fraction=0.0, seeds=[42], targets=list(range(10)),
+                                         adjacency="in")
+    assert pilot_in.run_name() == (
+        "eurosat-dirichlet-a0.3-in-r0.001546-f0.0-cap5.0__non-iid__influence-noise__fedavg"
+        "__clients-48__seed-42__nm0p074208__clip5__rounds-100__epochs-5__data__eurosat_cnn")
+    with pytest.raises(TypeError):
+        FrontierCombo(*[None] * 15)  # subclass fields are keyword-only
