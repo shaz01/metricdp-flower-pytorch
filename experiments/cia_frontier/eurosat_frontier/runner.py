@@ -84,7 +84,7 @@ def build_combos(*, alpha, seeds, targets, clients, privacy, ratios, pilot=False
         num_clients=clients - (target is not None), partition="non-iid", privacy=privacy,
         aggregation="fedavg", seed=seed,
         noise_multiplier=ratio * (clients - (target is not None)), hyperparams=HYPERPARAMS,
-        data_module="experiments.cia_frontier.data:create_data_module",
+        data_module="experiments.cia_frontier.eurosat_frontier.data:create_data_module",
         model_module="experiments.reproduce.eurosat_cnn:create_model",
         alpha=alpha, canonical_clients=clients, out_target=target, noise_ratio=ratio,
         partition_seed=partition_seed,
@@ -117,7 +117,7 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
     from experiments.cia.datasets.shadow import ShadowDataModule
     from metricdp_pytorch.utils.noisy_dataset import NoisyDataModule
     from metricdp_pytorch.utils.device import resolve_device
-    from experiments.cia_frontier.data import DirichletEuroSAT, partition_summary
+    from experiments.cia_frontier.eurosat_frontier.data import DirichletEuroSAT, partition_summary
 
     output.mkdir(parents=True, exist_ok=True)
     device = resolve_device()
@@ -152,7 +152,7 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
         revision = os.environ.get("METRICDP_SOURCE_COMMIT")
         if revision is None:
             revision = subprocess.run(
-                ["git", "-C", str(Path(__file__).resolve().parents[2]), "rev-parse", "HEAD"],
+                ["git", "-C", str(Path(__file__).resolve().parents[3]), "rev-parse", "HEAD"],
                 capture_output=True, text=True, check=True,
             ).stdout.strip()
         atomic_json(folder / "provenance.json", {
@@ -220,7 +220,7 @@ def main():
     parser.add_argument("--alpha-pilot", action="store_true")
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--max-parallel-clients", type=int, default=6)
-    parser.add_argument("--output", type=Path, default=Path("experiments/cia_frontier/results/eurosat_frontier"))
+    parser.add_argument("--output", type=Path, default=Path("experiments/cia_frontier/eurosat_frontier/results"))
     args = parser.parse_args()
     if args.max_parallel_clients < 1:
         parser.error("--max-parallel-clients must be positive")

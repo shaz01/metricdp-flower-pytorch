@@ -8,7 +8,7 @@ Per-client score: fraction of rounds 1..100 where IN clean-shadow loss < OUT cle
 loss for that client (no direction flip). ``score(c, i, j)`` pairs IN from training seed i
 with OUT from training seed j; all pairings are valid because the data layout is identical.
 
-Usage: uv run python -m experiments.cia_frontier.training_seed_variance
+Usage: uv run python -m experiments.cia_frontier.eurosat_frontier.training_seed_variance
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import json
 import statistics as st
 from pathlib import Path
 
-ROOT = Path("experiments/cia_frontier/results/eurosat_frontier")
+ROOT = Path("experiments/cia_frontier/eurosat_frontier/results")
 SOURCES = {42: ROOT / "frontier_torch210", 43: ROOT / "training_seed_variance",
            44: ROOT / "training_seed_variance"}
 TARGETS = (0, 1, 2, 3, 4)

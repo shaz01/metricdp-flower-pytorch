@@ -3,7 +3,7 @@
 Branch `feature/influence-noise-pilot`, from `runs/new-auc-frontier-eurosat` at
 `1b846ef` (descendant of the pinned-runtime commit `af3e6e3`). Separate from the
 main AUC-frontier experiment; no main code paths, results, or controller state
-are modified or reinterpreted. Results go to `experiments/cia_frontier/results/influence_noise/`.
+are modified or reinterpreted. Results go to `experiments/cia_frontier/influence_noise/results/`.
 
 ## Mechanism (`metricdp_pytorch/influence_noise.py`)
 
@@ -67,12 +67,12 @@ behaviour in any parameter.
 uv run python -m experiments.cia_frontier.influence_noise.runner --fraction .5 --adjacency in
 # one shard (on a GPU worker)
 uv run python -m experiments.cia_frontier.influence_noise.runner --fraction .5 --adjacency in \
-  --output experiments/cia_frontier/results/influence_noise/f0.5-seed-42-in --execute
+  --output experiments/cia_frontier/influence_noise/results/f0.5-seed-42-in --execute
 uv run python -m experiments.cia_frontier.influence_noise.runner --fraction 0 --adjacency out \
-  --out-targets 0 --output experiments/cia_frontier/results/influence_noise/f0.0-seed-42-out-0 --execute
+  --out-targets 0 --output experiments/cia_frontier/influence_noise/results/f0.0-seed-42-out-0 --execute
 ```
 
-Resume/sharding/locking are inherited from `experiments.cia_frontier.runner`
+Resume/sharding/locking are inherited from `experiments.cia_frontier.eurosat_frontier.runner`
 (per-trajectory manifest, atomic writes, completion marker, full retrain of a
 partial trajectory). `influence_protocol.json` pins `f`, cap, `τ`, RNG scheme and
 client mapping; a mismatch refuses to write into an existing trajectory.
@@ -95,7 +95,7 @@ start only after that arm's IN is collected and validated (exit 0, torch 2.10.0 
 A100, 1000 finite measurement rows, 100 rounds of finite influence diagnostics,
 evaluation JSON). One retry per trajectory; raw failed artifacts move to gitignored local
 `.colab/quarantine/`, and only a small metadata JSON is committed under
-`experiments/cia_frontier/results/influence_noise/failures/`.
+`experiments/cia_frontier/influence_noise/results/failures/`.
 
 ## Exploratory utility screen and early stop (owner-authorized 2026-09-24 02:05 CEST)
 

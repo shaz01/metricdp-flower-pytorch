@@ -69,8 +69,8 @@ Suggested alpha grid is provisional: .1, .3, 1, 10. Run three seeds per alpha.
 Example for one alpha:
 
 ```bash
-uv run python -m experiments.cia_frontier.runner --alpha .3 --seeds 42 43 44 \
-  --privacy vanilla --alpha-pilot --output experiments/cia_frontier/results/eurosat_frontier/alpha_pilot
+uv run python -m experiments.cia_frontier.eurosat_frontier.runner --alpha .3 --seeds 42 43 44 \
+  --privacy vanilla --alpha-pilot --output experiments/cia_frontier/eurosat_frontier/results/alpha_pilot
 ```
 
 A pilot trains only full IN models; no target shadow evaluation is needed. It
@@ -88,9 +88,9 @@ Dirichlet changes the problem. Lock or revise them after the alpha pilot, and
 record the revision. Run this once per privacy mode:
 
 ```bash
-uv run python -m experiments.cia_frontier.runner --alpha .3 --seeds 42 43 \
+uv run python -m experiments.cia_frontier.eurosat_frontier.runner --alpha .3 --seeds 42 43 \
   --privacy global-dp --ratios .00019325 .0003865 .000773 .001546 .003092 .006184 \
-  --output experiments/cia_frontier/results/eurosat_frontier/frontier
+  --output experiments/cia_frontier/eurosat_frontier/results/frontier
 ```
 
 The `.3` here is an EXAMPLE, not a selected alpha. Repeat with `metric-privacy`.
@@ -109,8 +109,8 @@ Neither analysis claims a selection-adjusted equivalence result.
 Run a separate vanilla attack reference with five seeds and the same targets:
 
 ```bash
-uv run python -m experiments.cia_frontier.runner --alpha .3 --seeds 42 43 44 45 46 \
-  --privacy vanilla --output experiments/cia_frontier/results/eurosat_frontier/frontier
+uv run python -m experiments.cia_frontier.eurosat_frontier.runner --alpha .3 --seeds 42 43 44 45 46 \
+  --privacy vanilla --output experiments/cia_frontier/eurosat_frontier/results/frontier
 ```
 
 That is **105** additional trainings, not 60. Total planned budget with the
@@ -148,7 +148,7 @@ under the same protocol and backend policy.
 ### Analysis (no training)
 
 ```bash
-uv run python -m experiments.cia_frontier.analyze experiments/cia_frontier/results/eurosat_frontier/frontier
+uv run python -m experiments.cia_frontier.eurosat_frontier.analyze experiments/cia_frontier/eurosat_frontier/results/frontier
 uv run pytest experiments/cia_frontier/
 ```
 

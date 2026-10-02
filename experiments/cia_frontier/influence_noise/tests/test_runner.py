@@ -57,7 +57,7 @@ def test_influence_flags_rejected_elsewhere():
 
 def test_protocol_mismatch_rejected(tmp_path, monkeypatch):
     calls = []
-    monkeypatch.setattr("experiments.cia_frontier.runner.execute", lambda *a, **k: calls.append(a))
+    monkeypatch.setattr("experiments.cia_frontier.eurosat_frontier.runner.execute", lambda *a, **k: calls.append(a))
     (combo,) = runner.build_influence_combos(fraction=0.5, seeds=[42], targets=[0], adjacency="in")
     runner.execute([combo], [0], tmp_path, 6)
     path = tmp_path / combo.run_name() / "influence_protocol.json"

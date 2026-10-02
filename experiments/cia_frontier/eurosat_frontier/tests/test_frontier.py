@@ -4,9 +4,9 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from experiments.cia_frontier.data import create_data_module, dirichlet_partitions
-from experiments.cia_frontier.runner import build_combos, execute
-from experiments.cia_frontier.analyze import statistics, summarize
+from experiments.cia_frontier.eurosat_frontier.data import create_data_module, dirichlet_partitions
+from experiments.cia_frontier.eurosat_frontier.runner import build_combos, execute
+from experiments.cia_frontier.eurosat_frontier.analyze import statistics, summarize
 
 
 def combos(**kwargs):
@@ -61,7 +61,7 @@ def test_metrics_not_folded_and_cluster_interval():
 
 def test_every_round_every_target_and_resume(tmp_path, monkeypatch):
     import experiments.cia.iter_combos as training
-    import experiments.cia_frontier.data as data
+    import experiments.cia_frontier.eurosat_frontier.data as data
     monkeypatch.setattr(data, "partition_summary", lambda *args: {})
     from experiments.cia import cia
     import metricdp_pytorch.utils.device as device
@@ -115,7 +115,7 @@ def test_adjacency_selection_keeps_fixed_panel(tmp_path, monkeypatch):
         combos(privacy="vanilla", pilot=True, adjacency="in")
     # Shared IN manifest records (and evaluates) the whole panel.
     import experiments.cia.iter_combos as training
-    import experiments.cia_frontier.data as data
+    import experiments.cia_frontier.eurosat_frontier.data as data
     from experiments.cia import cia
     import metricdp_pytorch.utils.device as device
     monkeypatch.setattr(data, "partition_summary", lambda *args: {})
@@ -146,7 +146,7 @@ def test_combo_subclass_keeps_master_combo_and_historical_run_names():
     """FrontierCombo/InfluenceCombo must define on top of master's Combo (which ends with
     a defaulted ``dirichlet_alpha``) and still reproduce the committed run names."""
     from experiments.cia_frontier.influence_noise.runner import build_influence_combos
-    from experiments.cia_frontier.runner import FrontierCombo
+    from experiments.cia_frontier.eurosat_frontier.runner import FrontierCombo
     from experiments.reproduce.matrix.combo import Combo
 
     assert issubclass(FrontierCombo, Combo)
