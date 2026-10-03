@@ -1,6 +1,6 @@
 # Provisional research plan grounded in the review
 
-2026-10-01. A new research proposal, not a selected mechanism or authorization to launch experiments. The owner's question is how each client constructs an individual additive-noise distribution that improves participation privacy at useful accuracy. The [frontier](../../reports/auc_frontier.html) and [evidence audit](../project_evidence_audit.md) define the empirical starting point; the [integrative review](client_specific_noise_review.md) explains the prior-art constraints.
+2026-10-01. A new research proposal, not a selected mechanism or authorization to launch experiments. The owner's question is how each client constructs an individual additive-noise distribution that improves participation privacy at useful accuracy. The [frontier](../../results/contest_at_scale/auc_frontier/reports/auc_frontier.html) and [evidence audit](../project_evidence_audit.md) define the empirical starting point; the [integrative review](client_specific_noise_review.md) explains the prior-art constraints.
 
 ## 1. Resolve closest prior art and define the contribution
 

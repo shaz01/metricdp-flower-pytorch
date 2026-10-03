@@ -66,3 +66,24 @@ def test_matrix_propagates_dirichlet_alpha_into_names_and_runner_args(tmp_path) 
     assert combo.dirichlet_alpha == 0.1
     assert "__dirichlet__alpha-0p1__" in combo.run_name()
     assert args[args.index("--dirichlet-alpha") + 1] == "0.1"
+
+
+def test_data_tag_overrides_only_the_run_name_token() -> None:
+    from dataclasses import replace
+
+    from experiments.reproduce.matrix import Combo
+
+    combo = Combo(
+        name_prefix="x", num_clients=4, partition="homogeneous", privacy="vanilla",
+        aggregation="fedavg", seed=42, noise_multiplier=0.01,
+        hyperparams=Hyperparams(clipping_norm=5.0, rounds=2, local_epochs=1, batch_size=8,
+                                learning_rate=0.001, initialization_epochs=0),
+        data_module="pkg.new_name:create", model_module="pkg.model:create_model",
+    )
+    assert "__new_name__model" in combo.run_name()
+    tagged = replace(combo, data_tag="old_name")
+    assert tagged.run_name() == combo.run_name().replace("__new_name__", "__old_name__")
+    kwargs = dict(output_dir=None, max_parallel_clients=1, client_cpus=1)
+    assert [a for a in tagged.runner_args(**kwargs) if a != tagged.run_name()] == [
+        a for a in combo.runner_args(**kwargs) if a != combo.run_name()
+    ]

@@ -24,11 +24,15 @@ class Combo:
     data_module: str
     model_module: str
     dirichlet_alpha: float = 0.5
+    # Run-name token for the data module; defaults to the module's leaf name.
+    # Set it when a script is renamed so historical run names (and resume /
+    # analysis lookups against committed results) stay unchanged.
+    data_tag: str | None = None
 
     def run_name(self) -> str:
         """Build the complete deterministic name from this combo's parameters."""
         module_path = self.data_module.rsplit(":", 1)[0]
-        data_module_name = module_path.rsplit(".", 1)[-1]
+        data_module_name = self.data_tag or module_path.rsplit(".", 1)[-1]
         model_path = self.model_module.rsplit(":", 1)[0]
         model_suffix = f"__{model_path.rsplit('.', 1)[-1]}"
         partition_suffix = (
