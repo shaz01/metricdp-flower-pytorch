@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-04, changing-update quadratic spike with held-out evaluation
+**Last updated:** 2026-10-04, rotated/residual comparison; owner requested stop tonight
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -59,9 +59,13 @@ The changing-update quadratic spike is now recorded in
 `research/proposals/2026-10-04_dynamic_quadratic_findings.md`: six cells, 1,024 development
 and 8,192 fresh evaluation federations each. Every selected adaptive profile has equal axes
 and is exactly the static mechanism; one-release controls win, including public shrinkage.
-Next: rotated public-bank and residual-aware protected-history diagnostics to distinguish stale
-selection from missing geometry. No image-model or CIA experiments are running, and no
-experiment-completion decision or better-defense claim is inferred.
+The rotated-bank/residual-aware comparison is recorded in
+`research/proposals/2026-10-04_rotated_residual_findings.md`: residual selection beats stale
+selection in four of six cells but beats tuned public geometry in only one cell, by ~0.39%
+at E=16,N=8. One-release controls still win throughout. The owner explicitly selected
+“Stop after this comparison”; stop tonight after documenting/pushing, with no further jobs
+running. On resume, decide whether realistic persistent client-specific geometry warrants
+another constructor. No image-model/CIA experiment or completion decision is inferred.
 The owner-authorized 141 staged result files were committed and pushed as `1081ff7`.
 The owner broadened the design to potentially new non-Gaussian mechanisms/distributions; see
 `research/non_gaussian_mechanism_research.md`. Gaussian is a control, not a requirement.

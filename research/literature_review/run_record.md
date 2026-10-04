@@ -43,3 +43,7 @@ Owner: “lets move in to that step”. Completed bounded analytical comparison 
 ## Changing-update spike, 2026-10-04
 
 Owner: “lets move to that” after the proposed quadratic-learning step. Executed bounded two-round synthetic learning simulations with full shared-history gradients, independent development/evaluation draws, public and same-probe controls, and development-only post-processing fitting. Selected adaptive profiles are isotropic and exactly match static profiles in all six tested cells; stronger one-release controls win. Raw settings and held-out trial losses are committed for reproduction. No image-model/CIA launch or experiment-completion decision was inferred. Next: distinguish stale selection from missing geometry using public rotated-bank/residual-aware diagnostics.
+
+## Tonight’s rotated/residual comparison, 2026-10-04
+
+Owner: “work on this also for tonight”. Scope reply: **“Stop after this comparison”**. Ran the six-cell rotated-bank comparison with fixed/stale/residual/corrected/random rules, same-probe and one-release controls, independent development/evaluation and analytically integrated second noise. Residual selection beats tuned static once by ~0.39% at E=16,N=8; one-release still wins. Stop after documenting/pushing; do not infer authorization for another diagnostic tonight. No CIA or experiment-completion decision is inferred.
