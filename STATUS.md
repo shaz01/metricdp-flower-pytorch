@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-04, concrete joint clipping/noise proposal and analytical feasibility
+**Last updated:** 2026-10-04, heterogeneous-risk controls and protected-history next candidate
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -45,9 +45,14 @@ clipping/non-Gaussian profiles, an explicit sampler and construction accounting.
 math review rules out common-ball ellipsoid shaping as a quadratic-utility improvement. The
 first closed-form diagnostic loses at total budgets 4 and 8 and gains slightly at 16 against
 only the listed fixed public controls; an optimized public clipping radius beats the private
-selector at all three budgets. This is not CIA or trained-model evidence. Next: analyze richer
-client heterogeneity against optimized public controls before a complete-vector pilot. Detailed
-pilot defaults remain proposals; no training or attack experiments are running.
+selector at all three budgets. This is not CIA or trained-model evidence. A reproducible follow-up checked 30 heterogeneous population/budget cases, optimizing profile
+geometry and selector allocation and adding diamond-law controls. No positive-cost private
+selector beat the best public control on the bounded grids; see
+`research/proposals/2026-10-04_heterogeneity_findings.md` and
+`results/client_specific_noise/analytical_heterogeneity.json`. Deprioritize separately paid RR
+selection for FL implementation. Next: two-round analytical construction from already protected
+client uploads, with equal probe/budget/global-objective controls. Pilot defaults remain
+proposals; no training or attack experiments are running.
 The owner-authorized 141 staged result files were committed and pushed as `1081ff7`.
 The owner broadened the design to potentially new non-Gaussian mechanisms/distributions; see
 `research/non_gaussian_mechanism_research.md`. Gaussian is a control, not a requirement.
