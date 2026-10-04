@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-01, staged results synced; comparator and threat/construction follow-up
+**Last updated:** 2026-10-04, concrete joint clipping/noise proposal and analytical feasibility
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -39,8 +39,15 @@ Follow-up: `research/literature_review/next_step_handoff.md`. FACP now has a par
 methods assessment; FedFR-ADP remains preview-only. Complete methods are still pending.
 `research/threat_specification_review.md` specifies candidate games and verifies weighting,
 metadata and active-ID seed issues; `research/noise_construction_proof_obligations.md` derives
-reference noise controls and estimation obligations. Next: settle the hidden event/observer
-contract, then fully specify public/protected-history and private/population candidate laws.
+reference noise controls and estimation obligations. The owner has now confirmed dataset-contribution secrecy among registered slots. See
+`research/proposals/2026-10-04_mechanism_proposal.md` for public and privately selected joint
+clipping/non-Gaussian profiles, an explicit sampler and construction accounting. Independent
+math review rules out common-ball ellipsoid shaping as a quadratic-utility improvement. The
+first closed-form diagnostic loses at total budgets 4 and 8 and gains slightly at 16 against
+only the listed fixed public controls; an optimized public clipping radius beats the private
+selector at all three budgets. This is not CIA or trained-model evidence. Next: analyze richer
+client heterogeneity against optimized public controls before a complete-vector pilot. Detailed
+pilot defaults remain proposals; no training or attack experiments are running.
 The owner-authorized 141 staged result files were committed and pushed as `1081ff7`.
 The owner broadened the design to potentially new non-Gaussian mechanisms/distributions; see
 `research/non_gaussian_mechanism_research.md`. Gaussian is a control, not a requirement.
