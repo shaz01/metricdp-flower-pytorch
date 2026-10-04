@@ -11,10 +11,10 @@ CIFAR-10 and EuroSAT
 eurosat_cnn and cifar10_cnn
 Homogeneous
 10 rounds
-3 seeds
-Metric only
-Noise ratio 0.0025
+Seed 42 (add 43, 44 only if two cells come out within ~30%)
+Metric only, noise ratio 0.0001 (near-vanilla: no noise feedback, but distances still logged)
 Accuracy only
+The noise at ratio 0.0025 is computed from the measured distances, not run.
 
 If CIFAR-10 is far apart with both models, it's the dataset. Go to Stage B.
 If it changes with the model, it's the model. Keep one model, decide which datasets Stage B uses,
