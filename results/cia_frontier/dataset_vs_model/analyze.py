@@ -13,7 +13,7 @@ from pathlib import Path
 
 from results.cia_frontier.dataset_vs_model.runner import DEFAULT_OUTPUT
 
-_NAME = re.compile(r"^stage-a-(?P<dataset>[a-z0-9]+)-(?P<model>[a-z0-9_]+)-r(?P<ratio>[0-9.e-]+)__")
+_NAME = re.compile(r"^stage-a-(?P<dataset>[a-z0-9]+)-(?P<model>[a-z0-9_]+?)(?:-cap\d+)?-r(?P<ratio>[0-9.e-]+)__")
 
 
 def _median(values):

@@ -20,6 +20,9 @@ from results.contest_at_scale.auc_frontier.eurosat_remove import HYPERPARAMS as 
 
 ROUNDS = 10
 CLIENTS = 48
+# Same data per client in every cell: EuroSAT's 21,600 training images / 48 = 450.
+# Without the cap CIFAR-10 clients hold ~1,040 images and take ~2.3x more local steps.
+MAX_CLIENT_SAMPLES = 450
 NOISE_RATIO = 0.0025  # noise multiplier = ratio x clients, the PLAN.md convention
 HYPERPARAMS = replace(_FRONTIER_HYPERPARAMS, rounds=ROUNDS)
 
@@ -49,11 +52,12 @@ def build_combos(*, seeds, cells=None, ratio=NOISE_RATIO, clients=CLIENTS,
     if unknown or len(set(wanted)) != len(wanted):
         raise ValueError(f"Unknown or repeated cells: {sorted(unknown) or wanted}")
     return [Combo(
-        name_prefix=f"stage-a-{dataset}-{model}-r{ratio!r}",
+        name_prefix=f"stage-a-{dataset}-{model}-cap{MAX_CLIENT_SAMPLES}-r{ratio!r}",
         num_clients=clients, partition="homogeneous", privacy=privacy, aggregation="fedavg",
         seed=seed, noise_multiplier=0.0 if privacy == "vanilla" else ratio * clients,
         hyperparams=replace(HYPERPARAMS, rounds=rounds),
         data_module=DATASETS[dataset], model_module=MODELS[model], data_tag=dataset,
+        max_client_samples=MAX_CLIENT_SAMPLES,
     ) for dataset, model in CELLS if cell_name(dataset, model) in wanted for seed in seeds]
 
 

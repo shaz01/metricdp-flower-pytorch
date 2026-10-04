@@ -28,6 +28,9 @@ class Combo:
     # Set it when a script is renamed so historical run names (and resume /
     # analysis lookups against committed results) stay unchanged.
     data_tag: str | None = None
+    # Per-client sample cap passed to the runner (0 = unlimited, the default).
+    # Not part of run_name(); put it in name_prefix when it matters.
+    max_client_samples: int = 0
 
     def run_name(self) -> str:
         """Build the complete deterministic name from this combo's parameters."""
@@ -107,6 +110,8 @@ class Combo:
             "--run-name",
             self.run_name(),
         )
+        if self.max_client_samples:
+            args = (*args, "--max-client-samples", str(self.max_client_samples))
         if checkpoint_rounds:
             return (
                 *args,

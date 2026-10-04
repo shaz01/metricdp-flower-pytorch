@@ -49,6 +49,13 @@ def test_runner_args_reach_server_config(tmp_path):
     assert config["privacy"] == "metric-privacy" and config["partition-mode"] == "homogeneous"
     assert config["num-clients"] == 48 and config["num-server-rounds"] == 10
     assert config["data-module"] == data.DATASETS["cifar10"]
+    assert config["max-client-samples"] == 450
+
+
+def test_every_cell_caps_clients_to_eurosat_size():
+    combos = runner.build_combos(seeds=[42])
+    assert {c.max_client_samples for c in combos} == {450}
+    assert all("-cap450-" in c.run_name() for c in combos)
 
 
 def test_eurosat32_transform_resizes_and_skips_augmentation():
