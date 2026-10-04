@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-04, two-round protected-history comparison and scope limits
+**Last updated:** 2026-10-04, changing-update quadratic spike with held-out evaluation
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -55,13 +55,18 @@ selection for FL implementation. The two-round protected-history calculation is 
 `results/client_specific_noise/protected_history_two_round.json`: 15 budget/client-count cases,
 selection/noise correlation and aggregate bias accounted. Adaptation improves the tested fixed
 two-round schedule in some cases, but public one-release control wins or ties every case.
-Next: a changing-update quadratic learning problem with shared-history dynamics, equal budget,
-static/public controls and fresh evaluation simulations. No neural training or CIA experiments
-are running; this does not establish a better defense than metric privacy.
+The changing-update quadratic spike is now recorded in
+`research/proposals/2026-10-04_dynamic_quadratic_findings.md`: six cells, 1,024 development
+and 8,192 fresh evaluation federations each. Every selected adaptive profile has equal axes
+and is exactly the static mechanism; one-release controls win, including public shrinkage.
+Next: rotated public-bank and residual-aware protected-history diagnostics to distinguish stale
+selection from missing geometry. No image-model or CIA experiments are running, and no
+experiment-completion decision or better-defense claim is inferred.
 The owner-authorized 141 staged result files were committed and pushed as `1081ff7`.
 The owner broadened the design to potentially new non-Gaussian mechanisms/distributions; see
 `research/non_gaussian_mechanism_research.md`. Gaussian is a control, not a requirement.
-No new experiments have been launched or new mechanism selected. The historical next steps
+Bounded analytical calculations and a synthetic quadratic spike have been run; no final
+mechanism has been selected. The historical next steps
 below are context, not the active agenda.
 
 **`feature/auc-targeted-noise-sweep` is complete (2026-09-01) and merged into `master`.** See

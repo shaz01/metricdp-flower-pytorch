@@ -39,3 +39,7 @@ Owner: “move to the next step”. Deterministic analytical code and outputs no
 ## Two-round protected-history follow-up, 2026-10-04
 
 Owner: “lets move in to that step”. Completed bounded analytical comparison of 15 budget/client-count cases, with a 400,000-draw independent sampler sanity check and independent mathematical review. Selection correlation and nonvanishing aggregate bias are included. Conditional gains versus a fixed two-round static schedule survive some aggregate objectives; all-budget public one-release control beats or ties every case. The next research question needs changing updates under shared global history. No neural training/CIA launch, novelty claim or experiment-completion decision was inferred. Systematic-review counts remain unchanged.
+
+## Changing-update spike, 2026-10-04
+
+Owner: “lets move to that” after the proposed quadratic-learning step. Executed bounded two-round synthetic learning simulations with full shared-history gradients, independent development/evaluation draws, public and same-probe controls, and development-only post-processing fitting. Selected adaptive profiles are isotropic and exactly match static profiles in all six tested cells; stronger one-release controls win. Raw settings and held-out trial losses are committed for reproduction. No image-model/CIA launch or experiment-completion decision was inferred. Next: distinguish stale selection from missing geometry using public rotated-bank/residual-aware diagnostics.

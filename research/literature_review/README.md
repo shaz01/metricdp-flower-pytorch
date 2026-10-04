@@ -4,6 +4,8 @@ Version 1, 2026-10-01. The owner requested both systematic and integrative revie
 
 ## Follow-up after version 1
 
+**Changing-update test:** [held-out quadratic findings](../proposals/2026-10-04_dynamic_quadratic_findings.md) show the selected adaptive bank reverting to identical static profiles in all six cells. One-release public controls perform better, even after fair public shrinkage. This limits the preceding stationary result; no CIA claim follows.
+
 **Protected-history follow-up:** [two-round findings](../proposals/2026-10-04_protected_history_findings.md) include 15 analytical cases and the selection-noise correlation. Adaptation sometimes improves the tested fixed schedule; a public one-release control beats or matches it in every case. Next: changing-update quadratic learning, rather than a deep-model sweep.
 
 **Next-step calculation:** [heterogeneity findings and construction decision](../proposals/2026-10-04_heterogeneity_findings.md) compare 30 bounded analytical cases with optimized public geometry and diamond-noise controls. Separately paid RR selection showed no gain; protected-history construction is the next candidate. Reproduction code and arithmetic artifact are linked in the note. These are not CIA results.
