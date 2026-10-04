@@ -48,7 +48,7 @@ Launch (one cell per account):
 ```
 uv run python scripts/colab/run_experiment.py run --account lab2 --session dvm-a-<cell> --gpu A100 \
   --module results.cia_frontier.dataset_vs_model.runner \
-  --results results/cia_frontier/dataset_vs_model/results/stage_a \
+  --results results/cia_frontier/dataset_vs_model/results/stage_a/<cell> \
   --commit-message "results(dataset_vs_model): stage A <cell>" \
-  -- --execute --cells <cell> --output-dir results/cia_frontier/dataset_vs_model/results/stage_a
+  -- --execute --cells <cell> --output-dir results/cia_frontier/dataset_vs_model/results/stage_a/<cell>
 ```
