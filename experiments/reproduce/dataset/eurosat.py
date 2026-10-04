@@ -72,6 +72,9 @@ class RGBImageTransform:
 
     image_size: tuple[int, int]
     augment: bool = False
+    # Downsample the validated 64x64 image to this size (e.g. (32, 32)) so the
+    # same 32x32 model can run on EuroSAT and CIFAR-10. None keeps native size.
+    resize_to: tuple[int, int] | None = None
 
     def __call__(self, image: Any) -> torch.Tensor:
         if not isinstance(image, Image.Image):
@@ -82,8 +85,10 @@ class RGBImageTransform:
                 f"Expected {self.image_size[0]}×{self.image_size[1]} images, "
                 f"got {rgb.size}."
             )
+        if self.resize_to is not None and self.resize_to != self.image_size:
+            rgb = rgb.resize(self.resize_to, Image.Resampling.BILINEAR)
         if self.augment:
-            rgb = _RANDOM_CROP(rgb)
+            rgb = (_RANDOM_CROP if rgb.size == IMAGE_SIZE else RandomCrop(rgb.size[::-1], padding=4))(rgb)
             rgb = _RANDOM_HORIZONTAL_FLIP(rgb)
         return _TO_TENSOR(rgb)
 
@@ -95,10 +100,20 @@ _EUROSAT_EVAL_TRANSFORM = RGBImageTransform(IMAGE_SIZE, augment=False)
 class EurosatDataset(RecordImageDataset):
     """PyTorch view over Hugging Face EuroSAT records."""
 
-    def __init__(self, dataset: HuggingFaceDataset, *, augment: bool = False) -> None:
+    def __init__(
+        self,
+        dataset: HuggingFaceDataset,
+        *,
+        augment: bool = False,
+        resize_to: tuple[int, int] | None = None,
+    ) -> None:
+        if resize_to is None:
+            transform = _EUROSAT_TRAIN_TRANSFORM if augment else _EUROSAT_EVAL_TRANSFORM
+        else:
+            transform = RGBImageTransform(IMAGE_SIZE, augment=augment, resize_to=resize_to)
         super().__init__(
             dataset,
-            transform=_EUROSAT_TRAIN_TRANSFORM if augment else _EUROSAT_EVAL_TRANSFORM,
+            transform=transform,
             image_column=IMAGE_COLUMN,
             label_column=LABEL_COLUMN,
         )
@@ -148,13 +163,22 @@ class EurosatDataModule:
         cache_dir: str | Path | None = None,
         *,
         train_fraction: float = 0.8,
+        augment: bool = True,
+        resize_to: tuple[int, int] | None = None,
     ) -> None:
         if not 0.0 < train_fraction < 1.0:
             raise ValueError("train_fraction must be in (0, 1).")
+        if resize_to is not None and (len(resize_to) != 2 or min(resize_to) < 1):
+            raise ValueError("resize_to must be a (width, height) pair of positive ints.")
         self.cache_dir = cache_dir
         self.train_fraction = train_fraction
+        self.augment = augment  # training-time random crop + flip (default on)
+        self.resize_to = None if resize_to is None else tuple(int(v) for v in resize_to)
         self._dataset: DatasetDict | None = None
         self._class_names: tuple[str, ...] | None = None
+
+    def _view(self, split: HuggingFaceDataset, *, train: bool) -> EurosatDataset:
+        return EurosatDataset(split, augment=train and self.augment, resize_to=self.resize_to)
 
     @property
     def dataset(self) -> DatasetDict:
@@ -201,14 +225,14 @@ class EurosatDataModule:
             labels, selected, self.train_fraction, seed=loader_seed
         )
         train_loader = make_indexed_loader(
-            EurosatDataset(split, augment=True),
+            self._view(split, train=True),
             train_indices,
             batch_size=batch_size,
             shuffle=True,
             seed=loader_seed,
         )
         eval_loader = make_indexed_loader(
-            EurosatDataset(split, augment=False),
+            self._view(split, train=False),
             test_indices,
             batch_size=batch_size,
             shuffle=False,
@@ -238,14 +262,14 @@ class EurosatDataModule:
             labels, selected, 0.5, seed=seed
         )
         validation_loader = make_indexed_loader(
-            EurosatDataset(split, augment=False),
+            self._view(split, train=False),
             validation_indices,
             batch_size=batch_size,
             shuffle=True,
             seed=seed,
         )
         test_loader = make_indexed_loader(
-            EurosatDataset(split, augment=False),
+            self._view(split, train=False),
             test_indices,
             batch_size=batch_size,
             shuffle=False,

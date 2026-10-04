@@ -109,9 +109,9 @@ def test_client_loaders_train_split_is_augmented_eval_split_is_not(
     seen_augment_flags: list[bool] = []
     original_init = eurosat.EurosatDataset.__init__
 
-    def spy_init(self, records, *, augment: bool = False) -> None:
+    def spy_init(self, records, *, augment: bool = False, resize_to=None) -> None:
         seen_augment_flags.append(augment)
-        original_init(self, records, augment=augment)
+        original_init(self, records, augment=augment, resize_to=resize_to)
 
     monkeypatch.setattr(eurosat.EurosatDataset, "__init__", spy_init)
 
@@ -145,9 +145,9 @@ def test_server_loaders_never_augmented(monkeypatch) -> None:
     seen_augment_flags: list[bool] = []
     original_init = eurosat.EurosatDataset.__init__
 
-    def spy_init(self, records, *, augment: bool = False) -> None:
+    def spy_init(self, records, *, augment: bool = False, resize_to=None) -> None:
         seen_augment_flags.append(augment)
-        original_init(self, records, augment=augment)
+        original_init(self, records, augment=augment, resize_to=resize_to)
 
     monkeypatch.setattr(eurosat.EurosatDataset, "__init__", spy_init)
 
