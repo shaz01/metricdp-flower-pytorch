@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-01, client-side noise literature review version 1 and provisional plan
+**Last updated:** 2026-10-04, dataset_vs_model Stage A launched on Colab (4 cells)
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -139,7 +139,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| _(none)_ | Nothing currently running. | — |
+| `results.cia_frontier.dataset_vs_model.runner --execute --seeds 42 --ratio 0.0001 --cells <cell>` (one cell per session, branch `runs/dataset-vs-model`) | dataset_vs_model Stage A, 4 cells (cifar10/eurosat32 x eurosat_cnn/cifar10_cnn), Colab A100 x4 across 3 Colab accounts | running |
 
 ## What's established on `master`
 
