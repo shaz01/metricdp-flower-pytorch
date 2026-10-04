@@ -34,6 +34,8 @@ from scripts.colab import state as colab_state  # noqa: E402
 HELPER_DIR = Path(__file__).resolve().parent
 SOURCE_ROOTS = ("metricdp_pytorch", "experiments", "scripts")
 SOURCE_FILES = ("pyproject.toml", "uv.lock", ".python-version", "README.md", "LICENSE")
+# Experiment code lives next to its data under results/; ship only its Python files.
+SOURCE_GLOBS = (":(glob)results/**/*.py",)
 SECRET_PATTERNS = (
     re.compile(rb"ghp_[A-Za-z0-9]{20,}"),
     re.compile(rb"github_pat_[A-Za-z0-9_]{20,}"),
@@ -245,6 +247,7 @@ def _source_paths() -> list[Path]:
         "--",
         *SOURCE_ROOTS,
         *SOURCE_FILES,
+        *SOURCE_GLOBS,
     ]
     output = subprocess.run(
         command, cwd=PROJECT_ROOT, check=True, capture_output=True
