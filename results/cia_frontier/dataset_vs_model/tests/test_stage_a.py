@@ -113,3 +113,12 @@ def test_analyze_groups_by_cell(tmp_path):
     assert cell["max_pairwise_distance"] == 2.0 and cell["median_pairwise_distance"] == 1.5
     assert cell["final_accuracy"] == pytest.approx(0.5425)
     assert analyze.summarize(tmp_path, skip_rounds=3)["cifar10+cifar10_cnn"]["update_norm"] is None
+
+
+def test_analyze_reads_per_cell_subdirs(tmp_path):
+    for cell in ("cifar10+cifar10_cnn", "eurosat32+eurosat_cnn"):
+        sub = tmp_path / cell
+        sub.mkdir()
+        combo = runner.build_combos(seeds=[42], cells=[cell])[0]
+        combo.result_path(sub).write_text(json.dumps(_fake_run(42, [6.0], [1.0], 0.5)))
+    assert sorted(analyze.summarize(tmp_path)) == ["cifar10+cifar10_cnn", "eurosat32+eurosat_cnn"]

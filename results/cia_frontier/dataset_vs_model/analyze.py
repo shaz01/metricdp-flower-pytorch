@@ -49,7 +49,8 @@ def summarize_run(data: dict, *, skip_rounds: int = 0) -> dict:
 
 def summarize(output: Path, *, skip_rounds: int = 0) -> dict:
     cells: dict[str, list[dict]] = {}
-    for path in sorted(output.glob("*.json")):
+    # Recursive: each cell runs in its own Colab session and output subdir (stage_a/<cell>/).
+    for path in sorted(output.rglob("*.json")):
         match = _NAME.match(path.name)
         if not match or path.name.endswith(".evaluation.json"):
             continue
