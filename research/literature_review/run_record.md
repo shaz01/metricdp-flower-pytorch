@@ -35,3 +35,7 @@ Owner: “so lets move with our research direction”. Hidden-event reply: **“
 ## Heterogeneity follow-up, 2026-10-04
 
 Owner: “move to the next step”. Deterministic analytical code and outputs now cover 30 synthetic population/budget cases with geometry optimization, selector-budget grids and diamond-law controls. No separately paid private selector beat the strongest listed public control on these grids. This does not establish a universal impossibility result. The next construction candidate reuses already privatized uploads, charging the probe and matching the public baseline. No FL/CIA experiment launch or experiment-completion decision was inferred. Existing K-norm and k-RR primary links were refreshed; no new source-family inclusion or systematic query count was added.
+
+## Two-round protected-history follow-up, 2026-10-04
+
+Owner: “lets move in to that step”. Completed bounded analytical comparison of 15 budget/client-count cases, with a 400,000-draw independent sampler sanity check and independent mathematical review. Selection correlation and nonvanishing aggregate bias are included. Conditional gains versus a fixed two-round static schedule survive some aggregate objectives; all-budget public one-release control beats or ties every case. The next research question needs changing updates under shared global history. No neural training/CIA launch, novelty claim or experiment-completion decision was inferred. Systematic-review counts remain unchanged.

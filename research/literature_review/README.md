@@ -4,6 +4,8 @@ Version 1, 2026-10-01. The owner requested both systematic and integrative revie
 
 ## Follow-up after version 1
 
+**Protected-history follow-up:** [two-round findings](../proposals/2026-10-04_protected_history_findings.md) include 15 analytical cases and the selection-noise correlation. Adaptation sometimes improves the tested fixed schedule; a public one-release control beats or matches it in every case. Next: changing-update quadratic learning, rather than a deep-model sweep.
+
 **Next-step calculation:** [heterogeneity findings and construction decision](../proposals/2026-10-04_heterogeneity_findings.md) compare 30 bounded analytical cases with optimized public geometry and diamond-noise controls. Separately paid RR selection showed no gain; protected-history construction is the next candidate. Reproduction code and arithmetic artifact are linked in the note. These are not CIA results.
 
 **Concrete direction, 2026-10-04:** the owner confirmed dataset-contribution secrecy. Read the [joint clipping/noise proposal](../proposals/2026-10-04_mechanism_proposal.md), [independent mathematical review](../proposals/2026-10-04_candidate_math_review.md), [analytical feasibility check](../proposals/2026-10-04_analytic_feasibility.md), and [proposed pilot protocol](../proposals/2026-10-04_pilot_protocol.md). Private construction cost is explicit; the first analytic comparison is unfavorable at budgets 4 and 8 and slightly favorable at 16 against only the listed fixed controls; optimizing the public clipping radius erases that gain. No CIA improvement or deep-model feasibility is established.

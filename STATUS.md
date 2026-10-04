@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-04, heterogeneous-risk controls and protected-history next candidate
+**Last updated:** 2026-10-04, two-round protected-history comparison and scope limits
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -50,9 +50,14 @@ geometry and selector allocation and adding diamond-law controls. No positive-co
 selector beat the best public control on the bounded grids; see
 `research/proposals/2026-10-04_heterogeneity_findings.md` and
 `results/client_specific_noise/analytical_heterogeneity.json`. Deprioritize separately paid RR
-selection for FL implementation. Next: two-round analytical construction from already protected
-client uploads, with equal probe/budget/global-objective controls. Pilot defaults remain
-proposals; no training or attack experiments are running.
+selection for FL implementation. The two-round protected-history calculation is now recorded in
+`research/proposals/2026-10-04_protected_history_findings.md` and
+`results/client_specific_noise/protected_history_two_round.json`: 15 budget/client-count cases,
+selection/noise correlation and aggregate bias accounted. Adaptation improves the tested fixed
+two-round schedule in some cases, but public one-release control wins or ties every case.
+Next: a changing-update quadratic learning problem with shared-history dynamics, equal budget,
+static/public controls and fresh evaluation simulations. No neural training or CIA experiments
+are running; this does not establish a better defense than metric privacy.
 The owner-authorized 141 staged result files were committed and pushed as `1081ff7`.
 The owner broadened the design to potentially new non-Gaussian mechanisms/distributions; see
 `research/non_gaussian_mechanism_research.md`. Gaussian is a control, not a requirement.
