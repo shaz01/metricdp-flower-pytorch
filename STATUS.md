@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-05, dataset_vs_model Stage B redesigned as IN runs (targets 0–9, every round) + per-client influence log; not launched
+**Last updated:** 2026-10-05, dataset_vs_model Stage B seed 42 IN runs (36) launching on Colab L4
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -139,6 +139,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| `results.cia_frontier.dataset_vs_model.stage_b --execute --seeds 42 <shard args>` (IN runs; 6 shards x 6 runs, output `stage_b/<shard>`, branch `runs/dataset-vs-model`) | dataset_vs_model Stage B seed 42, 36 IN runs, Colab L4 across 3 Colab accounts (pilot wave of 3 shards, then the rest) | running |
 | `results.cia_frontier.dataset_vs_model.stage_b --execute --seeds 42 <shard args>` (6 shards x 6 runs, output `stage_b/<shard>`, branch `runs/dataset-vs-model`) | dataset_vs_model Stage B seed 42 (36 runs), Colab A100 across 3 Colab accounts; stopped by user for redesign after ~10 min, 0 runs finished (see `results/failures/stage-b-seed42-attempt1-stopped.json`) | stopped |
 
 ## What's established on `master`
