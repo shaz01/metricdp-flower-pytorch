@@ -4,6 +4,8 @@ Version 1, 2026-10-01. The owner requested both systematic and integrative revie
 
 ## Follow-up after version 1
 
+**Broader oracle, 2026-10-05:** [findings and next decision](../proposals/2026-10-05_broader_oracle_findings.md) test all three bias contrasts and the full 51-dimensional identifiable reduced head on fresh test examples. Only bias calibration in label stress at round 20/label 8 clears the 0.001 CE point gate across three seeds; two noise-only intervals clear it. Full-head personalization does not. The opportunity concerns clipped aggregate signal, not demonstrated covariance-noise benefit. Next proposed work is a narrow construction/accounting design review.
+
 **Real-data geometry audit, 2026-10-05:** [findings and construction decision](../proposals/2026-10-05_client_geometry_findings.md) confirm persistent centered covariance differences in explicit label stress, but the best raw-information oracle gain is only 0.000363 CE, below the 0.001 feasibility gate. The two-bias-coordinate restriction prevents a full-model conclusion. Broader oracle design review precedes a private estimator. No CIA claim follows.
 
 **Oct-4 stopping point:** [rotated/residual comparison](../proposals/2026-10-04_rotated_residual_findings.md) adds rotated public geometry and refreshed selectors. Residual selection beats tuned static geometry only once, by ~0.39% at a large privacy budget; one-release controls win throughout. The owner requested stopping after this comparison.

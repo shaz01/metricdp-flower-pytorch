@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-05, real-data client-geometry audit; no jobs running
+**Last updated:** 2026-10-05, broader head oracle; no jobs running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -70,9 +70,16 @@ partitions and 27 snapshots. Centered covariance is distinct and persistent in l
 full-information profile assignment gains at most 0.000363 CE in 81 two-bias-coordinate
 comparisons, below the 0.001 feasibility gate. The gain changes clipped means rather than
 reducing noise penalty. These are raw-information diagnostics, not DP/CIA evidence.
-Next proposed decision: broaden the fixed parameter-block oracle and shared controls before
-paying for a private geometry estimator. No further jobs running, no CNN/Flower/CIA sweep
-or experiment-completion decision inferred.
+The owner then approved the broader oracle. See
+`research/proposals/2026-10-05_broader_oracle_findings.md`: fresh test slice, 36 rows/108
+comparisons, shared/oracle clipping and step-shrink optimization. All three bias contrasts
+show a marginal label-stress round-20/label-8 gain of 0.001036–0.001126 CE in three seeds;
+two of three noise-only intervals clear 0.001. Full 51-dimensional head has no gate pass.
+The bias gain changes aggregate means despite higher noise cost. Next proposed step is a
+narrow bias-calibration design review: prioritize a frozen public per-slot profile control
+(the same assignment repeats across seeds), then complete-transcript accounting before
+any private estimator implementation.
+No further jobs running, no CNN/Flower/CIA sweep or experiment-completion decision inferred.
 The owner-authorized 141 staged result files were committed and pushed as `1081ff7`.
 The owner broadened the design to potentially new non-Gaussian mechanisms/distributions; see
 `research/non_gaussian_mechanism_research.md`. Gaussian is a control, not a requirement.
@@ -184,7 +191,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| _(none)_ | Nothing currently running. | — |
+| `uv run python -m research.calculations.broader_geometry_oracle` | Local CPU: fresh-evaluation 3/51-dimensional head oracle, saved under `results/client_specific_noise/` | Done; no jobs running |
 
 ## What's established on `master`
 
