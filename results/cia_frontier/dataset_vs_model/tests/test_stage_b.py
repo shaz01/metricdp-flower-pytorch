@@ -87,6 +87,28 @@ def test_cifar10_train_pool_is_stratified_fixed_subset():
         Cifar10DataModule(train_subsample=-1)
 
 
+def test_round_matched_score_synthetic():
+    from results.cia_frontier.per_client_score import score_rows
+    inside = [dict(round=r, target=t, clean_loss=float(r + t)) for r in (1, 2) for t in (0, 1)]
+    outside = [dict(round=r, target=t, clean_loss=float(r + t + (1 if t == 0 else -1)))
+               for r in (1, 2) for t in (0, 1)]
+    scored = score_rows(inside, outside)
+    assert scored["per_target"] == {"0": 1.0, "1": 0.0}
+    assert scored["mean"] == 0.5 and scored["matched_rounds"] == 2
+
+
+def test_pure_influence_diagnostics():
+    from metricdp_pytorch.influence_diagnostics import per_client_influence
+    original = [np.array([3., 0.]), np.array([0., 2.])]
+    snapshot = [u.copy() for u in original]
+    rows = per_client_influence(original, [8, 3], [1, 3], 2.)
+    assert set(rows) == {"8", "3"}
+    assert rows["8"]["clipped"] is True
+    assert rows["3"]["aggregation_weight"] == 0.75
+    assert rows["8"]["leave_one_out_influence_norm"] >= 0
+    assert all(np.array_equal(a, b) for a, b in zip(original, snapshot))
+
+
 def test_stage_b_cifar10_module_is_eurosat_sized():
     module = data.create_cifar10_small({})
     assert module.train_subsample == 21_600 and module.subsample_seed == 0

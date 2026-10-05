@@ -27,28 +27,27 @@ After Stage A.
 It's the combination: CIFAR-10 clients drift apart only with cifar10_cnn (0.76 vs 0.41–0.42
 elsewhere). Model branch. See README.
 
-## Stage B: accuracy gap
-CIFAR-10 and EuroSAT (32×32), both with a 21,600-image pool (CIFAR-10 cut to EuroSAT's size
-before partitioning, fixed subset), so clients get the same data under any partition.
-Model: cifar10_cnn (the one where the two datasets differ in Stage A).
-Homogeneous and Dirichlet α = 0.3
-20 rounds
-3 seeds
+## Stage B: accuracy and IN measurements
+CIFAR-10 and EuroSAT (32×32), each with 21,600 training images. CIFAR-10 uses the same fixed
+stratified subset before partitioning. At 48 clients, that is 450 images per client on average.
+Model: cifar10_cnn. Use homogeneous and Dirichlet α = 0.3 partitions, 20 rounds, and seed 42.
+Every run is an IN run for targets 0–9. It evaluates clean and noisy shadow losses each round.
+The clean shadow is a deterministic stratified 10% subset of the target's training records. The
+IN model trains on the full target training split, including those shadow records.
+
 Vanilla, Global, Metric
 Noise ratios 0.001, 0.0025, 0.004, 0.00625 (contest_at_scale/cifar10's three, plus 0.001 below:
 at 450 images/client the same ratio is heavier, and metric-privacy adds 1.3–2.9× global-DP's
 noise here, so each curve needs a point before collapse)
-Accuracy only
-= 2 × 2 × (1 + 2 × 4) × 3 = 108 runs.
-
-Shows how the dataset changes the gap, and how label skew changes it. Compare mechanisms at
-equal accuracy, not equal ratio.
+The plan is 2 × 2 × (1 + 2 × 4) = 36 IN runs. Build OUT runs later with `--out-targets`;
+they exclude one target and use its identical shadow records. Compare mechanisms at equal
+accuracy, not equal ratio.
 
 ## Stage C: attack
-Same runs as Stage B, with the attack (IN/OUT).
+Reuse the Stage B IN losses and add OUT runs later. Score each target by the fraction of matched
+rounds where its IN clean-shadow loss is lower than its OUT loss, then average targets.
 
-Shows how label skew changes the attack score. First time we compare homogeneous and real
-non-IID at the same settings.
+Per-client influence diagnostics are saved in each training round for all privacy modes.
 
 # Code
 - `runner.py` plans Stage A (`--execute` trains; `--cells` shards across machines).

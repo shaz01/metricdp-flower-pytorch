@@ -84,6 +84,15 @@ def controller_active_sessions(controller_dir: Path, account: str) -> set[str]:
     return active
 
 
+def recorded_gpu_type(controller_dir: Path, session: str) -> str:
+    """Read the accelerator recorded by the controller for this session."""
+    path = controller_dir / f"{session}.json"
+    gpu = json.loads(path.read_text()).get("gpu") if path.exists() else None
+    if not gpu:
+        raise ValueError(f"Missing recorded GPU type for reattached session {session}")
+    return str(gpu)
+
+
 def _log(message: str) -> None:
     print(f"{datetime.now(UTC).isoformat(timespec='seconds')} {message}", flush=True)
 
@@ -136,9 +145,10 @@ def cycle(state, controller_dir: Path | None, account: str, reattach: bool) -> N
     from colab_cli.state import SessionState
 
     name, live = pair
+    recorded_gpu = recorded_gpu_type(controller_dir, name)
     session = SessionState(
         name=name, token=live.token, url=live.url, endpoint=live.endpoint,
-        variant="GPU", accelerator="A100",
+        variant="GPU", accelerator=recorded_gpu,
     )
     store.add(session)
     session.keep_alive_pid = spawn_keep_alive(

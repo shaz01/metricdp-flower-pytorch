@@ -38,6 +38,17 @@ def test_plan_reattach_requires_single_unambiguous_pair():
     assert refresher.plan_reattach(set(), set(), {"b"}, [unnamed, Listed("ep-2", "t", "u")]) is None
 
 
+def test_recorded_gpu_type(tmp_path: Path):
+    (tmp_path / "run.json").write_text(json.dumps({"gpu": "L4"}))
+    assert refresher.recorded_gpu_type(tmp_path, "run") == "L4"
+    try:
+        refresher.recorded_gpu_type(tmp_path, "missing")
+    except ValueError as error:
+        assert "Missing recorded GPU" in str(error)
+    else:
+        raise AssertionError("missing recorded GPU should fail")
+
+
 def test_controller_active_sessions_filters_account_and_phase(tmp_path: Path):
     for name, account, phase in [
         ("s1", "lab2", "training"),
