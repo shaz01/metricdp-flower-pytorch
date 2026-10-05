@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-05, dataset_vs_model Stage B seed 42 IN runs (36) launching on Colab L4
+**Last updated:** 2026-10-05, dataset_vs_model Stage B IN seed 42 lost (controller machine slept, Colab VMs reclaimed); awaiting relaunch decision
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -139,7 +139,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `results.cia_frontier.dataset_vs_model.stage_b --execute --seeds 42 <shard args>` (IN runs; 6 shards x 6 runs, output `stage_b/<shard>`, branch `runs/dataset-vs-model`) | dataset_vs_model Stage B seed 42, 36 IN runs, Colab L4: 2 concurrent on one account, 1 each on the other two (2nd session refused) with one shard queued behind each | running |
+| `results.cia_frontier.dataset_vs_model.stage_b --execute --seeds 42 <shard args>` (IN runs; 6 shards x 6 runs, output `stage_b/<shard>`, branch `runs/dataset-vs-model`) | dataset_vs_model Stage B seed 42, 36 IN runs, Colab L4: 2 concurrent on one account, 1 each on the other two (2nd session refused) with one shard queued behind each; all VMs reclaimed while the controller machine slept, 0 runs collected (see `results/failures/stage-b-in-seed42-attempt2-lost.json`) | stopped |
 | `results.cia_frontier.dataset_vs_model.stage_b --execute --seeds 42 <shard args>` (6 shards x 6 runs, output `stage_b/<shard>`, branch `runs/dataset-vs-model`) | dataset_vs_model Stage B seed 42 (36 runs), Colab A100 across 3 Colab accounts; stopped by user for redesign after ~10 min, 0 runs finished (see `results/failures/stage-b-seed42-attempt1-stopped.json`) | stopped |
 
 ## What's established on `master`
