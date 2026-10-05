@@ -4,6 +4,8 @@ Version 1, 2026-10-01. The owner requested both systematic and integrative revie
 
 ## Follow-up after version 1
 
+**Frozen slot control, 2026-10-05:** [findings](../proposals/2026-10-05_public_slot_findings.md) show the prior fully frozen profile assignment exactly matching the oracle in aligned primary cases, with fresh gains below0.001. Reassigning the same clients to different slots makes the frozen pattern harmful. The prior signal does not establish that private distribution estimation is needed. Next proposed work is a permutation-equivariant local construction/accounting design review before more implementation.
+
 **Broader oracle, 2026-10-05:** [findings and next decision](../proposals/2026-10-05_broader_oracle_findings.md) test all three bias contrasts and the full 51-dimensional identifiable reduced head on fresh test examples. Only bias calibration in label stress at round 20/label 8 clears the 0.001 CE point gate across three seeds; two noise-only intervals clear it. Full-head personalization does not. The opportunity concerns clipped aggregate signal, not demonstrated covariance-noise benefit. Next proposed work is a narrow construction/accounting design review.
 
 **Real-data geometry audit, 2026-10-05:** [findings and construction decision](../proposals/2026-10-05_client_geometry_findings.md) confirm persistent centered covariance differences in explicit label stress, but the best raw-information oracle gain is only 0.000363 CE, below the 0.001 feasibility gate. The two-bias-coordinate restriction prevents a full-model conclusion. Broader oracle design review precedes a private estimator. No CIA claim follows.

@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-05, broader head oracle; no jobs running
+**Last updated:** 2026-10-05, frozen slot-profile diagnostic; no jobs running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -75,10 +75,14 @@ The owner then approved the broader oracle. See
 comparisons, shared/oracle clipping and step-shrink optimization. All three bias contrasts
 show a marginal label-stress round-20/label-8 gain of 0.001036–0.001126 CE in three seeds;
 two of three noise-only intervals clear 0.001. Full 51-dimensional head has no gate pass.
-The bias gain changes aggregate means despite higher noise cost. Next proposed step is a
-narrow bias-calibration design review: prioritize a frozen public per-slot profile control
-(the same assignment repeats across seeds), then complete-transcript accounting before
-any private estimator implementation.
+The bias gain changes aggregate means despite higher noise cost. The owner approved the
+frozen per-slot control: `research/proposals/2026-10-05_public_slot_findings.md`. On a third
+fresh test slice, the fully frozen configuration exactly matches the oracle in three aligned
+primary cells; gains 0.000938–0.000998 CE fail the retained 0.001 gate. Cyclically reassigning
+the same clients makes it 0.001748–0.001783 worse than tuned shared, exposing slot-label
+alignment. 24 rows/72 comparisons/four arms saved. Next proposed step: permutation-equivariant
+client-local construction/accounting design review, measuring selector cost against small
+headroom before any estimator implementation. No novelty/DP/CIA claim follows.
 No further jobs running, no CNN/Flower/CIA sweep or experiment-completion decision inferred.
 The owner-authorized 141 staged result files were committed and pushed as `1081ff7`.
 The owner broadened the design to potentially new non-Gaussian mechanisms/distributions; see
@@ -191,7 +195,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `uv run python -m research.calculations.broader_geometry_oracle` | Local CPU: fresh-evaluation 3/51-dimensional head oracle, saved under `results/client_specific_noise/` | Done; no jobs running |
+| `uv run python -m research.calculations.public_slot_profile_probe` | Local CPU: frozen slot profiles/roster shift, saved under `results/client_specific_noise/` | Done; no jobs running |
 
 ## What's established on `master`
 
