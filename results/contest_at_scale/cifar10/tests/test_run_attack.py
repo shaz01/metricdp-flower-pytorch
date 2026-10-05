@@ -98,4 +98,6 @@ def test_renamed_script_keeps_historical_run_names() -> None:
     assert combo.data_module.startswith("results.contest_at_scale.cifar10.run_attack:")
     assert "__cifar10_remove__cifar10_cnn" in combo.run_name()
     committed = DEFAULT_OUTPUT_DIR / "clients-8" / "in-remove" / "vanilla" / "runs"
+    if not committed.is_dir():
+        pytest.skip("committed cifar10 results not checked out (sparse worktree)")
     assert combo.result_path(committed).exists()
