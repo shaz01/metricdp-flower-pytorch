@@ -4,6 +4,8 @@ Version 1, 2026-10-01. The owner requested both systematic and integrative revie
 
 ## Follow-up after version 1
 
+**Paid protected-history replay, 2026-10-05:** [findings and next design question](../proposals/2026-10-05_protected_real_history_findings.md) retain probe-selection correlation and match static/full-budget controls. Six of 54 cases improve over one release, only in label stress at budget 8, by 0.000109–0.000247 development quadratic loss; zero 0.001 gates. Raw anchored replay and unaccounted calibration do not certify private training or CIA protection. Next proposed work: review the observer-specific protection contract before another construction/sweep.
+
 **Hidden-mixture and adjacency audit, 2026-10-05:** [analytic argument and fair cost results](../proposals/2026-10-05_hidden_mixture_findings.md) show generic tails approaching the additive bound for the current hidden-selector law. Contribution/dummy adjacency permits smaller noise independently of hiding the category; applying that change equally to controls leaves no0.001 development gate pass. Protected-history routing on measured label skew remains the next proposed design/cost question.
 
 **Client-local construction/cost review, 2026-10-05:** [law and findings](../proposals/2026-10-05_local_selector_findings.md) define slot-invariant local routing, categorical RR and conditional L1 upload accounting. Exact development costs leave small label-stress gains at 8/16 but no 0.001 gate pass; raw history/calibration costs remain excluded. Deprioritize this paid selector. Protected-history or hidden-mixture analysis remains a proposed question, not a selected defense.

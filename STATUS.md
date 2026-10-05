@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-05, hidden-mixture bounds and fair dummy costs; no jobs running
+**Last updated:** 2026-10-05, paid protected-history real-data replay; no jobs running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -93,8 +93,15 @@ additive bound, so hiding the category gives no uniform discount for this law. S
 dummy-edge accounting is xi+eta/2 rather than replacement xi+eta; recalibrating both routes
 and controls fairly leaves 12/54 small development gains, zero 0.001 gates, maximum 0.000655.
 Uniform sharpness is not a fixed-trained-head/domain claim; raw history/calibration remain
-unaccounted. Next proposed work: protected-history routing on the measured label-skew
-setting, including probe cost and matched one-release control, before implementation.
+unaccounted. The owner approved the paid protected-history replay:
+`research/proposals/2026-10-05_protected_real_history_findings.md`. Saved early/later bias
+updates, full probe-selection correlation and paid probe budget, 18 records/54 cases, fresh
+16,384 probe draws per case. Adaptive beats matched static in 18, optimized static in 12
+(label stress, budgets 8/16), and full-budget one release in six (label stress, budget 8).
+Strong-control gains 0.000109–0.000247 quadratic loss; zero 0.001 gates. Offline raw-anchor
+replay, development-data reuse and unaccounted calibration exclude private-training/CIA
+claims. Next proposed work: observer-specific protection contract and legitimate aggregate-
+output construction before another sampler/sweep; do not silently change trust assumptions.
 No further jobs running, no CNN/Flower/CIA sweep or experiment-completion decision inferred.
 The owner-authorized 141 staged result files were committed and pushed as `1081ff7`.
 The owner broadened the design to potentially new non-Gaussian mechanisms/distributions; see
@@ -207,7 +214,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `uv run python -m research.calculations.hidden_mixture_audit` | Local CPU: tail/dummy cost audit, saved under `results/client_specific_noise/` | Done; no jobs running |
+| Protected-history real-data replay | Local CPU: 54 cases saved and independently verified; no test/CIA | Done; no jobs running |
 
 ## What's established on `master`
 
