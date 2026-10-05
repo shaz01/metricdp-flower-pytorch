@@ -32,11 +32,18 @@ Run these as one `&&` chain. If the `cd` fails, the later commands would hit the
 
 ## Environment
 
-Reuse the main checkout's venv instead of creating a new one:
+Reuse the main checkout's venv, and always set `PYTHONPATH` to the worktree root:
 
 ```bash
-UV_PROJECT_ENVIRONMENT="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.venv" uv run --no-sync <cmd>
+PYTHONPATH="$PWD" UV_PROJECT_ENVIRONMENT="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.venv" uv run --no-sync <cmd>
 ```
+
+Run it from the worktree root. Both parts are needed on every command (each shell call is fresh):
+
+- The main venv has the project installed in editable mode, which puts the **main checkout** on
+  the import path. Without `PYTHONPATH`, anything run by file path (`python path/to/script.py`)
+  or from another folder silently imports the main checkout's code instead of the worktree's.
+- `--no-sync` stops uv from reinstalling the project into the shared venv.
 
 Only `uv sync` a separate venv if the branch changes dependencies (`pyproject.toml`/`uv.lock`).
 
