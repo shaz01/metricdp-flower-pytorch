@@ -4,7 +4,9 @@ Version 1, 2026-10-01. The owner requested both systematic and integrative revie
 
 ## Follow-up after version 1
 
-**Tonight’s stopping point:** [rotated/residual comparison](../proposals/2026-10-04_rotated_residual_findings.md) adds rotated public geometry and refreshed selectors. Residual selection beats tuned static geometry only once, by ~0.39% at a large privacy budget; one-release controls win throughout. The owner requested stopping after this comparison.
+**Real-data geometry audit, 2026-10-05:** [findings and construction decision](../proposals/2026-10-05_client_geometry_findings.md) confirm persistent centered covariance differences in explicit label stress, but the best raw-information oracle gain is only 0.000363 CE, below the 0.001 feasibility gate. The two-bias-coordinate restriction prevents a full-model conclusion. Broader oracle design review precedes a private estimator. No CIA claim follows.
+
+**Oct-4 stopping point:** [rotated/residual comparison](../proposals/2026-10-04_rotated_residual_findings.md) adds rotated public geometry and refreshed selectors. Residual selection beats tuned static geometry only once, by ~0.39% at a large privacy budget; one-release controls win throughout. The owner requested stopping after this comparison.
 
 **Changing-update test:** [held-out quadratic findings](../proposals/2026-10-04_dynamic_quadratic_findings.md) show the selected adaptive bank reverting to identical static profiles in all six cells. One-release public controls perform better, even after fair public shrinkage. This limits the preceding stationary result; no CIA claim follows.
 

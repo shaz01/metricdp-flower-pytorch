@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-04, rotated/residual comparison; owner requested stop tonight
+**Last updated:** 2026-10-05, real-data client-geometry audit; no jobs running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -62,14 +62,21 @@ and is exactly the static mechanism; one-release controls win, including public 
 The rotated-bank/residual-aware comparison is recorded in
 `research/proposals/2026-10-04_rotated_residual_findings.md`: residual selection beats stale
 selection in four of six cells but beats tuned public geometry in only one cell, by ~0.39%
-at E=16,N=8. One-release controls still win throughout. The owner explicitly selected
-“Stop after this comparison”; stop tonight after documenting/pushing, with no further jobs
-running. On resume, decide whether realistic persistent client-specific geometry warrants
-another constructor. No image-model/CIA experiment or completion decision is inferred.
+at E=16,N=8. One-release controls still win throughout. The owner's Oct-4 stop instruction
+was respected. On Oct-5 “lets move to the next step” authorized the client-geometry audit.
+See `research/proposals/2026-10-05_client_geometry_findings.md`: cached Fashion-MNIST,
+a 68-parameter fixed-feature classifier, three seeds, balanced/quantity/explicit label-stress
+partitions and 27 snapshots. Centered covariance is distinct and persistent in label stress;
+full-information profile assignment gains at most 0.000363 CE in 81 two-bias-coordinate
+comparisons, below the 0.001 feasibility gate. The gain changes clipped means rather than
+reducing noise penalty. These are raw-information diagnostics, not DP/CIA evidence.
+Next proposed decision: broaden the fixed parameter-block oracle and shared controls before
+paying for a private geometry estimator. No further jobs running, no CNN/Flower/CIA sweep
+or experiment-completion decision inferred.
 The owner-authorized 141 staged result files were committed and pushed as `1081ff7`.
 The owner broadened the design to potentially new non-Gaussian mechanisms/distributions; see
 `research/non_gaussian_mechanism_research.md`. Gaussian is a control, not a requirement.
-Bounded analytical calculations and a synthetic quadratic spike have been run; no final
+Bounded analytical calculations, synthetic quadratic spikes and a reduced real-data geometry audit have been run; no final
 mechanism has been selected. The historical next steps
 below are context, not the active agenda.
 
