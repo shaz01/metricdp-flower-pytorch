@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-05, frozen slot-profile diagnostic; no jobs running
+**Last updated:** 2026-10-05, client-local selector law and cost review; no jobs running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -80,9 +80,15 @@ frozen per-slot control: `research/proposals/2026-10-05_public_slot_findings.md`
 fresh test slice, the fully frozen configuration exactly matches the oracle in three aligned
 primary cells; gains 0.000938–0.000998 CE fail the retained 0.001 gate. Cyclically reassigning
 the same clients makes it 0.001748–0.001783 worse than tuned shared, exposing slot-label
-alignment. 24 rows/72 comparisons/four arms saved. Next proposed step: permutation-equivariant
-client-local construction/accounting design review, measuring selector cost against small
-headroom before any estimator implementation. No novelty/DP/CIA claim follows.
+alignment. 24 rows/72 comparisons/four arms saved. The owner approved the local rule/cost
+review: `research/proposals/2026-10-05_local_selector_findings.md`. A local dominant-class
+route with purity fallback is slot-permutation invariant; conditional RR+L1-upload law is
+specified with full assumptions. Exact development moments include selector variance and
+remaining-budget noise. 18 records/54 cells: 12 small label-stress gains at labels 8/16,
+42 losses, zero 0.001 gates; largest optimistic gain 0.000850. Public mixtures tie shared.
+Raw history/global calibration are still unaccounted; no actual DP training/CIA claim.
+Deprioritize paid RR implementation. Next proposed question: protected-history routing or
+uniform analysis of the hidden-selector mixture, with full costs and stronger controls.
 No further jobs running, no CNN/Flower/CIA sweep or experiment-completion decision inferred.
 The owner-authorized 141 staged result files were committed and pushed as `1081ff7`.
 The owner broadened the design to potentially new non-Gaussian mechanisms/distributions; see
@@ -195,7 +201,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `uv run python -m research.calculations.public_slot_profile_probe` | Local CPU: frozen slot profiles/roster shift, saved under `results/client_specific_noise/` | Done; no jobs running |
+| `uv run python -m research.calculations.local_selector_cost` | Local CPU: exact development costs, saved under `results/client_specific_noise/` | Done; no jobs running |
 
 ## What's established on `master`
 
