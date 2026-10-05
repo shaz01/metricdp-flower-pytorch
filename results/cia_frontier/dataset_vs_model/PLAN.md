@@ -23,15 +23,26 @@ then go to Stage B. We still need the homogeneous vs non-IID data.
 # Runs held off
 After Stage A.
 
+## Stage A result
+It's the combination: CIFAR-10 clients drift apart only with cifar10_cnn (0.76 vs 0.41–0.42
+elsewhere). Model branch. See README.
+
 ## Stage B: accuracy gap
-CIFAR-10 and EuroSAT
-One model for both
+CIFAR-10 and EuroSAT (32×32), both with a 21,600-image pool (CIFAR-10 cut to EuroSAT's size
+before partitioning, fixed subset), so clients get the same data under any partition.
+Model: cifar10_cnn (the one where the two datasets differ in Stage A).
 Homogeneous and Dirichlet α = 0.3
+20 rounds
 3 seeds
 Vanilla, Global, Metric
+Noise ratios 0.001, 0.0025, 0.004, 0.00625 (contest_at_scale/cifar10's three, plus 0.001 below:
+at 450 images/client the same ratio is heavier, and metric-privacy adds 1.3–2.9× global-DP's
+noise here, so each curve needs a point before collapse)
 Accuracy only
+= 2 × 2 × (1 + 2 × 4) × 3 = 108 runs.
 
-Shows how the dataset changes the gap, and how label skew changes it.
+Shows how the dataset changes the gap, and how label skew changes it. Compare mechanisms at
+equal accuracy, not equal ratio.
 
 ## Stage C: attack
 Same runs as Stage B, with the attack (IN/OUT).
@@ -42,7 +53,10 @@ non-IID at the same settings.
 # Code
 - `runner.py` plans Stage A (`--execute` trains; `--cells` shards across machines).
 - `analyze.py` prints per-cell update norm, pairwise distance, metric-privacy noise, accuracy.
+- `stage_b.py` / `analyze_stage_b.py`: same for Stage B (cells = dataset+partition; `--cells`,
+  `--privacy`, `--ratios`, `--seeds` shard).
 - EuroSAT data module gained `resize_to` and `augment` options (defaults unchanged).
+- CIFAR-10 data module gained `train_subsample` / `subsample_seed` (default off).
 
 Launch (one cell per account):
 ```

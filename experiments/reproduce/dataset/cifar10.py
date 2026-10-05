@@ -32,6 +32,7 @@ from metricdp_pytorch.utils.split_data import (
     dirichlet_label_partitions,
     label_shard_partitions,
     quantity_skewed_partitions,
+    split_stratified,
 )
 
 DATASET_ID = "uoft-cs/cifar10"
@@ -139,19 +140,44 @@ class Cifar10DataModule:
         cache_dir: str | Path | None = None,
         *,
         train_fraction: float = 0.8,
+        train_subsample: int = 0,
+        subsample_seed: int = 0,
     ) -> None:
         if not 0.0 < train_fraction < 1.0:
             raise ValueError("train_fraction must be in (0, 1).")
+        if train_subsample < 0:
+            raise ValueError("train_subsample must be non-negative (0 = full training set).")
         self.cache_dir = cache_dir
         self.train_fraction = train_fraction
+        # Stratified subset of the 50k training pool taken BEFORE partitioning, so the
+        # pool size (and hence per-client data) can match another dataset's. Fixed
+        # ``subsample_seed`` keeps the pool identical across training seeds.
+        self.train_subsample = train_subsample
+        self.subsample_seed = subsample_seed
         self.class_names = CLASS_NAMES
         self._dataset: DatasetDict | None = None
+        self._train_pool: HuggingFaceDataset | None = None
 
     @property
     def dataset(self) -> DatasetDict:
         if self._dataset is None:
             self._dataset = load_cifar10_dataset(self.cache_dir)
         return self._dataset
+
+    @property
+    def train_pool(self) -> HuggingFaceDataset:
+        """Training records partitioned across clients (full split or stratified subset)."""
+        if self._train_pool is None:
+            split = self.dataset["train"]
+            if self.train_subsample and self.train_subsample < len(split):
+                labels = labels_from_records(split)
+                keep, _ = split_stratified(
+                    labels, range(len(labels)), self.train_subsample / len(labels),
+                    seed=self.subsample_seed,
+                )
+                split = split.select(sorted(keep))
+            self._train_pool = split
+        return self._train_pool
 
     def client_loaders(
         self,
@@ -166,7 +192,7 @@ class Cifar10DataModule:
         dirichlet_alpha: float = 0.5,
         max_samples: int = 0,
     ) -> tuple[DataLoader, DataLoader]:
-        split = self.dataset["train"]
+        split = self.train_pool
         labels = labels_from_records(split)
         partitions = create_partitions(
             labels,
@@ -213,4 +239,6 @@ def create_data_module(config: Mapping[str, Any]) -> Cifar10DataModule:
     return Cifar10DataModule(
         cache_dir=cache_dir,
         train_fraction=float(config.get("train-fraction", 0.8)),
+        train_subsample=int(config.get("train-subsample", 0)),
+        subsample_seed=int(config.get("subsample-seed", 0)),
     )
