@@ -4,6 +4,8 @@ Version 1, 2026-10-01. The owner requested both systematic and integrative revie
 
 ## Follow-up after version 1
 
+**Hidden-mixture and adjacency audit, 2026-10-05:** [analytic argument and fair cost results](../proposals/2026-10-05_hidden_mixture_findings.md) show generic tails approaching the additive bound for the current hidden-selector law. Contribution/dummy adjacency permits smaller noise independently of hiding the category; applying that change equally to controls leaves no0.001 development gate pass. Protected-history routing on measured label skew remains the next proposed design/cost question.
+
 **Client-local construction/cost review, 2026-10-05:** [law and findings](../proposals/2026-10-05_local_selector_findings.md) define slot-invariant local routing, categorical RR and conditional L1 upload accounting. Exact development costs leave small label-stress gains at 8/16 but no 0.001 gate pass; raw history/calibration costs remain excluded. Deprioritize this paid selector. Protected-history or hidden-mixture analysis remains a proposed question, not a selected defense.
 
 **Frozen slot control, 2026-10-05:** [findings](../proposals/2026-10-05_public_slot_findings.md) show the prior fully frozen profile assignment exactly matching the oracle in aligned primary cases, with fresh gains below0.001. Reassigning the same clients to different slots makes the frozen pattern harmful. The prior signal does not establish that private distribution estimation is needed. Next proposed work is a permutation-equivariant local construction/accounting design review before more implementation.
