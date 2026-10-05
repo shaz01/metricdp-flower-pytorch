@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-04, dataset_vs_model Stage A (4 cells, seed 42) collected; awaiting owner review
+**Last updated:** 2026-10-04, dataset_vs_model Stage B (seed 42, 36 runs) launched on Colab
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -139,6 +139,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| `results.cia_frontier.dataset_vs_model.stage_b --execute --seeds 42 <shard args>` (6 shards x 6 runs, output `stage_b/<shard>`, branch `runs/dataset-vs-model`) | dataset_vs_model Stage B seed 42 (36 runs), Colab A100 x6 across 3 Colab accounts (2 each) | running |
 | `results.cia_frontier.dataset_vs_model.runner --execute --seeds 42 --ratio 0.0001 --cells <cell>` (one cell per session, output `stage_a/<cell>`, branch `runs/dataset-vs-model`) | dataset_vs_model Stage A, 4 cells (cifar10/eurosat32 x eurosat_cnn/cifar10_cnn), Colab A100 x4 across 3 Colab accounts; attempt 1 failed at startup (see `results/failures/`) | done (attempt 2, collected into `stage_a/<cell>/`) |
 
 ## What's established on `master`
