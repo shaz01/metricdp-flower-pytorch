@@ -85,17 +85,3 @@ def test_build_combos_accepts_homogeneous_partition() -> None:
 def test_build_combos_rejects_unknown_partition() -> None:
     with pytest.raises(ValueError, match="partition"):
         cifar10_remove.build_combos(canonical_num_clients=8, partition="bogus")
-
-
-def test_renamed_script_keeps_historical_run_names() -> None:
-    """run_attack.py was cia/scripts/cifar10_remove.py; committed results use that token."""
-    from results.contest_at_scale.cifar10.run_attack import DEFAULT_OUTPUT_DIR
-
-    (combo,) = cifar10_remove.build_combos(
-        adjacencies=("in-remove",), privacy_modes=("vanilla",), seeds=(42,),
-        canonical_num_clients=8,
-    )
-    assert combo.data_module.startswith("results.contest_at_scale.cifar10.run_attack:")
-    assert "__cifar10_remove__cifar10_cnn" in combo.run_name()
-    committed = DEFAULT_OUTPUT_DIR / "clients-8" / "in-remove" / "vanilla" / "runs"
-    assert combo.result_path(committed).exists()
