@@ -31,6 +31,9 @@ class Combo:
     # Per-client sample cap passed to the runner (0 = unlimited, the default).
     # Not part of run_name(); put it in name_prefix when it matters.
     max_client_samples: int = 0
+    # Log per-client influence (metricdp_pytorch.influence_diagnostics) every round.
+    # Diagnostics only: training is unchanged, so it is not part of run_name().
+    log_client_influence: bool = False
 
     def run_name(self) -> str:
         """Build the complete deterministic name from this combo's parameters."""
@@ -112,6 +115,8 @@ class Combo:
         )
         if self.max_client_samples:
             args = (*args, "--max-client-samples", str(self.max_client_samples))
+        if self.log_client_influence:
+            args = (*args, "--log-client-influence")
         if checkpoint_rounds:
             return (
                 *args,

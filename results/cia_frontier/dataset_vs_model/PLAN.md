@@ -31,29 +31,42 @@ elsewhere). Model branch. See README.
 CIFAR-10 and EuroSAT (32×32), each with 21,600 training images. CIFAR-10 uses the same fixed
 stratified subset before partitioning. At 48 clients, that is 450 images per client on average.
 Model: cifar10_cnn. Use homogeneous and Dirichlet α = 0.3 partitions, 20 rounds, and seed 42.
-Every run is an IN run for targets 0–9. It evaluates clean and noisy shadow losses each round.
-The clean shadow is a deterministic stratified 10% subset of the target's training records. The
-IN model trains on the full target training split, including those shadow records.
+Every run is an IN run: all 48 clients train. After each round it scores targets 0–9 on their
+shadow sets (clean and noisy loss), like eurosat_frontier.
+A target's shadow set is a fixed 10% of its own training records. So the IN model trains on the
+shadow records. The noisy copy adds 20% noise to the same records.
+One seed sets both the data split and training, as in eurosat_frontier.
 
 Vanilla, Global, Metric
 Noise ratios 0.001, 0.0025, 0.004, 0.00625 (contest_at_scale/cifar10's three, plus 0.001 below:
 at 450 images/client the same ratio is heavier, and metric-privacy adds 1.3–2.9× global-DP's
 noise here, so each curve needs a point before collapse)
-The plan is 2 × 2 × (1 + 2 × 4) = 36 IN runs. Build OUT runs later with `--out-targets`;
-they exclude one target and use its identical shadow records. Compare mechanisms at equal
-accuracy, not equal ratio.
+That is 2 × 2 × (1 + 2 × 4) = 36 IN runs. OUT runs come later (`--out-targets`).
+An OUT run drops one target (47 clients) and scores the same shadow records.
+`shadows.json` stores a hash of them, and the scoring script checks IN and OUT match.
+Compare mechanisms at equal accuracy, not equal ratio.
 
 ## Stage C: attack
 Reuse the Stage B IN losses and add OUT runs later. Score each target by the fraction of matched
 rounds where its IN clean-shadow loss is lower than its OUT loss, then average targets.
 
-Per-client influence diagnostics are saved in each training round for all privacy modes.
+Script: `python -m results.cia_frontier.per_client_score <root>`. It also works on
+eurosat_frontier's folders.
+
+## Influence log
+Every round, every run (vanilla too) saves per-client lists in `train_metrics`, keyed by
+`influence-client-ids` (canonical client IDs, so OUT runs skip the dropped target):
+update norm before clipping, clipped or not, distance and cosine to the weighted average of
+clipped updates, leave-one-out influence norm, aggregation weight, num examples.
+It only reads the updates. A test checks aggregation stays bit-identical with it on.
 
 # Code
 - `runner.py` plans Stage A (`--execute` trains; `--cells` shards across machines).
 - `analyze.py` prints per-cell update norm, pairwise distance, metric-privacy noise, accuracy.
-- `stage_b.py` / `analyze_stage_b.py`: same for Stage B (cells = dataset+partition; `--cells`,
-  `--privacy`, `--ratios`, `--seeds` shard).
+- `stage_b.py`: Stage B IN runs and later OUT runs. Shard with `--cells`, `--privacy`,
+  `--ratios`, `--seeds`. Each run gets its own folder with `measurements.json`.
+- `analyze_stage_b.py`: accuracy and DP diagnostics from the IN runs.
+- `../trajectories.py`: the train-then-score loop, shared with eurosat_frontier.
 - EuroSAT data module gained `resize_to` and `augment` options (defaults unchanged).
 - CIFAR-10 data module gained `train_subsample` / `subsample_seed` (default off).
 

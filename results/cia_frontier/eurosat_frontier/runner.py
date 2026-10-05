@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import asdict, dataclass, replace
+from dataclasses import asdict, dataclass
 import json
 import math
 from pathlib import Path
 
 from experiments.reproduce.matrix import Combo
+from results.cia_frontier.trajectories import atomic_json, execute_locked, execute_trajectory  # noqa: F401
 from results.contest_at_scale.auc_frontier.eurosat_remove import HYPERPARAMS
 
 
@@ -91,39 +92,14 @@ def build_combos(*, alpha, seeds, targets, clients, privacy, ratios, pilot=False
     ) for ratio in ratios for seed in seeds for target in selected]
 
 
-def atomic_json(path, value):
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps(value, indent=2, allow_nan=False) + "\n")
-    temporary.replace(path)
-
-
 def execute(combos, targets, output, max_parallel_clients, pilot=False):
     """Lock each trajectory across local agents; independent runs can proceed in parallel."""
-    import fcntl
-    import hashlib
-    import tempfile
-    for combo in combos:
-        identity = str((output / combo.run_name()).resolve()).encode()
-        lock = Path(tempfile.gettempdir()) / ("auc-frontier-" + hashlib.sha256(identity).hexdigest() + ".lock")
-        with lock.open("w") as handle:
-            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            _execute([combo], targets, output, max_parallel_clients, pilot)
+    execute_locked(combos, lambda combo: _execute([combo], targets, output, max_parallel_clients, pilot),
+                   output)
 
 
 def _execute(combos, targets, output, max_parallel_clients, pilot=False):
-    # Imports are delayed so planning cannot load data or initialize training.
-    from experiments.cia.iter_combos import iter_combos
-    from experiments.cia import cia
-    from experiments.cia.datasets.shadow import ShadowDataModule
-    from metricdp_pytorch.utils.noisy_dataset import NoisyDataModule
-    from metricdp_pytorch.utils.device import resolve_device
-    from results.cia_frontier.eurosat_frontier.data import DirichletEuroSAT, partition_summary
-
-    output.mkdir(parents=True, exist_ok=True)
-    device = resolve_device()
     for combo in combos:
-        folder = output / combo.run_name()
-        folder.mkdir(parents=True, exist_ok=True)
         chosen = [] if pilot else (targets if combo.out_target is None else [combo.out_target])
         manifest = {"alpha": combo.alpha, "seed": combo.seed, "privacy": combo.privacy,
                     "noise_ratio": combo.noise_ratio,
@@ -133,73 +109,31 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
                     "run_name": combo.run_name(), "score_direction": "lower loss indicates IN"}
         if combo.partition_seed is not None:
             manifest["partition_seed"] = combo.partition_seed
-        manifest_path = folder / "manifest.json"
-        if manifest_path.exists() and json.loads(manifest_path.read_text()) != manifest:
-            raise ValueError(f"Manifest mismatch: {folder}; use a separate output directory")
-        atomic_json(manifest_path, manifest)
-        report = folder / "measurements.json"
-        rounds = tuple(range(1, combo.hyperparams.rounds + 1))
-        expected = {(r, t) for r in rounds for t in chosen}
-        rows = json.loads(report.read_text()) if report.exists() else []
-        if (folder / "complete.json").exists() and {(r["round"], r["target"]) for r in rows} == expected:
-            continue
-        atomic_json(folder / "partitions.json", partition_summary(
-            combo.alpha, combo.canonical_clients, combo.layout_seed,
-        ))
-        import os
-        import subprocess
-        import sys
-        revision = os.environ.get("METRICDP_SOURCE_COMMIT")
-        if revision is None:
-            revision = subprocess.run(
-                ["git", "-C", str(Path(__file__).resolve().parents[3]), "rev-parse", "HEAD"],
-                capture_output=True, text=True, check=True,
-            ).stdout.strip()
-        atomic_json(folder / "provenance.json", {
-            "commit": revision, "python": sys.version, "device": str(device),
-        })
-        # A partial evaluation may have consumed checkpoints: retrain the entire
-        # trajectory, rather than mixing measurements from separate executions.
-        import time
-        started = time.monotonic()
-        for _, success, paths in iter_combos(
-            [combo], output_dir=folder, max_parallel_clients=max_parallel_clients,
-            force=True, log=print, checkpoint_rounds=rounds,
-        ):
-            if not success:
-                raise RuntimeError(f"Training failed: {combo.run_name()}")
-            trained = time.monotonic()
-            print(f"[FRONTIER] training finished in {trained - started:.1f}s; "
-                  f"evaluating {len(chosen)} target(s) x {len(rounds)} rounds", flush=True)
+        execute_trajectory(
+            combo, chosen=chosen, manifest=manifest, output=output,
+            max_parallel_clients=max_parallel_clients,
+            partition_summary=lambda: _data().partition_summary(
+                combo.alpha, combo.canonical_clients, combo.layout_seed),
+            make_shadows=lambda target: _shadows(combo, target),
             # Evaluation data (shadow subsets, server test split) follows the
             # layout seed, so every training seed is scored on identical records.
-            eval_combo = replace(combo, seed=combo.layout_seed)
-            shadows = {}
-            for target in chosen:
-                base = DirichletEuroSAT(combo.alpha, partition_seed=combo.partition_seed)
-                kwargs = dict(num_clients=combo.canonical_clients, target_partition_id=target,
-                              shadow_fraction=0.10, partition_mode="non-iid", partition_profile="auto")
-                shadows[target] = (ShadowDataModule(base, **kwargs),
-                                   ShadowDataModule(NoisyDataModule(base, std_fraction=0.20), **kwargs))
-            rows = []
-            for round_number, path in zip(rounds, paths, strict=True):
-                for target, (clean, noisy) in shadows.items():
-                    aggregate, clean_loss, noisy_loss, size = cia.eval_model(
-                        path, clean_data_module=clean, noisy_data_module=noisy,
-                        device=device, combo=eval_combo,
-                    )
-                    rows.append(dict(round=round_number, target=target,
-                                     aggregate_loss=aggregate, clean_loss=clean_loss,
-                                     noisy_loss=noisy_loss, shadow_size=size))
-                atomic_json(report, rows)
-                path.unlink()  # only after ALL targets at this round are persisted
-                print(f"[FRONTIER EVAL {round_number}/{len(rounds)}] targets={len(chosen)} "
-                      f"elapsed={time.monotonic() - trained:.1f}s", flush=True)
-            finished = time.monotonic()
-            atomic_json(folder / "complete.json", {
-                "complete": True, "training_seconds": round(trained - started, 1),
-                "evaluation_seconds": round(finished - trained, 1),
-            })
+            eval_seed=combo.layout_seed,
+        )
+
+
+def _data():
+    from results.cia_frontier.eurosat_frontier import data
+    return data
+
+
+def _shadows(combo, target):
+    from experiments.cia.datasets.shadow import ShadowDataModule
+    from metricdp_pytorch.utils.noisy_dataset import NoisyDataModule
+    base = _data().DirichletEuroSAT(combo.alpha, partition_seed=combo.partition_seed)
+    kwargs = dict(num_clients=combo.canonical_clients, target_partition_id=target,
+                  shadow_fraction=0.10, partition_mode="non-iid", partition_profile="auto")
+    return (ShadowDataModule(base, **kwargs),
+            ShadowDataModule(NoisyDataModule(base, std_fraction=0.20), **kwargs))
 
 
 def main():

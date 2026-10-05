@@ -108,6 +108,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-client-samples", type=int, default=0)
     parser.add_argument("--max-test-samples", type=int, default=0)
     parser.add_argument(
+        "--log-client-influence",
+        action="store_true",
+        help="add per-client influence lists (influence-*) to every round's train metrics",
+    )
+    parser.add_argument(
         "--data-module",
         default="experiments.reproduce.dataset.alzheimer:create_data_module",
         help="pluggable dataset factory in package.module:factory format",
@@ -287,6 +292,8 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
             "checkpoint-rounds": sorted(args.checkpoint_rounds),
         }
     )
+    if args.log_client_influence:
+        config["log-client-influence"] = True
     if args.privacy == "influence-noise":
         config["influence-fraction"] = args.influence_fraction
         config["influence-cap"] = args.influence_cap

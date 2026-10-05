@@ -11,7 +11,7 @@ import json
 import platform
 import subprocess
 import sys
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
@@ -26,6 +26,7 @@ from experiments.reproduce.paper_loss import make_evaluate_fn
 from experiments.reproduce.paper_strategies import create_paper_strategy
 from experiments.reproduce.paper_training import create_initial_model, seed_training
 from metricdp_pytorch.data_module import load_data_module
+from metricdp_pytorch.influence_diagnostics import InfluenceLoggingStrategy
 from metricdp_pytorch.model_module import load_model
 from metricdp_pytorch.utils.device import resolve_device
 from metricdp_pytorch.utils.runtime import runtime_config
@@ -157,6 +158,7 @@ def run(
         *,
         evaluate_fn: Callable[[int, ArrayRecord], MetricRecord] | None = None,
         initial_arrays: ArrayRecord | None = None,
+        client_id_map: Sequence[int] | None = None,
 ) -> Result:
     """Run one ordinary paper utility/convergence experiment.
 
@@ -186,6 +188,14 @@ def run(
         noise_multiplier=float(config.get("noise-multiplier", 0.01)),
         clipping_norm=float(config.get("clipping-norm", 5.0)),
     )
+    if bool(config.get("log-client-influence", False)):
+        # Diagnostics only: reads replies before any clipping, draws no randomness.
+        strategy = InfluenceLoggingStrategy(
+            strategy,
+            clipping_norm=(None if str(config["privacy"]) == "vanilla"
+                           else float(config.get("clipping-norm", 5.0))),
+            id_map=client_id_map,
+        )
     return strategy.start(
         grid=grid,
         initial_arrays=initial_arrays,
@@ -246,6 +256,8 @@ def main(grid: Grid, context: Context) -> None:
         config,
         evaluate_fn=evaluate_fn,
         initial_arrays=ArrayRecord(initial_model.state_dict()),
+        # IN/OUT partition views: log canonical client IDs, stable across runs.
+        client_id_map=getattr(data_module, "active_partition_ids", None),
     )
 
     if output_dir and run_name:
@@ -275,6 +287,7 @@ def main(grid: Grid, context: Context) -> None:
             "dirichlet_alpha": float(config.get("dirichlet-alpha", 0.5)),
             "noise_multiplier": float(config.get("noise-multiplier", 0.01)),
             "clipping_norm": float(config.get("clipping-norm", 5.0)),
+            "log_client_influence": bool(config.get("log-client-influence", False)),
             **({"influence_fraction": float(config["influence-fraction"]),
                 "influence_cap": float(config["influence-cap"])}
                if str(config["privacy"]) == "influence-noise" else {}),

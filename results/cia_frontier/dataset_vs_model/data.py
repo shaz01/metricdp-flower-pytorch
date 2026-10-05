@@ -7,6 +7,7 @@ CIFAR-10 pipeline never had augmentation.
 """
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
 from typing import Any
 
@@ -49,3 +50,63 @@ STAGE_B_DATASETS = {
     "cifar10s": f"{__name__}:create_cifar10_small",
     "eurosat32": f"{__name__}:create_eurosat32",
 }
+
+
+# --- Stage B/C IN and OUT views -------------------------------------------------------
+# A trajectory's ``partition-profile`` run-config value is JSON:
+# {"dataset": "cifar10s"|"eurosat32", "clients": 48, "out_target": null|int}.
+# IN (out_target null) trains all canonical clients, OUT drops one. Every other client
+# keeps exactly its canonical records because partitions are always built for ``clients``.
+# Optional "train_subsample" shrinks the CIFAR-10 pool; it is for local smoke runs only.
+
+_BASES = {"cifar10s": create_cifar10_small, "eurosat32": create_eurosat32}
+
+
+class AutoProfile:
+    """Forward to a base module, replacing the JSON profile with the plugin's 'auto'."""
+
+    def __init__(self, base):
+        self.base = base
+
+    @property
+    def class_names(self):
+        return getattr(self.base, "class_names", ())
+
+    def client_loaders(self, partition_id, **kwargs):
+        return self.base.client_loaders(partition_id, **{**kwargs, "partition_profile": "auto"})
+
+    def server_loaders(self, **kwargs):
+        return self.base.server_loaders(**kwargs)
+
+
+def stage_b_profile(dataset: str, clients: int, out_target: int | None,
+                    train_subsample: int | None = None) -> str:
+    if dataset not in _BASES:
+        raise ValueError(f"Unknown Stage B dataset {dataset!r}")
+    profile = {"dataset": dataset, "clients": clients, "out_target": out_target}
+    if train_subsample is not None:
+        if dataset != "cifar10s":
+            raise ValueError("train_subsample applies to cifar10s only")
+        profile["train_subsample"] = train_subsample
+    return json.dumps(profile, sort_keys=True)
+
+
+def stage_b_base(settings: Mapping[str, Any], config: Mapping[str, Any]):
+    """Canonical (all-clients) data module for one profile; shared by training and shadows."""
+    module = _BASES[settings["dataset"]](config)
+    if "train_subsample" in settings:
+        module.train_subsample = int(settings["train_subsample"])
+    return module
+
+
+def create_stage_b_view(config: Mapping[str, Any]):
+    from experiments.cia.datasets.partitions import in_remove, out_remove
+    settings = json.loads(config["partition-profile"])
+    target = settings["out_target"]
+    factory = in_remove if target is None else out_remove
+    return factory(AutoProfile(stage_b_base(settings, config)),
+                   canonical_num_partitions=settings["clients"],
+                   target_partition_id=0 if target is None else target)
+
+
+STAGE_B_VIEW = f"{__name__}:create_stage_b_view"

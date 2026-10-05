@@ -17,7 +17,8 @@ from results.cia_frontier.dataset_vs_model.stage_b import DEFAULT_OUTPUT
 
 _NAME = re.compile(
     r"^stage-b-(?P<dataset>[a-z0-9]+)-(?P<partition>[a-z]+)-"
-    r"(?P<arm>vanilla|(?P<privacy>global-dp|metric-privacy)-r(?P<ratio>[0-9.e-]+))__"
+    r"(?P<arm>vanilla|(?P<privacy>global-dp|metric-privacy)-r(?P<ratio>[0-9.e-]+?))-"
+    r"(?P<adjacency>in|out-[0-9]+)__"
 )
 _KEYS = ("final_accuracy", "update_norm", "max_pairwise_distance", "metric_noise_stdv")
 
@@ -31,7 +32,8 @@ def summarize(output: Path, *, skip_rounds: int = 0) -> dict:
     groups: dict[str, dict[str, list[dict]]] = {}
     for path in sorted(output.rglob("*.json")):
         match = _NAME.match(path.name)
-        if not match or path.name.endswith(".evaluation.json"):
+        # Accuracy comes from the full-federation IN trajectories only.
+        if not match or match["adjacency"] != "in" or path.name.endswith(".evaluation.json"):
             continue
         data = json.loads(path.read_text())
         if "train_metrics" not in data:

@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-05, dataset_vs_model Stage B seed 42 stopped by user (redesign); all Colab sessions released
+**Last updated:** 2026-10-05, dataset_vs_model Stage B redesigned as IN runs (targets 0–9, every round) + per-client influence log; not launched
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
