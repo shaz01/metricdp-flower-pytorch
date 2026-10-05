@@ -79,7 +79,7 @@ def test_server_split_uses_partition_seed(monkeypatch):
 
 def test_execute_scores_on_partition_seed_data(tmp_path, monkeypatch):
     import experiments.cia.iter_combos as training
-    from experiments.cia import cia
+    from experiments.cia import trajectories
     import metricdp_pytorch.utils.device as device
     monkeypatch.setattr(device, "resolve_device", lambda: "cpu")
     summaries = []
@@ -93,11 +93,17 @@ def test_execute_scores_on_partition_seed_data(tmp_path, monkeypatch):
     monkeypatch.setattr(training, "iter_combos", fake_training)
     eval_seeds, layouts = [], []
 
-    def fake_eval(path, **kwargs):
-        eval_seeds.append(kwargs["combo"].seed)
-        layouts.append(kwargs["clean_data_module"].data_module.partition_seed)
-        return (1.0, 2.0, 3.0, 10)
-    monkeypatch.setattr(cia, "eval_model", fake_eval)
+    def fake_loaders(shadows, combo):
+        for clean, _noisy in shadows.values():
+            eval_seeds.append(combo.seed)
+            layouts.append(clean.data_module.partition_seed)
+        return None, shadows
+
+    def fake_score(path, *, shadow_loaders, combo, **kwargs):
+        eval_seeds.append(combo.seed)
+        return {target: (1.0, 2.0, 3.0, 10) for target in shadow_loaders}
+    monkeypatch.setattr(trajectories, "build_loaders", fake_loaders)
+    monkeypatch.setattr(trajectories, "score_checkpoint", fake_score)
     combo = plan(partition_seed=42, seeds=[44], out_targets=[0])[0]
     combo = replace(combo, hyperparams=replace(combo.hyperparams, rounds=2))
     execute([combo], list(range(10)), tmp_path, 1)

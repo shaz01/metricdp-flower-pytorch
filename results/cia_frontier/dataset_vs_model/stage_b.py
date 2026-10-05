@@ -6,7 +6,7 @@ One model (cifar10_cnn). Cells: {cifar10s, eurosat32} x {homogeneous, dirichlet 
 
 Every Stage B run is an IN trajectory (all 48 canonical clients). After each round its
 checkpoint is scored on the clean and noisy shadow sets of targets 0-9, using the
-eurosat_frontier measurement path (results/cia_frontier/trajectories.py). A target's
+eurosat_frontier measurement path (experiments/cia/trajectories.py). A target's
 clean shadow set is a deterministic stratified 10% subset of that target's own training
 split, so the IN model trains on the shadow records. OUT trajectories (``--out-targets``)
 drop one target and keep every other client's records unchanged; they score the same
@@ -188,7 +188,7 @@ def shadow_fingerprints(combo: StageBCombo, shadows: dict) -> dict:
 
 
 def execute(combos, targets, output: Path, max_parallel_clients: int):
-    from results.cia_frontier.trajectories import execute_locked, execute_trajectory
+    from experiments.cia.trajectories import execute_locked, execute_trajectory
 
     def run(combo):
         chosen = list(targets) if combo.out_target is None else [combo.out_target]

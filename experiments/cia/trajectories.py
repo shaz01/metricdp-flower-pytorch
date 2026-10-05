@@ -1,4 +1,4 @@
-"""Shared IN/OUT trajectory execution for the cia_frontier experiments.
+"""Shared IN/OUT trajectory execution (used by results/cia_frontier experiments).
 
 Generalized from eurosat_frontier's runner (unchanged behaviour there): train one
 trajectory with a checkpoint every round, score every chosen target's clean and
@@ -10,6 +10,11 @@ Layout of one trajectory folder: ``manifest.json`` (immutable plan),
 ``measurements.json`` (rows: round, target, aggregate_loss, clean_loss,
 noisy_loss, shadow_size), optional ``shadows.json`` (per-target shadow
 fingerprints) and ``complete.json``.
+
+Scoring builds the server test loader and every target's clean/noisy shadow loaders
+once, then per round loads the checkpoint once and computes the test-set loss once.
+Values equal ``experiments.cia.cia.eval_model`` exactly: none of these loaders
+shuffle and noisy samples are seeded per record index.
 """
 from __future__ import annotations
 
@@ -53,7 +58,6 @@ def execute_trajectory(
     IN and OUT runs can be checked to score identical records.
     """
     # Imports are delayed so planning cannot load data or initialize training.
-    from experiments.cia import cia
     from experiments.cia.iter_combos import iter_combos
     from metricdp_pytorch.utils.device import resolve_device
 
@@ -101,13 +105,13 @@ def execute_trajectory(
         shadows = {target: make_shadows(target) for target in chosen}
         if shadow_fingerprints is not None:
             atomic_json(folder / "shadows.json", shadow_fingerprints(shadows))
+        test_loader, shadow_loaders = build_loaders(shadows, eval_combo)
         rows = []
         for round_number, path in zip(rounds, paths, strict=True):
-            for target, (clean, noisy) in shadows.items():
-                aggregate, clean_loss, noisy_loss, size = cia.eval_model(
-                    path, clean_data_module=clean, noisy_data_module=noisy,
-                    device=device, combo=eval_combo,
-                )
+            scores = score_checkpoint(path, test_loader=test_loader, shadow_loaders=shadow_loaders,
+                                      device=device, combo=eval_combo)
+            for target in shadows:
+                aggregate, clean_loss, noisy_loss, size = scores[target]
                 rows.append(dict(round=round_number, target=target,
                                  aggregate_loss=aggregate, clean_loss=clean_loss,
                                  noisy_loss=noisy_loss, shadow_size=size))
@@ -120,3 +124,31 @@ def execute_trajectory(
             "complete": True, "training_seconds": round(trained - started, 1),
             "evaluation_seconds": round(finished - trained, 1),
         })
+
+
+def build_loaders(shadows: dict, combo):
+    """Server test loader and per-target (clean, noisy) shadow loaders, as eval_model builds them."""
+    batch_size, seed = combo.hyperparams.batch_size, combo.seed
+    first_clean = next(iter(shadows.values()))[0]
+    _validation, test_loader = first_clean.server_loaders(batch_size=batch_size, seed=seed)
+    loaders = {}
+    for target, (clean, noisy) in shadows.items():
+        clean_loader = clean.target_shadow_loader(batch_size=batch_size, seed=seed)
+        noisy_loader = noisy.target_shadow_loader(batch_size=batch_size, seed=seed)
+        if len(clean_loader.dataset) != len(noisy_loader.dataset):
+            raise ValueError("Clean and noisy shadow datasets must contain the same examples.")
+        loaders[target] = (clean_loader, noisy_loader)
+    return test_loader, loaders
+
+
+def score_checkpoint(path, *, test_loader, shadow_loaders: dict, device, combo) -> dict:
+    """Return {target: (test loss, clean loss, noisy loss, shadow size)} for one checkpoint."""
+    import torch
+    from experiments.cia.cia import _calculate_loss
+    from metricdp_pytorch.model_module import load_model
+    model = load_model(combo.model_module)
+    model.load_state_dict(torch.load(path, map_location="cpu", weights_only=True))
+    aggregate = _calculate_loss(model, test_loader, device)
+    return {target: (aggregate, _calculate_loss(model, clean, device),
+                     _calculate_loss(model, noisy, device), len(clean.dataset))
+            for target, (clean, noisy) in shadow_loaders.items()}

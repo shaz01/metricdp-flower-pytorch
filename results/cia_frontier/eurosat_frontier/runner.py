@@ -8,7 +8,7 @@ import math
 from pathlib import Path
 
 from experiments.reproduce.matrix import Combo
-from results.cia_frontier.trajectories import atomic_json, execute_locked, execute_trajectory  # noqa: F401
+from experiments.cia.trajectories import atomic_json, execute_locked, execute_trajectory  # noqa: F401
 from results.contest_at_scale.auc_frontier.eurosat_remove import HYPERPARAMS
 
 

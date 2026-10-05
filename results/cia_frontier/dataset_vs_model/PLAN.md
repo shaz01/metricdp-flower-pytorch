@@ -66,7 +66,7 @@ It only reads the updates. A test checks aggregation stays bit-identical with it
 - `stage_b.py`: Stage B IN runs and later OUT runs. Shard with `--cells`, `--privacy`,
   `--ratios`, `--seeds`. Each run gets its own folder with `measurements.json`.
 - `analyze_stage_b.py`: accuracy and DP diagnostics from the IN runs.
-- `../trajectories.py`: the train-then-score loop, shared with eurosat_frontier.
+- `experiments/cia/trajectories.py`: the train-then-score loop, shared with eurosat_frontier.
 - EuroSAT data module gained `resize_to` and `augment` options (defaults unchanged).
 - CIFAR-10 data module gained `train_subsample` / `subsample_seed` (default off).
 

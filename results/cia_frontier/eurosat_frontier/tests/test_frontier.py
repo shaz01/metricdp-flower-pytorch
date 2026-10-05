@@ -63,7 +63,7 @@ def test_every_round_every_target_and_resume(tmp_path, monkeypatch):
     import experiments.cia.iter_combos as training
     import results.cia_frontier.eurosat_frontier.data as data
     monkeypatch.setattr(data, "partition_summary", lambda *args: {})
-    from experiments.cia import cia
+    from experiments.cia import trajectories
     import metricdp_pytorch.utils.device as device
     monkeypatch.setattr(device, "resolve_device", lambda: "cpu")
     calls = []
@@ -76,10 +76,11 @@ def test_every_round_every_target_and_resume(tmp_path, monkeypatch):
         yield runs[0], True, paths
     monkeypatch.setattr(training, "iter_combos", fake_training)
     evaluations = []
-    def fake_eval(path, **kwargs):
-        evaluations.append(path)
-        return (1.0, 2.0, 3.0, 10)
-    monkeypatch.setattr(cia, "eval_model", fake_eval)
+    def fake_score(path, *, shadow_loaders, **kwargs):
+        evaluations.extend([path] * len(shadow_loaders))
+        return {target: (1.0, 2.0, 3.0, 10) for target in shadow_loaders}
+    monkeypatch.setattr(trajectories, "build_loaders", lambda shadows, combo: (None, shadows))
+    monkeypatch.setattr(trajectories, "score_checkpoint", fake_score)
     combo = combos()[0]
     combo = replace(combo, hyperparams=replace(combo.hyperparams, rounds=3))
     execute([combo], [0, 47], tmp_path, 1)
@@ -116,7 +117,7 @@ def test_adjacency_selection_keeps_fixed_panel(tmp_path, monkeypatch):
     # Shared IN manifest records (and evaluates) the whole panel.
     import experiments.cia.iter_combos as training
     import results.cia_frontier.eurosat_frontier.data as data
-    from experiments.cia import cia
+    from experiments.cia import trajectories
     import metricdp_pytorch.utils.device as device
     monkeypatch.setattr(data, "partition_summary", lambda *args: {})
     monkeypatch.setattr(device, "resolve_device", lambda: "cpu")
@@ -126,7 +127,9 @@ def test_adjacency_selection_keeps_fixed_panel(tmp_path, monkeypatch):
             path.touch()
         yield runs[0], True, paths
     monkeypatch.setattr(training, "iter_combos", fake_training)
-    monkeypatch.setattr(cia, "eval_model", lambda path, **kwargs: (1.0, 2.0, 3.0, 10))
+    monkeypatch.setattr(trajectories, "build_loaders", lambda shadows, combo: (None, shadows))
+    monkeypatch.setattr(trajectories, "score_checkpoint", lambda path, *, shadow_loaders, **kwargs:
+                        {target: (1.0, 2.0, 3.0, 10) for target in shadow_loaders})
     selected = [replace(c, hyperparams=replace(c.hyperparams, rounds=2)) for c in
                 combos(targets=panel, seeds=[42], adjacency="in")
                 + combos(targets=panel, seeds=[42], adjacency="out", out_targets=[0])]
