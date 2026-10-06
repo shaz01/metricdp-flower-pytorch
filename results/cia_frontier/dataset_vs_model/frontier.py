@@ -1,0 +1,97 @@
+"""Stage C privacy-utility frontiers: round-matched attack score vs round-R accuracy.
+
+x = mean per-client IN/OUT attack score over targets (0.5 = no signal; per_client_score),
+y = server accuracy of the IN trajectory at its last round R. One PNG per dataset, one line
+per mechanism through its noise ratios, vanilla as the shared starting point. Error bars span
+the per-target score range (min-max).
+
+    python -m results.cia_frontier.dataset_vs_model.frontier [--root DIR]
+"""
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+from results.cia_frontier.per_client_score import score_directories
+
+ROOT = Path("results/cia_frontier/dataset_vs_model/results/stage_c")
+STYLE = {"global-dp": ("tab:blue", "o", "Global DP"), "metric-privacy": ("tab:orange", "s", "Metric privacy")}
+
+
+def accuracies(root: Path) -> dict:
+    """{(dataset, privacy, noise_ratio): (round-R accuracy, R, training s)} from IN trajectories."""
+    out = {}
+    for path in sorted(root.rglob("manifest.json")):
+        manifest = json.loads(path.read_text())
+        if manifest["out_target"] is not None:
+            continue
+        (run,) = [p for p in path.parent.glob(f"{manifest['run_name']}.json")]
+        metrics = json.loads(run.read_text())["server_evaluate_metrics"]
+        rounds = manifest["rounds"]
+        out[(manifest["dataset"], manifest["privacy"], manifest["noise_ratio"])] = \
+            float(metrics[str(rounds)]["accuracy"])
+    return out
+
+
+def build(root: Path) -> dict:
+    acc = accuracies(root)
+    settings = []
+    for entry in score_directories(root):
+        key = (entry["dataset"], entry["privacy"], entry["noise_ratio"])
+        scores = list(entry["per_target"].values())
+        settings.append({"dataset": key[0], "privacy": key[1], "noise_ratio": key[2],
+                         "rounds": entry["rounds"], "accuracy": acc[key], "mean_score": entry["mean"],
+                         "min_score": min(scores), "max_score": max(scores),
+                         "per_target": entry["per_target"], "matched_rounds": entry["matched_rounds"]})
+    settings.sort(key=lambda s: (s["dataset"], s["privacy"] != "vanilla", s["privacy"], s["noise_ratio"]))
+    return {"x": "mean per-client round-matched IN/OUT score (0.5 = no signal)",
+            "y": "IN-trajectory server accuracy at round R", "error_bars": "per-target min-max",
+            "settings": settings}
+
+
+def plot(data: dict, root: Path) -> list[Path]:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    paths = []
+    for dataset in sorted({s["dataset"] for s in data["settings"]}):
+        rows = [s for s in data["settings"] if s["dataset"] == dataset]
+        (vanilla,) = [s for s in rows if s["privacy"] == "vanilla"]
+        fig, ax = plt.subplots(figsize=(6, 4.5))
+        for privacy, (color, marker, label) in STYLE.items():
+            line = [vanilla] + sorted((s for s in rows if s["privacy"] == privacy), key=lambda s: s["noise_ratio"])
+            xs, ys = [s["mean_score"] for s in line], [s["accuracy"] for s in line]
+            err = [[s["mean_score"] - s["min_score"] for s in line], [s["max_score"] - s["mean_score"] for s in line]]
+            ax.errorbar(xs, ys, xerr=err, color=color, marker=marker, capsize=3, lw=1.5, label=label, alpha=0.9)
+            for s in line[1:]:
+                ax.annotate(f"{s['noise_ratio']:g}", (s["mean_score"], s["accuracy"]), textcoords="offset points",
+                            xytext=(5, -10), fontsize=7, color=color)
+        ax.plot(vanilla["mean_score"], vanilla["accuracy"], "k*", ms=13, zorder=5, label="Vanilla")
+        ax.axvline(0.5, color="grey", ls=":", lw=1)
+        ax.set_xlabel("Mean per-client attack score (IN vs OUT, round-matched)")
+        ax.set_ylabel(f"Accuracy at round {vanilla['rounds']}")
+        ax.set_title(f"Stage C frontier: {dataset}, Dirichlet α=0.3, seed 42 (bars: per-target min-max)",
+                     fontsize=9)
+        ax.legend(fontsize=8)
+        ax.grid(alpha=0.3)
+        fig.tight_layout()
+        path = root / f"frontier_{dataset}.png"
+        fig.savefig(path, dpi=150)
+        plt.close(fig)
+        paths.append(path)
+    return paths
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=ROOT)
+    args = parser.parse_args()
+    data = build(args.root)
+    (args.root / "frontier.json").write_text(json.dumps(data, indent=1, allow_nan=False) + "\n")
+    for path in plot(data, args.root):
+        print(path)
+
+
+if __name__ == "__main__":
+    main()

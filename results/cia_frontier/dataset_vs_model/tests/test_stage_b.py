@@ -279,3 +279,37 @@ def test_parallel_streams_split_and_exit_code(tmp_path):
     assert parallel.main(["--cells", "eurosat32+dirichlet", ":::", "--privacy", "vanilla",
                           ":::", "--privacy", "global-dp"]) == 0
     assert parallel.main([":::", "--cells", "nope"]) == 1
+
+
+def test_plateau_rule():
+    from results.cia_frontier.dataset_vs_model.plateau import choose_r, plateau_round
+    curve = {r: min(0.6, 0.02 * r) for r in range(1, 71)}  # reaches 0.6 at round 30
+    plateau, reached = plateau_round(curve)
+    assert plateau == pytest.approx(0.6)
+    assert reached == 30  # MA(28..30) = (0.56+0.58+0.6)/3 = 0.58, within 0.02
+    assert choose_r([30, 22]) == (30, "max R_d rounded up to a multiple of 5")
+    assert choose_r([31, 12])[0] == 35 and choose_r([63, 12])[0] == 50
+    assert choose_r([None, None])[0] == 50
+
+
+def test_frontier_build_and_plot(tmp_path):
+    pytest.importorskip("matplotlib")
+    from results.cia_frontier.dataset_vs_model import frontier
+    for privacy, ratio, acc, out_loss in (("vanilla", 0.0, 0.6, 2.0), ("global-dp", 0.004, 0.5, 1.0),
+                                          ("metric-privacy", 0.004, 0.55, 0.5)):
+        setting = {"dataset": "eurosat32", "partition": "dirichlet", "alpha": 0.3, "privacy": privacy,
+                   "noise_ratio": ratio, "clients": 48, "rounds": 2}
+        name = f"in-{privacy}"
+        _trajectory(tmp_path / privacy, name, {**setting, "seed": 42, "out_target": None, "targets": [0, 1]},
+                    _rows({(r, t): 1.0 for r in (1, 2) for t in (0, 1)}))
+        (tmp_path / privacy / name / f"{name}.json").write_text(json.dumps(
+            {"server_evaluate_metrics": {"1": {"accuracy": 0.1}, "2": {"accuracy": acc}}}))
+        for t in (0, 1):
+            _trajectory(tmp_path / privacy, f"out{t}", {**setting, "seed": 42, "out_target": t, "targets": [t]},
+                        _rows({(r, t): out_loss if t == 0 else 1.0 for r in (1, 2)}))
+    data = frontier.build(tmp_path)
+    by = {s["privacy"]: s for s in data["settings"]}
+    assert by["vanilla"]["accuracy"] == 0.6 and by["vanilla"]["per_target"] == {"0": 1.0, "1": 0.5}
+    assert by["vanilla"]["mean_score"] == 0.75 and by["metric-privacy"]["min_score"] == 0.0
+    (png,) = frontier.plot(data, tmp_path)
+    assert png.name == "frontier_eurosat32.png" and png.stat().st_size > 0
