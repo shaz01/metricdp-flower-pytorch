@@ -2,6 +2,8 @@
 
 2026-10-06. Purpose: identify construction predecessors for the [observer-specific contract](../proposals/2026-10-06_observer_contract_review.md). This is a focused integrative update, not a rerun of version-1 systematic screening. Its 31 included primary families remain frozen; the two new families below are tracked separately. Neither is a proven client-specific FL defense in our project.
 
+Methods follow-up now complete at the stated bounded read scope: [detailed reconstruction](divisible_noise_methods.md) and [independent mathematical review](../proposals/2026-10-06_divisible_methods_math_review.md). Exact calibration and sampler traps are documented; no implementation or new density selected. The [direction decision](../proposals/2026-10-06_research_direction_decision.md) explains why scalar asymptotic utility does not settle our repeated whole-client task. Earlier discovery/read limits below describe this document's initial pass, not the newer assessment.
+
 ## Why this family matters
 
 Infinite divisibility means one desired noise law can be decomposed into independent shares. Clients generate these shares locally; aggregation recovers the desired law. The protected output may be the aggregate even when each share is too weak for upload privacy. The attacker's own coins must be subtracted in the proof. A lower bound on remaining unknown shares controls dropout/collusion safety.

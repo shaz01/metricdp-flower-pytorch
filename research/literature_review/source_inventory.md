@@ -76,3 +76,14 @@ These entries are outside frozen version-1 systematic inclusion counts; discover
 |---|---|---|
 | ID-F01 | [Pagh–Stausholm, ALT2022 Arete](https://proceedings.mlr.press/v167/pagh22a.html), arXiv2110.06559v3 | Introduction/definition/certificate and application overview; full proofs not reconstructed; normalized certificate epsilon≥20. |
 | ID-F02 | [Harrison–Manurangsi, FORC2025](https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.FORC.2025.12), arXiv2504.05202v1 | Abstract/introduction/sampler overview; full finite-parameter mechanisms, continuous transformation and proof assessment pending. |
+
+### Sustained methods/trajectory/construction follow-up, 2026-10-06
+
+The following cards are separately tracked, with overlap to existing foundational families; their card count is not a new unique-family/PRISMA count.
+
+| Follow-up | Primary methods and assessment |
+|---|---|
+| ID-F02 methods continuation | [GDL/MSDLap detailed reconstruction](divisible_noise_methods.md): official§2–5, scalar certificates/sampler proofs, finite arithmetic, independent transfer review. |
+| T-F01–03 | [Temporal noise cards](temporal_noise_followup.md): ICML2023 multi-epoch MF, EMNLP2024 BLT, ICML2025 DMM; full-participation/causal/cryptographic bounds and own reviewed Gaussian limit. |
+| S-F01–08 | [Private surrogate cards](private_surrogate_followup.md): eight scoped primary-source assessments; distinguish whole-distribution sampling, sanitized objects and record-private synthetic data. Includes old foundations; no claim of eight new families. |
+| F-F01 | [Feldman–Zrnic NeurIPS2021 filter](client_influence_filter.md): arXivv4 Definitions2.5/2.6, Thm3.1/4.3/4.5, Cor4.7, Alg7/Prop5.2; independently reviewed whole-client conditional transfer. |

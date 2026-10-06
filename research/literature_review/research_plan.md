@@ -1,3 +1,5 @@
+> Active follow-up, 2026-10-06: read the [research-direction decision](../proposals/2026-10-06_research_direction_decision.md) before executing this provisional plan. The owner authorized sustained investigation; independently reviewed construction knowledge now prioritizes distribution-guided cumulative client influence under an enforced filter, with strong public-schedule and one-time-surrogate controls. No final mechanism or empirical advantage is established. Earlier milestones below remain historical context.
+
 # Provisional research plan grounded in the review
 
 2026-10-01. A new research proposal, not a selected mechanism or authorization to launch experiments. The owner's question is how each client constructs an individual additive-noise distribution that improves participation privacy at useful accuracy. The [frontier](../../reports/auc_frontier.html) and [evidence audit](../project_evidence_audit.md) define the empirical starting point; the [integrative review](client_specific_noise_review.md) explains the prior-art constraints.

@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-06, observer contract and divisible-noise review; no jobs running
+**Last updated:** 2026-10-06, sustained construction review and influence-filter direction; no jobs running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -109,9 +109,19 @@ versus stronger local uploads in an 8-slot example, but 8/7 more variance than m
 Laplace. No placement superiority or new density claim. Independent math/code audit complete.
 Fixed-slot weights/dummies differ from current removal runner; no training code changed.
 Focused follow-up adds separately tracked Arete (ALT2022) and Harrison–Manurangsi (FORC2025),
-without changing frozen version-1 systematic counts. Next proposed work: full methods/proof-
-feasibility review of divisible non-Gaussian aggregate laws, vector/coalition/quantization and
-private-construction costs before any sampler or sweep.
+without changing frozen version-1 systematic counts. Owner “move on” and sustained-autonomy
+instruction extended the review. See `research/proposals/2026-10-06_research_direction_decision.md`:
+full scalar methods/certificate audit, temporal MF/BLT/DMM, one-time surrogates and individual
+Rényi filters. Deterministic scalar variance ratios versus Laplace at epsilon2/4/8/16:
+4.853/1.904/0.393/0.00695; high-budget scalar gains cannot bypass vector/round costs.
+Independently reviewed robust full-row-ball Gaussian workload limit rules out correlation gains
+within that class; narrower enforced client influence is a tractable construction question.
+Recommended next: distribution-guided cumulative influence allocation under a hard filter,
+compared with optimized public clipping schedules. Whole-client peer/dummy proof transfer is
+valid under documented assumptions; no utility gain or novelty shown. One-time private
+surrogates remain a backup/control. Noise covariance remains public in the initial proof;
+private noise-shape changes need a new certificate. No sampler or FL/CIA training launched.
+New focused cards stay outside frozen systematic counts; no full experiment completion.
 No further jobs running, no CNN/Flower/CIA sweep or experiment-completion decision inferred.
 The owner-authorized 141 staged result files were committed and pushed as `1081ff7`.
 The owner broadened the design to potentially new non-Gaussian mechanisms/distributions; see
@@ -216,6 +226,8 @@ item (NaN/failure-mode logging in `runner.py`, motivated directly by the zero-no
 found during the redo). After that, Phase 2 (mechanism redesign) is the next major phase.
 
 ### Currently running
+
+The sustained methods/construction review is documented and verified; no experiments are running.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
