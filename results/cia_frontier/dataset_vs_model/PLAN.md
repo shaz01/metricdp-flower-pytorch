@@ -46,12 +46,34 @@ An OUT run drops one target (47 clients) and scores the same shadow records.
 `shadows.json` stores a hash of them, and the scoring script checks IN and OUT match.
 Compare mechanisms at equal accuracy, not equal ratio.
 
+## Plateau check (sets R)
+Two vanilla Dirichlet runs, 70 rounds, seed 42, one per dataset (`results/plateau/`).
+The rule was fixed before the runs. Plateau = mean accuracy over rounds 60-70.
+R_d = first round whose 3-round moving average is within 2 points of the plateau.
+R = max R_d, rounded up to a multiple of 5, capped at 50.
+Result: CIFAR-10s plateau 0.583, EuroSAT32 plateau 0.773, both R_d = 51. So R = 50 (the cap).
+Accuracy still rises slowly after round 50 (about 2 points by round 70).
+
 ## Stage C: attack
-Reuse the Stage B IN losses and add OUT runs later. Score each target by the fraction of matched
-rounds where its IN clean-shadow loss is lower than its OUT loss, then average targets.
+Dirichlet a=0.3 only. The old homogeneous Stage B runs are near-IID and serve as a rough
+homogeneous reference.
+Datasets cifar10s and eurosat32. Arms: vanilla, plus global-dp and metric-privacy at
+ratios 0.0025, 0.004, 0.00625. That is 14 settings. Seed 42, R = 50 rounds.
+Per setting: 1 IN run that scores targets 0-6 every round, and 7 OUT runs (one per target
+removed). 14 IN + 98 OUT = 112 runs. Stage B IN runs are not reused: they ran 20 rounds.
+We use 7 targets, down from 10, to keep the OUT cost at 7 runs per setting.
+Score each target by the fraction of matched rounds where its IN clean-shadow loss is lower
+than its OUT loss, then average targets.
 
 Script: `python -m results.cia_frontier.per_client_score <root>`. It also works on
-eurosat_frontier's folders.
+eurosat_frontier's folders. `frontier.py` draws one accuracy-vs-attack-score PNG per dataset.
+
+Shards (one per setting) run two streams side by side on one VM with `parallel.py`:
+```
+... --module results.cia_frontier.dataset_vs_model.parallel -- --execute --seeds 42 \
+  --output-dir <out> --stage c --cells <ds>+dirichlet --privacy <p> --ratios <r> --rounds 50 \
+  --targets 0 1 2 3 4 5 6 ::: --out-targets 0 1 2 --with-in ::: --out-targets 3 4 5 6
+```
 
 ## Influence log
 Every round, every run (vanilla too) saves per-client lists in `train_metrics`, keyed by
@@ -65,6 +87,9 @@ It only reads the updates. A test checks aggregation stays bit-identical with it
 - `analyze.py` prints per-cell update norm, pairwise distance, metric-privacy noise, accuracy.
 - `stage_b.py`: Stage B IN runs and later OUT runs. Shard with `--cells`, `--privacy`,
   `--ratios`, `--seeds`. Each run gets its own folder with `measurements.json`.
+- `plateau.py`: the plateau rule above; writes `results/plateau/plateau.json`.
+- `parallel.py`: runs several `stage_b` streams at once on one VM.
+- `frontier.py`: Stage C frontier PNGs and `frontier.json`.
 - `analyze_stage_b.py`: accuracy and DP diagnostics from the IN runs.
 - `experiments/cia/trajectories.py`: the train-then-score loop, shared with eurosat_frontier.
 - EuroSAT data module gained `resize_to` and `augment` options (defaults unchanged).
