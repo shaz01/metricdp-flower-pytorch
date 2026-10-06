@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-06, sustained construction review and influence-filter direction; no jobs running
+**Last updated:** 2026-10-06, coupled influence-filter and one-release utility results; no jobs running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -122,6 +122,20 @@ valid under documented assumptions; no utility gain or novelty shown. One-time p
 surrogates remain a backup/control. Noise covariance remains public in the initial proof;
 private noise-shape changes need a new certificate. No sampler or FL/CIA training launched.
 New focused cards stay outside frozen systematic counts; no full experiment completion.
+Owner “lets move wtih that dont stop until you had a concrete result on this direction” authorized
+coupled influence-filter feasibility. See `research/proposals/2026-10-06_client_energy_filter_findings.md`:
+27 real-data cells,100 development configs/cell,16 development and128 fresh evaluation trajectories.
+Fixed public/carry-forward schedules versus greedy/remaining/norm-trend/energy-EMA policies.
+Neither matched history policy reaches the0.001 CE gate; largest forecast gain0.00001717.
+Development-only spending/alignment diagnosis shows strong clipping and little unused energy.
+One-release bounded local-model reference wins21/27 cells but often uses80 local steps.
+Audit-directed post-hoc20-step/matched-energy reference wins6/27, all label-stress E4/E8;
+E8 gains0.01236/0.03936/0.03593 acrossseeds. Feedback/clipping/release schedule still differ,
+so no noise-only causal attribution. Promote one-time private descriptors/surrogates as next
+bounded construction question; filter remains reference, not final defense. Fixed-law conditional
+peer/dummy accounting applies; offline tuning/artifact release are unaccounted. No CIA/metric
+superiority, CNN transfer or full experiment-completion claim. Independent numeric/code audits
+and `uv run pytest`277passed/5deselected. All raw artifacts under `results/client_specific_noise/`.
 No further jobs running, no CNN/Flower/CIA sweep or experiment-completion decision inferred.
 The owner-authorized 141 staged result files were committed and pushed as `1081ff7`.
 The owner broadened the design to potentially new non-Gaussian mechanisms/distributions; see
@@ -227,7 +241,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-The sustained methods/construction review is documented and verified; no experiments are running.
+The owner-authorized bounded feasibility phase has a documented concrete result. All Local CPU jobs have stopped; overall research remains active.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -236,7 +250,9 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| Protected-history real-data replay | Local CPU: 54 cases saved and independently verified; no test/CIA | Done; no jobs running |
+| `uv run python -m research.calculations.client_energy_filter_probe` | Local CPU: 27 coupled reduced-model cells, fixed/carry-forward schedules and local policies | Done; no jobs running |
+| `uv run python -m research.calculations.client_energy_one_release` | Local CPU: 27 one-release cells plus27 post-hoc20-step controls | Done |
+| `uv run python -m research.calculations.client_energy_filter_diagnostic` | Local CPU: 15 development-only spending/alignment arms | Done |
 
 ## What's established on `master`
 

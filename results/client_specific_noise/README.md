@@ -23,3 +23,17 @@ Regenerate with `uv run python research/calculations/heterogeneous_profile_risk.
 `protected_real_history_probe.json` and `protected_real_history_trials.npz` preserve18 saved-update replay records/54 budget cases, three arms×16384 fresh conditional probe values plus an exactly integrated one-release reference. Run `uv run python -m research.calculations.protected_real_history_probe` with the saved geometry archive and cached training Arrow; `--self-check` runs bounded mathematical checks. Read [protocol](../../research/proposals/2026-10-05_protected_real_history_protocol.md) and [findings](../../research/proposals/2026-10-05_protected_real_history_findings.md): six small label-stress E8 wins against one release, zero0.001 gates; same-development raw-anchor replay, no heldoutCE/private-training/CIA claim.
 
 `divisible_certificate_audit.json` contains deterministic sensitivity-one continuous-MSDLap variance/certificate arithmetic, four scalar settings and27 conservative equal-coordinate/round allocation cases. Run `uv run python -m research.calculations.divisible_certificate_audit`. No random draws, data/model training or CIA outputs. [Methods and limitations](../../research/literature_review/divisible_noise_methods.md); flexible smoothing split is our shift-proof extension, not an exact finite-computer sampler certificate.
+
+`client_energy_filter_probe.json`/`.npz` contain27 coupled noisy reduced-model training cells,100 development configurations/cell and nine selected arms with128 fresh paired evaluation trajectories. Fixed and carry-forward public schedules, greedy/equal-remaining filters and two history policies share a public accounting law. No matched history policy reaches0.001 CE improvement. `client_energy_one_release.json`/`.npz` add the schedule-changing local-model release reference; `client_energy_one_release_compute_control.json`/`.npz` add post-hoc20-local-step controls. `client_energy_filter_diagnostic.json`/`.npz` preserve development-only spending and pooled-descent diagnostics. See [protocol](../../research/proposals/2026-10-06_client_energy_filter_protocol.md) and [findings/direction update](../../research/proposals/2026-10-06_client_energy_filter_findings.md). Each fixed law has a conditional whole-client peer/dummy certificate; raw-data-dependent tuning and diagnostic publication are unaccounted. No CIA or full-experiment completion claim.
+
+Regenerate in order with the local Fashion-MNIST Arrow cache:
+
+```sh
+uv run python -m research.calculations.client_energy_filter_probe --check
+uv run python -m research.calculations.client_energy_filter_probe
+uv run python -m research.calculations.client_energy_one_release
+uv run python -m research.calculations.client_energy_one_release --compute-control
+uv run python -m research.calculations.client_energy_filter_diagnostic
+```
+
+The pilot archive contains held-out indices, paired CE/accuracy and private spending traces; the diagnostic archive adds proposed/signal norms and diagnostic alignment/descent, not images. Neither archive is the modeled peer transcript. Tests: projected gradient finite difference, cap/gauge/dummy checks and default repository suite277passed/5deselected.

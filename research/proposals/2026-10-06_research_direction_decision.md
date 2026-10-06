@@ -1,3 +1,5 @@
+> Phase result: [coupled filter findings and updated priorities](2026-10-06_client_energy_filter_findings.md). The proposed filter-policy phase has now run; the recommendation below records the pre-run reasoning.
+
 # Research direction decision after the construction review
 
 2026-10-06. Owner authorized sustained work until promising knowledge or a technique can shape the roadmap. We continued beyond the scalar-paper review into temporal mechanisms, one-time private surrogates and individual privacy filters. This note separates established findings from a proposed new construction question. No overall experiment completion or paper novelty is declared.

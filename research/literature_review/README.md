@@ -1,3 +1,5 @@
+> Latest concrete result, 2026-10-06: [coupled influence-filter findings](../proposals/2026-10-06_client_energy_filter_findings.md). No matched magnitude-history policy reaches the0.001 CE gate in27cells; a bounded one-shot local-model reference shows label-stress headroom, including a post-hoc equal20-step/matched-energy control. Prioritize one-time private descriptors/surrogates for the next bounded construction review. This is reduced-model utility evidence, not CIA superiority or an end-to-end private tuning pipeline. The older plan below is historical context.
+
 # Client-specific noise literature review — start here
 
 Version 1, 2026-10-01. The owner requested both systematic and integrative review and confirmed the protocol. This package provides a bounded, documented search, methods-level technique explanations and a provisional research plan. It is not an exhaustive novelty certificate or a claim that any candidate already beats metric-inspired server noise.

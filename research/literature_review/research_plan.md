@@ -1,3 +1,5 @@
+> Latest concrete result, 2026-10-06: [coupled influence-filter findings](../proposals/2026-10-06_client_energy_filter_findings.md). No matched magnitude-history policy reaches the0.001 CE gate in27cells; a bounded one-shot local-model reference shows label-stress headroom, including a post-hoc equal20-step/matched-energy control. Prioritize one-time private descriptors/surrogates for the next bounded construction review. This is reduced-model utility evidence, not CIA superiority or an end-to-end private tuning pipeline. The older plan below is historical context.
+
 > Active follow-up, 2026-10-06: read the [research-direction decision](../proposals/2026-10-06_research_direction_decision.md) before executing this provisional plan. The owner authorized sustained investigation; independently reviewed construction knowledge now prioritizes distribution-guided cumulative client influence under an enforced filter, with strong public-schedule and one-time-surrogate controls. No final mechanism or empirical advantage is established. Earlier milestones below remain historical context.
 
 # Provisional research plan grounded in the review

@@ -1,3 +1,5 @@
+> Latest concrete result, 2026-10-06: [coupled influence-filter findings](../proposals/2026-10-06_client_energy_filter_findings.md). No matched magnitude-history policy reaches the0.001 CE gate in27cells; a bounded one-shot local-model reference shows label-stress headroom, including a post-hoc equal20-step/matched-energy control. Prioritize one-time private descriptors/surrogates for the next bounded construction review. This is reduced-model utility evidence, not CIA superiority or an end-to-end private tuning pipeline. The older plan below is historical context.
+
 # Next-step handoff: comparators, threat game and construction
 
 2026-10-01, `feature/client-specific-noise`. This is a supplement to review version 1, rather than a new claim of exhaustive literature coverage. The owner authorized committing the existing staged results and proceeding with the next research step. All 141 staged files were archive-checked, committed as `1081ff7`, and pushed to this branch. No new experiment was launched.
