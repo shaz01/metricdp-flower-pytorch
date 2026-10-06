@@ -67,3 +67,12 @@ See [FACP partial methods](facp_followup.md) and [FedFR-ADP access assessment](f
 ## Owner-directed non-Gaussian extension
 
 Four additional primary sources were assessed after version 1: [Geng–Viswanath staircase](https://arxiv.org/abs/1212.1186), [Hardt–Talwar geometry](https://arxiv.org/abs/0907.3754), [Joseph–Yu constructions](https://proceedings.mlr.press/v247/joseph24a.html) and [Gilani et al. optimized noise](https://proceedings.mlr.press/v267/gilani25a.html). Selected methods/read scopes and appraisal are in [non-Gaussian foundations](non_gaussian_foundations.md) and [optimized-noise assessment](optimized_noise_followup.md). These are supplemental inclusions, not part of the frozen 31-family version-1 count.
+
+## Separately tracked observer-contract follow-up, 2026-10-06
+
+These entries are outside frozen version-1 systematic inclusion counts; discovery/read boundaries are in [focused handoff](infinitely_divisible_followup.md).
+
+| Follow-up ID | Primary family | Read boundary and remaining gap |
+|---|---|---|
+| ID-F01 | [Pagh–Stausholm, ALT2022 Arete](https://proceedings.mlr.press/v167/pagh22a.html), arXiv2110.06559v3 | Introduction/definition/certificate and application overview; full proofs not reconstructed; normalized certificate epsilon≥20. |
+| ID-F02 | [Harrison–Manurangsi, FORC2025](https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.FORC.2025.12), arXiv2504.05202v1 | Abstract/introduction/sampler overview; full finite-parameter mechanisms, continuous transformation and proof assessment pending. |
