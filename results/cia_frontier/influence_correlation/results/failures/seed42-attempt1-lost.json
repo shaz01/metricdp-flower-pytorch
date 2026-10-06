@@ -1,0 +1,28 @@
+{
+  "experiment": "influence_correlation",
+  "seeds": [42],
+  "attempt": 1,
+  "status": "lost-vm-reclaimed",
+  "gpu": "L4",
+  "source_commit": "9031219",
+  "launched_at": "2026-10-06T12:32Z (lab4); 2026-10-06T13:15Z (lab2, lab3 after re-shard)",
+  "lost_between": "2026-10-06T13:50Z (controller laptop died) and 14:20Z (back up)",
+  "cause": "Local controller laptop died; keep-alives stopped and Colab reclaimed every VM. Nothing was collected; the 5 lost sessions were marked stopped locally and the one VM still allocated (never started training) was released.",
+  "pilot_check": {
+    "runs": ["infl-cifar10s-dirichlet-vanilla-in", "infl-cifar10s-dirichlet-global-dp-r0.004-in"],
+    "targets": 16, "rounds": 50, "influence_keys": 8, "influence_client_ids": 16,
+    "training_seconds": [536.2, 542.2], "evaluation_seconds": [191.8, 193.6],
+    "out_run_seconds": "about 520 training + 120 evaluation (cifar10s OUT 0, 1)"
+  },
+  "shards": [
+    {"session": "ic-c10s-van", "account": "lab4", "progress": "IN + OUT 0-1 done, OUT 2 training at 13:20Z; about 110 min of work lost"},
+    {"session": "ic-c10s-gdp", "account": "lab4", "progress": "IN + OUT 0-1 done, OUT 2 training at 13:20Z; about 110 min of work lost"},
+    {"session": "ic-c10s-mp-b", "account": "lab2", "progress": "OUT 8-15 shard training; lost"},
+    {"session": "ic-c10s-mp-axx", "account": "lab2", "progress": "controller died during launch; never trained; released"},
+    {"session": "ic-es-van-axx", "account": "lab3", "progress": "IN + OUT 0-7 shard training; about 65 min lost"},
+    {"session": "ic-es-van-bx", "account": "lab3", "progress": "OUT 8-15 shard training; about 65 min lost"},
+    {"session": "ic-es-gdp-a/b, ic-es-mp-a/b", "account": null, "progress": "queued, never launched"}
+  ],
+  "artifacts_committed": false,
+  "counts_as_scientific_attempt": false
+}
