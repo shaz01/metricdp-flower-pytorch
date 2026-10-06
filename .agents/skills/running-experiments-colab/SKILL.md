@@ -49,7 +49,7 @@ uv run python scripts/colab/run_experiment.py login --account lab2
 
 `accounts` also prints each account's Colab compute-unit balance (`units=`),
 the hourly burn rate and hours left while sessions are running, and the GPUs
-the account is eligible for. Check it before picking an account for an A100
+the account is eligible for. Check it before picking an account for a GPU
 run; `--no-units` skips the lookup.
 
 `login` runs the interactive OAuth paste flow under that account's `HOME`; sign
@@ -61,13 +61,14 @@ touches `HOME`, so accounts cannot bleed into each other.
 ```bash
 uv run python scripts/colab/run_experiment.py run \
   --session <session-name> \
-  --gpu A100 \
+  --gpu L4 \
   --module experiments.<name>.<entrypoint> \
   --results results/<name> \
   --commit-message "results(<name>): add Colab run" \
   -- --output-dir results/<name>
 ```
 
+`--gpu` defaults to `L4`; ask for `A100` or `H100` only when the run needs it.
 Pass experiment arguments after `--`. **The module's output path must be the
 same directory supplied to `--results`**; only that directory is downloaded from
 the VM, and the controller now refuses a mismatched `--output-dir` outright.
