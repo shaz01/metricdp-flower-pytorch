@@ -27,7 +27,7 @@ ROUNDS = 50
 RATIO = 0.004
 DATASETS = ("cifar10s", "eurosat32")
 PRIVACY = stage_b.PRIVACY
-SEEDS = (42, 43, 44)
+SEEDS = (42,)  # seed 43 only after seed 42 is reviewed (PLAN.md)
 TARGETS = tuple(range(CLIENTS))
 DEFAULT_OUTPUT = Path("results/cia_frontier/influence_correlation/results")
 
