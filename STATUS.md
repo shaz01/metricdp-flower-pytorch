@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-06, dataset_vs_model Stage B IN seed 42 done (36/36 collected on Colab L4, `stage_b/summary.json`); sessions released
+**Last updated:** 2026-10-06, dataset_vs_model plateau check (2 x 70-round vanilla) running on Colab L4; Stage C follows
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -139,9 +139,8 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| `results.cia_frontier.dataset_vs_model.stage_b --execute --seeds 42 --cells <ds>+dirichlet --privacy vanilla --rounds 70 --targets 0` (output `plateau/{c10s,es}`, branch `runs/dataset-vs-model`) | dataset_vs_model plateau check: 2 vanilla Dirichlet 70-round runs, Colab L4 (one account, 2 VMs); then Stage C | running |
 | `results.cia_frontier.dataset_vs_model.stage_b --execute --seeds 42 <shard args>` (IN runs, attempt 3; 6 shards x 6 runs, output `stage_b/<shard>`, branch `runs/dataset-vs-model`) | dataset_vs_model Stage B seed 42, 36 IN runs, Colab L4: 2 concurrent on one account, 1 each on the other two, 2 shards queued; controllers under `caffeinate -dims`. 36/36 collected; one controller-machine crash mid-run, VMs survived and were re-attached | done |
-| `results.cia_frontier.dataset_vs_model.stage_b --execute --seeds 42 <shard args>` (IN runs; 6 shards x 6 runs, output `stage_b/<shard>`, branch `runs/dataset-vs-model`) | dataset_vs_model Stage B seed 42, 36 IN runs, Colab L4: 2 concurrent on one account, 1 each on the other two (2nd session refused) with one shard queued behind each; all VMs reclaimed while the controller machine slept, 0 runs collected (see `results/failures/stage-b-in-seed42-attempt2-lost.json`) | stopped |
-| `results.cia_frontier.dataset_vs_model.stage_b --execute --seeds 42 <shard args>` (6 shards x 6 runs, output `stage_b/<shard>`, branch `runs/dataset-vs-model`) | dataset_vs_model Stage B seed 42 (36 runs), Colab A100 across 3 Colab accounts; stopped by user for redesign after ~10 min, 0 runs finished (see `results/failures/stage-b-seed42-attempt1-stopped.json`) | stopped |
 
 ## What's established on `master`
 
