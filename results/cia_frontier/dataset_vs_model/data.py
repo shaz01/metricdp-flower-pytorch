@@ -57,7 +57,8 @@ STAGE_B_DATASETS = {
 # {"dataset": "cifar10s"|"eurosat32", "clients": 48, "out_target": null|int}.
 # IN (out_target null) trains all canonical clients, OUT drops one. Every other client
 # keeps exactly its canonical records because partitions are always built for ``clients``.
-# Optional "train_subsample" shrinks the CIFAR-10 pool; it is for local smoke runs only.
+# Optional "train_subsample" shrinks the pool (stratified, fixed subsample seed 0); used by
+# local smoke runs and by influence_correlation (7,200 images = 16 clients x 450).
 
 _BASES = {"cifar10s": create_cifar10_small, "eurosat32": create_eurosat32}
 
@@ -85,8 +86,8 @@ def stage_b_profile(dataset: str, clients: int, out_target: int | None,
         raise ValueError(f"Unknown Stage B dataset {dataset!r}")
     profile = {"dataset": dataset, "clients": clients, "out_target": out_target}
     if train_subsample is not None:
-        if dataset != "cifar10s":
-            raise ValueError("train_subsample applies to cifar10s only")
+        if train_subsample <= 0:
+            raise ValueError("train_subsample must be positive")
         profile["train_subsample"] = train_subsample
     return json.dumps(profile, sort_keys=True)
 

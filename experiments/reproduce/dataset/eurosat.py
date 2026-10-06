@@ -165,13 +165,22 @@ class EurosatDataModule:
         train_fraction: float = 0.8,
         augment: bool = True,
         resize_to: tuple[int, int] | None = None,
+        train_subsample: int = 0,
+        subsample_seed: int = 0,
     ) -> None:
         if not 0.0 < train_fraction < 1.0:
             raise ValueError("train_fraction must be in (0, 1).")
         if resize_to is not None and (len(resize_to) != 2 or min(resize_to) < 1):
             raise ValueError("resize_to must be a (width, height) pair of positive ints.")
+        if train_subsample < 0:
+            raise ValueError("train_subsample must be non-negative (0 = full training set).")
         self.cache_dir = cache_dir
         self.train_fraction = train_fraction
+        # Stratified subset of the training split taken BEFORE partitioning (same
+        # semantics as Cifar10DataModule.train_subsample); 0 keeps the full split.
+        self.train_subsample = train_subsample
+        self.subsample_seed = subsample_seed
+        self._train_pool: HuggingFaceDataset | None = None
         self.augment = augment  # training-time random crop + flip (default on)
         self.resize_to = None if resize_to is None else tuple(int(v) for v in resize_to)
         self._dataset: DatasetDict | None = None
@@ -192,6 +201,21 @@ class EurosatDataModule:
             self._class_names = derive_class_names(self.dataset["train"])
         return self._class_names
 
+    @property
+    def train_pool(self) -> HuggingFaceDataset:
+        """Training records partitioned across clients (full split or stratified subset)."""
+        if self._train_pool is None:
+            split = self.dataset["train"]
+            if self.train_subsample and self.train_subsample < len(split):
+                labels = labels_from_records(split, label_column=LABEL_COLUMN)
+                keep, _ = split_stratified(
+                    labels, range(len(labels)), self.train_subsample / len(labels),
+                    seed=self.subsample_seed,
+                )
+                split = split.select(sorted(keep))
+            self._train_pool = split
+        return self._train_pool
+
     def client_loaders(
         self,
         partition_id: int,
@@ -205,7 +229,7 @@ class EurosatDataModule:
         dirichlet_alpha: float = 0.5,
         max_samples: int = 0,
     ) -> tuple[DataLoader, DataLoader]:
-        split = self.dataset["train"]
+        split = self.train_pool
         labels = labels_from_records(split, label_column=LABEL_COLUMN)
         partitions = create_partitions(
             labels,
