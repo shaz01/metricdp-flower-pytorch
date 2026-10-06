@@ -42,10 +42,15 @@ Each account gets its own `HOME` under `~/.colab-accounts/<account>/`, because
 `default` account.
 
 ```bash
-uv run python scripts/colab/run_experiment.py accounts            # who is configured
+uv run python scripts/colab/run_experiment.py accounts            # who is configured + compute units left
 uv run python scripts/colab/run_experiment.py accounts --remote   # plus live sessions
 uv run python scripts/colab/run_experiment.py login --account lab2
 ```
+
+`accounts` also prints each account's Colab compute-unit balance (`units=`),
+the hourly burn rate and hours left while sessions are running, and the GPUs
+the account is eligible for. Check it before picking an account for an A100
+run; `--no-units` skips the lookup.
 
 `login` runs the interactive OAuth paste flow under that account's `HOME`; sign
 in with the Google account that slot should own. Nothing else in the controller

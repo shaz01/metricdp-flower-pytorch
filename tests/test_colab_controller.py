@@ -146,6 +146,70 @@ def test_accounts_are_discovered_and_login_needs_a_refresh_token(
     assert "lab3" not in colab_accounts.logged_in_accounts()
 
 
+class _FakeResponse:
+    def __init__(self, body: str) -> None:
+        self._body = body.encode()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc) -> None:
+        return None
+
+    def read(self) -> bytes:
+        return self._body
+
+
+def test_compute_units_strips_the_xssi_prefix(monkeypatch) -> None:
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        seen["auth"] = request.get_header("Authorization")
+        return _FakeResponse(
+            ')]}\'\n{"currentBalance": 88.5, "consumptionRateHourly": 0,'
+            ' "eligibleGpus": ["A100", "T4"]}'
+        )
+
+    monkeypatch.setattr(colab_accounts, "_access_token", lambda account: "tok")
+    monkeypatch.setattr(colab_accounts.urllib.request, "urlopen", fake_urlopen)
+    info = colab_accounts.compute_units("lab2")
+    assert info == {
+        "currentBalance": 88.5,
+        "consumptionRateHourly": 0,
+        "eligibleGpus": ["A100", "T4"],
+    }
+    assert seen["url"].startswith(colab_accounts.CCU_INFO_URL)
+    assert seen["auth"] == "Bearer tok"
+
+
+def test_compute_units_failure_is_not_fatal(monkeypatch) -> None:
+    def broken(request, timeout):
+        raise colab_accounts.urllib.error.URLError("offline")
+
+    monkeypatch.setattr(colab_accounts, "_access_token", lambda account: "tok")
+    monkeypatch.setattr(colab_accounts.urllib.request, "urlopen", broken)
+    assert colab_accounts.compute_units("lab2") is None
+    monkeypatch.setattr(colab_accounts, "_access_token", lambda account: None)
+    assert colab_accounts.compute_units("lab2") is None
+
+
+def test_compute_units_formatting() -> None:
+    fmt = run_experiment._format_compute_units
+    assert fmt(None) == "units=?"
+    assert fmt({"currentBalance": 88.08, "consumptionRateHourly": 0}) == "units=88.1"
+    assert (
+        fmt(
+            {
+                "currentBalance": 50,
+                "consumptionRateHourly": 5,
+                "eligibleGpus": ["A100", "L4"],
+            }
+        )
+        == "units=50.0 (5.00/h, ~10.0h left) gpus=A100,L4"
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Slot selection
 # --------------------------------------------------------------------------- #
