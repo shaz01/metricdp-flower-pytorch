@@ -264,3 +264,18 @@ def test_stage_c_plan_and_cli(monkeypatch, capsys):
     monkeypatch.setattr(sys, "argv", ["stage_b", "--with-in"])
     with pytest.raises(SystemExit):
         stage_b.main()
+
+
+def test_parallel_streams_split_and_exit_code(tmp_path):
+    from results.cia_frontier.dataset_vs_model import parallel
+    argv = ["--execute", "--rounds", "5", ":::", "--privacy", "vanilla", ":::", "--privacy", "global-dp"]
+    cmds = parallel.commands(argv, python="py")
+    assert cmds == [["py", "-u", "-m", parallel.MODULE, "--execute", "--rounds", "5", "--privacy", "vanilla"],
+                    ["py", "-u", "-m", parallel.MODULE, "--execute", "--rounds", "5", "--privacy", "global-dp"]]
+    for bad in (["--execute"], ["--execute", ":::"], [":::", "a", ":::"]):
+        with pytest.raises(ValueError):
+            parallel.split_streams(bad)
+    # planning only (no --execute): both streams succeed
+    assert parallel.main(["--cells", "eurosat32+dirichlet", ":::", "--privacy", "vanilla",
+                          ":::", "--privacy", "global-dp"]) == 0
+    assert parallel.main([":::", "--cells", "nope"]) == 1
