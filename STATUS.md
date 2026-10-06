@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-06, plateau check done (R=50); dataset_vs_model Stage C (112 runs) running on Colab L4
+**Last updated:** 2026-10-06, influence_correlation seed 42 (102 runs) launched on Colab L4; dataset_vs_model Stage C running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -139,6 +139,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| `results.cia_frontier.influence_correlation.runner --execute --seeds 42 --datasets <ds> --privacy <arm> --all-out` (6 shards, one per dataset x arm, IN + 16 OUT each; output `results/<ds>-<arm>`, branch `runs/influence-correlation`) | influence_correlation seed 42: 6 IN + 96 OUT runs (16 clients, R=50), Colab L4, one account x 2 VMs, queued by a local scheduler under `caffeinate -dims` | running |
 | `results.cia_frontier.dataset_vs_model.parallel --execute --seeds 42 --stage c ... --rounds 50` (14 shards, one per setting, 2 streams per VM; output `stage_c/<shard>`, branch `runs/dataset-vs-model`) | dataset_vs_model Stage C: 14 IN + 98 OUT runs, Dirichlet, R=50, Colab L4 (2 accounts x 2 VMs), queued by a local scheduler under `caffeinate -dims` | running |
 | `results.cia_frontier.dataset_vs_model.stage_b --execute --seeds 42 --cells <ds>+dirichlet --privacy vanilla --rounds 70 --targets 0` (output `plateau/{c10s,es}`, branch `runs/dataset-vs-model`) | dataset_vs_model plateau check: 2 vanilla Dirichlet 70-round runs, Colab L4 (one account, 2 VMs); then Stage C. Done: R = 50 (`plateau/plateau.json`) | done |
 | `results.cia_frontier.dataset_vs_model.stage_b --execute --seeds 42 <shard args>` (IN runs, attempt 3; 6 shards x 6 runs, output `stage_b/<shard>`, branch `runs/dataset-vs-model`) | dataset_vs_model Stage B seed 42, 36 IN runs, Colab L4: 2 concurrent on one account, 1 each on the other two, 2 shards queued; controllers under `caffeinate -dims`. 36/36 collected; one controller-machine crash mid-run, VMs survived and were re-attached | done |
