@@ -42,6 +42,7 @@ NOISY_STD_FRACTION = 0.20
 HYPERPARAMS = replace(_STAGE_A_HYPERPARAMS, rounds=ROUNDS)
 DEFAULT_OUTPUT = Path("results/cia_frontier/dataset_vs_model/results/stage_b")
 
+STAGES = ("b", "c")
 CELLS = tuple((d, p) for d in STAGE_B_DATASETS for p in PARTITIONS)
 
 
@@ -72,8 +73,10 @@ def arm_name(privacy: str, ratio: float | None) -> str:
 
 def build_combos(*, seeds=SEEDS, cells=None, ratios=RATIOS, privacy=PRIVACY,
                  rounds=ROUNDS, clients=CLIENTS, alpha=DIRICHLET_ALPHA,
-                 targets=TARGETS, out_targets=None, train_subsample=None):
+                 targets=TARGETS, out_targets=None, train_subsample=None, stage="b"):
     """IN trajectories by default; with ``out_targets``, only those OUT trajectories.
+
+    ``stage`` only labels run names (``stage-<stage>-...``); Stage C reuses these builders.
 
     Noise multiplier = ratio x active clients (48 IN, 47 OUT), eurosat_frontier's convention.
     """
@@ -88,6 +91,8 @@ def build_combos(*, seeds=SEEDS, cells=None, ratios=RATIOS, privacy=PRIVACY,
     if out_targets is not None and (not out_targets or len(set(out_targets)) != len(out_targets)
                                     or not set(out_targets) <= set(targets)):
         raise ValueError("OUT targets must be distinct members of the target panel")
+    if stage not in STAGES:
+        raise ValueError(f"Unknown stage label: {stage}")
     unknown = set(privacy) - set(PRIVACY)
     if unknown:
         raise ValueError(f"Unknown privacy modes: {sorted(unknown)}")
@@ -98,7 +103,7 @@ def build_combos(*, seeds=SEEDS, cells=None, ratios=RATIOS, privacy=PRIVACY,
     arms = [(p, None) if p == "vanilla" else (p, r) for p in privacy for r in ([None] if p == "vanilla" else ratios)]
     adjacencies = [None] if out_targets is None else list(out_targets)
     return [StageBCombo(
-        name_prefix=(f"stage-b-{dataset}-{partition}-{arm_name(priv, ratio)}-"
+        name_prefix=(f"stage-{stage}-{dataset}-{partition}-{arm_name(priv, ratio)}-"
                      f"{'in' if target is None else f'out-{target}'}"),
         num_clients=clients - (target is not None), partition=partition, dirichlet_alpha=alpha,
         privacy=priv, aggregation="fedavg", seed=seed,
@@ -229,15 +234,21 @@ def main():
                         help="Fixed target panel every IN trajectory measures")
     parser.add_argument("--out-targets", type=int, nargs="+",
                         help="Train only these OUT trajectories (each must be in --targets)")
+    parser.add_argument("--with-in", action="store_true",
+                        help="With --out-targets, also train the IN trajectory (shard IN and OUT together)")
+    parser.add_argument("--stage", choices=STAGES, default="b", help="Run-name label only")
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--max-parallel-clients", type=int, default=6)
     parser.add_argument("--output", "--output-dir", dest="output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args()
     if args.max_parallel_clients < 1:
         parser.error("--max-parallel-clients must be positive")
-    combos = build_combos(seeds=args.seeds, cells=args.cells, ratios=args.ratios,
-                          privacy=args.privacy, rounds=args.rounds, targets=args.targets,
-                          out_targets=args.out_targets)
+    if args.with_in and not args.out_targets:
+        parser.error("--with-in requires --out-targets")
+    kwargs = dict(seeds=args.seeds, cells=args.cells, ratios=args.ratios, privacy=args.privacy,
+                  rounds=args.rounds, targets=args.targets, stage=args.stage)
+    combos = ((build_combos(**kwargs) if args.with_in else [])
+              + build_combos(**kwargs, out_targets=args.out_targets))
     print(json.dumps({"training_runs": len(combos), "execute": args.execute,
                       "target_panel": args.targets, "out_targets": args.out_targets,
                       "run_names": [c.run_name() for c in combos]}, indent=2), flush=True)

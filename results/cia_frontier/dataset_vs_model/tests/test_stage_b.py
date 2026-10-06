@@ -238,3 +238,29 @@ def test_per_client_score_on_synthetic_trajectories(tmp_path, style):
         (tmp_path / "out1" / "out1" / "shadows.json").write_text(json.dumps(shadows(9) | {"1": {"sha256": "x"}}))
         with pytest.raises(ValueError, match="shadow records differ"):
             score_directories(tmp_path)
+
+
+def test_stage_c_plan_and_cli(monkeypatch, capsys):
+    kw = dict(cells=["cifar10s+dirichlet", "eurosat32+dirichlet"], ratios=[0.0025, 0.004, 0.00625],
+              rounds=35, targets=list(range(7)), stage="c")
+    ins = stage_b.build_combos(**kw)
+    outs = stage_b.build_combos(**kw, out_targets=list(range(7)))
+    assert len(ins) == 14 and len(outs) == 98
+    assert {c.hyperparams.rounds for c in ins + outs} == {35}
+    assert all(c.run_name().startswith("stage-c-") for c in ins + outs)
+    assert len({c.run_name() for c in ins + outs}) == 112
+    assert stage_b.manifest(ins[0], range(7))["targets"] == list(range(7))
+    with pytest.raises(ValueError):
+        stage_b.build_combos(stage="z")
+    import sys
+    monkeypatch.setattr(sys, "argv", ["stage_b", "--stage", "c", "--cells", "eurosat32+dirichlet",
+                                      "--privacy", "global-dp", "--ratios", "0.004", "--rounds", "35",
+                                      "--targets", *map(str, range(7)), "--out-targets", "0", "1", "--with-in"])
+    stage_b.main()
+    plan = json.loads(capsys.readouterr().out)
+    assert plan["training_runs"] == 3 and not plan["execute"]
+    assert ["-in__" in n for n in plan["run_names"]] == [True, False, False]
+    assert all(n.startswith("stage-c-eurosat32-dirichlet-global-dp-r0.004-") for n in plan["run_names"])
+    monkeypatch.setattr(sys, "argv", ["stage_b", "--with-in"])
+    with pytest.raises(SystemExit):
+        stage_b.main()

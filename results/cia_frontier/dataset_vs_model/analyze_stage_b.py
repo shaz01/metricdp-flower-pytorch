@@ -16,7 +16,7 @@ from results.cia_frontier.dataset_vs_model.analyze import summarize_run
 from results.cia_frontier.dataset_vs_model.stage_b import DEFAULT_OUTPUT
 
 _NAME = re.compile(
-    r"^stage-b-(?P<dataset>[a-z0-9]+)-(?P<partition>[a-z]+)-"
+    r"^stage-[bc]-(?P<dataset>[a-z0-9]+)-(?P<partition>[a-z]+)-"
     r"(?P<arm>vanilla|(?P<privacy>global-dp|metric-privacy)-r(?P<ratio>[0-9.e-]+?))-"
     r"(?P<adjacency>in|out-[0-9]+)__"
 )
