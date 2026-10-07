@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from experiments.reproduce.matrix.hyperparams import Hyperparams
+from metricdp_pytorch.strategy_factory import aggregation_token
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,9 @@ class Combo:
     # Per-client sample cap passed to the runner (0 = unlimited, the default).
     # Not part of run_name(); put it in name_prefix when it matters.
     max_client_samples: int = 0
+    # FedAvg client weighting (metricdp_pytorch.strategy_factory.AGGREGATION_WEIGHTINGS).
+    # "equal" adds "-eqw" to the aggregation token of run_name(); the default leaves it unchanged.
+    aggregation_weighting: str = "num-examples"
 
     def run_name(self) -> str:
         """Build the complete deterministic name from this combo's parameters."""
@@ -45,7 +49,7 @@ class Combo:
         )
         return (
             f"{self.name_prefix}__{self.partition}{partition_suffix}__{self.privacy}__"
-            f"{self.aggregation}__clients-{self.num_clients}__seed-{self.seed}__"
+            f"{aggregation_token(self.aggregation, self.aggregation_weighting)}__clients-{self.num_clients}__seed-{self.seed}__"
             f"nm{format_noise(self.noise_multiplier)}__"
             f"clip{self.hyperparams.clipping_norm:g}__"
             f"rounds-{self.hyperparams.rounds}__"
@@ -112,6 +116,8 @@ class Combo:
         )
         if self.max_client_samples:
             args = (*args, "--max-client-samples", str(self.max_client_samples))
+        if self.aggregation_weighting != "num-examples":
+            args = (*args, "--aggregation-weighting", self.aggregation_weighting)
         if checkpoint_rounds:
             return (
                 *args,

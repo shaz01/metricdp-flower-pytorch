@@ -16,10 +16,18 @@ from experiments.reproduce.paper_training import (
 )
 from metricdp_pytorch.data_module import load_data_module
 from metricdp_pytorch.model_module import load_model
+from metricdp_pytorch.strategy_factory import UNIT_WEIGHT_KEY
 from metricdp_pytorch.utils.device import release_device_cache, resolve_device
 from metricdp_pytorch.utils.runtime import runtime_config
 
 app = ClientApp()
+
+
+def _weight_metrics(run_config: Mapping[str, Any]) -> dict[str, int]:
+    """Constant FedAvg weight for equal-weighted aggregation (absent by default)."""
+    if str(run_config.get("aggregation-weighting", "num-examples")) == "equal":
+        return {UNIT_WEIGHT_KEY: 1}
+    return {}
 
 
 def _client_round_seed(base_seed: int, client_id: int, server_round: int) -> int:
@@ -130,6 +138,7 @@ def train(msg: Message, context: Context) -> Message:
                         "train_loss": epoch_losses[-1],
                         "train_loss_mean": sum(epoch_losses) / len(epoch_losses),
                         "num-examples": len(trainloader.dataset),
+                        **_weight_metrics(run_config),
                     }
                 ),
             }
@@ -160,6 +169,7 @@ def evaluate(msg: Message, context: Context) -> Message:
                         "eval_loss": metrics["loss"],
                         "eval_acc": metrics["accuracy"],
                         "num-examples": len(testloader.dataset),
+                        **_weight_metrics(run_config),
                     }
                 )
             }

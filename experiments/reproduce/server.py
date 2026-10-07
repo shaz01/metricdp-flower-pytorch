@@ -185,6 +185,7 @@ def run(
         fraction_evaluate=float(config.get("fraction-evaluate", 1.0)),
         noise_multiplier=float(config.get("noise-multiplier", 0.01)),
         clipping_norm=float(config.get("clipping-norm", 5.0)),
+        weighting=str(config.get("aggregation-weighting", "num-examples")),
     )
     return strategy.start(
         grid=grid,
@@ -259,6 +260,7 @@ def main(grid: Grid, context: Context) -> None:
             "partition_profile": str(config.get("partition-profile", "auto")),
             "privacy": str(config["privacy"]),
             "aggregation": str(config["aggregation"]),
+            "aggregation_weighting": str(config.get("aggregation-weighting", "num-examples")),
             "seed": int(config.get("seed", 0)),
             "num_clients": int(config["num-clients"]),
             "rounds": int(config["num-server-rounds"]),
