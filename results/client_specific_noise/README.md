@@ -61,3 +61,18 @@ uv run python -m research.calculations.audit_private_descriptor_artifacts
 ```
 
 `private_descriptor_artifact_audit.json` records the separate auditor's68,532numeric comparisons, max error4.440892098500626e-16, source SHA verification, old/new/role disjointness,2048confirmation examples and1992remaining reserve examples. The auditor imports neither simulator nor simulator statistics and independently reconstructs all six primary arms from cached images and saved teachers. Both kernel checks and the default repository suite277passed/5deselected on2026-10-07. No jobs running.
+
+
+## Fixed-slot conditional descriptor CIA (2026-10-07)
+
+[Protocol](../../research/proposals/2026-10-07_descriptor_cia_protocol.md) and [findings/handoff](../../research/proposals/2026-10-07_descriptor_cia_findings.md) explain156cells, corrected target-class coverage, fresh-noise confirmation, the adapted metric scale channel and raw descriptor/student/individual views. `descriptor_cia_probe.json` contains per-cell configurations, validation-selected attacks, operator calibration, ROC-AUC/uncertainty/low-FPR points and diagnostic IN/OUT utility. Its NPZ holds evaluation scores, validation scores, utility arrays and utility indices; no image arrays. SHA values bind the dataset, development choices, corrected protocol and calculator.
+
+The conditional auxiliary attacker knows target/background datasets; this is not independently sampled client-population evaluation. Utility reuses earlier2048confirmation images, with128fresh draws per world;1992reserve images remain unused. The metric student is identical to its noisy identifiable model, so `student_exact_llr` equals descriptor LR; the finite LDA/loss bank must not be substituted for that stronger available attack. Individual B descriptor auditing sees raw individually sanitized objects, not merely nonlinear Q_i. Saturated AUC1/SE0 is finite-sample ranking separation, not certainty about population error.
+
+```sh
+uv run pytest research/calculations/tests/test_descriptor_cia_probe.py
+uv run python -m research.calculations.descriptor_cia_probe
+uv run python -m research.calculations.audit_descriptor_cia_artifacts
+```
+
+`descriptor_cia_artifact_audit.json` independently recomputes score statistics, all attainable low-FPR thresholds, frozen defense/validation selections, variance calibration,48Gaussian theoretical AUC expectations and utility index consistency:4,188numeric comparisons,max error8.67e-19. The default suite passes282tests,5deselected. Source calculation now retains all ROC thresholds; an initial pruning error was corrected by recomputing summaries from unchanged saved scores. Operator traces/publication/tuning and fixed-seed finite-precision samplers are unaccounted. No end-to-end private release, historical metric/CNN replication or overall experiment completion is claimed.

@@ -1,3 +1,5 @@
+> Subsequent attack evidence: [fixed-slot CIA findings](2026-10-07_descriptor_cia_findings.md). The useful epsilon8 descriptor remains distinguishable. The next recommendation is now matched attack–utility calibration; this earlier utility result is not a CIA superiority claim.
+
 # One-time client descriptors: bounded feasibility findings and research handoff
 
 2026-10-07; runs on 2026-10-06, verification on 2026-10-07. Active branch: `feature/client-specific-noise`.
