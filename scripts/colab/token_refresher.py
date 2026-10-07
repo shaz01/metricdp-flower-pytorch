@@ -40,6 +40,7 @@ class Listed:
     token: str
     url: str
     expires_in: int | None = None
+    accelerator: str = "L4"
 
 
 def plan_refresh(
@@ -97,6 +98,11 @@ def _log(message: str) -> None:
     print(f"{datetime.now(UTC).isoformat(timespec='seconds')} {message}", flush=True)
 
 
+def _accelerator_name(value) -> str:
+    name = getattr(value, "value", value)
+    return str(name) if name and name != "NONE" else "L4"
+
+
 def _listed(client) -> list[Listed]:
     out = []
     for assignment in client.list_assignments():
@@ -109,6 +115,7 @@ def _listed(client) -> list[Listed]:
                 info.token,
                 info.url,
                 getattr(info, "token_expires_in_seconds", None),
+                _accelerator_name(getattr(assignment, "accelerator", None)),
             )
         )
     return out
@@ -145,10 +152,9 @@ def cycle(state, controller_dir: Path | None, account: str, reattach: bool) -> N
     from colab_cli.state import SessionState
 
     name, live = pair
-    recorded_gpu = recorded_gpu_type(controller_dir, name)
     session = SessionState(
         name=name, token=live.token, url=live.url, endpoint=live.endpoint,
-        variant="GPU", accelerator=recorded_gpu,
+        variant="GPU", accelerator=live.accelerator,
     )
     store.add(session)
     session.keep_alive_pid = spawn_keep_alive(

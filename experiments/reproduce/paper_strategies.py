@@ -72,9 +72,11 @@ def create_paper_strategy(
     fraction_evaluate: float = 1.0,
     noise_multiplier: float = PAPER_NOISE_MULTIPLIER,
     clipping_norm: float = PAPER_CLIPPING_NORM,
+    weighting: str = "num-examples",
     **influence: object,
 ) -> Strategy:
     return make_strategy(
+        weighting=weighting,
         aggregation=aggregation,
         privacy=privacy,
         num_clients=num_clients,

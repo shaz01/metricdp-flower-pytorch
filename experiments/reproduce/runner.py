@@ -26,6 +26,8 @@ os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
 from metricdp_pytorch.utils.runtime import RUN_CONFIG_ENV
 from metricdp_pytorch.strategy_factory import (
     AGGREGATION_METHODS,
+    AGGREGATION_WEIGHTINGS,
+    aggregation_token,
     EXPERIMENTAL_PRIVACY_MODES,
     PRIVACY_MODES,
 )
@@ -65,6 +67,12 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--aggregation", choices=AGGREGATION_METHODS, default="fedavg"
+    )
+    parser.add_argument(
+        "--aggregation-weighting",
+        choices=AGGREGATION_WEIGHTINGS,
+        default="num-examples",
+        help="num-examples: size-weighted FedAvg (default); equal: every client weighs 1/n",
     )
     parser.add_argument("--num-clients", type=int, default=4)
     parser.add_argument("--fraction-evaluate", type=float, default=1.0)
@@ -250,7 +258,8 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
         encoded_alpha = f"{args.dirichlet_alpha:g}".replace(".", "p")
         partition_token = f"{partition_token}__alpha-{encoded_alpha}"
     run_name = args.run_name or (
-        f"paper__{partition_token}__{args.privacy}__{args.aggregation}"
+        f"paper__{partition_token}__{args.privacy}__"
+        f"{aggregation_token(args.aggregation, args.aggregation_weighting)}"
         f"__clients-{args.num_clients}__seed-{args.seed}"
     )
     output_dir = args.output_dir.resolve()
@@ -267,6 +276,7 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
             "dirichlet-alpha": args.dirichlet_alpha,
             "privacy": args.privacy,
             "aggregation": args.aggregation,
+            "aggregation-weighting": args.aggregation_weighting,
             "seed": args.seed,
             "num-clients": args.num_clients,
             "fraction-evaluate": args.fraction_evaluate,
