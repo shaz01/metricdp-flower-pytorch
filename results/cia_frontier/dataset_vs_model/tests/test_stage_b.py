@@ -313,3 +313,23 @@ def test_frontier_build_and_plot(tmp_path):
     assert by["vanilla"]["mean_score"] == 0.75 and by["metric-privacy"]["min_score"] == 0.0
     (png,) = frontier.plot(data, tmp_path)
     assert png.name == "frontier_eurosat32.png" and png.stat().st_size > 0
+
+
+def test_equal_weighting_names_manifest_and_cli(monkeypatch, capsys, tmp_path):
+    kw = dict(cells=["eurosat32+dirichlet"], ratios=[0.004], rounds=50, targets=list(range(7)), stage="c")
+    default, equal = stage_b.build_combos(**kw), stage_b.build_combos(**kw, weighting="equal")
+    assert [c.run_name() for c in equal] == [c.run_name().replace("__fedavg__", "__fedavg-eqw__")
+                                             for c in default]
+    assert "aggregation_weighting" not in stage_b.manifest(default[0], range(7))
+    assert stage_b.manifest(equal[0], range(7))["aggregation_weighting"] == "equal"
+    args = equal[0].runner_args(output_dir=tmp_path, max_parallel_clients=4, client_cpus=1.0)
+    assert build_run_config(_parser().parse_args(list(args)))["aggregation-weighting"] == "equal"
+    with pytest.raises(ValueError):
+        stage_b.build_combos(**kw, weighting="size")
+    import sys
+    monkeypatch.setattr(sys, "argv", ["stage_b", "--stage", "c", "--cells", "eurosat32+dirichlet",
+                                      "--privacy", "vanilla", "--rounds", "50", "--aggregation-weighting",
+                                      "equal", "--targets", *map(str, range(7)), "--out-targets", "0"])
+    stage_b.main()
+    plan = json.loads(capsys.readouterr().out)
+    assert plan["run_names"] and all("__fedavg-eqw__" in n for n in plan["run_names"])

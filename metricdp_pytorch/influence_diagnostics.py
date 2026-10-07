@@ -33,20 +33,25 @@ def metric_key(field: str) -> str:
     return PREFIX + field.replace("_", "-")
 
 
-def per_client_influence(updates, client_ids, num_examples, clipping_norm):
+def per_client_influence(updates, client_ids, num_examples, clipping_norm, weights=None):
     """Return ID-keyed diagnostics; ``updates`` are flattened ``model - global`` vectors.
 
     Clipping follows Flower's fixed clipping (scale ``min(1, C/||u||)``); with
-    ``clipping_norm=None`` (vanilla) nothing is clipped. ``g`` is the
-    num-examples-weighted average of clipped updates, as FedAvg aggregates them.
-    Leave-one-out influence is ``||w/(1-w) (u - g)||``: how far ``g`` moves
-    when this client is dropped and the others are reweighted.
+    ``clipping_norm=None`` (vanilla) nothing is clipped. ``weights`` are the raw
+    FedAvg weights (the strategy's ``weighted_by_key`` metric; default
+    ``num_examples``), normalized to sum to 1. ``g`` is the weighted average of
+    clipped updates, exactly as FedAvg aggregates them. Leave-one-out influence is
+    ``||w/(1-w) (u - g)||``: how far ``g`` moves when this client is dropped and
+    the others are reweighted.
     """
+    weights = num_examples if weights is None else weights
     updates = [np.asarray(u, dtype=np.float64).reshape(-1) for u in updates]
-    if not (len(updates) == len(client_ids) == len(num_examples)) or not updates:
+    if not (len(updates) == len(client_ids) == len(num_examples) == len(weights)) or not updates:
         raise ValueError("Updates, IDs and example counts must be nonempty and aligned")
     if len(set(client_ids)) != len(client_ids) or any(n <= 0 for n in num_examples):
         raise ValueError("Client IDs must be unique and example counts positive")
+    if any(w <= 0 for w in weights):
+        raise ValueError("Aggregation weights must be positive")
     if any(u.shape != updates[0].shape for u in updates):
         raise ValueError("Updates must have equal shapes")
     if clipping_norm is not None and clipping_norm <= 0:
@@ -54,8 +59,8 @@ def per_client_influence(updates, client_ids, num_examples, clipping_norm):
     norms = [float(np.linalg.norm(u)) for u in updates]
     clipped = [u * min(1.0, clipping_norm / norm) if clipping_norm is not None and norm else u
                for u, norm in zip(updates, norms, strict=True)]
-    total = float(sum(num_examples))
-    weights = [n / total for n in num_examples]
+    total = float(sum(weights))
+    weights = [float(w) / total for w in weights]
     average = np.zeros_like(clipped[0])
     for w, c in zip(weights, clipped, strict=True):
         average += w * c
@@ -100,9 +105,13 @@ def _flat_update(model: ArrayRecord, reference: Sequence[np.ndarray]) -> np.ndar
 def reply_influence(replies: Sequence[Message], reference: ArrayRecord,
                     clipping_norm: float | None, id_map: Sequence[int] | None = None,
                     arrayrecord_key: str = "arrays", weight_key: str = "num-examples"):
-    """Diagnostics for the successful replies; IDs translated through ``id_map``."""
+    """Diagnostics for the successful replies; IDs translated through ``id_map``.
+
+    ``weight_key`` is the reply metric FedAvg weights by (``num-examples`` or, for
+    equal weighting, ``unit-weight``); ``num_examples`` is always logged as is.
+    """
     current = reference.to_numpy_ndarrays()
-    updates, ids, counts = [], [], []
+    updates, ids, counts, weights = [], [], [], []
     for reply in replies:
         if reply.has_error() or not reply.has_content():
             continue
@@ -112,11 +121,19 @@ def reply_influence(replies: Sequence[Message], reference: ArrayRecord,
         metrics = next(iter(reply.content.metric_records.values()))
         cid = int(metrics["client-id"])
         ids.append(id_map[cid] if id_map is not None else cid)
-        counts.append(float(metrics[weight_key]))
+        counts.append(float(metrics["num-examples"]))
+        weights.append(float(metrics[weight_key]))
         updates.append(_flat_update(model, current))
     if not updates:
         return {}
-    return influence_metrics(per_client_influence(updates, ids, counts, clipping_norm))
+    return influence_metrics(per_client_influence(updates, ids, counts, clipping_norm, weights))
+
+
+def aggregation_weight_key(strategy: Strategy) -> str:
+    """The ``weighted_by_key`` of the innermost strategy (DP wrappers nest via ``.strategy``)."""
+    while not hasattr(strategy, "weighted_by_key") and hasattr(strategy, "strategy"):
+        strategy = strategy.strategy
+    return str(getattr(strategy, "weighted_by_key", "num-examples"))
 
 
 class InfluenceLoggingStrategy(Strategy):
@@ -128,6 +145,7 @@ class InfluenceLoggingStrategy(Strategy):
         self.clipping_norm = clipping_norm
         self.id_map = tuple(id_map) if id_map is not None else None
         self.current_arrays = ArrayRecord()
+        self.weight_key = aggregation_weight_key(strategy)
 
     def summary(self) -> None:
         self.strategy.summary()
@@ -140,7 +158,8 @@ class InfluenceLoggingStrategy(Strategy):
     def aggregate_train(self, server_round: int, replies: Iterable[Message]):
         reply_list = list(replies)
         # Measure before delegating: DP wrappers clip the replies in place.
-        diagnostics = reply_influence(reply_list, self.current_arrays, self.clipping_norm, self.id_map)
+        diagnostics = reply_influence(reply_list, self.current_arrays, self.clipping_norm, self.id_map,
+                                      weight_key=self.weight_key)
         arrays, metrics = self.strategy.aggregate_train(server_round, reply_list)
         if diagnostics:
             metrics = metrics if metrics is not None else MetricRecord()

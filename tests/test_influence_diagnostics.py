@@ -80,3 +80,35 @@ def test_logging_leaves_aggregation_and_rng_bit_identical(privacy):
     assert metrics["influence-client-ids"] == [4, 7, 9]  # canonical IDs through the view map
     assert metrics["influence-clipped"] == ([0, 0, 0] if privacy == "vanilla" else [1, 0, 1])
     assert metrics["influence-aggregation-weight"] == pytest.approx([1 / 6, 1 / 2, 1 / 3])
+
+
+def _equal_replies():
+    replies = _replies()
+    for reply in replies:
+        next(iter(reply.content.metric_records.values()))["unit-weight"] = 1
+    return replies
+
+
+@pytest.mark.parametrize("privacy", ["vanilla", "global-dp", "metric-privacy"])
+def test_equal_weighting_logs_one_over_n_and_equal_weighted_loo(privacy):
+    clip = None if privacy == "vanilla" else 2.0
+    strategy = make_strategy("fedavg", privacy, num_clients=3, fraction_evaluate=1.0,
+                             noise_multiplier=0.0, clipping_norm=2.0, weighting="equal")
+    current = _model([0.0, 0.0, 0.0])
+    if privacy != "vanilla":
+        strategy.current_arrays = current
+    strategy = InfluenceLoggingStrategy(strategy, clipping_norm=clip)
+    assert strategy.weight_key == "unit-weight"
+    strategy.current_arrays = current
+    arrays, metrics = strategy.aggregate_train(1, _equal_replies())
+    assert metrics["influence-aggregation-weight"] == pytest.approx([1 / 3] * 3)
+    assert metrics["influence-num-examples"] == [10, 30, 20]
+    updates = [np.array(v) for v in ([9.0, 0.0, 1.0], [0.5, 0.5, 0.5], [-1.0, 2.0, 0.0])]
+    clipped = [u if clip is None else u * min(1.0, clip / np.linalg.norm(u)) for u in updates]
+    g = np.mean(clipped, axis=0)
+    np.testing.assert_allclose(arrays.to_numpy_ndarrays()[0], g, rtol=1e-6, atol=1e-6)  # noise 0
+    loo = [0.5 * np.linalg.norm(c - g) for c in clipped]  # w/(1-w) = (1/3)/(2/3)
+    assert metrics["influence-leave-one-out-influence-norm"] == pytest.approx(loo)
+    for i, c in enumerate(clipped):  # LOO identity: g - mean of the others
+        others = np.mean([d for j, d in enumerate(clipped) if j != i], axis=0)
+        assert loo[i] == pytest.approx(np.linalg.norm(g - others))
