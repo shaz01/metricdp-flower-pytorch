@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-07, influence_correlation equal-weight (eqw) rerun launched
+**Last updated:** 2026-10-07, influence_correlation equal-weight (eqw) rerun done (102/102), size-vs-exposure comparison computed
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -139,7 +139,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `results.cia_frontier.influence_correlation.runner --execute --seeds 42 ... --aggregation-weighting equal` (18 shards as seed 42; output `results_eqw/<shard>`, branch `runs/influence-correlation`) | influence_correlation equal-weight FedAvg rerun (each client 1/n, matching DP sensitivity C/n): 102 runs, Colab L4, lab2/3/4 x 2 VMs, resumable scheduler `.colab/eqw/` under `caffeinate -dims` + launchd restart, controller on the Mac laptop | running |
+| `results.cia_frontier.influence_correlation.runner --execute --seeds 42 ... --aggregation-weighting equal` (18 shards as seed 42; output `results_eqw/<shard>`, branch `runs/influence-correlation`) | influence_correlation equal-weight FedAvg rerun (each client 1/n, matching DP sensitivity C/n): 102 runs, Colab L4, lab2/3/4 x 2 VMs, resumable scheduler `.colab/eqw/` under `caffeinate -dims` + launchd restart, controller on the Mac laptop. 102/102 collected, 0 failed, 3h38m, ~30 units; aggregation weights 1/n verified; `results_eqw/{correlations,weighting_comparison}.json` | done |
 | `results.cia_frontier.influence_correlation.runner --execute --seeds 42 --datasets <ds> --privacy <arm> --out-targets <part> [--no-in]` (18 shards, 3 per dataset x arm; output `results/<ds>-<arm>-<a|b|c>`, branch `runs/influence-correlation`) | influence_correlation seed 42, attempt 2: 6 IN + 96 OUT runs (16 clients, R=50), Colab L4, 3 accounts x 2 VMs, resumable local scheduler under `caffeinate -dims`. Attempt 1 lost (controller laptop died; `results/failures/seed42-attempt1-lost.json`). 102/102 collected, 0 failed runs; `analyze.py` output in `results/correlations.json` | done |
 | `results.cia_frontier.dataset_vs_model.parallel --execute --seeds 42 --stage c ... --rounds 50` (14 shards, one per setting, 2 streams per VM; output `stage_c/<shard>`, branch `runs/dataset-vs-model`) | dataset_vs_model Stage C: 14 IN + 98 OUT runs, Dirichlet, R=50, Colab L4 (2 accounts x 2 VMs), queued by a local scheduler under `caffeinate -dims` | running |
 | `results.cia_frontier.dataset_vs_model.stage_b --execute --seeds 42 --cells <ds>+dirichlet --privacy vanilla --rounds 70 --targets 0` (output `plateau/{c10s,es}`, branch `runs/dataset-vs-model`) | dataset_vs_model plateau check: 2 vanilla Dirichlet 70-round runs, Colab L4 (one account, 2 VMs); then Stage C. Done: R = 50 (`plateau/plateau.json`) | done |
