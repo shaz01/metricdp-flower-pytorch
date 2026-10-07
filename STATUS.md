@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-07, equal-weight (eqw) plateau recheck launched (then Stage C eqw)
+**Last updated:** 2026-10-07, eqw plateau done (R=57); Stage C eqw launched
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -139,7 +139,8 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `results.cia_frontier.dataset_vs_model.stage_b --execute --seeds 42 --cells <ds>+dirichlet --privacy vanilla --rounds 70 --targets 0 --aggregation-weighting equal` (output `plateau_eqw/{c10s,es}`, branch `runs/dataset-vs-model`) | equal-weight FedAvg plateau recheck before Stage C eqw: 2 vanilla Dirichlet 70-round runs, Colab L4 (lab3/lab4), resumable scheduler `.colab/eqw-plateau/` under `caffeinate -dims` + launchd restart, controller on the Mac laptop | running |
+| `results.cia_frontier.dataset_vs_model.parallel --execute --seeds 42 --stage c ... --rounds 57 --aggregation-weighting equal` (14 shards, one per setting, 2 streams per VM; output `stage_c_eqw/<shard>`, branch `runs/dataset-vs-model`) | dataset_vs_model Stage C equal-weight rerun: 14 IN + 98 OUT runs, Dirichlet, R=57, Colab L4 (lab4 x2, lab3 x2, lab2 x1), resumable scheduler `.colab/eqw-c/` under `caffeinate -dims` + launchd restart, controller on the Mac laptop | running |
+| `results.cia_frontier.dataset_vs_model.stage_b --execute --seeds 42 --cells <ds>+dirichlet --privacy vanilla --rounds 70 --targets 0 --aggregation-weighting equal` (output `plateau_eqw/{c10s,es}`, branch `runs/dataset-vs-model`) | equal-weight FedAvg plateau recheck before Stage C eqw: 2 vanilla Dirichlet 70-round runs, Colab L4 (lab3/lab4), resumable scheduler `.colab/eqw-plateau/` under `caffeinate -dims` + launchd restart, controller on the Mac laptop. 2/2 done, 51 min: R_d = 57 (cifar10s, plateau 0.561), 52 (eurosat32, 0.756) > 50, so Stage C eqw uses R = min(57, 70) = 57 (`plateau_eqw/plateau.json`; its own rule field says 50 = old cap) | done |
 | `results.cia_frontier.dataset_vs_model.parallel --execute --seeds 42 --stage c ... --rounds 50` (14 shards, one per setting, 2 streams per VM; output `stage_c/<shard>`, branch `runs/dataset-vs-model`) | dataset_vs_model Stage C: 14 IN + 98 OUT runs, Dirichlet, R=50, Colab L4 (2 accounts x 2 VMs), queued by a local scheduler under `caffeinate -dims`. 112/112 collected (~36.6 VM-h); `stage_c/frontier.json`, `frontier_*.png`, `per_client_score.json` | done |
 | `results.cia_frontier.dataset_vs_model.stage_b --execute --seeds 42 --cells <ds>+dirichlet --privacy vanilla --rounds 70 --targets 0` (output `plateau/{c10s,es}`, branch `runs/dataset-vs-model`) | dataset_vs_model plateau check: 2 vanilla Dirichlet 70-round runs, Colab L4 (one account, 2 VMs); then Stage C. Done: R = 50 (`plateau/plateau.json`) | done |
 
