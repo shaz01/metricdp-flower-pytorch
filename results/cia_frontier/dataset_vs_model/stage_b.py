@@ -25,6 +25,7 @@ import math
 from pathlib import Path
 
 from experiments.reproduce.matrix import Combo
+from metricdp_pytorch.strategy_factory import AGGREGATION_WEIGHTINGS
 from results.cia_frontier.dataset_vs_model.data import STAGE_B_DATASETS, STAGE_B_VIEW, stage_b_profile
 from results.cia_frontier.dataset_vs_model.runner import HYPERPARAMS as _STAGE_A_HYPERPARAMS, MODELS
 
@@ -73,7 +74,8 @@ def arm_name(privacy: str, ratio: float | None) -> str:
 
 def build_combos(*, seeds=SEEDS, cells=None, ratios=RATIOS, privacy=PRIVACY,
                  rounds=ROUNDS, clients=CLIENTS, alpha=DIRICHLET_ALPHA,
-                 targets=TARGETS, out_targets=None, train_subsample=None, stage="b"):
+                 targets=TARGETS, out_targets=None, train_subsample=None, stage="b",
+                 weighting="num-examples"):
     """IN trajectories by default; with ``out_targets``, only those OUT trajectories.
 
     ``stage`` only labels run names (``stage-<stage>-...``); Stage C reuses these builders.
@@ -91,6 +93,8 @@ def build_combos(*, seeds=SEEDS, cells=None, ratios=RATIOS, privacy=PRIVACY,
     if out_targets is not None and (not out_targets or len(set(out_targets)) != len(out_targets)
                                     or not set(out_targets) <= set(targets)):
         raise ValueError("OUT targets must be distinct members of the target panel")
+    if weighting not in AGGREGATION_WEIGHTINGS:
+        raise ValueError(f"Unknown aggregation weighting: {weighting}")
     if stage not in STAGES:
         raise ValueError(f"Unknown stage label: {stage}")
     unknown = set(privacy) - set(PRIVACY)
@@ -110,7 +114,7 @@ def build_combos(*, seeds=SEEDS, cells=None, ratios=RATIOS, privacy=PRIVACY,
         noise_multiplier=0.0 if ratio is None else ratio * (clients - (target is not None)),
         hyperparams=replace(HYPERPARAMS, rounds=rounds),
         data_module=STAGE_B_VIEW, model_module=MODELS[MODEL], data_tag=dataset,
-        log_client_influence=True,
+        log_client_influence=True, aggregation_weighting=weighting,
         dataset=dataset, canonical_clients=clients, out_target=target,
         noise_ratio=0.0 if ratio is None else ratio, train_subsample=train_subsample,
     ) for dataset, partition in CELLS if cell_name(dataset, partition) in wanted
@@ -127,6 +131,8 @@ def manifest(combo: StageBCombo, targets) -> dict:
              "hyperparams": asdict(combo.hyperparams), "run_name": combo.run_name(),
              "shadow_fraction": SHADOW_FRACTION, "noisy_std_fraction": NOISY_STD_FRACTION,
              "score_direction": "lower loss indicates IN"}
+    if combo.aggregation_weighting != "num-examples":  # default manifests stay unchanged
+        value["aggregation_weighting"] = combo.aggregation_weighting
     if combo.train_subsample is not None:
         value["train_subsample"] = combo.train_subsample
     return value
@@ -237,6 +243,9 @@ def main():
     parser.add_argument("--with-in", action="store_true",
                         help="With --out-targets, also train the IN trajectory (shard IN and OUT together)")
     parser.add_argument("--stage", choices=STAGES, default="b", help="Run-name label only")
+    parser.add_argument("--aggregation-weighting", choices=AGGREGATION_WEIGHTINGS,
+                        default="num-examples",
+                        help="equal: FedAvg weight 1/n per client (run names get -eqw)")
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--max-parallel-clients", type=int, default=6)
     parser.add_argument("--output", "--output-dir", dest="output", type=Path, default=DEFAULT_OUTPUT)
@@ -246,7 +255,8 @@ def main():
     if args.with_in and not args.out_targets:
         parser.error("--with-in requires --out-targets")
     kwargs = dict(seeds=args.seeds, cells=args.cells, ratios=args.ratios, privacy=args.privacy,
-                  rounds=args.rounds, targets=args.targets, stage=args.stage)
+                  rounds=args.rounds, targets=args.targets, stage=args.stage,
+                  weighting=args.aggregation_weighting)
     combos = ((build_combos(**kwargs) if args.with_in else [])
               + build_combos(**kwargs, out_targets=args.out_targets))
     print(json.dumps({"training_runs": len(combos), "execute": args.execute,

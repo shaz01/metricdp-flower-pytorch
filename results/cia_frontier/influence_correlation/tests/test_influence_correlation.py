@@ -138,3 +138,18 @@ def test_collect_joins_scores_with_in_run_features(tmp_path):
     assert len(rows) == 2 and {r["client"] for r in rows} == {0, 1}
     assert all(r["attack_score"] == 1.0 for r in rows)
     assert rows[1]["update_norm_mean"] == pytest.approx(1.5) and rows[0]["label_skew"] == 0.0
+
+
+def test_equal_weighting_reaches_runner_config_and_names(tmp_path):
+    default = runner.build_combos(seeds=[42], out_targets=[0])
+    equal = runner.build_combos(seeds=[42], out_targets=[0], weighting="equal")
+    assert [c.run_name() for c in equal] == [c.run_name().replace("__fedavg__", "__fedavg-eqw__")
+                                             for c in default]
+    assert all("__fedavg__" in c.run_name() for c in default)
+    combo = equal[0]
+    config = build_run_config(_parser().parse_args(list(
+        combo.runner_args(output_dir=tmp_path, max_parallel_clients=4, client_cpus=1.0))))
+    assert config["aggregation-weighting"] == "equal"
+    default_config = build_run_config(_parser().parse_args(list(
+        default[0].runner_args(output_dir=tmp_path, max_parallel_clients=4, client_cpus=1.0))))
+    assert default_config["aggregation-weighting"] == "num-examples"

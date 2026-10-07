@@ -33,7 +33,8 @@ DEFAULT_OUTPUT = Path("results/cia_frontier/influence_correlation/results")
 
 
 def build_combos(*, seeds=SEEDS, datasets=DATASETS, privacy=PRIVACY, ratio=RATIO,
-                 rounds=ROUNDS, clients=CLIENTS, out_targets=None, with_in=True):
+                 rounds=ROUNDS, clients=CLIENTS, out_targets=None, with_in=True,
+                 weighting="num-examples"):
     """IN trajectories (all clients as targets) and/or OUT trajectories for every client."""
     bad = set(datasets) - set(DATASETS)
     if bad or len(set(datasets)) != len(datasets):
@@ -43,7 +44,8 @@ def build_combos(*, seeds=SEEDS, datasets=DATASETS, privacy=PRIVACY, ratio=RATIO
     targets = tuple(range(clients))
     common = dict(seeds=seeds, cells=[stage_b.cell_name(d, "dirichlet") for d in datasets],
                   ratios=[ratio], privacy=privacy, rounds=rounds, clients=clients,
-                  targets=targets, train_subsample=clients * IMAGES_PER_CLIENT, stage="c")
+                  targets=targets, train_subsample=clients * IMAGES_PER_CLIENT, stage="c",
+                  weighting=weighting)
     combos = stage_b.build_combos(**common) if with_in else []
     if out_targets is not None:
         combos += stage_b.build_combos(**common, out_targets=list(out_targets))
@@ -102,6 +104,9 @@ def main():
                         help="Train these OUT trajectories (default with --all-out: every client)")
     parser.add_argument("--all-out", action="store_true", help="OUT trajectories for all clients")
     parser.add_argument("--no-in", action="store_true", help="Skip the IN trajectories")
+    parser.add_argument("--aggregation-weighting", choices=("num-examples", "equal"),
+                        default="num-examples",
+                        help="equal: FedAvg weight 1/n per client (run names get -eqw)")
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--max-parallel-clients", type=int, default=6)
     parser.add_argument("--output", "--output-dir", dest="output", type=Path, default=DEFAULT_OUTPUT)
@@ -113,7 +118,7 @@ def main():
     out_targets = list(TARGETS) if args.all_out else args.out_targets
     combos = build_combos(seeds=args.seeds, datasets=args.datasets, privacy=args.privacy,
                           ratio=args.ratio, rounds=args.rounds, out_targets=out_targets,
-                          with_in=not args.no_in)
+                          with_in=not args.no_in, weighting=args.aggregation_weighting)
     print(json.dumps({"training_runs": len(combos), "execute": args.execute,
                       "clients": CLIENTS, "pool": POOL, "out_targets": out_targets,
                       "run_names": [c.run_name() for c in combos]}, indent=2), flush=True)
