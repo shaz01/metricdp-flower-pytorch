@@ -76,3 +76,16 @@ uv run python -m research.calculations.audit_descriptor_cia_artifacts
 ```
 
 `descriptor_cia_artifact_audit.json` independently recomputes score statistics, all attainable low-FPR thresholds, frozen defense/validation selections, variance calibration,48Gaussian theoretical AUC expectations and utility index consistency:4,188numeric comparisons,max error8.67e-19. The default suite passes282tests,5deselected. Source calculation now retains all ROC thresholds; an initial pruning error was corrected by recomputing summaries from unchanged saved scores. Operator traces/publication/tuning and fixed-seed finite-precision samplers are unaccounted. No end-to-end private release, historical metric/CNN replication or overall experiment completion is claimed.
+
+## Matched conditional CIA strength (2026-10-07)
+
+[Protocol](../../research/proposals/2026-10-07_matched_cia_protocol.md) and [findings/handoff](../../research/proposals/2026-10-07_matched_cia_findings.md) document the negative radial-law result and proposed representation direction. `matched_cia_development.json`/`.npz` save17,496configuration results and independent radial calibration streams. `matched_cia_evaluation.json`/`.npz` save117arms/936target rows, fresh attack scores and utility arrays,1,024new utility indices and968remaining reserve indices. Both NPZ files are explicitly versioned, contain no image arrays, and preserve operator diagnostics outside the modeled peer transcript. `matched_cia_contrasts.json` contains36fixed-target/equal-world stratified paired noise intervals; `matched_cia_artifact_audit.json` records33,174independent arithmetic checks plus hashes/choices/splits and504Gaussian expectation checks.
+
+```sh
+uv run pytest research/calculations/tests/test_matched_cia_probe.py
+uv run python -m research.calculations.matched_cia_probe --stage development
+uv run python -m research.calculations.matched_cia_probe --stage evaluation
+uv run python -m research.calculations.audit_matched_cia_artifacts
+```
+
+Development must precede evaluation. Reproduction requires the same local Fashion-MNIST cache and preceding descriptor archives. Calibration, attack and utility streams are distinct; common random innovations across controls support paired contrasts. Gaussian risk is conditional on saved shift norms; radial matching is Monte Carlo estimated. Offline private maximum-norm calibration, tuning/publication and fixed-seed finite precision are unaccounted. This is fresh utility/noise confirmation on saved clients, not new client populations or a common-epsilon deployable comparison. Default suite287passed/5deselected; no jobs running and no overall completion decision.

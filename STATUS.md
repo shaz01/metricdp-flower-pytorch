@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-07, fixed-slot CIA boundary verified; no jobs running
+**Last updated:** 2026-10-07, matched-CIA comparison independently verified; no jobs running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -20,7 +20,9 @@ this research. The initial audit and literature-review version 1 were already co
 `master`; further research and implementation stay on this branch until the owner declares
 the work finished. No experiments were launched during the branch transition.
 
-**Latest verified research chunk (2026-10-07):** [fixed-slot conditional CIA findings](research/proposals/2026-10-07_descriptor_cia_findings.md). Three saved federations, four dominant-class targets, 156 cells, 1,024 fresh evaluation releases per world. At epsilon8 aggregate balanced votes remain distinguishable: mean descriptor AUC0.879624 Gaussian /0.792654 radial, versus equal-world CE0.955695 /1.003976. Gaussian non-voting control leaks less (meanAUC0.785588), so the earlier utility gain is not a matched-leakage win. Reduced metric adaptation has IN/OUT std ratios2.103–2.371 and exact LR AUC>=0.999998; identity student decoder exposes that same scale channel. This is strong known-alternative auxiliary knowledge under fixed datasets, not new client populations or a historical CNN/Flower replication. Student finite attack bank is weaker; raw individual-object view differs from Q_i-only. Corrected initial target-class coverage and low-FPR arithmetic are documented. Independent contract review plus4,188numeric checks/48Gaussian expectation checks;282passed/5deselected. No remaining reserve images used. Next: frozen matched attack-strength/variance controls before broad sweeps; no final defense or overall completion decision.
+**Latest verified research chunk (2026-10-07):** [matched-CIA findings](research/proposals/2026-10-07_matched_cia_findings.md). Reoptimized Gaussian/radial laws at conditional AUC targets0.55/0.65/0.80:17,496development settings,117arms/936target rows,1,024fresh utility images;968reserve images remain. Near chance, radial votes lose to strongest Gaussian controls in all three seeds (mean CE1.430741 versus1.354335). At0.80votes improve over non-voting controls, but same-query Gaussian matches radial; no consistent noise-law benefit. Offline private norm calibration/tuning is unaccounted, so this is not a deployable privacy guarantee or independent-population result. Independent query/contract review plus33,174saved-artifact checks;287passed/5deselected. Next: development-only task-relevant compression/public-reference residual review before a new frozen constructor; this hypothesis is untested. No overall experiment-completion or merge decision; no jobs running.
+
+**Preceding CIA boundary audit (2026-10-07):** [fixed-slot conditional CIA findings](research/proposals/2026-10-07_descriptor_cia_findings.md). Three saved federations, four dominant-class targets, 156 cells, 1,024 fresh evaluation releases per world. At epsilon8 aggregate balanced votes remain distinguishable: mean descriptor AUC0.879624 Gaussian /0.792654 radial, versus equal-world CE0.955695 /1.003976. Gaussian non-voting control leaks less (meanAUC0.785588), so the earlier utility gain is not a matched-leakage win. Reduced metric adaptation has IN/OUT std ratios2.103–2.371 and exact LR AUC>=0.999998; identity student decoder exposes that same scale channel. This is strong known-alternative auxiliary knowledge under fixed datasets, not new client populations or a historical CNN/Flower replication. Student finite attack bank is weaker; raw individual-object view differs from Q_i-only. Corrected initial target-class coverage and low-FPR arithmetic are documented. Independent contract review plus4,188numeric checks/48Gaussian expectation checks;282passed/5deselected. No remaining reserve images used. Next: frozen matched attack-strength/variance controls before broad sweeps; no final defense or overall completion decision.
 
 **Preceding utility feasibility (2026-10-07):** [one-time descriptor findings](research/proposals/2026-10-07_private_descriptor_findings.md). Three initial noise laws:81cells/1,215arms; raw votes fail label stress. Follow-up corrects local imbalance BEFORE joint clipping/noise, with equally corrected/reweighted model/logit/probability controls. Development17,496configs; frozen choices confirmed on2,048fresh reserve images,18cells/810arms,512new paired draws. At epsilon8 aggregate balanced-loss votes gain0.113975–0.177312CE against selected strong analytic-Gaussian controls in all three seeds (63.14–66.40%accuracy); radial Laplace also passes but is worse on this48-dimensional voting query. Individually reusable client distributions fail against aggregate controls; central can use the same constructor. This supports a useful client-query construction, not a new noise density, CIA/metric-privacy superiority or end-to-end private tuning/publication. Remaining reserve1,992images. Independent saved-artifact audit68,532numeric checks/max error4.44e-16; kernel checks and277passed/5deselected. Active recommendation: freeze full-peer fixed-slot contribution/dummy CIA evaluation plus novelty/shift stress checks. Overall experiment remains active; no merge/completion decision inferred.
 
@@ -245,7 +247,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-No jobs running. Local CPU completed and verified the corrected conditional fixed-slot CIA probe and earlier descriptor/constructor pilots.
+Local CPU completed both matched-CIA stages and independent verification. No jobs running.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -254,6 +256,8 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| `uv run python -m research.calculations.matched_cia_probe --stage development` | Local CPU:17,496configs, three risk targets, Gaussian/radial | Done; selections saved before reserve features opened |
+| `uv run python -m research.calculations.matched_cia_probe --stage evaluation` | Local CPU:117arms,8target alternatives,1,024fresh utility images | Done;936target rows; independently checked |
 | `uv run python -m research.calculations.descriptor_cia_probe` | Local CPU: conditional fixed-federation IN/dummy audit,96certified cells+60adapted metric cells | Done;156cells; independently checked |
 | `uv run python -m research.calculations.private_descriptor_probe` (three `--law` routes) | Local CPU: one-time descriptor pilots and laws | Done;81cells/1,215arms |
 | `uv run python -m research.calculations.private_prior_constructor_probe --stage development` | Local CPU: three label-stress seeds, two laws, raw/prior/balanced teachers | Done;17,496configs; choices frozen |
