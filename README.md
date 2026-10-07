@@ -56,6 +56,8 @@ uv run python -m experiments.reproduce.runner \
   --seed 42 --noise-multiplier 0.01 --clipping-norm 5.0
 ```
 
+FedAvg weights clients by example count by default (`--aggregation-weighting num-examples`). The server-side DP wrappers add noise with std `noise_multiplier * C / n`, i.e. sensitivity `C/n`, which is exact only for an equal-weighted mean; `--aggregation-weighting equal` gives every client weight `1/n` (clients report a constant `unit-weight` metric) and appends `-eqw` to the aggregation token in run names. Client-side evaluation metrics stay example-weighted in both modes.
+
 Use `--dry-run` to inspect the resolved configuration. The four-client `auto` profile reproduces the exact published client tables; other client counts automatically use scalable partitions. Results are written under `results/reproduce/` by default.
 
 Every run evaluates the final global model directly from memory. It writes `<run-name>.evaluation.json` and `<run-name>.predictions.npz` without creating a checkpoint. The artifacts contain raw labels/probabilities/predictions, confusion matrices, per-class and macro/micro/weighted precision, recall and F1, and one-vs-rest ROC/AUC for the server final-test split and every client's held-out split.

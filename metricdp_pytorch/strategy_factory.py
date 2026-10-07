@@ -33,6 +33,14 @@ PRIVACY_MODES = ("vanilla", "global-dp", "metric-privacy")
 # Opt-in only; deliberately NOT part of PRIVACY_MODES, which existing sweeps iterate.
 EXPERIMENTAL_PRIVACY_MODES = ("influence-noise",)
 
+# How FedAvg-family strategies weight client updates. "num-examples" (Flower's default,
+# size-weighted) keeps every existing run unchanged. "equal" gives every client weight 1/n:
+# the server-side DP wrappers calibrate noise as noise_multiplier * C / n, i.e. sensitivity
+# C/n, which only holds for an equal-weighted mean (DP-FedAvg / TFF's unweighted aggregator).
+# In equal mode clients report a constant UNIT_WEIGHT_KEY = 1 metric and FedAvg weights by it.
+AGGREGATION_WEIGHTINGS = ("num-examples", "equal")
+UNIT_WEIGHT_KEY = "unit-weight"
+
 FEDOPT_ETA_0 = 0.01
 FEDOPT_ETA_DECAY = 0.15
 
@@ -112,11 +120,34 @@ class DecayingEtaFedAdam(DeterministicReplyOrderMixin, FedAdam):
         return super().aggregate_train(server_round, replies)
 
 
+def weighting_key(weighting: str) -> str:
+    """Reply metric FedAvg weights client updates by under ``weighting``."""
+    if weighting == "num-examples":
+        return "num-examples"
+    if weighting == "equal":
+        return UNIT_WEIGHT_KEY
+    raise ValueError(
+        f"Unknown aggregation weighting {weighting!r}; choose from {AGGREGATION_WEIGHTINGS}."
+    )
+
+
+def aggregation_token(aggregation: str, weighting: str) -> str:
+    """Run-name token: equal weighting appends ``-eqw`` so existing names stay unchanged."""
+    weighting_key(weighting)
+    return aggregation if weighting == "num-examples" else f"{aggregation}-eqw"
+
+
+def _evaluate_by_examples(records, _weighting_metric_name: str) -> MetricRecord:
+    """Client-evaluation metrics stay example-weighted whatever the training weighting."""
+    return aggregate_metrics_with_clients(records, "num-examples")
+
+
 def make_base_strategy(
     aggregation: str,
     *,
     num_clients: int,
     fraction_evaluate: float = 1.0,
+    weighting: str = "num-examples",
 ) -> Strategy:
     """Construct one of the six paper aggregation strategies.
 
@@ -182,6 +213,10 @@ def make_base_strategy(
         "train_metrics_aggr_fn": aggregate_metrics_with_clients,
         "evaluate_metrics_aggr_fn": aggregate_metrics_with_clients,
     }
+    key = weighting_key(weighting)
+    if key != "num-examples":
+        common["weighted_by_key"] = key
+        common["evaluate_metrics_aggr_fn"] = _evaluate_by_examples
     if aggregation == "fedavg":
         return DeterministicFedAvg(**common)
     if aggregation == "fedavgm":
@@ -223,12 +258,14 @@ def make_strategy(
     influence_fraction: float | None = None,
     influence_cap: float | None = None,
     seed: int | None = None,
+    weighting: str = "num-examples",
 ) -> Strategy:
     """Construct an aggregation strategy and apply the selected DP wrapper."""
     strategy = make_base_strategy(
         aggregation,
         num_clients=num_clients,
         fraction_evaluate=fraction_evaluate,
+        weighting=weighting,
     )
     if privacy == "vanilla":
         return strategy

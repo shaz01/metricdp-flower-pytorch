@@ -188,6 +188,42 @@ def resolve_email(account: str) -> str | None:
     return str(email)
 
 
+CCU_INFO_URL = "https://colab.research.google.com/tun/m/ccu-info"
+_XSSI_PREFIX = ")]}'"
+
+
+def compute_units(account: str) -> dict[str, object] | None:
+    """The account's Colab compute-unit balance and GPU eligibility.
+
+    Uses the same ``/tun/m/ccu-info`` endpoint the Colab frontend polls. Returns
+    ``currentBalance`` (compute units left), ``consumptionRateHourly`` (units
+    per hour burned by live sessions), ``assignmentsCount`` and
+    ``eligibleGpus``. ``None`` means the lookup failed; it is never fatal.
+    """
+    token = _access_token(account)
+    if not token:
+        return None
+    request = urllib.request.Request(
+        f"{CCU_INFO_URL}?authuser=0",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+            "X-Colab-Client-Agent": "colab-cli",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            body = response.read().decode("utf-8")
+    except (urllib.error.URLError, TimeoutError, OSError):
+        return None
+    body = body.removeprefix(_XSSI_PREFIX).strip()
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
 def pending_login_path(account: str) -> Path:
     return config_dir(account) / "metricdp-login.json"
 

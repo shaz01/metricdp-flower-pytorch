@@ -818,15 +818,43 @@ def _print_table(rows: list[dict[str, Any]]) -> None:
         )
 
 
+def _format_compute_units(info: dict[str, Any] | None) -> str:
+    if info is None:
+        return "units=?"
+    try:
+        balance = float(info.get("currentBalance", 0))
+        rate = float(info.get("consumptionRateHourly", 0))
+    except (TypeError, ValueError):
+        return "units=?"
+    text = f"units={balance:.1f}"
+    if rate > 0:
+        text += f" ({rate:.2f}/h, ~{balance / rate:.1f}h left)"
+    gpus = info.get("eligibleGpus")
+    if isinstance(gpus, list) and gpus:
+        text += f" gpus={','.join(str(gpu) for gpu in gpus)}"
+    return text
+
+
 def show_accounts(args: argparse.Namespace) -> None:
     occupancy = _account_occupancy()
-    for account in colab_accounts.known_accounts():
-        if colab_accounts.is_logged_in(account):
+    accounts = colab_accounts.known_accounts()
+    logged_in = [a for a in accounts if colab_accounts.is_logged_in(a)]
+    units: dict[str, dict[str, Any] | None] = {}
+    if logged_in and not args.no_units:
+        with ThreadPoolExecutor(max_workers=len(logged_in)) as pool:
+            units = dict(
+                zip(logged_in, pool.map(colab_accounts.compute_units, logged_in), strict=True)
+            )
+    for account in accounts:
+        if account in logged_in:
             email = colab_accounts.resolve_email(account) or "(email unknown)"
         else:
             email = "(not logged in)"
         active = occupancy.get(account, 0)
-        print(f"{account:<12} {email:<34} active={active}")
+        line = f"{account:<12} {email:<34} active={active}"
+        if account in logged_in and not args.no_units:
+            line += f"  {_format_compute_units(units.get(account))}"
+        print(line)
         if args.remote and colab_accounts.is_logged_in(account):
             output = _colab_plain(account, "sessions", check=False).strip()
             for line in output.splitlines():
@@ -950,6 +978,11 @@ def build_parser() -> argparse.ArgumentParser:
     accounts_parser = subparsers.add_parser("accounts", help="list configured accounts")
     accounts_parser.add_argument(
         "--remote", action="store_true", help="also list each account's live sessions"
+    )
+    accounts_parser.add_argument(
+        "--no-units",
+        action="store_true",
+        help="skip the per-account compute-unit balance lookup",
     )
 
     login_parser = subparsers.add_parser("login", help="authorize one Colab account")
