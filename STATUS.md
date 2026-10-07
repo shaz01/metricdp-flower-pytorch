@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-06, coupled influence-filter and one-release utility results; no jobs running
+**Last updated:** 2026-10-07, fresh-reserve private voting feasibility verified; no jobs running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -19,6 +19,8 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 this research. The initial audit and literature-review version 1 were already committed on
 `master`; further research and implementation stay on this branch until the owner declares
 the work finished. No experiments were launched during the branch transition.
+
+**Latest verified research chunk (2026-10-07):** [one-time descriptor findings](research/proposals/2026-10-07_private_descriptor_findings.md). Three initial noise laws:81cells/1,215arms; raw votes fail label stress. Follow-up corrects local imbalance BEFORE joint clipping/noise, with equally corrected/reweighted model/logit/probability controls. Development17,496configs; frozen choices confirmed on2,048fresh reserve images,18cells/810arms,512new paired draws. At epsilon8 aggregate balanced-loss votes gain0.113975–0.177312CE against selected strong analytic-Gaussian controls in all three seeds (63.14–66.40%accuracy); radial Laplace also passes but is worse on this48-dimensional voting query. Individually reusable client distributions fail against aggregate controls; central can use the same constructor. This supports a useful client-query construction, not a new noise density, CIA/metric-privacy superiority or end-to-end private tuning/publication. Remaining reserve1,992images. Independent saved-artifact audit68,532numeric checks/max error4.44e-16; kernel checks and277passed/5deselected. Active recommendation: freeze full-peer fixed-slot contribution/dummy CIA evaluation plus novelty/shift stress checks. Overall experiment remains active; no merge/completion decision inferred.
 
 **Research direction reset (2026-10-01).** The owner wants to investigate client-side noise
 sampled from a separately constructed distribution for each client, aiming to improve CIA
@@ -241,7 +243,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-The owner-authorized bounded feasibility phase has a documented concrete result. All Local CPU jobs have stopped; overall research remains active.
+No jobs running. The descriptor pilots, prior/balanced development and fresh-reserve confirmation are saved and verified on Local CPU.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -250,9 +252,10 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `uv run python -m research.calculations.client_energy_filter_probe` | Local CPU: 27 coupled reduced-model cells, fixed/carry-forward schedules and local policies | Done; no jobs running |
-| `uv run python -m research.calculations.client_energy_one_release` | Local CPU: 27 one-release cells plus27 post-hoc20-step controls | Done |
-| `uv run python -m research.calculations.client_energy_filter_diagnostic` | Local CPU: 15 development-only spending/alignment arms | Done |
+| `uv run python -m research.calculations.private_descriptor_probe` (three `--law` routes) | Local CPU: one-time descriptor pilots and laws | Done;81cells/1,215arms |
+| `uv run python -m research.calculations.private_prior_constructor_probe --stage development` | Local CPU: three label-stress seeds, two laws, raw/prior/balanced teachers | Done;17,496configs; choices frozen |
+| `uv run python -m research.calculations.private_prior_constructor_probe --stage evaluation` | Local CPU:2048fresh reserve examples,512draws/cell | Done;18cells/810arms |
+| `uv run python -m research.calculations.audit_private_descriptor_artifacts` | Local CPU: independent artifact arithmetic/split/calibration audit | Passed;68,532numeric checks |
 
 ## What's established on `master`
 

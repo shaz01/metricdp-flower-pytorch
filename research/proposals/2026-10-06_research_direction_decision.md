@@ -1,3 +1,5 @@
+> Subsequent verified evidence: [one-time descriptor findings, 2026-10-07](2026-10-07_private_descriptor_findings.md). The cumulative influence filter did not pass its bounded utility gate. The active recommendation is now the aggregate class-balanced voting constructor, followed by fixed-slot CIA evaluation; individual distributions and client-specific noise-density estimation remain unsolved. This decision document is historical rationale.
+
 > Phase result: [coupled filter findings and updated priorities](2026-10-06_client_energy_filter_findings.md). The proposed filter-policy phase has now run; the recommendation below records the pre-run reasoning.
 
 # Research direction decision after the construction review

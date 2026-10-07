@@ -37,3 +37,27 @@ uv run python -m research.calculations.client_energy_filter_diagnostic
 ```
 
 The pilot archive contains held-out indices, paired CE/accuracy and private spending traces; the diagnostic archive adds proposed/signal norms and diagnostic alignment/descent, not images. Neither archive is the modeled peer transcript. Tests: projected gradient finite difference, cap/gauge/dummy checks and default repository suite277passed/5deselected.
+
+
+## One-time descriptors and prior/balanced constructor feasibility (2026-10-06–07)
+
+See [verified findings and research handoff](../../research/proposals/2026-10-07_private_descriptor_findings.md), [initial protocol](../../research/proposals/2026-10-06_private_descriptor_protocol.md), [constructor protocol](../../research/proposals/2026-10-06_prior_constructor_protocol.md) and [math review](../../research/proposals/2026-10-06_private_descriptor_math_review.md). These are bounded research diagnostics; the owner has not declared the overall experiment finished.
+
+`private_descriptor_probe`, `private_descriptor_analytic_gaussian` and `private_descriptor_radial_laplace` each have a JSON and NPZ: development search/choices, paired CE/accuracy/calibration and disjoint role indices for27cells/405arms per law. The original zCDP JSON uses its legacy calibration schema (`rho`); the newer laws carry explicit law/dimension metadata. `private_prior_constructor_development` contains17,496development configurations, raw/prior/balanced teachers, counts and vote diagnostics; `private_prior_constructor_evaluation` contains frozen choices evaluated on2048fresh reserve examples with512new paired draws,18cells/810arms. All NPZ files are intentionally versioned despite the default ignore rule; none contains image arrays.
+
+The archives include operator-only private raw teachers/counts and diagnostic objects. Their publication/tuning is unaccounted; these are NOT the modeled peer transcript or an end-to-end DP dataset release. Fixed-seed finite-precision samplers are research implementations. Whole-client dummy adjacency, individual-upload privacy and central controls are distinct contracts. No CIA score, new density, metric-privacy superiority or deployed privacy guarantee is claimed.
+
+Reproduce using the same local Fashion-MNIST Arrow cache and earlier geometry archive, in this order (evaluation reads saved development selections):
+
+```sh
+uv run python -m research.calculations.private_descriptor_probe --check
+uv run python -m research.calculations.private_descriptor_probe
+uv run python -m research.calculations.private_descriptor_probe --law analytic_gaussian
+uv run python -m research.calculations.private_descriptor_probe --law radial_laplace
+uv run python -m research.calculations.private_prior_constructor_probe --check
+uv run python -m research.calculations.private_prior_constructor_probe --stage development
+uv run python -m research.calculations.private_prior_constructor_probe --stage evaluation
+uv run python -m research.calculations.audit_private_descriptor_artifacts
+```
+
+`private_descriptor_artifact_audit.json` records the separate auditor's68,532numeric comparisons, max error4.440892098500626e-16, source SHA verification, old/new/role disjointness,2048confirmation examples and1992remaining reserve examples. The auditor imports neither simulator nor simulator statistics and independently reconstructs all six primary arms from cached images and saved teachers. Both kernel checks and the default repository suite277passed/5deselected on2026-10-07. No jobs running.
