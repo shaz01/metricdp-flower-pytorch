@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-08, class-conditional comparison and attribution verified; no jobs running
+**Last updated:** 2026-10-08, private-signal headroom verified; no jobs running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -19,6 +19,8 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 this research. The initial audit and literature-review version 1 were already committed on
 `master`; further research and implementation stay on this branch until the owner declares
 the work finished. No experiments were launched during the branch transition.
+
+**Latest development-only headroom chunk (2026-10-08):** [findings/roadmap](research/proposals/2026-10-08_headroom_findings.md).2775models, public32/128/512nestedsettings, two record-disjoint2048privatecohorts, OLDdev512selection/512assessment.32unprotectedone-stepgains.015531–.036550CEbothcohorts/3publicsubsets;512selection-frozenoracle/one-stepgatefails, butrefinement helpsA morethanB. Centering leaves fixed-class within-class covariance unchanged. Independent224,895checks/max3.20e-14/allmodelsretrained;302passed/5deselected. Noreserveaccess;136unused. Nextproposed limited-public projection/clipping/noise feasibility with512anchor andstrongcontrols; no successfuldefense/newdensity/privateconfirmation/overallcompletionclaim. Nojobsrunning.
 
 **Latest bounded class-conditional chunk (2026-10-08):** [findings/roadmap](research/proposals/2026-10-08_class_conditional_findings.md), [mechanism explained](research/proposals/class_conditional_mechanism_explained.md).8640development settings,1176fresh attack/utility cells,320newimages/136unused. Public-cap CIA channel verified but q.55utilitygatefails; gains overpublic +.000119/−.000072/−.000010 and strongestnonprimarywinsall3. Refreshed-mask apparentgain is publicadaptation: zero-private matchedpublicoffset is better by.000097–.000141all3. Independent primary6,235,039checks/max8.88e-16;posthoc attribution35,108/max1.11e-16;299passed/5deselected. Next proposed: DEV-only genuinely useful private-signal/headroom diagnosis before anotherdensity/reserve sweep. No newdensity/end-to-endtuning/population/novelty or overallcompletion claim. No jobs running.
 
@@ -251,7 +253,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Local CPU class-conditional development, frozen confirmation and post-hoc attribution completed and independently verified. No jobs running.
+Local CPU development-only headroom diagnostic completed and independently verified. No jobs running; reserve untouched.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -260,6 +262,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| `uv run python -m research.calculations.headroom_probe` | Local CPU: private signal vs public budget/optimization | Done; independent224,895checks |
 | `uv run python -m research.calculations.class_conditional_attribution` | Local CPU: post-hoc public-offset attribution on SAME320images | Done; independent35,108checks |
 | `uv run python -m research.calculations.class_conditional_probe --stage evaluation` | Local CPU: frozen320-image utility, all8targets/shift transfer | Done; independent6,235,039checks |
 | `uv run python -m research.calculations.class_conditional_probe --stage development` | Local CPU: public class-gradient residuals, six modes | Done; independent150,722checks |

@@ -136,3 +136,18 @@ uv run python -m research.calculations.audit_class_conditional_attribution
 ```
 
 Requires preceding archives and same Fashion-MNIST cache; development must precede evaluation. Prototype fixed settings use a public clipping cap and Gaussian shares for contribution/dummy secrecy, not private covariance selection or a new density. Public restoration changes OUT/mismatched objectives; target balancing is separate. Strong model/peer observer recovers affine coordinates. Offline tuning/operator artifacts and finite precision remain unaccounted. Same clients/images under shift are repeated conditions, not independent populations. Default suite299passed/5deselected; no jobs running, overall experiment remains active. Do not use further reserve before a stronger private-signal case.
+
+
+## Development-only private-signal headroom (2026-10-08)
+
+[Protocol](../../research/proposals/2026-10-08_headroom_protocol.md), [findings/next direction](../../research/proposals/2026-10-08_headroom_findings.md). Public32supports unprotected one-step assessmentgains.015531–.036550CE in both disjointcohorts/all3publicsubsets;512selection-frozen gate fails, though private refinement helpsA morethanB. Smallerbudgetis a new resource setting with512anchorretained, not successfulprotection. Public class centering leaves fixed-class within-class samplingcovariance unchanged.
+
+`headroom_development.json`/`.npz`:2775models,9nestedpubliccells/18cohortcells, allselection/assessment scores/frozenchoices, original IDs (32/128/512public,2048cohortsA/B,512selection/512assessment), reference/Hessian/gamma/query matrices and144variance diagnostics/18projecteddecompositions. NPZexplicitlyversioned (~2.2MB), noimagearrays ornewreserveindices. `headroom_artifact_audit.json`:224,895checks/max3.20e-14, everymodelindependentlyretrained, splits/covarianceinvariance/choices/decompositions/hashes verified. Default302passed/5deselected.
+
+```sh
+uv run pytest research/calculations/tests/test_headroom.py
+uv run python -m research.calculations.headroom_probe
+uv run python -m research.calculations.audit_headroom
+```
+
+Both OLDdevelopmenthalves were used earlier; neitheris freshconfirmation.512subsetseedorderingsrepeatidenticalrecordsets. Cohortsare record-disjoint fromthesamepopulation, not independent populations. Historical512publicanchor waspreviouslytuned onbothdevelopmenthalves. This is raw/noiselessutility, notCIA/noise/privacy/noveltyevidence. Noadditionalreserve consumed;136unused remain. Missingprojectedfractionmetadata wasaddedandSAMEgridregenerated, notnewreplication. Nojobsrunning/overallcompletiondecision.
