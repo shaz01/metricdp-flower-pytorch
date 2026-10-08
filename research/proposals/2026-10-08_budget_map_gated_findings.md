@@ -27,7 +27,7 @@ Larger public budgets: at 128 gated gains are +.0024-.0066 (q.65/.80), 4-6/6 cel
 
 ## Interpretation
 
-A single pre-frozen client-query construction, with a post-processing step-size choice on a modest public validation set, gives a reliable utility gain over the strongest public-only model at a calibrated, verified attack target (.65/.80) when public TRAINING data are scarce (32 examples, about +.012 to +.017 CE, 0.3 to 0.9 accuracy points on KMNIST), shrinking by 128 and vanishing by 512. This is a limited-public result: the signal is useful because the public base is poor, and the gate protects against hurting a good base.
+A single pre-frozen client-query construction, with a post-processing step-size choice on a modest public validation set, gives a reliable utility gain over the strongest public-only model at a calibrated, verified attack target (.65/.80) when public TRAINING data are scarce (32 examples, about +.012 to +.017 CE; mean accuracy +0.4 to +1.1 points at q.65/.80, but one KMNIST 0-3 cell loses 0.7 to 0.9 points even though its CE improves), shrinking by 128 and vanishing by 512. This is a limited-public result: the signal is useful because the public base is poor, and the gate protects against hurting a good base.
 
 ## Limits
 
