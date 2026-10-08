@@ -18,3 +18,13 @@ def test_peer_noise_convention_and_scale():
 def test_step_zero_signal_is_public_offset_only():
     b=np.zeros((3,17)); off=np.ones((3,17)); dec=np.eye(51)[:2]
     out=step(b,.5,off,np.zeros(2),dec); assert out.shape==(1,3,17) and np.allclose(out[0],-.5*off)
+
+
+def test_stacked_step_is_bounded_by_eta_times_cap_and_noise_free_is_deterministic():
+    from research.calculations.stacked_constructor_probe import stacked_theta
+    from research.calculations.public_residual_probe import public_hessian
+    rng=np.random.default_rng(11); x=rng.normal(size=(64,17)); control=rng.normal(size=(3,17))*.1; h=public_hessian(x,control)
+    query=rng.normal(size=(8,51))*3; cfg={'dimension':12,'cap':.05,'eta':7.,'risk':.65}
+    a=stacked_theta(control,h,query,cfg,noiseless=True); b=stacked_theta(control,h,query,cfg,noiseless=True)
+    assert np.array_equal(a,b) and np.linalg.norm(a[0]-control)<=cfg['eta']*cfg['cap']+1e-12
+    noisy=stacked_theta(control,h,query,cfg,draws=16,seed=3); assert noisy.shape==(16,3,17)
