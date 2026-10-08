@@ -75,7 +75,9 @@ def plot(data: dict, root: Path, out: Path | None = None) -> list[Path]:
             xs, ys = [s["mean_score"] for s in line], [s["accuracy"] for s in line]
             err = [[s["mean_score"] - s["min_score"] for s in line], [s["max_score"] - s["mean_score"] for s in line]]
             yerr = [[s["accuracy"] - s["accuracy_min"] for s in line], [s["accuracy_max"] - s["accuracy"] for s in line]]
-            ax.errorbar(xs, ys, xerr=err, yerr=yerr, color=color, marker=marker, capsize=3, lw=1.5, label=label, alpha=0.9)
+            ax.errorbar(xs, ys, xerr=err, yerr=yerr, fmt="none", ecolor=color, elinewidth=0.8, capsize=0,
+                        alpha=0.25, zorder=1)
+            ax.plot(xs, ys, color=color, marker=marker, ms=7, lw=1.8, label=label, zorder=3)
             for s in line[1:]:
                 ax.annotate(f"{s['noise_ratio']:g}", (s["mean_score"], s["accuracy"]), textcoords="offset points",
                             xytext=(5, -10), fontsize=7, color=color)
