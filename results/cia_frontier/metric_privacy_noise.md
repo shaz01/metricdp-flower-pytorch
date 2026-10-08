@@ -2,7 +2,7 @@
 
 ## 1. Tests ran without Dirichlet are misleading 
 
-## 2. Gap is related to how hard the dataset is
+## 2. Gap is related to how hard the dataset is (result: False)
 
 On a hard dataset, local training takes big steps and clients disagree more, 
 so their updates land far apart and metric-privacy adds less noise than
@@ -13,6 +13,10 @@ further apart (1.28 vs 0.41). Metric-privacy adds 0.6× global-DP's noise on CIF
 Alzheimer and 1.8–2.6× on EuroSAT, where it loses accuracy first. 
 
 Could we say metric-privacy leads to higher accuracy on harder datasets and lower accuracy on easier datasets?
+**Caveat**: could also be because of the different models we use for the datasets.
+**Action**: dataset_vs_model experiment, stage A 
+**Result**: No. Gap is related to update sizes, meaning **data per client** and **whether
+the model is big enough to memorize each client's data**.
 
 ## 3. The distances settle within the first 5–10 rounds and then stay flat
 
