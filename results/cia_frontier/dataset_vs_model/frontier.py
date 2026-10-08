@@ -85,7 +85,7 @@ def plot(data: dict, root: Path, out: Path | None = None) -> list[Path]:
         ax.axvline(0.5, color="grey", ls=":", lw=1)
         ax.set_xlabel("Mean per-client attack score (IN vs OUT, round-matched)")
         ax.set_ylabel(f"Accuracy, mean of rounds {vanilla['rounds'] - WINDOW + 1}-{vanilla['rounds']}")
-        ax.set_title(f"Stage C frontier: {dataset}, Dirichlet α=0.3, seed 42 (bars: per-target / per-round min-max)",
+        ax.set_title(f"Stage C frontier: {dataset}, Dirichlet α=0.3, seed 42\n(faint bars: per-target / per-round min-max)",
                      fontsize=9)
         ax.legend(fontsize=8)
         ax.grid(alpha=0.3)
