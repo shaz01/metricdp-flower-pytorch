@@ -49,7 +49,7 @@ def score_rows(in_rows, out_rows):
             "matched_rounds": len({r for r, _ in outside})}
 
 
-def _load(root: Path):
+def _load(root: Path, max_round: int | None = None):
     for path in sorted(root.rglob("manifest.json")):
         manifest = json.loads(path.read_text())
         if manifest.get("pilot"):
@@ -57,14 +57,20 @@ def _load(root: Path):
         if not (path.parent / "complete.json").exists():
             raise ValueError(f"Incomplete trajectory: {path.parent}")
         shadows = path.parent / "shadows.json"
-        yield (manifest, json.loads((path.parent / "measurements.json").read_text()),
+        rows = json.loads((path.parent / "measurements.json").read_text())
+        if max_round is not None:
+            rows = [r for r in rows if int(r["round"]) <= max_round]
+        yield (manifest, rows,
                json.loads(shadows.read_text()) if shadows.exists() else None)
 
 
-def score_directories(root: Path) -> list[dict]:
-    """One entry per (setting, seed): per-target scores for every target with an OUT run."""
+def score_directories(root: Path, max_round: int | None = None) -> list[dict]:
+    """One entry per (setting, seed): per-target scores for every target with an OUT run.
+
+    ``max_round`` truncates every trajectory to rounds 1..max_round before scoring.
+    """
     ins, outs = {}, defaultdict(dict)
-    for manifest, rows, shadows in _load(root):
+    for manifest, rows, shadows in _load(root, max_round):
         setting = tuple(json.dumps(manifest.get(k)) for k in _SETTING)
         key = (setting, manifest["seed"])
         if manifest["out_target"] is None:

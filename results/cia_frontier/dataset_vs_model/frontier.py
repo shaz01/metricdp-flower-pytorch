@@ -19,7 +19,7 @@ ROOT = Path("results/cia_frontier/dataset_vs_model/results/stage_c")
 STYLE = {"global-dp": ("tab:blue", "o", "Global DP"), "metric-privacy": ("tab:orange", "s", "Metric privacy")}
 
 
-def accuracies(root: Path) -> dict:
+def accuracies(root: Path, at_round: int | None = None) -> dict:
     """{(dataset, privacy, noise_ratio): (round-R accuracy, R, training s)} from IN trajectories."""
     out = {}
     for path in sorted(root.rglob("manifest.json")):
@@ -28,20 +28,20 @@ def accuracies(root: Path) -> dict:
             continue
         (run,) = [p for p in path.parent.glob(f"{manifest['run_name']}.json")]
         metrics = json.loads(run.read_text())["server_evaluate_metrics"]
-        rounds = manifest["rounds"]
+        rounds = at_round or manifest["rounds"]
         out[(manifest["dataset"], manifest["privacy"], manifest["noise_ratio"])] = \
             float(metrics[str(rounds)]["accuracy"])
     return out
 
 
-def build(root: Path) -> dict:
-    acc = accuracies(root)
+def build(root: Path, at_round: int | None = None) -> dict:
+    acc = accuracies(root, at_round)
     settings = []
-    for entry in score_directories(root):
+    for entry in score_directories(root, at_round):
         key = (entry["dataset"], entry["privacy"], entry["noise_ratio"])
         scores = list(entry["per_target"].values())
         settings.append({"dataset": key[0], "privacy": key[1], "noise_ratio": key[2],
-                         "rounds": entry["rounds"], "accuracy": acc[key], "mean_score": entry["mean"],
+                         "rounds": at_round or entry["rounds"], "accuracy": acc[key], "mean_score": entry["mean"],
                          "min_score": min(scores), "max_score": max(scores),
                          "per_target": entry["per_target"], "matched_rounds": entry["matched_rounds"]})
     settings.sort(key=lambda s: (s["dataset"], s["privacy"] != "vanilla", s["privacy"], s["noise_ratio"]))
@@ -50,7 +50,8 @@ def build(root: Path) -> dict:
             "settings": settings}
 
 
-def plot(data: dict, root: Path) -> list[Path]:
+def plot(data: dict, root: Path, out: Path | None = None) -> list[Path]:
+    out = out or root
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -76,7 +77,7 @@ def plot(data: dict, root: Path) -> list[Path]:
         ax.legend(fontsize=8)
         ax.grid(alpha=0.3)
         fig.tight_layout()
-        path = root / f"frontier_{dataset}.png"
+        path = out / f"frontier_{dataset}.png"
         fig.savefig(path, dpi=150)
         plt.close(fig)
         paths.append(path)
@@ -86,10 +87,14 @@ def plot(data: dict, root: Path) -> list[Path]:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=ROOT)
+    parser.add_argument("--at-round", type=int, default=None,
+                        help="Truncate to rounds 1..N (accuracy at N, attack over 1..N); writes to ROOT/at_round_N/")
     args = parser.parse_args()
-    data = build(args.root)
-    (args.root / "frontier.json").write_text(json.dumps(data, indent=1, allow_nan=False) + "\n")
-    for path in plot(data, args.root):
+    data = build(args.root, args.at_round)
+    out = args.root / f"at_round_{args.at_round}" if args.at_round else args.root
+    out.mkdir(exist_ok=True)
+    (out / "frontier.json").write_text(json.dumps(data, indent=1, allow_nan=False) + "\n")
+    for path in plot(data, args.root, out):
         print(path)
 
 
