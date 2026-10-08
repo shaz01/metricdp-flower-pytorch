@@ -1,0 +1,19 @@
+# Frozen limited-public constructor: pooled freeze and fresh-data confirmation protocol
+
+Owner: "lets move with the research autonomously until you find a solution". Follows the limited-public findings. "Solution" is defined here narrowly and in advance: a SINGLE pre-frozen protected one-step construction (not per-cell tuned) at the 32-public-example resource setting that beats both the strongest selection-frozen public control and the matched zero-private public offset on genuinely new public subsets, a new private cohort and new held-out images, at the same conditional-risk target, with the known-alternative attack empirically within the target. This would support a useful bounded-risk client-query construction, NOT a new noise density, metric-privacy superiority, or an end-to-end private-training result. A failure is reported as failure and redirects the direction.
+
+## Stage 1: pooled freeze (development only)
+
+Budget 32 only, 3 public subset seeds x cohorts A/B (the 6 limited-public cells). Grid as before, with the step-size grid EXTENDED to eta in (.1,.3,1,3,10,30,100,300,1000) because 12-13/18 earlier selections sat on the old edge. Same modes/dimensions/caps (class_center, target_balanced; d 1,3,12,51; caps .003,.01,.03,.1,.3), risk targets .55/.65/.80, 32 common-random-number draws per cell. Freeze ONE configuration per risk: the argmin of POOLED mean selection CE over the 6 cells (never assessment). Freeze ONE public-zero configuration (mode,d,eta) the same way. If a frozen eta is still the grid maximum, say so and do not extend further without a new addendum. Also report pooled assessment CE of each frozen configuration per cell as a descriptive check (assessment is the reused development half).
+
+## Stage 2: fresh-data confirmation
+
+Source: Fashion-MNIST TEST split, four classes (labels 0-3, 1000/class). It was used only in earlier fixed-feature geometry/energy-filter phases; no choice for this constructor was made on it. Disjoint roles per class: three public subsets of 8/class (24), one private cohort (label-stress counts 205 dominant on two clients per class + 17 off-class per client = 512/class), and the remaining 464/class as held-out evaluation images (1,856). Role disjointness and class counts are asserted before any model is fit.
+
+For each fresh public subset: rebuild the public candidates exactly as in the headroom phase (24 scratch fits, 4 refinements, 24 public steps; strong control = argmin DEVELOPMENT-SELECTION CE, using the reused development selection half only). Reference b, class gradients and Hessian follow. Client queries use the fresh cohort. Apply the frozen configurations unchanged (no re-tuning, no re-selection) with 512 fresh draws and score on the held-out images only. Arms: strongest selection-frozen public control, frozen public-zero offset, noiseless unclipped and clipped private references, frozen noisy construction at each risk. Gate (descriptive, per risk): noisy gain over BOTH controls > .001 CE on all three fresh public subsets. One fresh cohort only, from the same source population; subset replicates share cohort and evaluation images.
+
+Attack check (per fresh subset, risk, each of the 8 target slots): the peer-conditioned known-alternative likelihood-ratio statistic on the released aggregate (own coins/state included, 7 peer shares per the documented 8/7 convention), 2,048 draws per world; report AUC against the calibrated bound ndtr(||shift||/(sqrt2 sigma)) <= risk. This checks the construction's contract, not a general CIA defense.
+
+## Limits
+
+Offline tuning, public-reference choice and artifact release unaccounted. Test split reused from different earlier pipelines. Single new cohort. Gaussian only. If Stage 2 passes, the next questions are independent-population/CNN transfer and whether a non-Gaussian or client-specific law adds anything at matched risk; neither is claimed here.
