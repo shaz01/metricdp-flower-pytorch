@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from logging import INFO
+from logging import INFO, WARNING
 
 import numpy as np
 from flwr.app import Array, ArrayRecord, ConfigRecord, Message, MetricRecord, RecordDict
@@ -83,6 +83,16 @@ def example_gradients(features: np.ndarray, labels: np.ndarray, theta: np.ndarra
 def public_class_gradients(features: np.ndarray, labels: np.ndarray, theta: np.ndarray) -> np.ndarray:
     gradients = example_gradients(features, labels, theta)
     return np.stack([gradients[labels == k].mean(axis=0) for k in range(NUM_CLASSES)])
+
+
+def head_scores(features: np.ndarray, labels: np.ndarray, thetas: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Mean cross-entropy and accuracy of each head in ``thetas`` (shape (M, 3, D)) on one labelled set."""
+    weights = np.einsum("ca,nad->ncd", CONTRAST, thetas)
+    logits = np.einsum("md,ncd->nmc", features, weights)
+    top = logits.max(axis=2)
+    log_sum = top + np.log(np.exp(logits - top[:, :, None]).sum(axis=2))
+    ce = (log_sum - logits[:, np.arange(len(labels)), labels]).mean(axis=1)
+    return ce, (logits.argmax(axis=2) == labels).mean(axis=1)
 
 
 def projection_basis(features: np.ndarray, theta: np.ndarray, dimension: int) -> np.ndarray:
@@ -169,8 +179,18 @@ class StackedHeadStrategy(FedAvg):
         basis: np.ndarray,
         class_gradients: np.ndarray,
         validation_ce: Callable[[np.ndarray], np.ndarray],
+        *,
+        replicate: bool = False,
+        reply_callback: Callable[[int, dict[int, np.ndarray], dict[str, float]], None] | None = None,
         **fedavg_kwargs,
     ) -> None:
+        """Build the strategy.
+
+        ``replicate`` re-sends the ORIGINAL base model every round, so each round is an independent
+        release from the same base (used to estimate the distribution of a one-shot release in one
+        simulation). It is not a multi-round federated protocol: privacy is not composed across rounds.
+        ``reply_callback(server_round, {client_id: vector}, metrics)`` is a diagnostics hook.
+        """
         super().__init__(**fedavg_kwargs)
         if basis.shape[1] != config.dimension:
             raise ValueError("basis columns must equal config.dimension.")
@@ -178,6 +198,9 @@ class StackedHeadStrategy(FedAvg):
         self.basis = basis
         self.class_gradients = class_gradients
         self.validation_ce = validation_ce
+        self.replicate = replicate
+        self.reply_callback = reply_callback
+        self.base_arrays: ArrayRecord | None = None
         self.current_arrays: ArrayRecord | None = None
         self.last_round_metrics: dict[str, float] = {}
 
@@ -187,6 +210,10 @@ class StackedHeadStrategy(FedAvg):
     def configure_train(
         self, server_round: int, arrays: ArrayRecord, config: ConfigRecord, grid: Grid
     ) -> Iterable[Message]:
+        if self.replicate:
+            if self.base_arrays is None:
+                self.base_arrays = arrays
+            arrays = self.base_arrays
         self.current_arrays = arrays
         node_ids, num_total = sample_nodes(
             grid, self.min_available_nodes, max(int(len(list(grid.get_node_ids())) * self.fraction_train), self.min_train_nodes)
@@ -207,12 +234,16 @@ class StackedHeadStrategy(FedAvg):
         if self.current_arrays is None:
             raise RuntimeError("configure_train must run before aggregate_train.")
         good = [reply for reply in replies if not reply.has_error()]
-        if not good:
+        if len(good) < max(self.min_train_nodes, 1):
+            log(WARNING, "aggregate_train: %s of the required %s clients replied; skipping the release.", len(good), self.min_train_nodes)
             return None, None
         good.sort(key=lambda reply: int(next(iter(reply.content.metric_records.values()))["client-id"]))
         total = np.zeros(self.config.dimension)
+        vectors: dict[int, np.ndarray] = {}
         for reply in good:
-            total += reply.content[UPDATE_KEY]["vector"].numpy().astype(float)
+            vector = reply.content[UPDATE_KEY]["vector"].numpy().astype(float)
+            vectors[int(next(iter(reply.content.metric_records.values()))["client-id"])] = vector
+            total += vector
         theta0 = head_theta(self.current_arrays)
         delta = (total @ self.basis.T).reshape(theta0.shape)
         candidates = np.stack([theta0 - self.config.eta * m * delta for m in self.config.multipliers])
@@ -224,4 +255,6 @@ class StackedHeadStrategy(FedAvg):
             "validation-ce-chosen": float(validation[pick]),
             "num-replies": float(len(good)),
         }
+        if self.reply_callback is not None:
+            self.reply_callback(server_round, vectors, dict(self.last_round_metrics))
         return with_head(self.current_arrays, candidates[pick]), MetricRecord(self.last_round_metrics)

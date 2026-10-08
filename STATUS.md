@@ -1,7 +1,7 @@
 # Project Status
 
-**Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-08, Flower strategy slice for the stacked head step added and unit-tested; no jobs running
+**Branch:** `feature/stacked-head` (branched from `feature/client-specific-noise`, which holds the research it implements)
+**Last updated:** 2026-10-08, stacked-head Flower experiment implemented and validated end to end; no jobs running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -15,7 +15,9 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-**Working branch:** `feature/client-specific-noise`. The owner requested a separate branch for
+**`feature/stacked-head` (2026-10-08, owner-requested branch):** full Flower implementation of the stacked, validation-gated head step in `experiments/stacked_head/` (README there), using `metricdp_pytorch/stacked_head_strategy.py`. Built: deterministic task roles + label-stress client partitions, CNN + public-base bundle, ClientApp, ServerApp, in-process grid, runner (`prepare`/`run`/`matrix`/`attack`), attack check, analysis/gate, probe-equivalence validator; 20 experiment tests + 8 strategy tests, full suite passing. Validation on this machine (CPU): a probe-noise replay of the research CNN-head cell (KMNIST 0-3, 32 public images, set 0, cohort A, q.65) through Flower's Ray simulation reproduces all 512 per-release held-out CEs to 1.1e-8 with identical control CE (`results/stacked_head/validation/`); the real-message-path IN/OUT attack (target 3, 2048 releases per world) gives AUC 0.6549 vs calibrated 0.650 (rough SE 0.011; an earlier run with the pre-cell-key noise streams gave 0.6476), TPR 4.1% at FPR 1%. NOT run yet: the `gate` (24 cells) and `budgets` (48 cells) matrices, any multi-seed/independent-noise study, any non-KMNIST task; where to run them (laptop or a server) is the owner's pending decision. Replicate rounds estimate the release distribution from one base; they are not a multi-round protocol. Research-branch note: six `.npz` archives behind the fresh-data audits were force-added late (commit `3cd0313`) because they were silently gitignored. No jobs running.
+
+**Research branch:** `feature/client-specific-noise`. The owner requested a separate branch for
 this research. The initial audit and literature-review version 1 were already committed on
 `master`; further research and implementation stay on this branch until the owner declares
 the work finished. No experiments were launched during the branch transition.
@@ -276,6 +278,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| `uv run python -m experiments.stacked_head.runner run/attack --backend ray` | Local CPU: Flower-path validation (probe replay 512 releases; IN/OUT attack 2048 releases) | Done; results in `results/stacked_head/validation/` |
 | `uv run python -m research.calculations.cnn_head_probe` | Local CPU: CNN-head port, fresh KMNIST, budgets 32/128 | Done; independent 148 checks |
 | `uv run python -m research.calculations.noise_law_probe --stage freeze` then `--stage compare` | Local CPU: Gaussian vs radial Laplace at matched AUC, fresh KMNIST | Done |
 | `uv run python -m research.calculations.budget_map_probe` and `gated_step_probe` | Local CPU: public-budget map + validation-gated step (needs MNIST, KMNIST in HF cache) | Done; independent 320 checks (KMNIST 32/128) |

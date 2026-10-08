@@ -112,7 +112,7 @@ def test_zero_multiplier_returns_base_when_validation_prefers_it():
     gamma = public_class_gradients(x[:32], y[:32], theta)
     basis = projection_basis(x[:32], theta, 3)
     config = StackedHeadConfig(cap=0.05, eta=5.0, dimension=3, risk=0.65, noise_free=True)
-    strategy = StackedHeadStrategy(config, basis, gamma, lambda thetas: np.arange(len(thetas), dtype=float))
+    strategy = StackedHeadStrategy(config, basis, gamma, lambda thetas: np.arange(len(thetas), dtype=float), min_train_nodes=1, min_available_nodes=1)
     strategy.current_arrays = make_arrays(theta)
     out, metrics = strategy.aggregate_train(1, [reply(0, np.ones(3))])
     assert metrics["multiplier"] == 0.0 and np.allclose(head_theta(out), theta, atol=1e-5)
@@ -149,3 +149,36 @@ def test_configure_train_ships_model_public_geometry_and_construction_config():
     sent = content["config"]
     assert (sent["server-round"], sent["dimension"], sent["cap"], sent["risk"], sent["mode"], sent["peers"]) == (2, 5, 0.02, 0.8, "target_center", 7)
     assert strategy.current_arrays is arrays
+
+
+def test_replicate_mode_resends_the_original_base_and_reports_vectors():
+    rng, x, y, theta = synthetic()
+    gamma = public_class_gradients(x[:32], y[:32], theta)
+    basis = projection_basis(x[:32], theta, 3)
+    config = StackedHeadConfig(cap=0.05, eta=5.0, dimension=3, risk=0.65, noise_free=True)
+    seen = []
+    strategy = StackedHeadStrategy(config, basis, gamma, lambda t: np.zeros(len(t)), replicate=True, min_train_nodes=2, min_available_nodes=2,
+                                   reply_callback=lambda rnd, vectors, metrics: seen.append((rnd, sorted(vectors), metrics)))
+    base = make_arrays(theta)
+    first = list(strategy.configure_train(1, base, ConfigRecord(), StubGrid(2)))
+    moved = make_arrays(theta + 1.0)
+    second = list(strategy.configure_train(2, moved, ConfigRecord(), StubGrid(2)))
+    assert np.allclose(first[0].content["arrays"][HEAD_WEIGHT_KEY].numpy(), second[0].content["arrays"][HEAD_WEIGHT_KEY].numpy())
+    strategy.aggregate_train(2, [reply(1, np.ones(3)), reply(0, np.ones(3))])
+    assert seen[0][0] == 2 and seen[0][1] == [0, 1] and "multiplier" in seen[0][2]
+    plain = StackedHeadStrategy(config, basis, gamma, lambda t: np.zeros(len(t)), min_train_nodes=2, min_available_nodes=2)
+    plain.configure_train(1, base, ConfigRecord(), StubGrid(2))
+    out = list(plain.configure_train(2, moved, ConfigRecord(), StubGrid(2)))
+    assert np.allclose(out[0].content["arrays"][HEAD_WEIGHT_KEY].numpy(), moved[HEAD_WEIGHT_KEY].numpy())
+
+
+def test_round_with_missing_clients_is_skipped_not_rescaled():
+    rng, x, y, theta = synthetic()
+    gamma = public_class_gradients(x[:32], y[:32], theta)
+    basis = projection_basis(x[:32], theta, 3)
+    config = StackedHeadConfig(cap=0.05, eta=5.0, dimension=3, risk=0.65, noise_free=True)
+    strategy = StackedHeadStrategy(config, basis, gamma, lambda t: np.zeros(len(t)), min_train_nodes=3, min_available_nodes=3)
+    strategy.current_arrays = make_arrays(theta)
+    assert strategy.aggregate_train(1, [reply(0, np.ones(3)), reply(1, np.ones(3))]) == (None, None)
+    out, metrics = strategy.aggregate_train(1, [reply(i, np.ones(3)) for i in range(3)])
+    assert out is not None and metrics["num-replies"] == 3.0
