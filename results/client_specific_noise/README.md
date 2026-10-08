@@ -89,3 +89,29 @@ uv run python -m research.calculations.audit_matched_cia_artifacts
 ```
 
 Development must precede evaluation. Reproduction requires the same local Fashion-MNIST cache and preceding descriptor archives. Calibration, attack and utility streams are distinct; common random innovations across controls support paired contrasts. Gaussian risk is conditional on saved shift norms; radial matching is Monte Carlo estimated. Offline private maximum-norm calibration, tuning/publication and fixed-seed finite precision are unaccounted. This is fresh utility/noise confirmation on saved clients, not new client populations or a common-epsilon deployable comparison. Default suite287passed/5deselected; no jobs running and no overall completion decision.
+
+## Public-reference residuals and class-conditional signal (2026-10-08)
+
+[Findings/handoff](../../research/proposals/2026-10-08_public_residual_findings.md), [primary protocol](../../research/proposals/2026-10-08_public_residual_protocol.md), [pre-reserve public-control addendum](../../research/proposals/2026-10-08_public_residual_control_addendum.md) and [post-hoc development-only signal protocol](../../research/proposals/2026-10-08_residual_signal_diagnostic_protocol.md). Public-only decoder regularization explains the apparent projected-model gain. The distribution-aware gradient-centering lead remains untested as a protected mechanism.
+
+`public_residual_development.json`/`.npz`:16,758configurations/eight-stratum CE arrays,18publicreference choices,48frozenfamily minima, public B/Hessian, fine teachers/selectedboundedqueries and hashes. `public_residual_evaluation.json`/`.npz`:432target rows/54arms, rawattack scores and utility draws/noiselessdiagnostics,512freshindices and456unusedreserve. NPZ files are explicitly versioned and contain no image arrays. `public_residual_contrasts.json` contains54fixed-stratum paired comparisons. `public_residual_artifact_audit.json` records260,338checks and independent teacher/Hessian/source/split/selection reconstruction.
+
+`public_residual_public_control_development.json` contains16public-only decoder-offset records (withduplicates), selectedBEFOREreserveaccess; `public_residual_public_control_evaluation.json` evaluatesonlythe frozenwinner and54supplementalcomparisons ontheSAME512images. This addendum was audit-directed afterdevelopmentstarted; it was not originally predeclared or a new replication. The unselected analytic zero d51offset has roundoff-sensitive argmaxaccuracy; selected d3offset and CEselection are unaffected.
+
+`public_residual_signal_diagnostic.json` savespost-hoc OLDdevelopment-only gradient norms and public class-gradient references,54pooledoracle scores and105gradientdirection/step scores, identity checks and hashes. `public_residual_signal_artifact_audit.json` independently verifies874numeric values without readingreserveindices/images. Mean-norm reductions and pooled unprotected headroom are not noise/privacy evidence. Observed maxima must notbeused aspublicsensitivity.
+
+Reproduce in this order using existing descriptor archives and the same local Fashion-MNIST cache:
+
+```sh
+uv run pytest research/calculations/tests/test_public_residual_probe.py
+uv run python -m research.calculations.public_residual_probe --stage development
+uv run python -m research.calculations.audit_public_residual_artifacts --development-only
+uv run python -m research.calculations.public_residual_public_control --stage development
+uv run python -m research.calculations.public_residual_probe --stage evaluation
+uv run python -m research.calculations.public_residual_public_control --stage evaluation
+uv run python -m research.calculations.audit_public_residual_artifacts --require-public-control
+uv run python -m research.calculations.public_residual_signal_diagnostic
+uv run python -m research.calculations.audit_public_residual_signal
+```
+
+Whole-client contribution/dummy cap is public for fixedparameters; researchselection/reference tuning and diagnostic publication are unaccounted. All methods now receive512task-labelledpublicexamples; no comparison credits those labels to privacy. Strong peer-knowncoins/conditionaltargetauxiliary, individual-uploadprivacy andcentral aredifferentcontracts. Freshslice/noise uses savedclients, not newpopulationreplication. Defaultsuite293passed/5deselected. No jobs running or overallcompletiondecision.

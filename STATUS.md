@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-07, matched-CIA comparison independently verified; no jobs running
+**Last updated:** 2026-10-08, public-reference result and signal diagnostic verified; no jobs running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -20,7 +20,9 @@ this research. The initial audit and literature-review version 1 were already co
 `master`; further research and implementation stay on this branch until the owner declares
 the work finished. No experiments were launched during the branch transition.
 
-**Latest verified research chunk (2026-10-07):** [matched-CIA findings](research/proposals/2026-10-07_matched_cia_findings.md). Reoptimized Gaussian/radial laws at conditional AUC targets0.55/0.65/0.80:17,496development settings,117arms/936target rows,1,024fresh utility images;968reserve images remain. Near chance, radial votes lose to strongest Gaussian controls in all three seeds (mean CE1.430741 versus1.354335). At0.80votes improve over non-voting controls, but same-query Gaussian matches radial; no consistent noise-law benefit. Offline private norm calibration/tuning is unaccounted, so this is not a deployable privacy guarantee or independent-population result. Independent query/contract review plus33,174saved-artifact checks;287passed/5deselected. Next: development-only task-relevant compression/public-reference residual review before a new frozen constructor; this hypothesis is untested. No overall experiment-completion or merge decision; no jobs running.
+**Latest verified research chunk (2026-10-08):** [public-reference findings](research/proposals/2026-10-08_public_residual_findings.md). Public-cap Gaussian comparison:16,758development settings,54arms/432target rows,512fresh images;456reserve remain. At q0.55fine residual CE0.451109/85.75%accuracy loses to public-only decoder adjustment CE0.447582/86.52%; projected absolute matches but is slightly worse than the latter. Fixed selected fine queries lose even without noise, so a zero-mean additive density change alone cannot repair their expected CE deficit. Main audit260,338numeric checks;293passed/5deselected. Follow-up DEVELOPMENT-ONLY gradient diagnostic: client empirical class distributions and public class-gradient references reduce mean client norms84–88%while preserving the balanced all-IN unbounded aggregate. Independent874checks; utility/OUT/shift/noise superiority remains untested, and private-data headroom is inconsistent. Next: signal-first public class-conditional control-variate feasibility with stronger public-gradient controls and explicit prior/conditional-shift stress. No final defense/novelty/end-to-end tuning or overall experiment-completion decision. No jobs running.
+
+**Preceding matched-CIA chunk (2026-10-07):** [matched-CIA findings](research/proposals/2026-10-07_matched_cia_findings.md). Reoptimized Gaussian/radial laws at conditional AUC targets0.55/0.65/0.80:17,496development settings,117arms/936target rows,1,024fresh utility images;968reserve images remain. Near chance, radial votes lose to strongest Gaussian controls in all three seeds (mean CE1.430741 versus1.354335). At0.80votes improve over non-voting controls, but same-query Gaussian matches radial; no consistent noise-law benefit. Offline private norm calibration/tuning is unaccounted, so this is not a deployable privacy guarantee or independent-population result. Independent query/contract review plus33,174saved-artifact checks;287passed/5deselected. Next: development-only task-relevant compression/public-reference residual review before a new frozen constructor; this hypothesis is untested. No overall experiment-completion or merge decision; no jobs running.
 
 **Preceding CIA boundary audit (2026-10-07):** [fixed-slot conditional CIA findings](research/proposals/2026-10-07_descriptor_cia_findings.md). Three saved federations, four dominant-class targets, 156 cells, 1,024 fresh evaluation releases per world. At epsilon8 aggregate balanced votes remain distinguishable: mean descriptor AUC0.879624 Gaussian /0.792654 radial, versus equal-world CE0.955695 /1.003976. Gaussian non-voting control leaks less (meanAUC0.785588), so the earlier utility gain is not a matched-leakage win. Reduced metric adaptation has IN/OUT std ratios2.103–2.371 and exact LR AUC>=0.999998; identity student decoder exposes that same scale channel. This is strong known-alternative auxiliary knowledge under fixed datasets, not new client populations or a historical CNN/Flower replication. Student finite attack bank is weaker; raw individual-object view differs from Q_i-only. Corrected initial target-class coverage and low-FPR arithmetic are documented. Independent contract review plus4,188numeric checks/48Gaussian expectation checks;282passed/5deselected. No remaining reserve images used. Next: frozen matched attack-strength/variance controls before broad sweeps; no final defense or overall completion decision.
 
@@ -247,7 +249,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Local CPU completed both matched-CIA stages and independent verification. No jobs running.
+Local CPU completed and verified public-residual development, fresh confirmation, supplementary public-only control and development-only signal diagnostic. No jobs running.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -256,6 +258,10 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| `uv run python -m research.calculations.public_residual_probe --stage development` | Local CPU: public-cap Gaussian, public reference/subspace, equal IN/OUT tuning | Done;16,758settings, choices frozen |
+| `uv run python -m research.calculations.public_residual_probe --stage evaluation` | Local CPU:432target rows,512fresh utility images | Done; independently checked |
+| `uv run python -m research.calculations.public_residual_public_control` (two stages) | Local CPU: supplementary frozen public-only model | Done;16development records,54contrasts |
+| `uv run python -m research.calculations.public_residual_signal_diagnostic` | Local CPU: raw-information/development-only gradient diagnostic | Done; independent874checks |
 | `uv run python -m research.calculations.matched_cia_probe --stage development` | Local CPU:17,496configs, three risk targets, Gaussian/radial | Done; selections saved before reserve features opened |
 | `uv run python -m research.calculations.matched_cia_probe --stage evaluation` | Local CPU:117arms,8target alternatives,1,024fresh utility images | Done;936target rows; independently checked |
 | `uv run python -m research.calculations.descriptor_cia_probe` | Local CPU: conditional fixed-federation IN/dummy audit,96certified cells+60adapted metric cells | Done;156cells; independently checked |
