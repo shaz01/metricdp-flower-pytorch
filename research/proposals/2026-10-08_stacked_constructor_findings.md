@@ -6,6 +6,8 @@ Protocol: [stacked-constructor protocol](2026-10-08_stacked_constructor_protocol
 
 Base = strongest selection-frozen public model T0; clipped, projected, noised client gradients at T0 are added as theta = T0 - eta*decode(total). Pooled freeze on the six Fashion-MNIST 0-3 development cells (selection CE only): all risks use `target_center`, d=51; caps/eta .01/10 (q.55), .003/100 (q.65, q.80); none at the eta grid edge. Pooled selection CE .6024/.5951/.5933 against .6052 for the strong public control alone.
 
+> **Erratum (later in the day):** the 24/24 result below used a single draw of three public sets per task; a replicate with new public sets shows it is fragile for the fixed step, mainly on Fashion-MNIST 4-7. See [budget map and gated step findings](2026-10-08_budget_map_gated_findings.md).
+
 ## Fresh-task transfer (no re-tuning)
 
 Two tasks no frozen choice ever saw: Fashion-MNIST train classes 4-7 (same domain, new classes) and MNIST train digits 0-3 (new dataset). Per task: 3 public 32-sets x 2 private cohorts = 6 cells, 2,048 held-out images, 512 noise draws, 2,048-draw attack per target slot. All roles disjoint.
