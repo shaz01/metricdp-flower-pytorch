@@ -115,3 +115,24 @@ uv run python -m research.calculations.audit_public_residual_signal
 ```
 
 Whole-client contribution/dummy cap is public for fixedparameters; researchselection/reference tuning and diagnostic publication are unaccounted. All methods now receive512task-labelledpublicexamples; no comparison credits those labels to privacy. Strong peer-knowncoins/conditionaltargetauxiliary, individual-uploadprivacy andcentral aredifferentcontracts. Freshslice/noise uses savedclients, not newpopulationreplication. Defaultsuite293passed/5deselected. No jobs running or overallcompletiondecision.
+
+
+## Public class-conditional query/noise feasibility (2026-10-08)
+
+[Primary protocol](../../research/proposals/2026-10-08_class_conditional_protocol.md), [findings/roadmap](../../research/proposals/2026-10-08_class_conditional_findings.md), [mechanism tutorial](../../research/proposals/class_conditional_mechanism_explained.md), [post-hoc attribution protocol](../../research/proposals/2026-10-08_class_conditional_attribution_protocol.md). Primary q.55utility gate fails: norm reduction does not reliably improve private utility. Refreshed-mask apparent gain is reproduced/exceeded by the public gradient alone.
+
+`class_conditional_development.json`/`.npz`:8640settings,36frozen minima,380public-only candidates,8×32candidate CE arrays,18full query/gamma/prior/count routes, original B/Hessian, hashes. `class_conditional_evaluation.json`/`.npz`:1176cells, all8target IN/OUT,2048fresh optimalLR draws/world and128freshutilitydraws/world; weighted/unweighted metrics, selected signal/offset arrays and noiseless diagnostics.320new indices/136unused; no image arrays. Both NPZ files explicitly versioned (18.1MB/45.6MB). `class_conditional_artifact_audit.json`:6,235,039independent numeric checks/max8.88e-16; reconstruction of2352attack vectors/2352utility releases, selections/public models/roles/1176Gaussian bounds,147fixed-stratum contrasts.
+
+`class_conditional_attribution.json` is a separately frozen POST-HOC diagnostic on the SAME320images:147exact public offsets, private/noiseless gains and encoded client norms. It does not alter primary choices or establish another confirmation. `class_conditional_attribution_audit.json`:35,108checks/max1.11e-16, independently reconstructed147publicoffsets and1176noiseless strata. Hash-key correction reran only this diagnostic on unchanged images/numerics.
+
+```sh
+uv run pytest research/calculations/tests/test_class_conditional.py
+uv run python -m research.calculations.class_conditional_probe --stage development
+uv run python -m research.calculations.audit_class_conditional --development-only
+uv run python -m research.calculations.class_conditional_probe --stage evaluation
+uv run python -m research.calculations.audit_class_conditional
+uv run python -m research.calculations.class_conditional_attribution
+uv run python -m research.calculations.audit_class_conditional_attribution
+```
+
+Requires preceding archives and same Fashion-MNIST cache; development must precede evaluation. Prototype fixed settings use a public clipping cap and Gaussian shares for contribution/dummy secrecy, not private covariance selection or a new density. Public restoration changes OUT/mismatched objectives; target balancing is separate. Strong model/peer observer recovers affine coordinates. Offline tuning/operator artifacts and finite precision remain unaccounted. Same clients/images under shift are repeated conditions, not independent populations. Default suite299passed/5deselected; no jobs running, overall experiment remains active. Do not use further reserve before a stronger private-signal case.

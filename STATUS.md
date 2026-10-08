@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-08, public-reference result and signal diagnostic verified; no jobs running
+**Last updated:** 2026-10-08, class-conditional comparison and attribution verified; no jobs running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -19,6 +19,8 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 this research. The initial audit and literature-review version 1 were already committed on
 `master`; further research and implementation stay on this branch until the owner declares
 the work finished. No experiments were launched during the branch transition.
+
+**Latest bounded class-conditional chunk (2026-10-08):** [findings/roadmap](research/proposals/2026-10-08_class_conditional_findings.md), [mechanism explained](research/proposals/class_conditional_mechanism_explained.md).8640development settings,1176fresh attack/utility cells,320newimages/136unused. Public-cap CIA channel verified but q.55utilitygatefails; gains overpublic +.000119/−.000072/−.000010 and strongestnonprimarywinsall3. Refreshed-mask apparentgain is publicadaptation: zero-private matchedpublicoffset is better by.000097–.000141all3. Independent primary6,235,039checks/max8.88e-16;posthoc attribution35,108/max1.11e-16;299passed/5deselected. Next proposed: DEV-only genuinely useful private-signal/headroom diagnosis before anotherdensity/reserve sweep. No newdensity/end-to-endtuning/population/novelty or overallcompletion claim. No jobs running.
 
 **Latest verified research chunk (2026-10-08):** [public-reference findings](research/proposals/2026-10-08_public_residual_findings.md). Public-cap Gaussian comparison:16,758development settings,54arms/432target rows,512fresh images;456reserve remain. At q0.55fine residual CE0.451109/85.75%accuracy loses to public-only decoder adjustment CE0.447582/86.52%; projected absolute matches but is slightly worse than the latter. Fixed selected fine queries lose even without noise, so a zero-mean additive density change alone cannot repair their expected CE deficit. Main audit260,338numeric checks;293passed/5deselected. Follow-up DEVELOPMENT-ONLY gradient diagnostic: client empirical class distributions and public class-gradient references reduce mean client norms84–88%while preserving the balanced all-IN unbounded aggregate. Independent874checks; utility/OUT/shift/noise superiority remains untested, and private-data headroom is inconsistent. Next: signal-first public class-conditional control-variate feasibility with stronger public-gradient controls and explicit prior/conditional-shift stress. No final defense/novelty/end-to-end tuning or overall experiment-completion decision. No jobs running.
 
@@ -249,7 +251,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Local CPU completed and verified public-residual development, fresh confirmation, supplementary public-only control and development-only signal diagnostic. No jobs running.
+Local CPU class-conditional development, frozen confirmation and post-hoc attribution completed and independently verified. No jobs running.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -258,6 +260,9 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| `uv run python -m research.calculations.class_conditional_attribution` | Local CPU: post-hoc public-offset attribution on SAME320images | Done; independent35,108checks |
+| `uv run python -m research.calculations.class_conditional_probe --stage evaluation` | Local CPU: frozen320-image utility, all8targets/shift transfer | Done; independent6,235,039checks |
+| `uv run python -m research.calculations.class_conditional_probe --stage development` | Local CPU: public class-gradient residuals, six modes | Done; independent150,722checks |
 | `uv run python -m research.calculations.public_residual_probe --stage development` | Local CPU: public-cap Gaussian, public reference/subspace, equal IN/OUT tuning | Done;16,758settings, choices frozen |
 | `uv run python -m research.calculations.public_residual_probe --stage evaluation` | Local CPU:432target rows,512fresh utility images | Done; independently checked |
 | `uv run python -m research.calculations.public_residual_public_control` (two stages) | Local CPU: supplementary frozen public-only model | Done;16development records,54contrasts |
