@@ -1,0 +1,11 @@
+# Matched-strength noise-law comparison on the stacked constructor
+
+Owner: "go straight with this plan" (step 2). Question: on the construction that now shows a limited-public utility gain, does a non-Gaussian density help at the SAME attack strength? Compared laws: analytic Gaussian (control, calibrated so the optimal known-alternative attack has AUC = risk) and radial Laplace (norm ~ Gamma, divisible across the 8 slots with Gamma shares, calibrated by `radial_scale_ratio(d,risk)` so the optimal radial-rank attack has AUC = risk for a shift of norm cap/8). Both use the peer-contract convention (own shares included in the released aggregate, so the released noise has the documented 8/7 variance factor).
+
+Freeze (development only): the stacked pooled-freeze procedure (six Fashion-MNIST 0-3 cells, extended eta grid, modes/d/caps as in the stacked protocol, selection CE only, 32 draws) repeated for the radial law at risk .65 and .80, giving one radial configuration per risk. The Gaussian configuration is the existing `stacked_constructor_freeze.json`. Each law keeps its own tuned configuration.
+
+Comparison: fresh KMNIST classes 0-3 and 4-7 (budget 32, 3 public sets x 2 cohorts, 512 draws per cell, same roles and gating as the gated-step phase, validation 512). Primary metric: held-out CE of the gated release, Gaussian minus radial, per cell. Also report fixed-step CE, accuracy, and an attack-strength verification of each law at its frozen d/cap/risk: AUC, TPR at FPR 1% and 5% for the optimal statistic on 65,536 draws per world (shift cap/8 along one axis; isotropic laws).
+
+Gate (stated now): "radial beats Gaussian" requires radial lower CE by more than .001 in at least 5/6 cells in BOTH tasks at q.65 and q.80 and matched AUC verified within .01; "Gaussian beats radial" the mirror image; otherwise "no consistent benefit". No claim about low-FPR leakage beyond the measured TPRs; matched AUC does not imply matched low-FPR risk, which is reported as an additional axis.
+
+Limits: Gaussian and radial Laplace only; shaped or per-client-varying laws are not tested here (earlier analysis rules out common-ball ellipsoid shaping for quadratic utility; per-client scale would need a new accounting); linear model, pooled 4x4 features, offline tuning and artifact release unaccounted; conditional known-alternative contract only.

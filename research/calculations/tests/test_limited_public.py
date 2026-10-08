@@ -28,3 +28,12 @@ def test_stacked_step_is_bounded_by_eta_times_cap_and_noise_free_is_deterministi
     a=stacked_theta(control,h,query,cfg,noiseless=True); b=stacked_theta(control,h,query,cfg,noiseless=True)
     assert np.array_equal(a,b) and np.linalg.norm(a[0]-control)<=cfg['eta']*cfg['cap']+1e-12
     noisy=stacked_theta(control,h,query,cfg,draws=16,seed=3); assert noisy.shape==(16,3,17)
+
+
+def test_radial_total_matches_earlier_matched_cia_sampler_and_variance():
+    from research.calculations.noise_law_probe import radial_total
+    from research.calculations.matched_cia_probe import noise_objects, radial_scale_ratio
+    d,risk,cap=12,.65,.01; scale=(cap/8)*radial_scale_ratio(d,risk)
+    ref=noise_objects(np.zeros((8,d)),'radial',scale,64,5).sum(1)
+    assert np.allclose(radial_total(64,5,d,cap,risk),ref)
+    big=radial_total(40000,9,d,cap,risk); assert abs(big.var(0).mean()/(8/7*(d+1)*scale**2)-1)<.05
