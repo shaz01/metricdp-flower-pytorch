@@ -151,3 +151,8 @@ uv run python -m research.calculations.audit_headroom
 ```
 
 Both OLDdevelopmenthalves were used earlier; neitheris freshconfirmation.512subsetseedorderingsrepeatidenticalrecordsets. Cohortsare record-disjoint fromthesamepopulation, not independent populations. Historical512publicanchor waspreviouslytuned onbothdevelopmenthalves. This is raw/noiselessutility, notCIA/noise/privacy/noveltyevidence. Noadditionalreserve consumed;136unused remain. Missingprojectedfractionmetadata wasaddedandSAMEgridregenerated, notnewreplication. Nojobsrunning/overallcompletiondecision.
+
+
+## Limited-public protected-query decomposition (2026-10-08)
+
+`limited_public_development.json` decomposes saved headroom client queries into public projection, per-client clipping and peer-contract Gaussian noise (q.55/.65/.80) at public budgets 32/128/512, with selection-only tuning and assessment rescoring. Run `uv run python -m research.calculations.limited_public_probe` after the headroom artifacts; verify with `uv run python -m research.calculations.audit_limited_public`. Read [protocol](../../research/proposals/2026-10-08_limited_public_protocol.md) and [findings](../../research/proposals/2026-10-08_limited_public_findings.md): 32 passes the descriptive gate at q.65/.80, 512 does not, noise is the dominant loss. Reused development halves, grid-edge eta, no CIA/privacy-tuning/novelty claim.

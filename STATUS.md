@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-08, private-signal headroom verified; no jobs running
+**Last updated:** 2026-10-08, limited-public protected-query decomposition done; no jobs running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -20,7 +20,9 @@ this research. The initial audit and literature-review version 1 were already co
 `master`; further research and implementation stay on this branch until the owner declares
 the work finished. No experiments were launched during the branch transition.
 
-**Latest development-only headroom chunk (2026-10-08):** [findings/roadmap](research/proposals/2026-10-08_headroom_findings.md).2775models, public32/128/512nestedsettings, two record-disjoint2048privatecohorts, OLDdev512selection/512assessment.32unprotectedone-stepgains.015531–.036550CEbothcohorts/3publicsubsets;512selection-frozenoracle/one-stepgatefails, butrefinement helpsA morethanB. Centering leaves fixed-class within-class covariance unchanged. Independent224,895checks/max3.20e-14/allmodelsretrained;302passed/5deselected. Noreserveaccess;136unused. Nextproposed limited-public projection/clipping/noise feasibility with512anchor andstrongcontrols; no successfuldefense/newdensity/privateconfirmation/overallcompletionclaim. Nojobsrunning.
+**Latest limited-public chunk (2026-10-08):** [findings](research/proposals/2026-10-08_limited_public_findings.md), [protocol](research/proposals/2026-10-08_limited_public_protocol.md). Development-only decomposition of saved headroom queries into public projection, per-client clipping and peer-contract Gaussian noise (q.55/.65/.80), 18 cells, selection-only tuning. At 32 public examples the noisy gain beats both the strongest public control and the zero-private public offset by >.001 CE in both cohorts at q.65/.80 for all 3 subsets (mean gain over zero-private offset .0089/.0159); fails at q.55 (.0008). 128 passes for subsets 42/44 only; 512 fails (private-signal arms .0017-.0020 CE worse than the control). Clipping is not a loss; noise is the dominant cost. Caveats: eta=30 grid edge selected in 12-13/18 noisy cases, reused development halves, no CIA run at the selected configs, no reserve used (136 unused). Independent audit 1,278 checks/max 2.2e-16; 305 passed/5 deselected. Next proposed: frozen-32 constructor under the peer-conditioned CIA contract with matched-AUC Gaussian vs radial controls on new cohort evidence; decide separately on extending the eta grid. No defense/new-density/overall-completion claim. No jobs running.
+
+**Preceding development-only headroom chunk (2026-10-08):** [findings/roadmap](research/proposals/2026-10-08_headroom_findings.md).2775models, public32/128/512nestedsettings, two record-disjoint2048privatecohorts, OLDdev512selection/512assessment.32unprotectedone-stepgains.015531–.036550CEbothcohorts/3publicsubsets;512selection-frozenoracle/one-stepgatefails, butrefinement helpsA morethanB. Centering leaves fixed-class within-class covariance unchanged. Independent224,895checks/max3.20e-14/allmodelsretrained;302passed/5deselected. Noreserveaccess;136unused. Nextproposed limited-public projection/clipping/noise feasibility with512anchor andstrongcontrols; no successfuldefense/newdensity/privateconfirmation/overallcompletionclaim. Nojobsrunning.
 
 **Latest bounded class-conditional chunk (2026-10-08):** [findings/roadmap](research/proposals/2026-10-08_class_conditional_findings.md), [mechanism explained](research/proposals/class_conditional_mechanism_explained.md).8640development settings,1176fresh attack/utility cells,320newimages/136unused. Public-cap CIA channel verified but q.55utilitygatefails; gains overpublic +.000119/−.000072/−.000010 and strongestnonprimarywinsall3. Refreshed-mask apparentgain is publicadaptation: zero-private matchedpublicoffset is better by.000097–.000141all3. Independent primary6,235,039checks/max8.88e-16;posthoc attribution35,108/max1.11e-16;299passed/5deselected. Next proposed: DEV-only genuinely useful private-signal/headroom diagnosis before anotherdensity/reserve sweep. No newdensity/end-to-endtuning/population/novelty or overallcompletion claim. No jobs running.
 
@@ -262,6 +264,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| `uv run python -m research.calculations.limited_public_probe` | Local CPU: projection/clipping/noise decomposition at budgets 32/128/512 | Done; independent 1,278 checks |
 | `uv run python -m research.calculations.headroom_probe` | Local CPU: private signal vs public budget/optimization | Done; independent224,895checks |
 | `uv run python -m research.calculations.class_conditional_attribution` | Local CPU: post-hoc public-offset attribution on SAME320images | Done; independent35,108checks |
 | `uv run python -m research.calculations.class_conditional_probe --stage evaluation` | Local CPU: frozen320-image utility, all8targets/shift transfer | Done; independent6,235,039checks |
