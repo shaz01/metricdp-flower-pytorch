@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `feature/client-specific-noise`
-**Last updated:** 2026-10-08, matched-strength noise-law comparison done (radial Laplace = Gaussian); no jobs running
+**Last updated:** 2026-10-08, CNN-head port done (partial: 3 of 4 gate pairs); no jobs running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -20,7 +20,9 @@ this research. The initial audit and literature-review version 1 were already co
 `master`; further research and implementation stay on this branch until the owner declares
 the work finished. No experiments were launched during the branch transition.
 
-**Latest noise-law chunk (2026-10-08):** [findings](research/proposals/2026-10-08_noise_law_findings.md). Gaussian vs radial Laplace on the stacked, validation-gated construction at matched AUC (verified .652/.800 vs .653/.797): radial freezes to the same configuration and gives the same fresh-KMNIST gains (|difference| <= .00025 CE, 0/12 cells beyond ±.001). Pre-stated verdict: no consistent benefit; radial TPR at low FPR is a few percent lower at q.80 only. The useful ingredients are per-client clipping, limited-public stacking and public-validation gating, not the density. Anisotropic/per-client-varying laws untested. Next: CNN/Flower port. No jobs running.
+**Latest CNN-head chunk (2026-10-08):** [findings](research/proposals/2026-10-08_cnn_head_findings.md). Head-only port of the frozen stacked, validation-gated construction to a small CNN trained on 32/128 public KMNIST images (fresh pool, classes 0-3 and 4-7). Pre-stated gate met for 3 of 4 task/risk pairs at budget 32 (gain +.011 to +.020 CE, accuracy +0.2 to +1.3 points); fails KMNIST 4-7 at q.80 (4/6 cells, worst −.0059) from finite-validation-set error in one cell, not catastrophic picks. Frozen step length was ~3-10x too large for CNN head scale; the widened multiplier grid absorbed it. Gains shrink at 128. Independent audit 148 checks (CNN code shared). Not a Flower strategy, multi-round, or CIA-pipeline result. Next: Flower strategy integration and an a-priori bounded-multiplier/larger-validation variant, both needing fresh data. No jobs running.
+
+**Preceding noise-law chunk (2026-10-08):** [findings](research/proposals/2026-10-08_noise_law_findings.md). Gaussian vs radial Laplace on the stacked, validation-gated construction at matched AUC (verified .652/.800 vs .653/.797): radial freezes to the same configuration and gives the same fresh-KMNIST gains (|difference| <= .00025 CE, 0/12 cells beyond ±.001). Pre-stated verdict: no consistent benefit; radial TPR at low FPR is a few percent lower at q.80 only. The useful ingredients are per-client clipping, limited-public stacking and public-validation gating, not the density. Anisotropic/per-client-varying laws untested. Next: CNN/Flower port. No jobs running.
 
 **Preceding budget-map / gated-step chunk (2026-10-08):** [findings](research/proposals/2026-10-08_budget_map_gated_findings.md). CORRECTION: the earlier stacked "24/24" result is fragile for a fixed step (new public sets: Fashion-MNIST 4-7 at 32 examples mean −.0036, harmful when the public base is strong). Fix: choose the step multiplier (0,.25,.5,1,2 x frozen eta) per release on a public validation set (post-processing). Primary gate on the fresh KMNIST dataset (two 4-class tasks, budget 32, q.65/.80, 512-image validation): PASSED, 6/6 cells each, gated mean +.0117 to +.0174 CE >= fixed, no cell below +.0071; 128-image validation still positive. Seen-pool replicates have no negative cell at 32. Gain shrinks at 128 (+.002 to +.007) and vanishes at 512. Independent audit 320 checks (KMNIST, budgets 32/128). Validation set is extra public labelled data; Gaussian only; not a client-specific-noise-law, CNN/Flower or independent-federation result. Next: matched-strength non-Gaussian/per-client noise comparison on this construction, then CNN/Flower port. No jobs running.
 
@@ -272,6 +274,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| `uv run python -m research.calculations.cnn_head_probe` | Local CPU: CNN-head port, fresh KMNIST, budgets 32/128 | Done; independent 148 checks |
 | `uv run python -m research.calculations.noise_law_probe --stage freeze` then `--stage compare` | Local CPU: Gaussian vs radial Laplace at matched AUC, fresh KMNIST | Done |
 | `uv run python -m research.calculations.budget_map_probe` and `gated_step_probe` | Local CPU: public-budget map + validation-gated step (needs MNIST, KMNIST in HF cache) | Done; independent 320 checks (KMNIST 32/128) |
 | `uv run python -m research.calculations.stacked_constructor_probe --stage freeze` then `--stage transfer` | Local CPU: stacked pooled freeze + fresh-task transfer (needs MNIST in HF cache) | Done; independent 378 checks |
