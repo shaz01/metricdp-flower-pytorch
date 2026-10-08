@@ -43,3 +43,15 @@ under `results/`. Plan without `--execute` first.
 ## Not covered
 Fed-Influence (Xue 2021) and Hu's local-vs-others loss gap need extra estimators or every local
 model; left out of this pass.
+
+## Planned, not launched: seeds 43 and 44 (equal weights)
+Same 6 settings, equal weights, 16 clients, all scored: 2 × 51 = 102 runs, ~60 units. Pooled with
+seed 42 that gives 48 clients per setting, narrowing the ρ uncertainty from about ±0.5 to ±0.3.
+
+Before launching, add one influence definition: **metric-privacy's client-model distance**, logged
+for every privacy mode (vanilla and global-DP too, not only metric-privacy). Log the full pairwise
+matrix each round, measured the way metric-privacy measures it (raw models before clipping, mean of
+per-layer L2 distances, with client ids), then derive per client: mean distance to the others, max
+distance to the others, and the share of rounds it is in the max pair (i.e. sets d). Today only the
+metric-privacy runs log this matrix (`metric-dp-pairwise-*`); on seed 42 the per-client mean distance
+tracked client size almost exactly (ρ +0.96 to +1.00), and the same two clients set d in most rounds.
