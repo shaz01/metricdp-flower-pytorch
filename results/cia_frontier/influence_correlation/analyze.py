@@ -7,7 +7,7 @@ run JSON's ``influence-*`` train metrics (aggregated over rounds) plus the parti
 Prints Spearman and Pearson correlations per feature, pooled and per setting, and writes
 correlations.json next to the results.
 
-    python -m results.cia_frontier.influence_correlation.analyze [root]
+    python -m results.cia_frontier.influence_correlation.analyze [root ...] [--out-dir DIR --tag _x]
 """
 from __future__ import annotations
 
@@ -42,11 +42,46 @@ def _agg(values, how):
     return statistics.fmean(values) if how == "mean" else sum(values)
 
 
+# Pairwise client-model distance (metric privacy's d): logged as influence-pairwise-* for every
+# privacy mode since seeds 43/44; older metric-privacy runs only have metric-dp-pairwise-* (the IN
+# runs score all clients, so its local client IDs are the canonical ones).
+PAIRWISE_SOURCES = (("influence-pairwise-distances", "influence-pairwise-client-i", "influence-pairwise-client-j"),
+                    ("metric-dp-pairwise-distances", "metric-dp-pairwise-client-i", "metric-dp-pairwise-client-j"))
+DISTANCE_FEATURES = ("pairwise_distance_mean", "pairwise_distance_max", "max_pair_share")
+
+
+def pairwise_round(metrics: dict) -> dict[int, dict[str, float]] | None:
+    """One round: per client, mean and max distance to the others and whether it is in the max pair."""
+    for dist_key, i_key, j_key in PAIRWISE_SOURCES:
+        if metrics.get(dist_key):
+            dists, ci, cj = metrics[dist_key], metrics[i_key], metrics[j_key]
+            break
+    else:
+        return None
+    to_others: dict[int, list[float]] = defaultdict(list)
+    for d, a, b in zip(dists, ci, cj, strict=True):
+        to_others[int(a)].append(float(d))
+        to_others[int(b)].append(float(d))
+    top = max(range(len(dists)), key=lambda k: dists[k])
+    in_max = {int(ci[top]), int(cj[top])}
+    return {c: {"pairwise_distance_mean": statistics.fmean(v), "pairwise_distance_max": max(v),
+                "max_pair_share": 1.0 if c in in_max else 0.0} for c, v in to_others.items()}
+
+
 def client_features(run_json: dict, partition_summary: dict | None) -> dict[int, dict]:
-    """Per canonical client: aggregated influence features over all logged rounds."""
+    """Per canonical client: aggregated influence features over all logged rounds.
+
+    Distance features (only where a pairwise matrix was logged), averaged over rounds:
+    ``pairwise_distance_mean`` = mean distance to the other clients, ``pairwise_distance_max`` =
+    max distance to the others, ``max_pair_share`` = share of rounds the client is in the max
+    pair (i.e. sets metric privacy's d).
+    """
     train = run_json.get("train_metrics", {})
     per_client: dict[int, dict[str, list]] = defaultdict(lambda: defaultdict(list))
     for metrics in train.values():
+        for cid, values in (pairwise_round(metrics) or {}).items():
+            for name, value in values.items():
+                per_client[cid][name].append(value)
         ids = metrics.get(PREFIX + "client-ids")
         if ids:
             for name, (suffix, _) in LOGGED.items():
@@ -64,6 +99,7 @@ def client_features(run_json: dict, partition_summary: dict | None) -> dict[int,
     out = {}
     for cid, series in per_client.items():
         row = {name: _agg(series.get(name, []), how) for name, (_, how) in LOGGED.items()}
+        row.update({name: _agg(series[name], "mean") for name in DISTANCE_FEATURES if series.get(name)})
         if cid in sizes:
             row["train_records"] = sizes[cid]
         out[cid] = row
@@ -150,22 +186,32 @@ def correlations(rows: list[dict]) -> dict:
                 x, y = zip(*pairs)
                 out[f] = {"n": len(pairs), "spearman": spearman(x, y), "pearson": pearson(x, y)}
         return out
-    by_setting = defaultdict(list)
+    by_setting, by_seed = defaultdict(list), defaultdict(list)
     for r in rows:
         by_setting[f"{r['dataset']}|{r['privacy']}|{r['noise_ratio']}"].append(r)
-    return {"pooled": table(rows), "n_rows": len(rows),
-            "per_setting": {k: table(v) for k, v in sorted(by_setting.items())}}
+        by_seed[f"{r['dataset']}|{r['privacy']}|{r['noise_ratio']}|seed{r['seed']}"].append(r)
+    out = {"pooled": table(rows), "n_rows": len(rows), "seeds": sorted({r["seed"] for r in rows}),
+           "per_setting": {k: table(v) for k, v in sorted(by_setting.items())}}
+    if len(out["seeds"]) > 1:
+        out["per_setting_seed"] = {k: table(v) for k, v in sorted(by_seed.items())}
+        out["distance_feature_seeds"] = {
+            k: sorted({r["seed"] for r in v if r.get("pairwise_distance_mean") is not None})
+            for k, v in sorted(by_setting.items())}
+    return out
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("root", type=Path, nargs="?",
-                        default=Path("results/cia_frontier/influence_correlation/results"))
+    parser.add_argument("roots", type=Path, nargs="*",
+                        default=[Path("results/cia_frontier/influence_correlation/results")])
+    parser.add_argument("--out-dir", type=Path, help="Where to write the JSONs (default: first root)")
+    parser.add_argument("--tag", default="", help="Suffix for the output names, e.g. _s42_44")
     args = parser.parse_args()
-    rows = collect(args.root)
+    rows = [row for root in args.roots for row in collect(root)]
     result = correlations(rows)
-    (args.root / "correlations.json").write_text(json.dumps(result, indent=2) + "\n")
-    (args.root / "client_rows.json").write_text(json.dumps(rows, indent=2) + "\n")
+    out_dir = args.out_dir or args.roots[0]
+    (out_dir / f"correlations{args.tag}.json").write_text(json.dumps(result, indent=2) + "\n")
+    (out_dir / f"client_rows{args.tag}.json").write_text(json.dumps(rows, indent=2) + "\n")
     print(f"{len(rows)} (client, setting) rows\n")
     print(f"{'feature':<32}{'n':>5}{'spearman':>10}{'pearson':>9}")
     for f, v in sorted(result["pooled"].items(), key=lambda kv: -abs(kv[1]["spearman"] or 0)):

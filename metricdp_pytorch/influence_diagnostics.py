@@ -16,6 +16,8 @@ from flwr.app import ArrayRecord, ConfigRecord, Message, MetricRecord
 from flwr.serverapp import Grid
 from flwr.serverapp.strategy import Strategy
 
+from metricdp_pytorch.metricdp_strategy import MAX_CLIENTS_FOR_PAIRWISE_LOGGING, pairwise_model_distances
+
 PREFIX = "influence-"
 # Train-metric keys added every round; each is a list aligned with ``influence-client-ids``.
 FIELDS = (
@@ -27,6 +29,10 @@ FIELDS = (
     "aggregation_weight",
     "num_examples",
 )
+# Pairwise client-model distances (metric privacy's d, logged for every privacy mode): three
+# aligned lists over the ``i < j`` pairs of clients sorted by canonical ID.
+PAIRWISE_KEYS = ("influence-pairwise-distances", "influence-pairwise-client-i",
+                 "influence-pairwise-client-j")
 
 
 def metric_key(field: str) -> str:
@@ -111,7 +117,7 @@ def reply_influence(replies: Sequence[Message], reference: ArrayRecord,
     equal weighting, ``unit-weight``); ``num_examples`` is always logged as is.
     """
     current = reference.to_numpy_ndarrays()
-    updates, ids, counts, weights = [], [], [], []
+    updates, ids, counts, weights, models = [], [], [], [], []
     for reply in replies:
         if reply.has_error() or not reply.has_content():
             continue
@@ -124,9 +130,28 @@ def reply_influence(replies: Sequence[Message], reference: ArrayRecord,
         counts.append(float(metrics["num-examples"]))
         weights.append(float(metrics[weight_key]))
         updates.append(_flat_update(model, current))
+        models.append(model)
     if not updates:
         return {}
-    return influence_metrics(per_client_influence(updates, ids, counts, clipping_norm, weights))
+    out = influence_metrics(per_client_influence(updates, ids, counts, clipping_norm, weights))
+    out.update(pairwise_metrics(dict(zip(ids, models, strict=True))))
+    return out
+
+
+def pairwise_metrics(models: dict[int, ArrayRecord]) -> dict[str, list]:
+    """Metric privacy's distance on the raw (unclipped) client models, every pair, with IDs.
+
+    Same measure as ``MetricPrivacyServerSideFixedClipping`` (mean over layers of the L2
+    distance; ``pairwise_model_distances``) with clients ordered by canonical ID.
+    """
+    if len(models) < 2 or len(models) > MAX_CLIENTS_FOR_PAIRWISE_LOGGING:
+        return {}
+    ids = sorted(models)
+    return {
+        PAIRWISE_KEYS[0]: pairwise_model_distances([models[i] for i in ids]),
+        PAIRWISE_KEYS[1]: [ids[a] for a in range(len(ids)) for _ in range(a + 1, len(ids))],
+        PAIRWISE_KEYS[2]: [ids[b] for a in range(len(ids)) for b in range(a + 1, len(ids))],
+    }
 
 
 def aggregation_weight_key(strategy: Strategy) -> str:

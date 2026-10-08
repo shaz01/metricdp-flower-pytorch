@@ -112,3 +112,18 @@ def test_equal_weighting_logs_one_over_n_and_equal_weighted_loo(privacy):
     for i, c in enumerate(clipped):  # LOO identity: g - mean of the others
         others = np.mean([d for j, d in enumerate(clipped) if j != i], axis=0)
         assert loo[i] == pytest.approx(np.linalg.norm(g - others))
+
+
+@pytest.mark.parametrize("privacy", ["vanilla", "global-dp", "metric-privacy"])
+def test_pairwise_matrix_logged_for_every_mode_on_raw_models(privacy):
+    from metricdp_pytorch.metricdp_strategy import pairwise_model_distances
+
+    plain, plain_metrics, plain_rng = _aggregate(privacy, logged=False)
+    logged, metrics, logged_rng = _aggregate(privacy, logged=True)
+    assert plain.tobytes() == logged.tobytes() and plain_rng == logged_rng
+    raw = [r.content["arrays"] for r in _replies()]  # unclipped client models, ids 0,1,2 -> 4,7,9
+    assert metrics["influence-pairwise-distances"] == pairwise_model_distances(raw)
+    assert metrics["influence-pairwise-client-i"] == [4, 4, 7]
+    assert metrics["influence-pairwise-client-j"] == [7, 9, 9]
+    if privacy == "metric-privacy":  # identical to the mechanism's own d measurement
+        assert metrics["influence-pairwise-distances"] == pytest.approx(metrics["metric-dp-pairwise-distances"])

@@ -153,3 +153,21 @@ def test_equal_weighting_reaches_runner_config_and_names(tmp_path):
     default_config = build_run_config(_parser().parse_args(list(
         default[0].runner_args(output_dir=tmp_path, max_parallel_clients=4, client_cpus=1.0))))
     assert default_config["aggregation-weighting"] == "num-examples"
+
+
+@pytest.mark.parametrize("prefix", ["influence-pairwise", "metric-dp-pairwise"])
+def test_distance_features_from_pairwise_matrix(prefix):
+    # clients 0,1,2; pairs (0,1),(0,2),(1,2)
+    rounds = {"1": [1.0, 4.0, 3.0], "2": [5.0, 2.0, 1.0]}
+    data = {"train_metrics": {r: {f"{prefix}-distances": d, f"{prefix}-client-i": [0, 0, 1],
+                                  f"{prefix}-client-j": [1, 2, 2]} for r, d in rounds.items()}}
+    feats = analyze.client_features(data, None)
+    assert feats[0]["pairwise_distance_mean"] == pytest.approx((2.5 + 3.5) / 2)
+    assert feats[2]["pairwise_distance_max"] == pytest.approx((4.0 + 2.0) / 2)
+    assert feats[0]["max_pair_share"] == 1.0  # max pair (0,2) then (0,1)
+    assert feats[1]["max_pair_share"] == 0.5 and feats[2]["max_pair_share"] == 0.5
+
+
+def test_no_pairwise_matrix_means_no_distance_features():
+    feats = analyze.client_features(_fake_in_run([0, 1], [1.0, 2.0], [0.1, 0.2], [1.0, 1.0]), None)
+    assert "pairwise_distance_mean" not in feats[0]
