@@ -1,9 +1,10 @@
-"""Stage C privacy-utility frontiers: round-matched attack score vs round-R accuracy.
+"""Stage C privacy-utility frontiers: round-matched attack score vs late-training accuracy.
 
 x = mean per-client IN/OUT attack score over targets (0.5 = no signal; per_client_score),
-y = server accuracy of the IN trajectory at its last round R. One PNG per dataset, one line
-per mechanism through its noise ratios, vanilla as the shared starting point. Error bars span
-the per-target score range (min-max).
+y = mean server accuracy of the IN trajectory over its last WINDOW rounds (R-WINDOW+1..R); under DP
+the per-round accuracy swings by up to ~15 points on EuroSAT, so one round is not representative.
+One PNG per dataset, one line per mechanism through its noise ratios, vanilla as the shared starting
+point. x error bars span the per-target score range, y error bars the accuracy range over the window.
 
     python -m results.cia_frontier.dataset_vs_model.frontier [--root DIR]
 """
@@ -16,11 +17,19 @@ from pathlib import Path
 from results.cia_frontier.per_client_score import score_directories
 
 ROOT = Path("results/cia_frontier/dataset_vs_model/results/stage_c")
+WINDOW = 10
 STYLE = {"global-dp": ("tab:blue", "o", "Global DP"), "metric-privacy": ("tab:orange", "s", "Metric privacy")}
 
 
+def window_accuracy(metrics: dict, rounds: int, window: int = WINDOW) -> dict:
+    """Mean/min/max server accuracy over rounds max(1, R-window+1)..R, plus the round-R value."""
+    values = [float(metrics[str(r)]["accuracy"]) for r in range(max(1, rounds - window + 1), rounds + 1)]
+    return {"accuracy": sum(values) / len(values), "accuracy_min": min(values), "accuracy_max": max(values),
+            "accuracy_final": float(metrics[str(rounds)]["accuracy"]), "accuracy_window": len(values)}
+
+
 def accuracies(root: Path, at_round: int | None = None) -> dict:
-    """{(dataset, privacy, noise_ratio): (round-R accuracy, R, training s)} from IN trajectories."""
+    """{(dataset, privacy, noise_ratio): window_accuracy(...)} from IN trajectories."""
     out = {}
     for path in sorted(root.rglob("manifest.json")):
         manifest = json.loads(path.read_text())
@@ -30,7 +39,7 @@ def accuracies(root: Path, at_round: int | None = None) -> dict:
         metrics = json.loads(run.read_text())["server_evaluate_metrics"]
         rounds = at_round or manifest["rounds"]
         out[(manifest["dataset"], manifest["privacy"], manifest["noise_ratio"])] = \
-            float(metrics[str(rounds)]["accuracy"])
+            window_accuracy(metrics, rounds)
     return out
 
 
@@ -41,12 +50,13 @@ def build(root: Path, at_round: int | None = None) -> dict:
         key = (entry["dataset"], entry["privacy"], entry["noise_ratio"])
         scores = list(entry["per_target"].values())
         settings.append({"dataset": key[0], "privacy": key[1], "noise_ratio": key[2],
-                         "rounds": at_round or entry["rounds"], "accuracy": acc[key], "mean_score": entry["mean"],
+                         "rounds": at_round or entry["rounds"], **acc[key], "mean_score": entry["mean"],
                          "min_score": min(scores), "max_score": max(scores),
                          "per_target": entry["per_target"], "matched_rounds": entry["matched_rounds"]})
     settings.sort(key=lambda s: (s["dataset"], s["privacy"] != "vanilla", s["privacy"], s["noise_ratio"]))
     return {"x": "mean per-client round-matched IN/OUT score (0.5 = no signal)",
-            "y": "IN-trajectory server accuracy at round R", "error_bars": "per-target min-max",
+            "y": f"IN-trajectory server accuracy, mean over the last {WINDOW} rounds up to R",
+            "error_bars": "x: per-target min-max; y: accuracy min-max over the window",
             "settings": settings}
 
 
@@ -64,15 +74,16 @@ def plot(data: dict, root: Path, out: Path | None = None) -> list[Path]:
             line = [vanilla] + sorted((s for s in rows if s["privacy"] == privacy), key=lambda s: s["noise_ratio"])
             xs, ys = [s["mean_score"] for s in line], [s["accuracy"] for s in line]
             err = [[s["mean_score"] - s["min_score"] for s in line], [s["max_score"] - s["mean_score"] for s in line]]
-            ax.errorbar(xs, ys, xerr=err, color=color, marker=marker, capsize=3, lw=1.5, label=label, alpha=0.9)
+            yerr = [[s["accuracy"] - s["accuracy_min"] for s in line], [s["accuracy_max"] - s["accuracy"] for s in line]]
+            ax.errorbar(xs, ys, xerr=err, yerr=yerr, color=color, marker=marker, capsize=3, lw=1.5, label=label, alpha=0.9)
             for s in line[1:]:
                 ax.annotate(f"{s['noise_ratio']:g}", (s["mean_score"], s["accuracy"]), textcoords="offset points",
                             xytext=(5, -10), fontsize=7, color=color)
         ax.plot(vanilla["mean_score"], vanilla["accuracy"], "k*", ms=13, zorder=5, label="Vanilla")
         ax.axvline(0.5, color="grey", ls=":", lw=1)
         ax.set_xlabel("Mean per-client attack score (IN vs OUT, round-matched)")
-        ax.set_ylabel(f"Accuracy at round {vanilla['rounds']}")
-        ax.set_title(f"Stage C frontier: {dataset}, Dirichlet α=0.3, seed 42 (bars: per-target min-max)",
+        ax.set_ylabel(f"Accuracy, mean of rounds {vanilla['rounds'] - WINDOW + 1}-{vanilla['rounds']}")
+        ax.set_title(f"Stage C frontier: {dataset}, Dirichlet α=0.3, seed 42 (bars: per-target / per-round min-max)",
                      fontsize=9)
         ax.legend(fontsize=8)
         ax.grid(alpha=0.3)
