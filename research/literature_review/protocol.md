@@ -69,4 +69,4 @@ Report limitations: restricted repositories/search interface; English/open-acces
 
 ## Follow-up scope clarification, 2026-10-01
 
-The owner explicitly proposed a potentially new non-Gaussian mechanism/distribution. Non-Gaussian construction is now an explicit research track alongside Gaussian controls, with focused geometric/optimal-noise and RDP-distribution-optimization retrieval. This supplements the original broad additive-perturbation scope; version-1 counts remain frozen, and follow-up logs/read scopes are linked from [next-step handoff](next_step_handoff.md). No pooling, exhaustive-coverage or novelty claim is added.
+The owner explicitly proposed a potentially new non-Gaussian mechanism/distribution. Non-Gaussian construction is now an explicit research track alongside Gaussian controls, with focused geometric/optimal-noise and RDP-distribution-optimization retrieval. This supplements the original broad additive-perturbation scope; version-1 counts remain frozen, and follow-up logs/read scopes are linked from next-step handoff (document removed at closure, 2026-10-09; see git history). No pooling, exhaustive-coverage or novelty claim is added.

@@ -24,7 +24,7 @@ Next research: acquire FACP/FedFR-ADP methods; refine the client-participation t
 
 ## Authorized follow-up
 
-Owner: “also push the staged files to the new branch and move with the next step”. The staged result files were pushed as1081ff7. Comparator access/method assessment, threat specification and construction proof obligations are in [next-step handoff](next_step_handoff.md). No mechanism choice or experiment launch was inferred.
+Owner: “also push the staged files to the new branch and move with the next step”. The staged result files were pushed as1081ff7. Comparator access/method assessment, threat specification and construction proof obligations are in next-step handoff (document removed at closure, 2026-10-09; see git history). No mechanism choice or experiment launch was inferred.
 
 Owner steering: “also why we use gaussian noise only maybe we can generate a unique noise mechanism / distribution”. The scope now explicitly includes non-Gaussian and optimized laws; Gaussian remains a baseline. No final distribution choice or novelty claim is inferred.
 

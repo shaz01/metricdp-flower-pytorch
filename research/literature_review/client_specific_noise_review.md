@@ -1,6 +1,6 @@
 # Integrative review: constructing client-specific noise for participation privacy
 
-Version 1, 2026-10-01. Subsequent comparator/threat work is documented in the [next-step supplement](next_step_handoff.md); initial search counts remain fixed. This is the detailed conceptual synthesis accompanying a bounded systematic search. It integrates inspected primary methods with the repository's verified evidence. Source-specific claims and equations live in linked technique cards; the design implications here are our deductions. No new protection technique has been implemented or demonstrated superior.
+Version 1, 2026-10-01. Subsequent comparator/threat work is documented in the next-step supplement (document removed at closure, 2026-10-09; see git history); initial search counts remain fixed. This is the detailed conceptual synthesis accompanying a bounded systematic search. It integrates inspected primary methods with the repository's verified evidence. Source-specific claims and equations live in linked technique cards; the design implications here are our deductions. No new protection technique has been implemented or demonstrated superior.
 
 ## What the project evidence actually asks us to solve
 
@@ -89,4 +89,4 @@ The [search report](systematic_search_report.md) states captured-record counts, 
 
 ## Research decision supported by the review
 
-Proceed first with an explicit CIA threat specification and observable-noise control, then a tractable geometry construction whose estimator and guarantee can be analyzed. Keep worst-case client DP and distributional/empirical CIA protection as separate tracks. Use the [provisional research plan](research_plan.md) to define milestones and stopping criteria. No mechanism is selected for implementation in this review.
+Proceed first with an explicit CIA threat specification and observable-noise control, then a tractable geometry construction whose estimator and guarantee can be analyzed. Keep worst-case client DP and distributional/empirical CIA protection as separate tracks. Use the provisional research plan (document removed at closure, 2026-10-09; see git history) to define milestones and stopping criteria. No mechanism is selected for implementation in this review.

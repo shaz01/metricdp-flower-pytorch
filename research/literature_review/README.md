@@ -46,7 +46,7 @@ Version 1, 2026-10-01. The owner requested both systematic and integrative revie
 
 **Concrete direction, 2026-10-04:** the owner confirmed dataset-contribution secrecy. Read the [joint clipping/noise proposal](../proposals/2026-10-04_mechanism_proposal.md), [independent mathematical review](../proposals/2026-10-04_candidate_math_review.md), [analytical feasibility check](../proposals/2026-10-04_analytic_feasibility.md), and [proposed pilot protocol](../proposals/2026-10-04_pilot_protocol.md). Private construction cost is explicit; the first analytic comparison is unfavorable at budgets 4 and 8 and slightly favorable at 16 against only the listed fixed controls; optimizing the public clipping radius erases that gain. No CIA improvement or deep-model feasibility is established.
 
-The [FACP partial-method assessment](facp_followup.md) and [FedFR-ADP access assessment](fedfr_followup.md) update the nearest-comparator evidence. FACP remains pending a complete artifact, but its auxiliary-statistics accounting exclusion is now confirmed from primary methods. FedFR-ADP remains preview-only. The [threat specification](../threat_specification_review.md) and [construction/proof obligations](../noise_construction_proof_obligations.md) develop the next research step. See [follow-up handoff](next_step_handoff.md) for new findings and preserved version-1 search counts.
+The [FACP partial-method assessment](facp_followup.md) and [FedFR-ADP access assessment](fedfr_followup.md) update the nearest-comparator evidence. FACP remains pending a complete artifact, but its auxiliary-statistics accounting exclusion is now confirmed from primary methods. FedFR-ADP remains preview-only. The [threat specification](../threat_specification_review.md) and [construction/proof obligations](../noise_construction_proof_obligations.md) develop the next research step. See follow-up handoff (document removed at closure, 2026-10-09; see git history) for new findings and preserved version-1 search counts.
 
 The owner also opened the direction to **new non-Gaussian mechanisms/distributions**. See [expanded mechanism research](../non_gaussian_mechanism_research.md), [non-Gaussian foundations](non_gaussian_foundations.md) and [optimized noise](optimized_noise_followup.md). Gaussian remains a control, not a design restriction.
 
@@ -55,7 +55,7 @@ The owner also opened the direction to **new non-Gaussian mechanisms/distributio
 1. [Detailed integrative review](client_specific_noise_review.md) — the main document: what the literature means for our question and why the construction problem matters.
 2. [Technique primer](privacy_and_noise_primer.md) — intuitive examples and equations for privacy units, noise distributions, weighted aggregation, geometry and estimation.
 3. Source explanations by family: [client perturbation](client_noise_sources.md), [covariance and learned distributions](covariance_sources.md), [distributed noise and trust](distributed_sources.md), [accounting and attacks](foundations_and_attacks.md), and [detailed GMIP tutorial](local_gaussian_analysis.md). The [priority-based adaptive method](review_covariance_checks.md) is an additional construction predecessor.
-4. [Provisional research plan](research_plan.md) — milestones, comparison controls, proof obligations and decision criteria.
+4. Provisional research plan (document removed at closure, 2026-10-09; see git history) — milestones, comparison controls, proof obligations and decision criteria.
 
 ## Agent handoff — read before proposing a mechanism
 

@@ -62,4 +62,4 @@ Version 1 answers the owner's immediate need for technique understanding and a g
 
 ## Subsequent follow-up
 
-The [next-step supplement](next_step_handoff.md) documents comparator access/read updates and owner-directed non-Gaussian scope clarification. The 51-query version-1 flow above is preserved; later query executions and new source cards are separate records, not silently counted as original retrieval.
+The next-step supplement (document removed at closure, 2026-10-09; see git history) documents comparator access/read updates and owner-directed non-Gaussian scope clarification. The 51-query version-1 flow above is preserved; later query executions and new source cards are separate records, not silently counted as original retrieval.
