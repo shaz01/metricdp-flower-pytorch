@@ -1,10 +1,20 @@
+> Latest verified direction, 2026-10-08: [public-reference findings and distribution-aware lead](../proposals/2026-10-08_public_residual_findings.md). On512fresh images, a public-only decoder adjustment matches/exceeds protected projected client models; fine residuals fail the0.55gate. Changing only zero-mean additive density cannot repair the selected noiseless query deficit. Development-only public class-conditional gradient centering reduces mean client norms84–88%and preserves the balanced all-IN unbounded aggregate. Protected utility and shift/OUT robustness remain untested. Next: signal-first class-conditional control-variate feasibility, not another density sweep.
+
+> Latest matched-CIA result, 2026-10-07: [findings and active next direction](../proposals/2026-10-07_matched_cia_findings.md). On1,024fresh utility images, radial votes lose to strongest Gaussian controls at target AUC0.55 in all three seeds. At0.80 voting helps, but Gaussian on the same query matches radial. No consistent radial-law improvement. Next: development-only task-relevant compression/public-reference residual construction review; untested hypothesis. Private calibration/tuning remains unaccounted; no deployed defense or population confirmation. The earlier recommendations below are historical.
+
+> Latest CIA boundary result, 2026-10-07: [fixed-slot descriptor CIA findings and active next step](../proposals/2026-10-07_descriptor_cia_findings.md). At epsilon8 the known-alternative voting-descriptor attack has meanAUC0.879624 (Gaussian) or0.792654 (radial); useful CE does not imply near-chance CIA. A reduced metric adaptation exposes an IN/OUT variance side channel, also visible in its identity-decoded student. Next: compare complete channels at matched attack strength. This is a conditional saved-federation audit, not population confirmation or historical metric-privacy replication.
+
+> Latest verified result, 2026-10-07: [one-time descriptor findings and active roadmap](../proposals/2026-10-07_private_descriptor_findings.md). Aggregate class-balanced votes beat the strongest corrected/reweighted controls on 2,048 fresh reserve images in all three label-stress seeds under analytic Gaussian and radial L2-Laplace at epsilon 8. Individually reusable distributions fail the stronger comparison; central noise can use the same voting constructor. No CIA/metric-privacy superiority or new-density claim. The earlier roadmap below is historical context.
+
+> Active follow-up, 2026-10-06: read the [research-direction decision](../proposals/2026-10-06_research_direction_decision.md) before executing this provisional plan. The owner authorized sustained investigation; independently reviewed construction knowledge now prioritizes distribution-guided cumulative client influence under an enforced filter, with strong public-schedule and one-time-surrogate controls. No final mechanism or empirical advantage is established. Earlier milestones below remain historical context.
+
 # Provisional research plan grounded in the review
 
 2026-10-01. A new research proposal, not a selected mechanism or authorization to launch experiments. The owner's question is how each client constructs an individual additive-noise distribution that improves participation privacy at useful accuracy. The [frontier](../../results/contest_at_scale/auc_frontier/reports/auc_frontier.html) and [evidence audit](../project_evidence_audit.md) define the empirical starting point; the [integrative review](client_specific_noise_review.md) explains the prior-art constraints.
 
 ## 1. Resolve closest prior art and define the contribution
 
-Acquire FACP and FedFR-ADP full methods, inspect private-statistic acquisition, adjacency, distribution law, accounting and threat model. Resolve the remaining pending sources in the ledger according to relevance. Do not describe category/source inference as participation inference. Compare against PAC/PAC-Private, Residual-PAC and time-adaptive spending before claiming novelty.
+Acquire FACP and FedFR-ADP full methods, inspect private-statistic acquisition, adjacency, distribution law, accounting and threat model. Resolve the remaining pending sources in the ledger according to relevance. Do not describe category/source inference as participation inference. Compare against PAC/PAC-Private, Residual-PAC, optimal/geometric non-Gaussian noise, RDP-optimized distributions and time-adaptive spending before claiming novelty.
 
 **Deliverable:** a one-page contribution statement specifying which construction, guarantee and evaluation is new relative to each nearest method. If the proposal duplicates a known estimator/sampler, change the contribution to the missing client-participation analysis rather than rename the mechanism.
 
@@ -20,7 +30,7 @@ Compare fixed server isotropic noise against independent client isotropic shares
 
 **Deliverable:** an algebraic equivalence statement and a small sampler/aggregation verification when implementation starts. If a measured advantage appears under supposedly equal laws, diagnose the implementation or threat difference before treating it as a discovery.
 
-## 4. Investigate three distribution-construction routes separately
+## 4. Investigate distribution-construction routes without restricting the law to Gaussian
 
 | Route | Construction | Guarantee task | Why start here |
 |---|---|---|---|
@@ -28,7 +38,9 @@ Compare fixed server isotropic noise against independent client isotropic shares
 | B: private local estimation | Per-layer/diagonal or low-rank projected gradient statistics; account the estimator | Whole-client treatment of estimate and upload, including covariance changes | Directly addresses the proposed local construction question |
 | C: modeled client distribution | Simulate client perturbations/populations; PAC-style covariance or learned sampler | Explicit population and attacker conditioning; empirical audit of approximation | Allows useful distribution-dependent claims if worst-case utility is prohibitive |
 
-For each route write an executable mathematical recipe: estimator input/sample count; basis; regularization; clipping; covariance-to-sampler factors; minimum eigenvalue; update frequency; and temporal/accounting rule. Avoid full dense covariance initially. Gradient variance, utility curvature and participation sensitivity are candidate signals to compare, not interchangeable definitions.
+The owner explicitly broadened the direction to a potentially new mechanism/distribution. Investigate non-Gaussian and optimized laws along each route; Gaussian is the baseline. See [non-Gaussian mechanism research](../non_gaussian_mechanism_research.md), [geometric/staircase sources](non_gaussian_foundations.md) and [RDP-optimized noise](optimized_noise_followup.md). Separate geometry, density shape, private estimation and aggregation-law design.
+
+For each route write an executable mathematical recipe: estimator input/sample count; basis; regularization; clipping; density/sampler or covariance factors; support and tail behavior; minimum eigenvalue where relevant; update frequency; and temporal/accounting rule. Avoid full dense covariance initially. Gradient variance, utility curvature and participation sensitivity are candidate signals to compare, not interchangeable definitions.
 
 **Deliverable:** two or three fully specified candidates with computational costs and failure cases. Reject candidates whose guarantee relies on a record-level estimator while claiming whole-client DP, or whose private calibration law is unanalyzed.
 

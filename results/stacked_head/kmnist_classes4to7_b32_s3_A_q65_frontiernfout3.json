@@ -1,0 +1,168 @@
+{
+ "kind": "Stacked-head one-shot release rounds (independent releases from one public base when replicate=true).",
+ "run_name": "kmnist_classes4to7_b32_s3_A_q65_frontiernfout3",
+ "config": {
+  "absent-clients": "3",
+  "attack-records": true,
+  "budget": 32,
+  "bundle-dir": ".stacked_head_cache/bundles",
+  "cell-key": "kmnist_classes4to7_b32_s3_A_q65_",
+  "cohort": "A",
+  "diagnostics": false,
+  "eval-split": "train",
+  "extra-validation-sizes": "128",
+  "frozen-key": "noisy_65",
+  "log-messages": false,
+  "model-module": "experiments.stacked_head.cnn:create_model",
+  "noise-free": true,
+  "noise-source": "independent",
+  "output-dir": "results/stacked_head",
+  "probe-noise-rounds": 1,
+  "probe-noise-seed": 20293377,
+  "public-set": 3,
+  "replicate": false,
+  "risk": 0.65,
+  "role-seed": 20261012,
+  "rounds": 1,
+  "run-name": "kmnist_classes4to7_b32_s3_A_q65_frontiernfout3",
+  "seed": 42,
+  "task": "kmnist_classes4to7",
+  "train-seed": 20261012
+ },
+ "construction": {
+  "cap": 0.003,
+  "eta": 100.0,
+  "dimension": 51,
+  "risk": 0.65,
+  "mode": "target_center",
+  "peers": 7,
+  "sigma": 0.0,
+  "multipliers": [
+   0.0,
+   0.03333333333333333,
+   0.1,
+   0.3333333333333333,
+   1.0,
+   3.0,
+   10.0,
+   30.0
+  ],
+  "noise_free": true
+ },
+ "bundle": {
+  "base": {
+   "epochs": 100,
+   "lr": 0.001,
+   "validation_ce": 0.6687768026022503
+  },
+  "candidates": [
+   {
+    "epochs": 30,
+    "lr": 0.001,
+    "validation_ce": 0.9112417599655429
+   },
+   {
+    "epochs": 30,
+    "lr": 0.003,
+    "validation_ce": 1.0826053158882964
+   },
+   {
+    "epochs": 100,
+    "lr": 0.001,
+    "validation_ce": 0.6687768026022503
+   },
+   {
+    "epochs": 100,
+    "lr": 0.003,
+    "validation_ce": 1.014044226628245
+   },
+   {
+    "epochs": 300,
+    "lr": 0.001,
+    "validation_ce": 1.0154969045755644
+   },
+   {
+    "epochs": 300,
+    "lr": 0.003,
+    "validation_ce": 1.2014152401966078
+   }
+  ],
+  "control": {
+   "ce": 0.7337777020324368,
+   "accuracy": 0.80615234375
+  },
+  "num_public": 32,
+  "num_validation": 512,
+  "num_evaluation": 2048,
+  "train_seed": 20261012,
+  "seed_offset": 35,
+  "task": "kmnist_classes4to7",
+  "budget": 32,
+  "public_set": 3,
+  "role_seed": 20261012,
+  "budgets": [
+   32,
+   128
+  ]
+ },
+ "control": {
+  "ce": 0.7337777020324368,
+  "accuracy": 0.80615234375
+ },
+ "rounds": [
+  {
+   "round": 1,
+   "multiplier": 0.3333333333333333,
+   "validation-ce-base": 0.6687768026022503,
+   "validation-ce-chosen": 0.5878635126791105,
+   "num-replies": 8.0,
+   "eval-ce": 0.6376669476049153,
+   "eval-accuracy": 0.80517578125
+  }
+ ],
+ "summary": {
+  "num_rounds": 1,
+  "mean_gated_ce": 0.6376669476049153,
+  "gain_over_control": 0.09611075442752148,
+  "gated_ce_std_across_releases": 0.0,
+  "mean_gated_accuracy": 0.80517578125,
+  "accuracy_delta": -0.0009765625,
+  "pick_fraction": {
+   "0.0": 0.0,
+   "0.03333333333333333": 0.0,
+   "0.1": 0.0,
+   "0.3333333333333333": 1.0,
+   "1.0": 0.0,
+   "3.0": 0.0,
+   "10.0": 0.0,
+   "30.0": 0.0
+  }
+ },
+ "summary_alt_validation": {
+  "128": {
+   "mean_ce": 0.6376669470699148,
+   "gain_over_control": 0.09611075496252197,
+   "mean_accuracy": 0.80517578125,
+   "accuracy_delta": -0.0009765625
+  }
+ },
+ "summary_fixed_multiplier_1": {
+  "mean_ce": 0.8423259420724463,
+  "gain_over_control": -0.10854824004000951,
+  "mean_accuracy": 0.73046875,
+  "accuracy_delta": -0.07568359375
+ },
+ "contributions": null,
+ "provenance": {
+  "python_version": "3.13.5",
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "library_versions": {
+   "flwr": "1.32.1",
+   "numpy": "2.5.1",
+   "torch": "2.10.0",
+   "datasets": "4.8.5"
+  },
+  "git_commit": "a3f42f7c75687d32505f8fa584a66dee82eba15d",
+  "git_dirty": true
+ }
+}

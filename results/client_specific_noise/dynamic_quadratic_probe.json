@@ -1,0 +1,1285 @@
+{
+  "kind": "bounded numerical learning spike, not CIA/image-model experiment",
+  "objective": "Fi(w)=.5||w-theta_i||\u00b2; exact excess=.5||w-mean(theta)||\u00b2",
+  "protocol": "fixed equal-weight slots; w0=0; w1=mean(Y0); w2=w1+mean(Y1)",
+  "private_inputs": "theta_i=.8 e1/e2 iid equiprobable; stationary theta, changing gradient theta-w",
+  "privacy": "reference ideal densities; whole-input conditional clipping+Laplace; eta0+eta1=E",
+  "grids": {
+    "radii": [
+      0.1,
+      0.2,
+      0.4,
+      0.8,
+      1.2,
+      1.6
+    ],
+    "first_budget_fractions": [
+      0.25,
+      0.5,
+      0.75
+    ]
+  },
+  "evaluation": "fresh seed per cell; same draws across arms for paired contrasts only",
+  "intervals": "normal Monte Carlo mean/paired intervals, no multiplicity correction; exploratory",
+  "validation": {
+    "deterministic_checks": "zero-noise learnability, complete-gradient cancellation, clipping sensitivity, equal-profile identity",
+    "conditional_moment": {
+      "conditional_noise_draws": 100000,
+      "expected_excess": 0.014962469888863496,
+      "observed_excess": 0.015015203015898655,
+      "monte_carlo_standard_error": 5.209979943522565e-05,
+      "tolerance": "six standard errors; numerical sanity only"
+    }
+  },
+  "limitations": [
+    "finite grid tuning, no optimality certificate",
+    "synthetic known population",
+    "postprocessing shrinkage is fitted after primary configuration selection, not jointly optimized",
+    "no contribution-inference attack run",
+    "ideal continuous density proof does not certify finite precision sampler"
+  ],
+  "rows": [
+    {
+      "epsilon_total": 4.0,
+      "clients": 8,
+      "development_trials": 1024,
+      "evaluation_trials": 8192,
+      "development_seed": 2026100400,
+      "evaluation_seed": 2026100500,
+      "candidate_counts": {
+        "adaptive": 378,
+        "static": 648,
+        "one_release": 6
+      },
+      "selected": {
+        "adaptive": {
+          "development_mean": 0.05553484260033783,
+          "config": {
+            "fraction": 0.75,
+            "first_radius": 0.4,
+            "pair": [
+              0.1,
+              0.1
+            ]
+          }
+        },
+        "static": {
+          "development_mean": 0.05553484260033783,
+          "config": {
+            "fraction": 0.75,
+            "first_radius": 0.4,
+            "pair": [
+              0.1,
+              0.1
+            ]
+          }
+        },
+        "one_release": {
+          "development_mean": 0.03999578496898211,
+          "config": {
+            "radius": 0.8
+          }
+        }
+      },
+      "same_probe_static_config": {
+        "fraction": 0.75,
+        "first_radius": 0.4,
+        "pair": [
+          0.1,
+          0.1
+        ]
+      },
+      "shrinkage_fitted_on_development": {
+        "adaptive": 0.21084444123048182,
+        "static": 0.21084444123048182,
+        "one_release": 0.33869209886677865
+      },
+      "evaluation": {
+        "adaptive": {
+          "mean_excess_loss": 0.05875244825018734,
+          "monte_carlo_standard_error": 0.000546587299712382,
+          "mean_interval_95_normal": [
+            0.057681137142751075,
+            0.05982375935762361
+          ]
+        },
+        "static": {
+          "mean_excess_loss": 0.05875244825018734,
+          "monte_carlo_standard_error": 0.000546587299712382,
+          "mean_interval_95_normal": [
+            0.057681137142751075,
+            0.05982375935762361
+          ]
+        },
+        "same_probe_static": {
+          "mean_excess_loss": 0.05875244825018734,
+          "monte_carlo_standard_error": 0.000546587299712382,
+          "mean_interval_95_normal": [
+            0.057681137142751075,
+            0.05982375935762361
+          ]
+        },
+        "one_release": {
+          "mean_excess_loss": 0.040014040833703496,
+          "monte_carlo_standard_error": 0.0004846788239394573,
+          "mean_interval_95_normal": [
+            0.03906407033878216,
+            0.04096401132862483
+          ]
+        },
+        "known_population": {
+          "mean_excess_loss": 0.020509033203125,
+          "monte_carlo_standard_error": 0.0002939813363786512,
+          "mean_interval_95_normal": [
+            0.019932829783822843,
+            0.021085236622427155
+          ]
+        },
+        "adaptive_shrunk": {
+          "mean_excess_loss": 0.017996845303574052,
+          "monte_carlo_standard_error": 0.0002331966163195572,
+          "mean_interval_95_normal": [
+            0.01753977993558772,
+            0.018453910671560384
+          ]
+        },
+        "static_shrunk": {
+          "mean_excess_loss": 0.017996845303574052,
+          "monte_carlo_standard_error": 0.0002331966163195572,
+          "mean_interval_95_normal": [
+            0.01753977993558772,
+            0.018453910671560384
+          ]
+        },
+        "one_release_shrunk": {
+          "mean_excess_loss": 0.013645464788649527,
+          "monte_carlo_standard_error": 0.00017377784879402293,
+          "mean_interval_95_normal": [
+            0.013304860205013242,
+            0.013986069372285812
+          ]
+        }
+      },
+      "contrasts": {
+        "static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "same_probe_static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "one_release": {
+          "difference_adaptive_minus_reference": 0.018738407416483846,
+          "paired_standard_error": 0.000572422843735525,
+          "interval_95_normal": [
+            0.017616458642762216,
+            0.019860356190205476
+          ],
+          "relative_reduction_percent": -46.829580382445755
+        },
+        "known_population": {
+          "difference_adaptive_minus_reference": 0.03824341504706234,
+          "paired_standard_error": 0.0006076513907697464,
+          "interval_95_normal": [
+            0.03705241832115364,
+            0.039434411772971044
+          ],
+          "relative_reduction_percent": -186.47107676063015
+        },
+        "adaptive_shrunk": {
+          "difference_adaptive_minus_reference": 0.04075560294661329,
+          "paired_standard_error": 0.0005437679695857278,
+          "interval_95_normal": [
+            0.03968981772622526,
+            0.04182138816700132
+          ],
+          "relative_reduction_percent": -226.45970590478714
+        },
+        "static_shrunk": {
+          "difference_adaptive_minus_reference": 0.04075560294661329,
+          "paired_standard_error": 0.0005437679695857278,
+          "interval_95_normal": [
+            0.03968981772622526,
+            0.04182138816700132
+          ],
+          "relative_reduction_percent": -226.45970590478714
+        },
+        "one_release_shrunk": {
+          "difference_adaptive_minus_reference": 0.04510698346153781,
+          "paired_standard_error": 0.0005215997445061347,
+          "interval_95_normal": [
+            0.04408464796230579,
+            0.046129318960769834
+          ],
+          "relative_reduction_percent": -330.5639211282739
+        }
+      },
+      "shrunk_contrasts": {
+        "static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "one_release": {
+          "difference_adaptive_minus_reference": 0.004351380514924527,
+          "paired_standard_error": 0.0001228023749692159,
+          "interval_95_normal": [
+            0.004110687859984864,
+            0.00459207316986419
+          ],
+          "relative_reduction_percent": -31.88884059518485
+        }
+      }
+    },
+    {
+      "epsilon_total": 4.0,
+      "clients": 48,
+      "development_trials": 1024,
+      "evaluation_trials": 8192,
+      "development_seed": 2026100401,
+      "evaluation_seed": 2026100501,
+      "candidate_counts": {
+        "adaptive": 378,
+        "static": 648,
+        "one_release": 6
+      },
+      "selected": {
+        "adaptive": {
+          "development_mean": 0.012122193811029348,
+          "config": {
+            "fraction": 0.75,
+            "first_radius": 0.8,
+            "pair": [
+              0.1,
+              0.1
+            ]
+          }
+        },
+        "static": {
+          "development_mean": 0.012122193811029348,
+          "config": {
+            "fraction": 0.75,
+            "first_radius": 0.8,
+            "pair": [
+              0.1,
+              0.1
+            ]
+          }
+        },
+        "one_release": {
+          "development_mean": 0.006662276241282771,
+          "config": {
+            "radius": 0.8
+          }
+        }
+      },
+      "same_probe_static_config": {
+        "fraction": 0.75,
+        "first_radius": 0.8,
+        "pair": [
+          0.1,
+          0.1
+        ]
+      },
+      "shrinkage_fitted_on_development": {
+        "adaptive": 0.21928507851661921,
+        "static": 0.21928507851661921,
+        "one_release": 0.31944897489601104
+      },
+      "evaluation": {
+        "adaptive": {
+          "mean_excess_loss": 0.012254080237783734,
+          "monte_carlo_standard_error": 0.00013689724042149445,
+          "mean_interval_95_normal": [
+            0.011985761646557605,
+            0.012522398829009863
+          ]
+        },
+        "static": {
+          "mean_excess_loss": 0.012254080237783734,
+          "monte_carlo_standard_error": 0.00013689724042149445,
+          "mean_interval_95_normal": [
+            0.011985761646557605,
+            0.012522398829009863
+          ]
+        },
+        "same_probe_static": {
+          "mean_excess_loss": 0.012254080237783734,
+          "monte_carlo_standard_error": 0.00013689724042149445,
+          "mean_interval_95_normal": [
+            0.011985761646557605,
+            0.012522398829009863
+          ]
+        },
+        "one_release": {
+          "mean_excess_loss": 0.0067324461098505995,
+          "monte_carlo_standard_error": 7.530396476218192e-05,
+          "mean_interval_95_normal": [
+            0.0065848503389167225,
+            0.0068800418807844765
+          ]
+        },
+        "known_population": {
+          "mean_excess_loss": 0.003349372016059033,
+          "monte_carlo_standard_error": 5.164875640306189e-05,
+          "mean_interval_95_normal": [
+            0.003248140453509032,
+            0.0034506035786090344
+          ]
+        },
+        "adaptive_shrunk": {
+          "mean_excess_loss": 0.0025060216457381966,
+          "monte_carlo_standard_error": 3.5202932260862745e-05,
+          "mean_interval_95_normal": [
+            0.0024370238985069056,
+            0.0025750193929694877
+          ]
+        },
+        "static_shrunk": {
+          "mean_excess_loss": 0.0025060216457381966,
+          "monte_carlo_standard_error": 3.5202932260862745e-05,
+          "mean_interval_95_normal": [
+            0.0024370238985069056,
+            0.0025750193929694877
+          ]
+        },
+        "one_release_shrunk": {
+          "mean_excess_loss": 0.0022543263758376727,
+          "monte_carlo_standard_error": 3.0221966178324464e-05,
+          "mean_interval_95_normal": [
+            0.0021950913221281568,
+            0.0023135614295471886
+          ]
+        }
+      },
+      "contrasts": {
+        "static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "same_probe_static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "one_release": {
+          "difference_adaptive_minus_reference": 0.0055216341279331355,
+          "paired_standard_error": 8.227875322202814e-05,
+          "interval_95_normal": [
+            0.00536036777161796,
+            0.005682900484248311
+          ],
+          "relative_reduction_percent": -82.01527405996075
+        },
+        "known_population": {
+          "difference_adaptive_minus_reference": 0.008904708221724702,
+          "paired_standard_error": 0.00014611269181009142,
+          "interval_95_normal": [
+            0.008618327345776923,
+            0.00919108909767248
+          ],
+          "relative_reduction_percent": -265.8620236578628
+        },
+        "adaptive_shrunk": {
+          "difference_adaptive_minus_reference": 0.009748058592045538,
+          "paired_standard_error": 0.0001361780702275389,
+          "interval_95_normal": [
+            0.009481149574399562,
+            0.010014967609691514
+          ],
+          "relative_reduction_percent": -388.985410745487
+        },
+        "static_shrunk": {
+          "difference_adaptive_minus_reference": 0.009748058592045538,
+          "paired_standard_error": 0.0001361780702275389,
+          "interval_95_normal": [
+            0.009481149574399562,
+            0.010014967609691514
+          ],
+          "relative_reduction_percent": -388.985410745487
+        },
+        "one_release_shrunk": {
+          "difference_adaptive_minus_reference": 0.009999753861946063,
+          "paired_standard_error": 0.00013477927866279636,
+          "interval_95_normal": [
+            0.009735586475766982,
+            0.010263921248125144
+          ],
+          "relative_reduction_percent": -443.58057329787965
+        }
+      },
+      "shrunk_contrasts": {
+        "static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "one_release": {
+          "difference_adaptive_minus_reference": 0.00025169526990052394,
+          "paired_standard_error": 9.000678860402188e-06,
+          "interval_95_normal": [
+            0.00023405393933413564,
+            0.0002693366004669122
+          ],
+          "relative_reduction_percent": -11.16498802472636
+        }
+      }
+    },
+    {
+      "epsilon_total": 8.0,
+      "clients": 8,
+      "development_trials": 1024,
+      "evaluation_trials": 8192,
+      "development_seed": 2026100402,
+      "evaluation_seed": 2026100502,
+      "candidate_counts": {
+        "adaptive": 378,
+        "static": 648,
+        "one_release": 6
+      },
+      "selected": {
+        "adaptive": {
+          "development_mean": 0.01670906437347675,
+          "config": {
+            "fraction": 0.75,
+            "first_radius": 0.8,
+            "pair": [
+              0.1,
+              0.1
+            ]
+          }
+        },
+        "static": {
+          "development_mean": 0.01670906437347675,
+          "config": {
+            "fraction": 0.75,
+            "first_radius": 0.8,
+            "pair": [
+              0.1,
+              0.1
+            ]
+          }
+        },
+        "one_release": {
+          "development_mean": 0.009709691288310403,
+          "config": {
+            "radius": 0.8
+          }
+        }
+      },
+      "same_probe_static_config": {
+        "fraction": 0.75,
+        "first_radius": 0.8,
+        "pair": [
+          0.1,
+          0.1
+        ]
+      },
+      "shrinkage_fitted_on_development": {
+        "adaptive": 0.5307936787803402,
+        "static": 0.5307936787803402,
+        "one_release": 0.6616259253459756
+      },
+      "evaluation": {
+        "adaptive": {
+          "mean_excess_loss": 0.01724176259457742,
+          "monte_carlo_standard_error": 0.00020212907763431413,
+          "mean_interval_95_normal": [
+            0.016845589602414165,
+            0.017637935586740674
+          ]
+        },
+        "static": {
+          "mean_excess_loss": 0.01724176259457742,
+          "monte_carlo_standard_error": 0.00020212907763431413,
+          "mean_interval_95_normal": [
+            0.016845589602414165,
+            0.017637935586740674
+          ]
+        },
+        "same_probe_static": {
+          "mean_excess_loss": 0.01724176259457742,
+          "monte_carlo_standard_error": 0.00020212907763431413,
+          "mean_interval_95_normal": [
+            0.016845589602414165,
+            0.017637935586740674
+          ]
+        },
+        "one_release": {
+          "mean_excess_loss": 0.00994954800210576,
+          "monte_carlo_standard_error": 0.00011855045982753147,
+          "mean_interval_95_normal": [
+            0.0097171891008438,
+            0.010181906903367722
+          ]
+        },
+        "known_population": {
+          "mean_excess_loss": 0.019947509765624996,
+          "monte_carlo_standard_error": 0.00028949879884588935,
+          "mean_interval_95_normal": [
+            0.019380092119887053,
+            0.02051492741136294
+          ]
+        },
+        "adaptive_shrunk": {
+          "mean_excess_loss": 0.008295301506833977,
+          "monte_carlo_standard_error": 0.00010382463417176659,
+          "mean_interval_95_normal": [
+            0.008091805223857315,
+            0.00849879778981064
+          ]
+        },
+        "static_shrunk": {
+          "mean_excess_loss": 0.008295301506833977,
+          "monte_carlo_standard_error": 0.00010382463417176659,
+          "mean_interval_95_normal": [
+            0.008091805223857315,
+            0.00849879778981064
+          ]
+        },
+        "one_release_shrunk": {
+          "mean_excess_loss": 0.00665405365660466,
+          "monte_carlo_standard_error": 7.938086445334601e-05,
+          "mean_interval_95_normal": [
+            0.006498467162276101,
+            0.006809640150933218
+          ]
+        }
+      },
+      "contrasts": {
+        "static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "same_probe_static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "one_release": {
+          "difference_adaptive_minus_reference": 0.007292214592471657,
+          "paired_standard_error": 0.00011983376450954191,
+          "interval_95_normal": [
+            0.007057340414032954,
+            0.007527088770910359
+          ],
+          "relative_reduction_percent": -73.29191829546735
+        },
+        "known_population": {
+          "difference_adaptive_minus_reference": -0.0027057471710475777,
+          "paired_standard_error": 0.0003619998476991119,
+          "interval_95_normal": [
+            -0.0034152668725378373,
+            -0.001996227469557318
+          ],
+          "relative_reduction_percent": 13.564335613011291
+        },
+        "adaptive_shrunk": {
+          "difference_adaptive_minus_reference": 0.00894646108774344,
+          "paired_standard_error": 0.00017806024487453313,
+          "interval_95_normal": [
+            0.008597463007789356,
+            0.009295459167697525
+          ],
+          "relative_reduction_percent": -107.84973976380503
+        },
+        "static_shrunk": {
+          "difference_adaptive_minus_reference": 0.00894646108774344,
+          "paired_standard_error": 0.00017806024487453313,
+          "interval_95_normal": [
+            0.008597463007789356,
+            0.009295459167697525
+          ],
+          "relative_reduction_percent": -107.84973976380503
+        },
+        "one_release_shrunk": {
+          "difference_adaptive_minus_reference": 0.010587708937972758,
+          "paired_standard_error": 0.00017759245649736393,
+          "interval_95_normal": [
+            0.010239627723237926,
+            0.01093579015270759
+          ],
+          "relative_reduction_percent": -159.11667510320788
+        }
+      },
+      "shrunk_contrasts": {
+        "static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "one_release": {
+          "difference_adaptive_minus_reference": 0.0016412478502293173,
+          "paired_standard_error": 4.5442386782512204e-05,
+          "interval_95_normal": [
+            0.0015521807721355933,
+            0.0017303149283230412
+          ],
+          "relative_reduction_percent": -24.665383462909908
+        }
+      }
+    },
+    {
+      "epsilon_total": 8.0,
+      "clients": 48,
+      "development_trials": 1024,
+      "evaluation_trials": 8192,
+      "development_seed": 2026100403,
+      "evaluation_seed": 2026100503,
+      "candidate_counts": {
+        "adaptive": 378,
+        "static": 648,
+        "one_release": 6
+      },
+      "selected": {
+        "adaptive": {
+          "development_mean": 0.0030995611378782017,
+          "config": {
+            "fraction": 0.25,
+            "first_radius": 0.1,
+            "pair": [
+              0.8,
+              0.8
+            ]
+          }
+        },
+        "static": {
+          "development_mean": 0.0030995611378782017,
+          "config": {
+            "fraction": 0.25,
+            "first_radius": 0.1,
+            "pair": [
+              0.8,
+              0.8
+            ]
+          }
+        },
+        "one_release": {
+          "development_mean": 0.0017212500786881048,
+          "config": {
+            "radius": 0.8
+          }
+        }
+      },
+      "same_probe_static_config": {
+        "fraction": 0.25,
+        "first_radius": 0.1,
+        "pair": [
+          0.8,
+          0.8
+        ]
+      },
+      "shrinkage_fitted_on_development": {
+        "adaptive": 0.5154158051700982,
+        "static": 0.5154158051700982,
+        "one_release": 0.6562282239964753
+      },
+      "evaluation": {
+        "adaptive": {
+          "mean_excess_loss": 0.003075598860056196,
+          "monte_carlo_standard_error": 3.467542861242718e-05,
+          "mean_interval_95_normal": [
+            0.003007635019975839,
+            0.0031435627001365533
+          ]
+        },
+        "static": {
+          "mean_excess_loss": 0.003075598860056196,
+          "monte_carlo_standard_error": 3.467542861242718e-05,
+          "mean_interval_95_normal": [
+            0.003007635019975839,
+            0.0031435627001365533
+          ]
+        },
+        "same_probe_static": {
+          "mean_excess_loss": 0.003075598860056196,
+          "monte_carlo_standard_error": 3.467542861242718e-05,
+          "mean_interval_95_normal": [
+            0.003007635019975839,
+            0.0031435627001365533
+          ]
+        },
+        "one_release": {
+          "mean_excess_loss": 0.001654877232039411,
+          "monte_carlo_standard_error": 1.8642751568042534e-05,
+          "mean_interval_95_normal": [
+            0.0016183374389660476,
+            0.0016914170251127745
+          ]
+        },
+        "known_population": {
+          "mean_excess_loss": 0.0033376736111111163,
+          "monte_carlo_standard_error": 5.139825834857007e-05,
+          "mean_interval_95_normal": [
+            0.003236933024747919,
+            0.0034384141974743137
+          ]
+        },
+        "adaptive_shrunk": {
+          "mean_excess_loss": 0.0015143111751603124,
+          "monte_carlo_standard_error": 1.834019906645793e-05,
+          "mean_interval_95_normal": [
+            0.0014783643849900548,
+            0.00155025796533057
+          ]
+        },
+        "static_shrunk": {
+          "mean_excess_loss": 0.0015143111751603124,
+          "monte_carlo_standard_error": 1.834019906645793e-05,
+          "mean_interval_95_normal": [
+            0.0014783643849900548,
+            0.00155025796533057
+          ]
+        },
+        "one_release_shrunk": {
+          "mean_excess_loss": 0.0011096911375337436,
+          "monte_carlo_standard_error": 1.3110325130995304e-05,
+          "mean_interval_95_normal": [
+            0.0010839949002769927,
+            0.0011353873747904945
+          ]
+        }
+      },
+      "contrasts": {
+        "static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "same_probe_static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "one_release": {
+          "difference_adaptive_minus_reference": 0.001420721628016785,
+          "paired_standard_error": 3.869949890471891e-05,
+          "interval_95_normal": [
+            0.001344870610163536,
+            0.0014965726458700342
+          ],
+          "relative_reduction_percent": -85.85057552975933
+        },
+        "known_population": {
+          "difference_adaptive_minus_reference": -0.00026207475105492024,
+          "paired_standard_error": 6.233453243597829e-05,
+          "interval_95_normal": [
+            -0.0003842504346294377,
+            -0.0001398990674804028
+          ],
+          "relative_reduction_percent": 7.852018549161707
+        },
+        "adaptive_shrunk": {
+          "difference_adaptive_minus_reference": 0.0015612876848958837,
+          "paired_standard_error": 3.135352777028445e-05,
+          "interval_95_normal": [
+            0.0014998347704661262,
+            0.001622740599325641
+          ],
+          "relative_reduction_percent": -103.10217018180548
+        },
+        "static_shrunk": {
+          "difference_adaptive_minus_reference": 0.0015612876848958837,
+          "paired_standard_error": 3.135352777028445e-05,
+          "interval_95_normal": [
+            0.0014998347704661262,
+            0.001622740599325641
+          ],
+          "relative_reduction_percent": -103.10217018180548
+        },
+        "one_release_shrunk": {
+          "difference_adaptive_minus_reference": 0.0019659077225224523,
+          "paired_standard_error": 3.6909216430502957e-05,
+          "interval_95_normal": [
+            0.0018935656583186666,
+            0.002038249786726238
+          ],
+          "relative_reduction_percent": -177.15809886448454
+        }
+      },
+      "shrunk_contrasts": {
+        "static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "one_release": {
+          "difference_adaptive_minus_reference": 0.0004046200376265687,
+          "paired_standard_error": 1.8235760769730054e-05,
+          "interval_95_normal": [
+            0.0003688779465178978,
+            0.0004403621287352396
+          ],
+          "relative_reduction_percent": -36.46240146837841
+        }
+      }
+    },
+    {
+      "epsilon_total": 16.0,
+      "clients": 8,
+      "development_trials": 1024,
+      "evaluation_trials": 8192,
+      "development_seed": 2026100404,
+      "evaluation_seed": 2026100504,
+      "candidate_counts": {
+        "adaptive": 378,
+        "static": 648,
+        "one_release": 6
+      },
+      "selected": {
+        "adaptive": {
+          "development_mean": 0.004430734308766443,
+          "config": {
+            "fraction": 0.25,
+            "first_radius": 0.1,
+            "pair": [
+              0.8,
+              0.8
+            ]
+          }
+        },
+        "static": {
+          "development_mean": 0.004430734308766443,
+          "config": {
+            "fraction": 0.25,
+            "first_radius": 0.1,
+            "pair": [
+              0.8,
+              0.8
+            ]
+          }
+        },
+        "one_release": {
+          "development_mean": 0.002607462770924969,
+          "config": {
+            "radius": 0.8
+          }
+        }
+      },
+      "same_probe_static_config": {
+        "fraction": 0.25,
+        "first_radius": 0.1,
+        "pair": [
+          0.8,
+          0.8
+        ]
+      },
+      "shrinkage_fitted_on_development": {
+        "adaptive": 0.820044402653819,
+        "static": 0.820044402653819,
+        "one_release": 0.8945931040565998
+      },
+      "evaluation": {
+        "adaptive": {
+          "mean_excess_loss": 0.004655495911929122,
+          "monte_carlo_standard_error": 5.635643541184656e-05,
+          "mean_interval_95_normal": [
+            0.0045450372985219025,
+            0.004765954525336341
+          ]
+        },
+        "static": {
+          "mean_excess_loss": 0.004655495911929122,
+          "monte_carlo_standard_error": 5.635643541184656e-05,
+          "mean_interval_95_normal": [
+            0.0045450372985219025,
+            0.004765954525336341
+          ]
+        },
+        "same_probe_static": {
+          "mean_excess_loss": 0.004655495911929122,
+          "monte_carlo_standard_error": 5.635643541184656e-05,
+          "mean_interval_95_normal": [
+            0.0045450372985219025,
+            0.004765954525336341
+          ]
+        },
+        "one_release": {
+          "mean_excess_loss": 0.0025013107855372547,
+          "monte_carlo_standard_error": 3.0159135806839943e-05,
+          "mean_interval_95_normal": [
+            0.0024421988793558486,
+            0.0025604226917186608
+          ]
+        },
+        "known_population": {
+          "mean_excess_loss": 0.020566406249999995,
+          "monte_carlo_standard_error": 0.00029585595475889904,
+          "mean_interval_95_normal": [
+            0.019986528578672554,
+            0.021146283921327436
+          ]
+        },
+        "adaptive_shrunk": {
+          "mean_excess_loss": 0.003632622934372012,
+          "monte_carlo_standard_error": 4.3185879183332006e-05,
+          "mean_interval_95_normal": [
+            0.0035479786111726813,
+            0.0037172672575713425
+          ]
+        },
+        "static_shrunk": {
+          "mean_excess_loss": 0.003632622934372012,
+          "monte_carlo_standard_error": 4.3185879183332006e-05,
+          "mean_interval_95_normal": [
+            0.0035479786111726813,
+            0.0037172672575713425
+          ]
+        },
+        "one_release_shrunk": {
+          "mean_excess_loss": 0.002232822877767566,
+          "monte_carlo_standard_error": 2.644285409146209e-05,
+          "mean_interval_95_normal": [
+            0.0021809948837483,
+            0.0022846508717868316
+          ]
+        }
+      },
+      "contrasts": {
+        "static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "same_probe_static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "one_release": {
+          "difference_adaptive_minus_reference": 0.0021541851263918678,
+          "paired_standard_error": 6.38983800737267e-05,
+          "interval_95_normal": [
+            0.0020289443014473636,
+            0.002279425951336372
+          ],
+          "relative_reduction_percent": -86.122249935814
+        },
+        "known_population": {
+          "difference_adaptive_minus_reference": -0.015910910338070874,
+          "paired_standard_error": 0.00030176422060267333,
+          "interval_95_normal": [
+            -0.016502368210452114,
+            -0.015319452465689633
+          ],
+          "relative_reduction_percent": 77.36359062765708
+        },
+        "adaptive_shrunk": {
+          "difference_adaptive_minus_reference": 0.0010228729775571103,
+          "paired_standard_error": 3.140517354779943e-05,
+          "interval_95_normal": [
+            0.0009613188374034235,
+            0.0010844271177107973
+          ],
+          "relative_reduction_percent": -28.1579727936706
+        },
+        "static_shrunk": {
+          "difference_adaptive_minus_reference": 0.0010228729775571103,
+          "paired_standard_error": 3.140517354779943e-05,
+          "interval_95_normal": [
+            0.0009613188374034235,
+            0.0010844271177107973
+          ],
+          "relative_reduction_percent": -28.1579727936706
+        },
+        "one_release_shrunk": {
+          "difference_adaptive_minus_reference": 0.0024226730341615566,
+          "paired_standard_error": 6.231843537179375e-05,
+          "interval_95_normal": [
+            0.0023005289008328406,
+            0.0025448171674902725
+          ],
+          "relative_reduction_percent": -108.50269666637449
+        }
+      },
+      "shrunk_contrasts": {
+        "static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "one_release": {
+          "difference_adaptive_minus_reference": 0.001399800056604446,
+          "paired_standard_error": 4.9527330122925526e-05,
+          "interval_95_normal": [
+            0.001302726489563512,
+            0.00149687362364538
+          ],
+          "relative_reduction_percent": -62.69194348295116
+        }
+      }
+    },
+    {
+      "epsilon_total": 16.0,
+      "clients": 48,
+      "development_trials": 1024,
+      "evaluation_trials": 8192,
+      "development_seed": 2026100405,
+      "evaluation_seed": 2026100505,
+      "candidate_counts": {
+        "adaptive": 378,
+        "static": 648,
+        "one_release": 6
+      },
+      "selected": {
+        "adaptive": {
+          "development_mean": 0.0008011780593754666,
+          "config": {
+            "fraction": 0.25,
+            "first_radius": 0.1,
+            "pair": [
+              0.8,
+              0.8
+            ]
+          }
+        },
+        "static": {
+          "development_mean": 0.0008011780593754666,
+          "config": {
+            "fraction": 0.25,
+            "first_radius": 0.1,
+            "pair": [
+              0.8,
+              0.8
+            ]
+          }
+        },
+        "one_release": {
+          "development_mean": 0.0004226972971164547,
+          "config": {
+            "radius": 0.8
+          }
+        }
+      },
+      "same_probe_static_config": {
+        "fraction": 0.25,
+        "first_radius": 0.1,
+        "pair": [
+          0.8,
+          0.8
+        ]
+      },
+      "shrinkage_fitted_on_development": {
+        "adaptive": 0.7844161576359521,
+        "static": 0.7844161576359521,
+        "one_release": 0.8863747191102259
+      },
+      "evaluation": {
+        "adaptive": {
+          "mean_excess_loss": 0.0007621013209692117,
+          "monte_carlo_standard_error": 8.639996625121353e-06,
+          "mean_interval_95_normal": [
+            0.0007451669275839738,
+            0.0007790357143544495
+          ]
+        },
+        "static": {
+          "mean_excess_loss": 0.0007621013209692117,
+          "monte_carlo_standard_error": 8.639996625121353e-06,
+          "mean_interval_95_normal": [
+            0.0007451669275839738,
+            0.0007790357143544495
+          ]
+        },
+        "same_probe_static": {
+          "mean_excess_loss": 0.0007621013209692117,
+          "monte_carlo_standard_error": 8.639996625121353e-06,
+          "mean_interval_95_normal": [
+            0.0007451669275839738,
+            0.0007790357143544495
+          ]
+        },
+        "one_release": {
+          "mean_excess_loss": 0.00042182867340150823,
+          "monte_carlo_standard_error": 4.7316199654384175e-06,
+          "mean_interval_95_normal": [
+            0.00041255469826924893,
+            0.00043110264853376754
+          ]
+        },
+        "known_population": {
+          "mean_excess_loss": 0.003239203559027783,
+          "monte_carlo_standard_error": 5.063915245073854e-05,
+          "mean_interval_95_normal": [
+            0.0031399508202243354,
+            0.0033384562978312302
+          ]
+        },
+        "adaptive_shrunk": {
+          "mean_excess_loss": 0.0005643889037225252,
+          "monte_carlo_standard_error": 6.417981290935683e-06,
+          "mean_interval_95_normal": [
+            0.0005518096603922912,
+            0.0005769681470527592
+          ]
+        },
+        "static_shrunk": {
+          "mean_excess_loss": 0.0005643889037225252,
+          "monte_carlo_standard_error": 6.417981290935683e-06,
+          "mean_interval_95_normal": [
+            0.0005518096603922912,
+            0.0005769681470527592
+          ]
+        },
+        "one_release_shrunk": {
+          "mean_excess_loss": 0.0003710335488920789,
+          "monte_carlo_standard_error": 4.148658584315201e-06,
+          "mean_interval_95_normal": [
+            0.0003629021780668211,
+            0.0003791649197173367
+          ]
+        }
+      },
+      "contrasts": {
+        "static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "same_probe_static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "one_release": {
+          "difference_adaptive_minus_reference": 0.0003402726475677034,
+          "paired_standard_error": 9.728292755405574e-06,
+          "interval_95_normal": [
+            0.0003212051937671085,
+            0.00035934010136829834
+          ],
+          "relative_reduction_percent": -80.66607820275472
+        },
+        "known_population": {
+          "difference_adaptive_minus_reference": -0.0024771022380585712,
+          "paired_standard_error": 5.137711221143479e-05,
+          "interval_95_normal": [
+            -0.0025778013779929835,
+            -0.002376403098124159
+          ],
+          "relative_reduction_percent": 76.472570893385
+        },
+        "adaptive_shrunk": {
+          "difference_adaptive_minus_reference": 0.00019771241724668645,
+          "paired_standard_error": 5.81210964428196e-06,
+          "interval_95_normal": [
+            0.0001863206823438938,
+            0.0002091041521494791
+          ],
+          "relative_reduction_percent": -35.0312374929131
+        },
+        "static_shrunk": {
+          "difference_adaptive_minus_reference": 0.00019771241724668645,
+          "paired_standard_error": 5.81210964428196e-06,
+          "interval_95_normal": [
+            0.0001863206823438938,
+            0.0002091041521494791
+          ],
+          "relative_reduction_percent": -35.0312374929131
+        },
+        "one_release_shrunk": {
+          "difference_adaptive_minus_reference": 0.00039106777207713274,
+          "paired_standard_error": 9.509623211584418e-06,
+          "interval_95_normal": [
+            0.0003724289105824273,
+            0.0004097066335718382
+          ],
+          "relative_reduction_percent": -105.39957188369537
+        }
+      },
+      "shrunk_contrasts": {
+        "static": {
+          "difference_adaptive_minus_reference": 0.0,
+          "paired_standard_error": 0.0,
+          "interval_95_normal": [
+            0.0,
+            0.0
+          ],
+          "relative_reduction_percent": 0.0
+        },
+        "one_release": {
+          "difference_adaptive_minus_reference": 0.00019335535483044626,
+          "paired_standard_error": 7.261521530641068e-06,
+          "interval_95_normal": [
+            0.00017912277263038977,
+            0.00020758793703050274
+          ],
+          "relative_reduction_percent": -52.11263385961003
+        }
+      }
+    }
+  ]
+}

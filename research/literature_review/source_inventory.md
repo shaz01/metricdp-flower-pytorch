@@ -59,3 +59,31 @@ Generated from the family ledgers on 2026-10-01. Inclusion means methods relevan
 | ROOT-A03 | [Enhanced Source Inference Attacks in Federated Learning](https://www.ijcai.org/proceedings/2025/0536.pdf) | Related boundary attack; methods not inspected |
 | ROOT-A04 | [DP-KFC: Data-Free Preconditioning for Differentially Private Deep Learning](https://proceedings.mlr.press/v306/van-den-bosch26a.html) | Potential public geometry baseline; methods not inspected |
 | ROOT-A05 | [CoSIFL](https://arxiv.org/abs/2509.23190) | Related client/source inference candidate, precise methods and title to resolve |
+
+## Subsequent read-status updates
+
+See [FACP partial methods](facp_followup.md) and [FedFR-ADP access assessment](fedfr_followup.md). Both remain pending complete methods; version-1 screening counts are unchanged.
+
+## Owner-directed non-Gaussian extension
+
+Four additional primary sources were assessed after version 1: [Geng–Viswanath staircase](https://arxiv.org/abs/1212.1186), [Hardt–Talwar geometry](https://arxiv.org/abs/0907.3754), [Joseph–Yu constructions](https://proceedings.mlr.press/v247/joseph24a.html) and [Gilani et al. optimized noise](https://proceedings.mlr.press/v267/gilani25a.html). Selected methods/read scopes and appraisal are in [non-Gaussian foundations](non_gaussian_foundations.md) and [optimized-noise assessment](optimized_noise_followup.md). These are supplemental inclusions, not part of the frozen 31-family version-1 count.
+
+## Separately tracked observer-contract follow-up, 2026-10-06
+
+These entries are outside frozen version-1 systematic inclusion counts; discovery/read boundaries are in [focused handoff](infinitely_divisible_followup.md).
+
+| Follow-up ID | Primary family | Read boundary and remaining gap |
+|---|---|---|
+| ID-F01 | [Pagh–Stausholm, ALT2022 Arete](https://proceedings.mlr.press/v167/pagh22a.html), arXiv2110.06559v3 | Introduction/definition/certificate and application overview; full proofs not reconstructed; normalized certificate epsilon≥20. |
+| ID-F02 | [Harrison–Manurangsi, FORC2025](https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.FORC.2025.12), arXiv2504.05202v1 | Abstract/introduction/sampler overview; full finite-parameter mechanisms, continuous transformation and proof assessment pending. |
+
+### Sustained methods/trajectory/construction follow-up, 2026-10-06
+
+The following cards are separately tracked, with overlap to existing foundational families; their card count is not a new unique-family/PRISMA count.
+
+| Follow-up | Primary methods and assessment |
+|---|---|
+| ID-F02 methods continuation | [GDL/MSDLap detailed reconstruction](divisible_noise_methods.md): official§2–5, scalar certificates/sampler proofs, finite arithmetic, independent transfer review. |
+| T-F01–03 | [Temporal noise cards](temporal_noise_followup.md): ICML2023 multi-epoch MF, EMNLP2024 BLT, ICML2025 DMM; full-participation/causal/cryptographic bounds and own reviewed Gaussian limit. |
+| S-F01–08 | [Private surrogate cards](private_surrogate_followup.md): eight scoped primary-source assessments; distinguish whole-distribution sampling, sanitized objects and record-private synthetic data. Includes old foundations; no claim of eight new families. |
+| F-F01 | [Feldman–Zrnic NeurIPS2021 filter](client_influence_filter.md): arXivv4 Definitions2.5/2.6, Thm3.1/4.3/4.5, Cor4.7, Alg7/Prop5.2; independently reviewed whole-client conditional transfer. |

@@ -1,7 +1,7 @@
 # Project Status
 
-**Branch:** `master`
-**Last updated:** 2026-10-01, client-side noise literature review version 1 and provisional plan
+**Branch:** `feature/stacked-head` (branched from `feature/client-specific-noise`, which holds the research it implements)
+**Last updated:** 2026-10-09, baseline comparison complete (1,000 evaluation cells): the stacked construction is NOT better than server-side global DP / metric privacy; report not yet written; no jobs running
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -14,6 +14,45 @@ section (including the Currently running table) updates more often, at "worth a 
 granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
+
+**`feature/stacked-head` (2026-10-08, owner-requested branch):** full Flower implementation of the stacked, validation-gated head step in `experiments/stacked_head/` (README there), using `metricdp_pytorch/stacked_head_strategy.py`. Built: deterministic task roles + label-stress client partitions, CNN + public-base bundle, ClientApp, ServerApp, in-process grid, runner (`prepare`/`run`/`matrix`/`attack`), attack check, analysis/gate, probe-equivalence validator; 20 experiment tests + 8 strategy tests, full suite passing. Validation on this machine (CPU): a probe-noise replay of the research CNN-head cell (KMNIST 0-3, 32 public images, set 0, cohort A, q.65) through Flower's Ray simulation reproduces all 512 per-release held-out CEs to 1.1e-8 with identical control CE (`results/stacked_head/validation/`); the real-message-path IN/OUT attack (target 3, 2048 releases per world) gives AUC 0.6549 vs calibrated 0.650 (rough SE 0.011; an earlier run with the pre-cell-key noise streams gave 0.6476), TPR 4.1% at FPR 1%. Owner chose to run locally. BOTH matrices DONE (`gate` 24 cells + `budgets` 24 more, 48 cells, 512 independent-noise releases each, real Flower/Ray path, ~2.5 min per cell; summary `results/stacked_head/gate_and_budgets_summary.txt`). Research-phase gate verdicts reproduce exactly: 32 public images met for KMNIST 0-3 at q.65/.80 (6/6 cells, mean +.0117/+.0153 CE) and KMNIST 4-7 at q.65 (5/6, +.0157), NOT met for KMNIST 4-7 at q.80 (4/6, worst -.0057, the same public-set-2/cohort-A cell as in research); 128 public images met for KMNIST 4-7 (6/6, +.0074/+.0099) and not met for KMNIST 0-3 (4/6, +.0020/+.0026, worst -.0011). All eight mean gains match the research CNN-head probe within ~.0001. Accuracy deltas are small (+0.1 to +1.3 points; slightly negative for KMNIST 0-3 at 128). Not yet done: other datasets/tasks, independent public-set draws beyond the three used here, multi-round protocols, secure aggregation, a CIA run on trained federations. Replicate rounds estimate the release distribution from one base; they are not a multi-round protocol. Research-branch note: six `.npz` archives behind the fresh-data audits were force-added late (commit `3cd0313`) because they were silently gitignored. No jobs running.
+
+**Baseline comparison (2026-10-09, owner: "add the missing comparison"):** findings `experiments/stacked_head/protocols/2026-10-09_baseline_comparison_findings.md` (protocol first, one pre-evaluation addendum). The paper's server-side mechanisms (the repository's real global-DP and metric-privacy strategies, tuned on Fashion-MNIST 0-3 CNN-head cells, noise matched to our calibrated risk / realized oracle AUC) run as a one-shot head update on the same base, data, gate and attacks. RESULT: ours is NOT better. Pre-stated verdicts MIXED vs both (global DP better in 7/10 groups, ours in 2; metric privacy 5/2/3); at risk .80 the baselines win in all 5 tasks (share of the non-private gain kept: baselines ~.63, ours .29), at .65 results are small and task dependent (ours better on MNIST by +.002 to +.006 CE). Part 2 practical-attack curve claim FALSE for both. Exploratory: metric calibration = global DP at matched leakage; the public-validation gate nearly doubles the paper mechanism's utility at q.80 (ungated +.052 vs gated +.122) and is the transferable part. Audits: 1,980 cells / 15,840 checks (audit made float32-tie-aware, disclosed). Caveats: one-shot head update only (paper mechanism is multi-round full-model), baselines use more client compute, steps=50 edge selection at q.80/vanilla, offline tuning unaccounted. No jobs running. Written report still pending (owner's call).
+
+**Next steps A-D (2026-10-09, owner: "do all of them autonomously; we will write the report at the very end after careful consideration"):** findings `experiments/stacked_head/protocols/2026-10-09_next_steps_findings.md` (protocols alongside, rules fixed first; two disclosed amendments to the attack protocol before any frontier cell). A) accuracy-aware gate variants V1-V3 cut accuracy dips on development data (6.1% -> 0.6-2.8% of cells) but fail the pre-stated 80% median-retention rule, so V0 is kept; V0 is CONFIRMED on fresh public sets + fresh test-split images (reliable in 10/10 groups). B) budget map: reliable at 32 (9/10 groups) and 128 (10/10, median +.0045), not at 512 (0/10, median +.0003); fade budget 512. C) cohort variation ~0% of variance, public set 98-99%. D) practical model-only attack stays far below the calibrated bound (AUC .50-.65 vs targets .55-.95; noise-free .75/.60 degenerate), calibration conservative; utility saturates with risk. 980 cells, 7,000+ audit checks pass, dev reruns reproduce earlier results exactly, role layout pinned by test. Caveats: accuracy dips in 6-9% of cells, weak single attacker, scope limits. NOT done: the written report (owner's call, to be written last), non-Gaussian/client-specific noise, multi-round protocols, secure aggregation. No jobs running.
+
+**Public-set sweep + transfer (2026-10-09, owner: "work autonomously without stopping"):** protocol with decision rules fixed first, then 120 sweep cells (KMNIST 0-3/4-7, 30 public sets each, 32 images, cohort A, q.65/.80) and 60 transfer cells (MNIST 0-3/4-7, Fashion-MNIST 4-7, 10 sets each), 256 releases per cell, in-process backend (bit-identical to Ray on the two cells compared). Findings: `experiments/stacked_head/protocols/2026-10-09_public_set_sweep_and_transfer_findings.md`. All ten task/risk groups meet the pre-stated reliability rule (p_win >= .80, p_loss <= .10, median > 0): p_win .87-1.00, 1 of 180 cells below -.003 (KMNIST 4-7 q.80 set 2, a gate error), median gains +.01 to +.04 CE; MNIST and Fashion-MNIST transfer; the 128-image validation gate is adequate. Caveats: the frozen step is 3-10x too large for the CNN head and the ungated fixed step is destructive (median gain -0.05 to -0.98), so reliability depends on the public-validation gate; accuracy falls in 29/120 sweep and 12/60 transfer cells (worst -2.6 pts) although CE improves; 10-set groups cannot statistically certify p_loss. Consistency audit of all cells passes (1,440 checks). Not done: larger public budgets on new datasets, more than one cohort per set, accuracy-aware gate, multi-round protocols, secure aggregation, CIA on trained federations, a written report (owner's call). No jobs running.
+
+**Research branch:** `feature/client-specific-noise`. The owner requested a separate branch for
+this research. The initial audit and literature-review version 1 were already committed on
+`master`; further research and implementation stay on this branch until the owner declares
+the work finished. No experiments were launched during the branch transition.
+
+**Latest Flower-strategy slice (2026-10-08):** `metricdp_pytorch/stacked_head_strategy.py` (library) + `tests/test_stacked_head_strategy.py` (7 tests). `StackedHeadStrategy(FedAvg)` ships the public base, the public projection basis and class gradients, receives one clipped+noise-share vector per client, sums them, decodes, picks the step multiplier on a public validation callable and rewrites the head (softmax-equivalent). Tests check client contributions against `client_queries`/`bounded_public`, the Hessian basis against `public_geometry`, share variance (8/7 sigma^2), gated selection, base-preserving zero multiplier, other arrays untouched, configure_train payload and failed-reply handling. NOT yet done: ClientApp train handler, ServerApp/runner wiring, a Flower simulation run, the repo's CIA pipeline on this strategy. Per AGENTS.md a new experiment folder/branch needs the owner's go-ahead. No jobs running.
+
+**Preceding CNN-head chunk (2026-10-08):** [findings](research/proposals/2026-10-08_cnn_head_findings.md). Head-only port of the frozen stacked, validation-gated construction to a small CNN trained on 32/128 public KMNIST images (fresh pool, classes 0-3 and 4-7). Pre-stated gate met for 3 of 4 task/risk pairs at budget 32 (gain +.011 to +.020 CE, accuracy +0.2 to +1.3 points); fails KMNIST 4-7 at q.80 (4/6 cells, worst −.0059) from finite-validation-set error in one cell, not catastrophic picks. Frozen step length was ~3-10x too large for CNN head scale; the widened multiplier grid absorbed it. Gains shrink at 128. Independent audit 148 checks (CNN code shared). Not a Flower strategy, multi-round, or CIA-pipeline result. Next: Flower strategy integration and an a-priori bounded-multiplier/larger-validation variant, both needing fresh data. No jobs running.
+
+**Preceding noise-law chunk (2026-10-08):** [findings](research/proposals/2026-10-08_noise_law_findings.md). Gaussian vs radial Laplace on the stacked, validation-gated construction at matched AUC (verified .652/.800 vs .653/.797): radial freezes to the same configuration and gives the same fresh-KMNIST gains (|difference| <= .00025 CE, 0/12 cells beyond ±.001). Pre-stated verdict: no consistent benefit; radial TPR at low FPR is a few percent lower at q.80 only. The useful ingredients are per-client clipping, limited-public stacking and public-validation gating, not the density. Anisotropic/per-client-varying laws untested. Next: CNN/Flower port. No jobs running.
+
+**Preceding budget-map / gated-step chunk (2026-10-08):** [findings](research/proposals/2026-10-08_budget_map_gated_findings.md). CORRECTION: the earlier stacked "24/24" result is fragile for a fixed step (new public sets: Fashion-MNIST 4-7 at 32 examples mean −.0036, harmful when the public base is strong). Fix: choose the step multiplier (0,.25,.5,1,2 x frozen eta) per release on a public validation set (post-processing). Primary gate on the fresh KMNIST dataset (two 4-class tasks, budget 32, q.65/.80, 512-image validation): PASSED, 6/6 cells each, gated mean +.0117 to +.0174 CE >= fixed, no cell below +.0071; 128-image validation still positive. Seen-pool replicates have no negative cell at 32. Gain shrinks at 128 (+.002 to +.007) and vanishes at 512. Independent audit 320 checks (KMNIST, budgets 32/128). Validation set is extra public labelled data; Gaussian only; not a client-specific-noise-law, CNN/Flower or independent-federation result. Next: matched-strength non-Gaussian/per-client noise comparison on this construction, then CNN/Flower port. No jobs running.
+
+**Preceding stacked-constructor chunk (2026-10-08):** [findings](research/proposals/2026-10-08_stacked_constructor_findings.md), [protocol](research/proposals/2026-10-08_stacked_constructor_protocol.md). Base = strongest public model; add clipped, projected, calibrated-Gaussian client gradients at that base. Pooled freeze on Fashion-MNIST 0-3 dev cells (target_center, d=51, cap .003, eta 100 for q.65/.80), then NO-retuning transfer to Fashion-MNIST train classes 4-7 and MNIST digits 0-3 (6 cells each, 2,048 held-out images, 512 draws). Beats the strongest public-only control in 24/24 cells at q.55/.65/.80 (mean CE gain ~.008/.022/.024; accuracy +0.8 to +1.7pp at q.80); attack AUC matches calibrated targets (mean within .002; max |z| 3.83 over 288 comparisons). Pre-stated gate NOT met: versus the earlier unstacked construction the difference is a wash (mean −.0007/+.0010). Independent audit 378 checks. Not a new density, client-specific-distribution, CNN/Flower or independent-federation claim. Next: larger public budgets on fresh tasks, matched-strength non-Gaussian/per-client noise comparison, CNN/Flower port. No jobs running.
+
+**Preceding frozen-constructor chunk (2026-10-08, owner: "move autonomously until you find a solution"):** [findings](research/proposals/2026-10-08_frozen_constructor_findings.md), [protocol](research/proposals/2026-10-08_frozen_constructor_protocol.md). Pooled freeze with extended eta grid (frozen: target_balanced, d=51, cap .003, eta 30/100/100 for q.55/.65/.80; none at the new edge). Fresh Fashion-MNIST test-split confirmation (3 new public 32-sets, 1 new 2,048-image cohort, 1,856 held-out images, 512 draws, no re-tuning): q.65/.80 beat both the strongest public control and the zero-private offset on 2 of 3 subsets (+.014 to +.018 CE); subset 2 loses to its strong public control (−.006 to −.008) though it beats the zero-private offset by .026-.028, because the construction replaces rather than adds to the public step. q.55 fails. Attack AUC matches calibrated targets (mean within .003). Pre-stated solution criterion NOT met. Independent audit 113 checks. Test split now consumed for this constructor; next steps are adaptive/development-only (stacked public+private construction, cross-dataset transfer). No jobs running.
+
+**Preceding limited-public chunk (2026-10-08):** [findings](research/proposals/2026-10-08_limited_public_findings.md), [protocol](research/proposals/2026-10-08_limited_public_protocol.md). Development-only decomposition of saved headroom queries into public projection, per-client clipping and peer-contract Gaussian noise (q.55/.65/.80), 18 cells, selection-only tuning. At 32 public examples the noisy gain beats both the strongest public control and the zero-private public offset by >.001 CE in both cohorts at q.65/.80 for all 3 subsets (mean gain over zero-private offset .0089/.0159); fails at q.55 (.0008). 128 passes for subsets 42/44 only; 512 fails (private-signal arms .0017-.0020 CE worse than the control). Clipping is not a loss; noise is the dominant cost. Caveats: eta=30 grid edge selected in 12-13/18 noisy cases, reused development halves, no CIA run at the selected configs, no reserve used (136 unused). Independent audit 1,278 checks/max 2.2e-16; 305 passed/5 deselected. Next proposed: frozen-32 constructor under the peer-conditioned CIA contract with matched-AUC Gaussian vs radial controls on new cohort evidence; decide separately on extending the eta grid. No defense/new-density/overall-completion claim. No jobs running.
+
+**Preceding development-only headroom chunk (2026-10-08):** [findings/roadmap](research/proposals/2026-10-08_headroom_findings.md).2775models, public32/128/512nestedsettings, two record-disjoint2048privatecohorts, OLDdev512selection/512assessment.32unprotectedone-stepgains.015531–.036550CEbothcohorts/3publicsubsets;512selection-frozenoracle/one-stepgatefails, butrefinement helpsA morethanB. Centering leaves fixed-class within-class covariance unchanged. Independent224,895checks/max3.20e-14/allmodelsretrained;302passed/5deselected. Noreserveaccess;136unused. Nextproposed limited-public projection/clipping/noise feasibility with512anchor andstrongcontrols; no successfuldefense/newdensity/privateconfirmation/overallcompletionclaim. Nojobsrunning.
+
+**Latest bounded class-conditional chunk (2026-10-08):** [findings/roadmap](research/proposals/2026-10-08_class_conditional_findings.md), [mechanism explained](research/proposals/class_conditional_mechanism_explained.md).8640development settings,1176fresh attack/utility cells,320newimages/136unused. Public-cap CIA channel verified but q.55utilitygatefails; gains overpublic +.000119/−.000072/−.000010 and strongestnonprimarywinsall3. Refreshed-mask apparentgain is publicadaptation: zero-private matchedpublicoffset is better by.000097–.000141all3. Independent primary6,235,039checks/max8.88e-16;posthoc attribution35,108/max1.11e-16;299passed/5deselected. Next proposed: DEV-only genuinely useful private-signal/headroom diagnosis before anotherdensity/reserve sweep. No newdensity/end-to-endtuning/population/novelty or overallcompletion claim. No jobs running.
+
+**Latest verified research chunk (2026-10-08):** [public-reference findings](research/proposals/2026-10-08_public_residual_findings.md). Public-cap Gaussian comparison:16,758development settings,54arms/432target rows,512fresh images;456reserve remain. At q0.55fine residual CE0.451109/85.75%accuracy loses to public-only decoder adjustment CE0.447582/86.52%; projected absolute matches but is slightly worse than the latter. Fixed selected fine queries lose even without noise, so a zero-mean additive density change alone cannot repair their expected CE deficit. Main audit260,338numeric checks;293passed/5deselected. Follow-up DEVELOPMENT-ONLY gradient diagnostic: client empirical class distributions and public class-gradient references reduce mean client norms84–88%while preserving the balanced all-IN unbounded aggregate. Independent874checks; utility/OUT/shift/noise superiority remains untested, and private-data headroom is inconsistent. Next: signal-first public class-conditional control-variate feasibility with stronger public-gradient controls and explicit prior/conditional-shift stress. No final defense/novelty/end-to-end tuning or overall experiment-completion decision. No jobs running.
+
+**Preceding matched-CIA chunk (2026-10-07):** [matched-CIA findings](research/proposals/2026-10-07_matched_cia_findings.md). Reoptimized Gaussian/radial laws at conditional AUC targets0.55/0.65/0.80:17,496development settings,117arms/936target rows,1,024fresh utility images;968reserve images remain. Near chance, radial votes lose to strongest Gaussian controls in all three seeds (mean CE1.430741 versus1.354335). At0.80votes improve over non-voting controls, but same-query Gaussian matches radial; no consistent noise-law benefit. Offline private norm calibration/tuning is unaccounted, so this is not a deployable privacy guarantee or independent-population result. Independent query/contract review plus33,174saved-artifact checks;287passed/5deselected. Next: development-only task-relevant compression/public-reference residual review before a new frozen constructor; this hypothesis is untested. No overall experiment-completion or merge decision; no jobs running.
+
+**Preceding CIA boundary audit (2026-10-07):** [fixed-slot conditional CIA findings](research/proposals/2026-10-07_descriptor_cia_findings.md). Three saved federations, four dominant-class targets, 156 cells, 1,024 fresh evaluation releases per world. At epsilon8 aggregate balanced votes remain distinguishable: mean descriptor AUC0.879624 Gaussian /0.792654 radial, versus equal-world CE0.955695 /1.003976. Gaussian non-voting control leaks less (meanAUC0.785588), so the earlier utility gain is not a matched-leakage win. Reduced metric adaptation has IN/OUT std ratios2.103–2.371 and exact LR AUC>=0.999998; identity student decoder exposes that same scale channel. This is strong known-alternative auxiliary knowledge under fixed datasets, not new client populations or a historical CNN/Flower replication. Student finite attack bank is weaker; raw individual-object view differs from Q_i-only. Corrected initial target-class coverage and low-FPR arithmetic are documented. Independent contract review plus4,188numeric checks/48Gaussian expectation checks;282passed/5deselected. No remaining reserve images used. Next: frozen matched attack-strength/variance controls before broad sweeps; no final defense or overall completion decision.
+
+**Preceding utility feasibility (2026-10-07):** [one-time descriptor findings](research/proposals/2026-10-07_private_descriptor_findings.md). Three initial noise laws:81cells/1,215arms; raw votes fail label stress. Follow-up corrects local imbalance BEFORE joint clipping/noise, with equally corrected/reweighted model/logit/probability controls. Development17,496configs; frozen choices confirmed on2,048fresh reserve images,18cells/810arms,512new paired draws. At epsilon8 aggregate balanced-loss votes gain0.113975–0.177312CE against selected strong analytic-Gaussian controls in all three seeds (63.14–66.40%accuracy); radial Laplace also passes but is worse on this48-dimensional voting query. Individually reusable client distributions fail against aggregate controls; central can use the same constructor. This supports a useful client-query construction, not a new noise density, CIA/metric-privacy superiority or end-to-end private tuning/publication. Remaining reserve1,992images. Independent saved-artifact audit68,532numeric checks/max error4.44e-16; kernel checks and277passed/5deselected. Active recommendation: freeze full-peer fixed-slot contribution/dummy CIA evaluation plus novelty/shift stress checks. Overall experiment remains active; no merge/completion decision inferred.
 
 **Research direction reset (2026-10-01).** The owner wants to investigate client-side noise
 sampled from a separately constructed distribution for each client, aiming to improve CIA
@@ -30,9 +69,113 @@ exploratory utility/leakage baseline, not a validated demonstration of CIA neutr
 The owner requested both systematic and integrative review and confirmed the protocol. Version 1
 is in `research/literature_review/README.md`: 31 included primary source families, technique
 explanations, bounded search/screening records, synthesis and a provisional research plan.
-Closest pending full methods: FACP and FedFR-ADP. Next: resolve those comparators, specify the
-client-participation game, and analyze distribution construction before choosing a mechanism.
-No new experiments have been launched or new mechanism selected. The historical next steps
+Follow-up: `research/literature_review/next_step_handoff.md`. FACP now has a partial primary-
+methods assessment; FedFR-ADP remains preview-only. Complete methods are still pending.
+`research/threat_specification_review.md` specifies candidate games and verifies weighting,
+metadata and active-ID seed issues; `research/noise_construction_proof_obligations.md` derives
+reference noise controls and estimation obligations. The owner has now confirmed dataset-contribution secrecy among registered slots. See
+`research/proposals/2026-10-04_mechanism_proposal.md` for public and privately selected joint
+clipping/non-Gaussian profiles, an explicit sampler and construction accounting. Independent
+math review rules out common-ball ellipsoid shaping as a quadratic-utility improvement. The
+first closed-form diagnostic loses at total budgets 4 and 8 and gains slightly at 16 against
+only the listed fixed public controls; an optimized public clipping radius beats the private
+selector at all three budgets. This is not CIA or trained-model evidence. A reproducible follow-up checked 30 heterogeneous population/budget cases, optimizing profile
+geometry and selector allocation and adding diamond-law controls. No positive-cost private
+selector beat the best public control on the bounded grids; see
+`research/proposals/2026-10-04_heterogeneity_findings.md` and
+`results/client_specific_noise/analytical_heterogeneity.json`. Deprioritize separately paid RR
+selection for FL implementation. The two-round protected-history calculation is now recorded in
+`research/proposals/2026-10-04_protected_history_findings.md` and
+`results/client_specific_noise/protected_history_two_round.json`: 15 budget/client-count cases,
+selection/noise correlation and aggregate bias accounted. Adaptation improves the tested fixed
+two-round schedule in some cases, but public one-release control wins or ties every case.
+The changing-update quadratic spike is now recorded in
+`research/proposals/2026-10-04_dynamic_quadratic_findings.md`: six cells, 1,024 development
+and 8,192 fresh evaluation federations each. Every selected adaptive profile has equal axes
+and is exactly the static mechanism; one-release controls win, including public shrinkage.
+The rotated-bank/residual-aware comparison is recorded in
+`research/proposals/2026-10-04_rotated_residual_findings.md`: residual selection beats stale
+selection in four of six cells but beats tuned public geometry in only one cell, by ~0.39%
+at E=16,N=8. One-release controls still win throughout. The owner's Oct-4 stop instruction
+was respected. On Oct-5 “lets move to the next step” authorized the client-geometry audit.
+See `research/proposals/2026-10-05_client_geometry_findings.md`: cached Fashion-MNIST,
+a 68-parameter fixed-feature classifier, three seeds, balanced/quantity/explicit label-stress
+partitions and 27 snapshots. Centered covariance is distinct and persistent in label stress;
+full-information profile assignment gains at most 0.000363 CE in 81 two-bias-coordinate
+comparisons, below the 0.001 feasibility gate. The gain changes clipped means rather than
+reducing noise penalty. These are raw-information diagnostics, not DP/CIA evidence.
+The owner then approved the broader oracle. See
+`research/proposals/2026-10-05_broader_oracle_findings.md`: fresh test slice, 36 rows/108
+comparisons, shared/oracle clipping and step-shrink optimization. All three bias contrasts
+show a marginal label-stress round-20/label-8 gain of 0.001036–0.001126 CE in three seeds;
+two of three noise-only intervals clear 0.001. Full 51-dimensional head has no gate pass.
+The bias gain changes aggregate means despite higher noise cost. The owner approved the
+frozen per-slot control: `research/proposals/2026-10-05_public_slot_findings.md`. On a third
+fresh test slice, the fully frozen configuration exactly matches the oracle in three aligned
+primary cells; gains 0.000938–0.000998 CE fail the retained 0.001 gate. Cyclically reassigning
+the same clients makes it 0.001748–0.001783 worse than tuned shared, exposing slot-label
+alignment. 24 rows/72 comparisons/four arms saved. The owner approved the local rule/cost
+review: `research/proposals/2026-10-05_local_selector_findings.md`. A local dominant-class
+route with purity fallback is slot-permutation invariant; conditional RR+L1-upload law is
+specified with full assumptions. Exact development moments include selector variance and
+remaining-budget noise. 18 records/54 cells: 12 small label-stress gains at labels 8/16,
+42 losses, zero 0.001 gates; largest optimistic gain 0.000850. Public mixtures tie shared.
+Raw history/global calibration are still unaccounted; no actual DP training/CIA claim.
+Deprioritize paid RR implementation. The owner approved the hidden-mixture analysis:
+`research/proposals/2026-10-05_hidden_mixture_findings.md`. Generic tails approach the
+additive bound, so hiding the category gives no uniform discount for this law. Separate
+dummy-edge accounting is xi+eta/2 rather than replacement xi+eta; recalibrating both routes
+and controls fairly leaves 12/54 small development gains, zero 0.001 gates, maximum 0.000655.
+Uniform sharpness is not a fixed-trained-head/domain claim; raw history/calibration remain
+unaccounted. The owner approved the paid protected-history replay:
+`research/proposals/2026-10-05_protected_real_history_findings.md`. Saved early/later bias
+updates, full probe-selection correlation and paid probe budget, 18 records/54 cases, fresh
+16,384 probe draws per case. Adaptive beats matched static in 18, optimized static in 12
+(label stress, budgets 8/16), and full-budget one release in six (label stress, budget 8).
+Strong-control gains 0.000109–0.000247 quadratic loss; zero 0.001 gates. Offline raw-anchor
+replay, development-data reuse and unaccounted calibration exclude private-training/CIA
+claims. The owner approved the observer review:
+`research/proposals/2026-10-06_observer_contract_review.md`. Historical scorer sees model
+shadow losses, not every upload; recommended primary contract retains the earlier peer/model
+view and includes own coins/state. Server privacy is a stronger separate extension. Conditional
+Gamma-share Laplace reference illustrates aggregate accounting; factor-7 variance reduction
+versus stronger local uploads in an 8-slot example, but 8/7 more variance than matched server
+Laplace. No placement superiority or new density claim. Independent math/code audit complete.
+Fixed-slot weights/dummies differ from current removal runner; no training code changed.
+Focused follow-up adds separately tracked Arete (ALT2022) and Harrison–Manurangsi (FORC2025),
+without changing frozen version-1 systematic counts. Owner “move on” and sustained-autonomy
+instruction extended the review. See `research/proposals/2026-10-06_research_direction_decision.md`:
+full scalar methods/certificate audit, temporal MF/BLT/DMM, one-time surrogates and individual
+Rényi filters. Deterministic scalar variance ratios versus Laplace at epsilon2/4/8/16:
+4.853/1.904/0.393/0.00695; high-budget scalar gains cannot bypass vector/round costs.
+Independently reviewed robust full-row-ball Gaussian workload limit rules out correlation gains
+within that class; narrower enforced client influence is a tractable construction question.
+Recommended next: distribution-guided cumulative influence allocation under a hard filter,
+compared with optimized public clipping schedules. Whole-client peer/dummy proof transfer is
+valid under documented assumptions; no utility gain or novelty shown. One-time private
+surrogates remain a backup/control. Noise covariance remains public in the initial proof;
+private noise-shape changes need a new certificate. No sampler or FL/CIA training launched.
+New focused cards stay outside frozen systematic counts; no full experiment completion.
+Owner “lets move wtih that dont stop until you had a concrete result on this direction” authorized
+coupled influence-filter feasibility. See `research/proposals/2026-10-06_client_energy_filter_findings.md`:
+27 real-data cells,100 development configs/cell,16 development and128 fresh evaluation trajectories.
+Fixed public/carry-forward schedules versus greedy/remaining/norm-trend/energy-EMA policies.
+Neither matched history policy reaches the0.001 CE gate; largest forecast gain0.00001717.
+Development-only spending/alignment diagnosis shows strong clipping and little unused energy.
+One-release bounded local-model reference wins21/27 cells but often uses80 local steps.
+Audit-directed post-hoc20-step/matched-energy reference wins6/27, all label-stress E4/E8;
+E8 gains0.01236/0.03936/0.03593 acrossseeds. Feedback/clipping/release schedule still differ,
+so no noise-only causal attribution. Promote one-time private descriptors/surrogates as next
+bounded construction question; filter remains reference, not final defense. Fixed-law conditional
+peer/dummy accounting applies; offline tuning/artifact release are unaccounted. No CIA/metric
+superiority, CNN transfer or full experiment-completion claim. Independent numeric/code audits
+and `uv run pytest`277passed/5deselected. All raw artifacts under `results/client_specific_noise/`.
+No further jobs running, no CNN/Flower/CIA sweep or experiment-completion decision inferred.
+The owner-authorized 141 staged result files were committed and pushed as `1081ff7`.
+The owner broadened the design to potentially new non-Gaussian mechanisms/distributions; see
+`research/non_gaussian_mechanism_research.md`. Gaussian is a control, not a requirement.
+Bounded analytical calculations, synthetic quadratic spikes and a reduced real-data geometry audit have been run; no final
+mechanism has been selected. The historical next steps
 below are context, not the active agenda.
 
 **`feature/auc-targeted-noise-sweep` is complete (2026-09-01) and merged into `master`.** See
@@ -132,6 +275,8 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
+Local CPU development-only headroom diagnostic completed and independently verified. No jobs running; reserve untouched.
+
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
 it, so machine-to-results provenance isn't lost; see `AGENTS.md`'s "Working across machines"
@@ -139,7 +284,28 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| _(none)_ | Nothing currently running. | — |
+| `uv run python -m experiments.stacked_head.runner run/attack --backend ray` | Local CPU: Flower-path validation (probe replay 512 releases; IN/OUT attack 2048 releases) | Done; results in `results/stacked_head/validation/` |
+| `uv run python -m research.calculations.cnn_head_probe` | Local CPU: CNN-head port, fresh KMNIST, budgets 32/128 | Done; independent 148 checks |
+| `uv run python -m research.calculations.noise_law_probe --stage freeze` then `--stage compare` | Local CPU: Gaussian vs radial Laplace at matched AUC, fresh KMNIST | Done |
+| `uv run python -m research.calculations.budget_map_probe` and `gated_step_probe` | Local CPU: public-budget map + validation-gated step (needs MNIST, KMNIST in HF cache) | Done; independent 320 checks (KMNIST 32/128) |
+| `uv run python -m research.calculations.stacked_constructor_probe --stage freeze` then `--stage transfer` | Local CPU: stacked pooled freeze + fresh-task transfer (needs MNIST in HF cache) | Done; independent 378 checks |
+| `uv run python -m research.calculations.frozen_constructor_probe --stage freeze` then `--stage confirm` | Local CPU: pooled freeze + fresh test-split confirmation | Done; independent 113 checks |
+| `uv run python -m research.calculations.limited_public_probe` | Local CPU: projection/clipping/noise decomposition at budgets 32/128/512 | Done; independent 1,278 checks |
+| `uv run python -m research.calculations.headroom_probe` | Local CPU: private signal vs public budget/optimization | Done; independent224,895checks |
+| `uv run python -m research.calculations.class_conditional_attribution` | Local CPU: post-hoc public-offset attribution on SAME320images | Done; independent35,108checks |
+| `uv run python -m research.calculations.class_conditional_probe --stage evaluation` | Local CPU: frozen320-image utility, all8targets/shift transfer | Done; independent6,235,039checks |
+| `uv run python -m research.calculations.class_conditional_probe --stage development` | Local CPU: public class-gradient residuals, six modes | Done; independent150,722checks |
+| `uv run python -m research.calculations.public_residual_probe --stage development` | Local CPU: public-cap Gaussian, public reference/subspace, equal IN/OUT tuning | Done;16,758settings, choices frozen |
+| `uv run python -m research.calculations.public_residual_probe --stage evaluation` | Local CPU:432target rows,512fresh utility images | Done; independently checked |
+| `uv run python -m research.calculations.public_residual_public_control` (two stages) | Local CPU: supplementary frozen public-only model | Done;16development records,54contrasts |
+| `uv run python -m research.calculations.public_residual_signal_diagnostic` | Local CPU: raw-information/development-only gradient diagnostic | Done; independent874checks |
+| `uv run python -m research.calculations.matched_cia_probe --stage development` | Local CPU:17,496configs, three risk targets, Gaussian/radial | Done; selections saved before reserve features opened |
+| `uv run python -m research.calculations.matched_cia_probe --stage evaluation` | Local CPU:117arms,8target alternatives,1,024fresh utility images | Done;936target rows; independently checked |
+| `uv run python -m research.calculations.descriptor_cia_probe` | Local CPU: conditional fixed-federation IN/dummy audit,96certified cells+60adapted metric cells | Done;156cells; independently checked |
+| `uv run python -m research.calculations.private_descriptor_probe` (three `--law` routes) | Local CPU: one-time descriptor pilots and laws | Done;81cells/1,215arms |
+| `uv run python -m research.calculations.private_prior_constructor_probe --stage development` | Local CPU: three label-stress seeds, two laws, raw/prior/balanced teachers | Done;17,496configs; choices frozen |
+| `uv run python -m research.calculations.private_prior_constructor_probe --stage evaluation` | Local CPU:2048fresh reserve examples,512draws/cell | Done;18cells/810arms |
+| `uv run python -m research.calculations.audit_private_descriptor_artifacts` | Local CPU: independent artifact arithmetic/split/calibration audit | Passed;68,532numeric checks |
 
 ## What's established on `master`
 

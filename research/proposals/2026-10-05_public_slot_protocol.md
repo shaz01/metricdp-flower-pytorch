@@ -1,0 +1,15 @@
+# Frozen slot-profile diagnostic protocol
+
+2026-10-05. Owner: “lets move to that”, approving the proposed fixed-public-assignment control. This is a bounded raw-information calculation, not a privacy/CIA experiment or a declaration of project completion. The protocol/calculator are saved before evaluating the next test slice; this is a local freeze, not formal external preregistration.
+
+Freeze the prior bias-oracle pattern [0,2,0,1,0,2,0,1], common radius 0.3 and shrink 1. The source is the preceding broader audit's label-stress/round 20/label 8 case, where this configuration repeated across three seeds. The assignment is now fixed in the calculator, not estimated from new clients. Its origin in private raw diagnostics means it is not certified public calibration for a deployed DP protocol.
+
+Reuse three-seed, three-regime Fashion-MNIST fixed-feature classifier snapshots at rounds 5/20. Only the three fixed Helmert class-bias contrasts are perturbed. Four arms: fully frozen configuration; fixed assignments with development-tuned radius/shrink; tuned common profile; exact 4^8 raw-information assignment oracle. The last three share the same existing radius grid/noise law and optimize shrink of BOTH mean and noise; private calibration is not accounted. Fully frozen configuration has no new parameter fitting, although its development score is reported descriptively.
+
+Evaluate official test examples 512:768 within each of classes 0..3. Assert separation from both preceding test subsets 0:256 and 256:512. Same examples/checkpoints/corpus across seeds; no client-population confidence claim. Use 2048 paired Laplace innovations per arm at counterfactual labels 4/8/16. These are not privacy budgets for the unprotected source models/selection.
+
+Primary cells are original roster, label stress, round 20, label 8, all three seeds. Retain 0.001 absoluteCE improvement over tuned shared and predefine absolute frozen-minus-oracle matching tolerance 0.0001. Report signed losses and conditional noise-only normal 95% intervals, not just gate flags. Identical chosen configurations should give exactly paired-equal output losses.
+
+Controls include balanced/quantity/original roster, checkpoint 5 and other labels. Additionally, in label stress move clients through one predetermined cyclic roster order[1,2,3,4,5,6,7,0], carrying updates ANDweights with clients and keeping fixed profiles attached toslots. Raw traininghead/aggregate remain unchanged. Shared/oracle development optima must remain invariant; frozen assignment neednot. This deliberately breaks the constructed slot-label alignment, not a sample of natural roster variation. Expected 24 roster/seed/regime/checkpoint rows,72 label comparisons,four arms each.
+
+No fresh-test tuning, new clippingbank, new training, sampler novelty, private selector or CIA sweep. Checks cover frozen settings, same-family oracle inclusion, permutation invariance, source hashes, test separation and paired losses. Save indices/settings/trialarrays for agent handoff. Interpret gain reproduction separately from privacy and robustness toslot reassignment.

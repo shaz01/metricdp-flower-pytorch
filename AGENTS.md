@@ -17,7 +17,7 @@ Federated learning + differential privacy research repo built on Flower and PyTo
 
 - Run the suite with `uv run pytest` from the repo root. The default `addopts` deselects the `reproducibility` marker (5 cross-version port-equivalence tests that need an isolated legacy environment).
 - To include those: `uv run pytest -m reproducibility experiments/port_equivalence/test_equivalence.py`.
-- Current test locations: `tests/`, `experiments/reproduce/tests/`, `experiments/cia/tests/` (shared attack code), `experiments/<group>/<experiment>/tests/` (e.g. `results/contest_at_scale/cifar10/tests/`, `results/cia_frontier/eurosat_frontier/tests/`), `experiments/port_equivalence/test_equivalence.py`.
+- Current test locations: `tests/`, `experiments/reproduce/tests/`, `experiments/cia/tests/` (shared attack code), `experiments/<group>/<experiment>/tests/` (e.g. `results/contest_at_scale/cifar10/tests/`, `results/cia_frontier/eurosat_frontier/tests/`), `experiments/stacked_head/tests/`, `research/calculations/tests/`, `experiments/port_equivalence/test_equivalence.py`.
 
 ## Linting
 
@@ -27,7 +27,8 @@ See `README.md` and each experiment's own `README.md` (where present) for full f
 ## Repo structure
 
 - `metricdp_pytorch/` — core library (privacy mechanism, strategy factory, data/device utils). Shared across all experiments.
-- `experiments/<name>/` — one folder per experiment (`reproduce`, `cia`, `client_scaling`, `port_equivalence`), each with its own code and, where applicable, its own `tests/`.
+- `experiments/<name>/` — one folder per experiment (`reproduce`, `cia`, `client_scaling`, `port_equivalence`, `stacked_head`), each with its own code and, where applicable, its own `tests/`.
+- `research/` — the closed client-specific-noise research direction (2026-10-09): literature review, proposals and findings, and its one-off calculations (`research/calculations/`, with tests). Historical record, not an active plan; the Flower implementation of its surviving construction is `experiments/stacked_head/`.
 - `results/<name>/` — every experiment's real output data lives here on `master`, organized to mirror the experiment folder names. Raw logs, one-off shell scripts, and lock/status files don't belong here — only real result data (run JSONs, evaluation summaries, READMEs).
 - `papers/` — reference PDFs, not experiment code.
 - `docs/` — gitignored, local-only notes. Don't expect it to exist on a fresh clone, and don't treat its absence as a problem.

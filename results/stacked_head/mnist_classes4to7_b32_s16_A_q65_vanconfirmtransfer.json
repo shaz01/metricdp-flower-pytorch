@@ -1,0 +1,183 @@
+{
+ "kind": "Server-side-DP baseline one-shot head update (independent releases from one public base when replicate=true).",
+ "run_name": "mnist_classes4to7_b32_s16_A_q65_vanconfirmtransfer",
+ "config": {
+  "absent-clients": "",
+  "attack-records": false,
+  "budget": 32,
+  "bundle-dir": ".stacked_head_cache/bundles",
+  "cell-key": "mnist_classes4to7_b32_s16_A_q65_",
+  "clip-norm": 0.0,
+  "cohort": "A",
+  "diagnostics": false,
+  "eval-split": "test",
+  "extra-validation-sizes": "128",
+  "frozen-key": "",
+  "local-lr": 0.03,
+  "local-steps": 50,
+  "log-messages": false,
+  "mechanism": "vanilla",
+  "model-module": "experiments.stacked_head.cnn:create_model",
+  "multipliers": "",
+  "noise-free": false,
+  "noise-multiplier": null,
+  "noise-source": "independent",
+  "output-dir": "results/stacked_head",
+  "probe-noise-rounds": 1,
+  "probe-noise-seed": 20294677,
+  "public-set": 16,
+  "replicate": false,
+  "risk": 0.65,
+  "role-seed": 20261012,
+  "rounds": 1,
+  "run-name": "mnist_classes4to7_b32_s16_A_q65_vanconfirmtransfer",
+  "seed": 42,
+  "task": "mnist_classes4to7",
+  "train-seed": 20261012
+ },
+ "baseline": {
+  "mechanism": "vanilla",
+  "clip_norm": 0.0,
+  "noise_multiplier": 0.0,
+  "local_lr": 0.03,
+  "local_steps": 50,
+  "multipliers": [
+   0.0,
+   0.125,
+   0.25,
+   0.5,
+   1.0,
+   2.0,
+   4.0,
+   8.0
+  ]
+ },
+ "bundle": {
+  "base": {
+   "epochs": 300,
+   "lr": 0.001,
+   "validation_ce": 0.3012885520180014
+  },
+  "candidates": [
+   {
+    "epochs": 30,
+    "lr": 0.001,
+    "validation_ce": 0.6423032325746638
+   },
+   {
+    "epochs": 30,
+    "lr": 0.003,
+    "validation_ce": 0.5291055252493961
+   },
+   {
+    "epochs": 100,
+    "lr": 0.001,
+    "validation_ce": 0.31230259360862345
+   },
+   {
+    "epochs": 100,
+    "lr": 0.003,
+    "validation_ce": 0.4550610766800013
+   },
+   {
+    "epochs": 300,
+    "lr": 0.001,
+    "validation_ce": 0.3012885520180014
+   },
+   {
+    "epochs": 300,
+    "lr": 0.003,
+    "validation_ce": 0.3210463363764941
+   }
+  ],
+  "control": {
+   "ce": 0.28728022983975804,
+   "accuracy": 0.902
+  },
+  "num_public": 32,
+  "num_validation": 512,
+  "num_evaluation": 2000,
+  "train_seed": 20261012,
+  "seed_offset": 48,
+  "task": "mnist_classes4to7",
+  "budget": 32,
+  "public_set": 16,
+  "role_seed": 20261012,
+  "eval_split": "test"
+ },
+ "control": {
+  "ce": 0.28728022983975804,
+  "accuracy": 0.902
+ },
+ "rounds": [
+  {
+   "round": 1,
+   "multiplier": 2.0,
+   "validation-ce-base": 0.3012885520180014,
+   "validation-ce-chosen": 0.2523427205351857,
+   "num-replies": 8.0,
+   "noise-std": 0.0,
+   "eval-ce": 0.24235483179563183,
+   "eval-accuracy": 0.9155
+  }
+ ],
+ "summary": {
+  "num_rounds": 1,
+  "mean_gated_ce": 0.24235483179563183,
+  "gain_over_control": 0.04492539804412621,
+  "gated_ce_std_across_releases": 0.0,
+  "mean_gated_accuracy": 0.9155,
+  "accuracy_delta": 0.013499999999999956,
+  "pick_fraction": {
+   "0.0": 0.0,
+   "0.125": 0.0,
+   "0.25": 0.0,
+   "0.5": 0.0,
+   "1.0": 0.0,
+   "2.0": 1.0,
+   "4.0": 0.0,
+   "8.0": 0.0
+  }
+ },
+ "summary_alt_validation": {
+  "128": {
+   "mean_ce": 0.24235483286268514,
+   "gain_over_control": 0.0449253969770729,
+   "mean_accuracy": 0.9155,
+   "accuracy_delta": 0.013499999999999956
+  }
+ },
+ "summary_fixed_multiplier_1": {
+  "mean_ce": 0.24700554162791766,
+  "gain_over_control": 0.04027468821184038,
+  "mean_accuracy": 0.916,
+  "accuracy_delta": 0.014000000000000012
+ },
+ "oracle": {
+  "per_client_mean_oracle_auc": [
+   0.5,
+   0.5,
+   0.5,
+   0.5,
+   0.5,
+   0.5,
+   0.5,
+   0.5
+  ],
+  "mean_update_norm": 0.26301888316930405,
+  "mean_noise_std": 0.0,
+  "fraction_clipped": 0.0
+ },
+ "provenance": {
+  "python_version": "3.13.5",
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "library_versions": {
+   "flwr": "1.32.1",
+   "numpy": "2.5.1",
+   "torch": "2.10.0",
+   "datasets": "4.8.5"
+  },
+  "git_commit": "e2852ecea818a26877311501eb1b076ec4fe7146",
+  "git_dirty": true
+ }
+}

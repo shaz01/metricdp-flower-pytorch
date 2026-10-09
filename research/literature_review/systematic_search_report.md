@@ -59,3 +59,7 @@ The [integrative synthesis](client_specific_noise_review.md) compares constructi
 A new agent can rerun the exact queries, inspect canonical primary sources and reproduce selection judgments. Results may differ as indexes change. Extend the search by retrieving the closest pending full texts first, then adding direct ACM/IEEE and other database exports, forward citation checks and complete result screening if preparing a publication-grade systematic review. Record amendments and dates instead of representing an expanded search as part of the original version.
 
 Version 1 answers the owner's immediate need for technique understanding and a grounded roadmap. It does not certify literature saturation or an unoccupied novelty gap.
+
+## Subsequent follow-up
+
+The [next-step supplement](next_step_handoff.md) documents comparator access/read updates and owner-directed non-Gaussian scope clarification. The 51-query version-1 flow above is preserved; later query executions and new source cards are separate records, not silently counted as original retrieval.
