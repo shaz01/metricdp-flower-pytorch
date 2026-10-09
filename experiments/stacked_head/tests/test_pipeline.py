@@ -34,7 +34,7 @@ def world(tmp_path_factory):
 @pytest.fixture
 def patched(world, monkeypatch):
     _, _, clients = world
-    monkeypatch.setattr(client_module, "client_data", lambda task, role_seed, cohort, client_id, budgets: clients[client_id])
+    monkeypatch.setattr(client_module, "client_data", lambda task, role_seed, cohort, client_id: clients[client_id])
     client_module.probe_block.cache_clear()
 
 

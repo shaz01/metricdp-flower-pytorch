@@ -43,10 +43,10 @@ def parse_ids(value) -> set[int]:
 
 
 @lru_cache(maxsize=None)
-def client_data(task: str, role_seed: int, cohort: str, client_id: int, budgets: tuple[int, ...]):
+def client_data(task: str, role_seed: int, cohort: str, client_id: int):
     """This client's images (float32) and labels (0..3); cached per worker process."""
     dataset, first = task_data.parse_task(task)
-    indices = task_data.client_indices(task, role_seed, cohort, client_id, budgets)
+    indices = task_data.client_indices(task, role_seed, cohort, client_id)
     labels = task_data.relabel(task_data.split_labels(dataset)[indices], first)
     return task_data.load_images(dataset, indices), labels
 
@@ -100,8 +100,7 @@ def train(msg: Message, context: Context) -> Message:
     model = load_model(str(run_config.get("model-module", DEFAULT_MODEL_MODULE)))
     model.load_state_dict(msg.content["arrays"].to_torch_state_dict())
     model.eval()
-    budgets = tuple(int(b) for b in run_config.get("role-budgets", task_data.DEFAULT_BUDGETS))
-    images, labels = client_data(str(run_config["task"]), int(run_config.get("role-seed", 20261012)), str(run_config["cohort"]), client_id, budgets)
+    images, labels = client_data(str(run_config["task"]), int(run_config.get("role-seed", 20261012)), str(run_config["cohort"]), client_id)
     absent = client_id in parse_ids(run_config.get("absent-clients", ""))
     public = msg.content["public"]
     basis = public["basis"].numpy()

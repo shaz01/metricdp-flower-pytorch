@@ -27,7 +27,7 @@ from metricdp_pytorch.utils.runtime import RUN_CONFIG_ENV  # noqa: E402
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PROBE_SEED_BASE = 20261012
-COHORTS = ("A", "B")
+COHORTS = ("A", "B", "C", "D")
 DEFAULT_RESULTS = "results/stacked_head"
 DEFAULT_BUNDLES = ".stacked_head_cache/bundles"
 FROZEN = "results/client_specific_noise/stacked_constructor_freeze.json"
@@ -38,6 +38,12 @@ PRESETS = {
     # Protocol experiments/stacked_head/protocols/2026-10-09_public_set_sweep_and_transfer.md
     "sweep32": {"tasks": ["kmnist_classes0to3", "kmnist_classes4to7"], "budgets": [32], "sets": list(range(30)), "cohorts": ["A"], "risks": [0.65, 0.8], "rounds": 256, "tag": "sweep"},
     "transfer32": {"tasks": ["mnist_classes0to3", "mnist_classes4to7", "fmnist_classes4to7"], "budgets": [32], "sets": list(range(10)), "cohorts": ["A"], "risks": [0.65, 0.8], "rounds": 256, "tag": "transfer"},
+    # Protocol experiments/stacked_head/protocols/2026-10-09_accuracy_aware_gate.md: fresh public sets AND fresh (test-split) evaluation images.
+    "confirm_sweep": {"tasks": ["kmnist_classes0to3", "kmnist_classes4to7"], "budgets": [32], "sets": list(range(30, 60)), "cohorts": ["A"], "risks": [0.65, 0.8], "rounds": 256, "tag": "confirmsweep", "eval_split": "test"},
+    "confirm_transfer": {"tasks": ["mnist_classes0to3", "mnist_classes4to7", "fmnist_classes4to7"], "budgets": [32], "sets": list(range(10, 20)), "cohorts": ["A"], "risks": [0.65, 0.8], "rounds": 256, "tag": "confirmtransfer", "eval_split": "test"},
+    # Protocol 2026-10-09_budgets_and_cohorts.md
+    "budget_map": {"tasks": ["kmnist_classes0to3", "kmnist_classes4to7", "mnist_classes0to3", "mnist_classes4to7", "fmnist_classes4to7"], "budgets": [128, 512], "sets": list(range(10)), "cohorts": ["A"], "risks": [0.65, 0.8], "rounds": 256, "tag": "budgetmap"},
+    "cohorts": {"tasks": ["kmnist_classes0to3", "kmnist_classes4to7"], "budgets": [32], "sets": list(range(10)), "cohorts": ["B", "C", "D"], "risks": [0.65, 0.8], "rounds": 256, "tag": "cohorts"},
 }
 
 
@@ -61,6 +67,7 @@ def _add_cell_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--noise-source", choices=("independent", "probe"), default="independent")
     parser.add_argument("--seed", type=int, default=42, help="base seed of the per-client independent noise streams")
     parser.add_argument("--role-seed", type=int, default=20261012)
+    parser.add_argument("--eval-split", choices=("train", "test"), default="train", help="held-out evaluation images: the task's train-split role, or a fixed subset of the dataset's test split")
     parser.add_argument("--train-seed", type=int, default=20261012)
     parser.add_argument("--frozen-config", default=FROZEN)
     parser.add_argument("--bundle-dir", default=DEFAULT_BUNDLES)
@@ -96,7 +103,7 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
         "frozen-config": args.frozen_config,
         "bundle-dir": str(args.bundle_dir),
         "output-dir": str(args.output_dir),
-        "public-sets": max(3, int(args.public_set) + 1),
+        "eval-split": args.eval_split,
         "extra-validation-sizes": "128",
         "run-name": run_name(args.task, args.budget, args.public_set, args.cohort, args.risk, tag),
         "cell-key": run_name(args.task, args.budget, args.public_set, args.cohort, args.risk, ""),
@@ -116,7 +123,7 @@ def prepare(config: dict[str, Any], *, force: bool = False) -> Path:
 
     return prepare_bundle(
         config["task"], config["budget"], config["public-set"], Path(config["bundle-dir"]),
-        role_seed=config["role-seed"], train_seed=config["train-seed"], public_sets=config.get("public-sets", 3), force=force,
+        role_seed=config["role-seed"], train_seed=config["train-seed"], eval_split=config.get("eval-split", "train"), force=force,
     )
 
 
@@ -197,6 +204,7 @@ def _parser() -> argparse.ArgumentParser:
     matrix = sub.add_parser("matrix", help="run a preset grid of cells (resumable)")
     _add_cell_arguments(matrix)
     matrix.add_argument("--preset", choices=sorted(PRESETS), default="smoke")
+    matrix.add_argument("--overwrite", action="store_true", help="re-run cells whose result file already exists (results are deterministic)")
     matrix.add_argument("--shard", default="0/1", help="I/N: run only every N-th (task, budget, public-set) group, so parallel processes never share a bundle")
     matrix.add_argument("--dry-run", action="store_true")
     attack = sub.add_parser("attack", help="IN/OUT known-alternative attack check on the real message path")
@@ -220,10 +228,11 @@ def cmd_matrix(args: argparse.Namespace) -> None:
                 for cohort in preset["cohorts"]:
                     for risk in preset["risks"]:
                         cell = argparse.Namespace(**{**vars(args), "task": task, "budget": budget, "public_set": public_set, "cohort": cohort, "risk": risk,
-                                                     "rounds": preset["rounds"], "tag": preset.get("tag", args.tag)})
+                                                     "rounds": preset["rounds"], "tag": preset.get("tag", args.tag),
+                                                     "eval_split": preset.get("eval_split", args.eval_split)})
                         config = build_run_config(cell)
                         path = Path(config["output-dir"]) / f"{config['run-name']}.json"
-                        if path.exists():
+                        if path.exists() and not args.overwrite:
                             print(f"skip (done): {path.name}", flush=True)
                             continue
                         print(f"run: {config['run-name']}", flush=True)

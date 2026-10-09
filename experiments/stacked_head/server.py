@@ -96,7 +96,7 @@ def provenance() -> dict[str, Any]:
 def load_run_bundle(config: dict[str, Any]) -> Bundle:
     path = bundle_path(
         Path(config["bundle-dir"]), str(config["task"]), int(config["budget"]), int(config["public-set"]),
-        int(config.get("role-seed", 20261012)), int(config.get("train-seed", 20261012)),
+        int(config.get("role-seed", 20261012)), int(config.get("train-seed", 20261012)), str(config.get("eval-split", "train")),
     )
     if not path.exists():
         raise FileNotFoundError(f"Public bundle {path} is missing; run the runner's prepare step first.")
@@ -145,7 +145,10 @@ def run(grid: Grid, config: dict[str, Any]) -> dict[str, Any]:
 
     alt_sizes = [int(size) for size in str(config.get("extra-validation-sizes", "128")).split(",") if size.strip()]
     subsets = {size: validation_subset(bundle.validation_labels, size) for size in alt_sizes}
-    per_release: dict[str, list[np.ndarray]] = {"val_ce": [], "eval_ce": [], "eval_accuracy": [], **{f"val{size}_ce": [] for size in alt_sizes}}
+    per_release: dict[str, list[np.ndarray]] = {
+        "val_ce": [], "val_accuracy": [], "eval_ce": [], "eval_accuracy": [],
+        **{f"val{size}_ce": [] for size in alt_sizes}, **{f"val{size}_accuracy": [] for size in alt_sizes},
+    }
     strategy_box: list[StackedHeadStrategy] = []
 
     def on_replies(server_round: int, vectors: dict[int, np.ndarray], metrics: dict[str, float]) -> None:
@@ -154,9 +157,13 @@ def run(grid: Grid, config: dict[str, Any]) -> dict[str, Any]:
         for client_id in sorted(vectors):
             total += vectors[client_id]
         candidates = strategy_box[0].candidates_for(total)
-        per_release["val_ce"].append(head_scores(bundle.validation_features, bundle.validation_labels, candidates)[0])
+        val_ce, val_accuracy = head_scores(bundle.validation_features, bundle.validation_labels, candidates)
+        per_release["val_ce"].append(val_ce)
+        per_release["val_accuracy"].append(val_accuracy)
         for size, subset in subsets.items():
-            per_release[f"val{size}_ce"].append(head_scores(bundle.validation_features[subset], bundle.validation_labels[subset], candidates)[0])
+            sub_ce, sub_accuracy = head_scores(bundle.validation_features[subset], bundle.validation_labels[subset], candidates)
+            per_release[f"val{size}_ce"].append(sub_ce)
+            per_release[f"val{size}_accuracy"].append(sub_accuracy)
         ce, accuracy = head_scores(bundle.evaluation_features, bundle.evaluation_labels, candidates)
         per_release["eval_ce"].append(ce)
         per_release["eval_accuracy"].append(accuracy)

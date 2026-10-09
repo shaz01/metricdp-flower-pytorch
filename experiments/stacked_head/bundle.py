@@ -125,8 +125,9 @@ def load_bundle(path: Path) -> Bundle:
     )
 
 
-def bundle_path(directory: Path, task: str, budget: int, public_set: int, role_seed: int, train_seed: int) -> Path:
-    return Path(directory) / f"{task}_b{budget}_s{public_set}_r{role_seed}_t{train_seed}.npz"
+def bundle_path(directory: Path, task: str, budget: int, public_set: int, role_seed: int, train_seed: int, eval_split: str = "train") -> Path:
+    suffix = "" if eval_split == "train" else f"_e{eval_split}"
+    return Path(directory) / f"{task}_b{budget}_s{public_set}_r{role_seed}_t{train_seed}{suffix}.npz"
 
 
 def prepare_bundle(
@@ -137,28 +138,40 @@ def prepare_bundle(
     *,
     role_seed: int = DEFAULT_ROLE_SEED,
     train_seed: int = DEFAULT_TRAIN_SEED,
-    budgets: tuple[int, ...] = task_data.DEFAULT_BUDGETS,
-    public_sets: int = task_data.PUBLIC_SETS,
+    eval_split: str = "train",
     force: bool = False,
 ) -> Path:
-    """Build (or reuse) the bundle for one public set of one task. Reads the dataset; the server then needs only the file."""
-    path = bundle_path(directory, task, budget, public_set, role_seed, train_seed)
+    """Build (or reuse) the bundle for one public set of one task. Reads the dataset; the server then needs only the file.
+
+    ``eval_split="train"`` scores the released model on the task's train-split evaluation role; ``"test"`` on a fixed
+    class-balanced subset of the dataset's TEST split, which no role or earlier result ever used.
+    """
+    path = bundle_path(directory, task, budget, public_set, role_seed, train_seed, eval_split)
     if path.exists() and not force:
         return path
+    if eval_split not in ("train", "test"):
+        raise ValueError("eval_split must be 'train' or 'test'.")
     dataset, first = task_data.parse_task(task)
-    roles = task_data.task_roles(task, role_seed, budgets, max(public_sets, public_set + 1))
+    roles = task_data.task_roles(task, role_seed)
     labels = task_data.split_labels(dataset)
     public_ids = roles.public[(budget, public_set)]
+    if eval_split == "train":
+        evaluation_images = task_data.load_images(dataset, roles.evaluation)
+        evaluation_labels = task_data.relabel(labels[roles.evaluation], first)
+    else:
+        test_ids = task_data.test_evaluation_indices(task_data.split_labels(dataset, "test"), first, role_seed)
+        evaluation_images = task_data.load_images(dataset, test_ids, "test")
+        evaluation_labels = task_data.relabel(task_data.split_labels(dataset, "test")[test_ids], first)
     bundle = prepare_from_arrays(
         task_data.load_images(dataset, public_ids),
         task_data.relabel(labels[public_ids], first),
         task_data.load_images(dataset, roles.validation),
         task_data.relabel(labels[roles.validation], first),
-        task_data.load_images(dataset, roles.evaluation),
-        task_data.relabel(labels[roles.evaluation], first),
+        evaluation_images,
+        evaluation_labels,
         seed_offset=budget + public_set,
         train_seed=train_seed,
     )
-    bundle.meta.update(task=task, budget=budget, public_set=public_set, role_seed=role_seed, budgets=list(budgets))
+    bundle.meta.update(task=task, budget=budget, public_set=public_set, role_seed=role_seed, eval_split=eval_split)
     save_bundle(bundle, path)
     return path
