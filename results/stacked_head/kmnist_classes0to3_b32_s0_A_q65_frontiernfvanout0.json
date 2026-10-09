@@ -1,0 +1,186 @@
+{
+ "kind": "Server-side-DP baseline one-shot head update (independent releases from one public base when replicate=true).",
+ "run_name": "kmnist_classes0to3_b32_s0_A_q65_frontiernfvanout0",
+ "config": {
+  "absent-clients": "0",
+  "attack-records": true,
+  "budget": 32,
+  "bundle-dir": ".stacked_head_cache/bundles",
+  "cell-key": "kmnist_classes0to3_b32_s0_A_q65_",
+  "clip-norm": 0.0,
+  "cohort": "A",
+  "diagnostics": false,
+  "eval-split": "train",
+  "extra-validation-sizes": "128",
+  "frozen-key": "noisy_65",
+  "local-lr": 0.03,
+  "local-steps": 50,
+  "log-messages": false,
+  "mechanism": "vanilla",
+  "model-module": "experiments.stacked_head.cnn:create_model",
+  "multipliers": "",
+  "noise-free": false,
+  "noise-multiplier": null,
+  "noise-source": "independent",
+  "output-dir": "results/stacked_head",
+  "probe-noise-rounds": 1,
+  "probe-noise-seed": 20293077,
+  "public-set": 0,
+  "replicate": false,
+  "risk": 0.65,
+  "role-seed": 20261012,
+  "rounds": 1,
+  "run-name": "kmnist_classes0to3_b32_s0_A_q65_frontiernfvanout0",
+  "seed": 42,
+  "task": "kmnist_classes0to3",
+  "train-seed": 20261012
+ },
+ "baseline": {
+  "mechanism": "vanilla",
+  "clip_norm": 0.0,
+  "noise_multiplier": 0.0,
+  "local_lr": 0.03,
+  "local_steps": 50,
+  "multipliers": [
+   0.0,
+   0.125,
+   0.25,
+   0.5,
+   1.0,
+   2.0,
+   4.0,
+   8.0
+  ]
+ },
+ "bundle": {
+  "base": {
+   "epochs": 30,
+   "lr": 0.003,
+   "validation_ce": 0.6229649803451831
+  },
+  "candidates": [
+   {
+    "epochs": 30,
+    "lr": 0.001,
+    "validation_ce": 1.0299817483334273
+   },
+   {
+    "epochs": 30,
+    "lr": 0.003,
+    "validation_ce": 0.6229649803451831
+   },
+   {
+    "epochs": 100,
+    "lr": 0.001,
+    "validation_ce": 0.7162956672455763
+   },
+   {
+    "epochs": 100,
+    "lr": 0.003,
+    "validation_ce": 1.0203073760817238
+   },
+   {
+    "epochs": 300,
+    "lr": 0.001,
+    "validation_ce": 0.7504056661970278
+   },
+   {
+    "epochs": 300,
+    "lr": 0.003,
+    "validation_ce": 0.8183125507219188
+   }
+  ],
+  "control": {
+   "ce": 0.6616440306687141,
+   "accuracy": 0.7900390625
+  },
+  "num_public": 32,
+  "num_validation": 512,
+  "num_evaluation": 2048,
+  "train_seed": 20261012,
+  "seed_offset": 32,
+  "task": "kmnist_classes0to3",
+  "budget": 32,
+  "public_set": 0,
+  "role_seed": 20261012,
+  "budgets": [
+   32,
+   128
+  ]
+ },
+ "control": {
+  "ce": 0.6616440306687141,
+  "accuracy": 0.7900390625
+ },
+ "rounds": [
+  {
+   "round": 1,
+   "multiplier": 2.0,
+   "validation-ce-base": 0.6229649803451831,
+   "validation-ce-chosen": 0.5163398214551885,
+   "num-replies": 8.0,
+   "noise-std": 0.0,
+   "eval-ce": 0.5518262076959736,
+   "eval-accuracy": 0.78662109375
+  }
+ ],
+ "summary": {
+  "num_rounds": 1,
+  "mean_gated_ce": 0.5518262076959736,
+  "gain_over_control": 0.10981782297274056,
+  "gated_ce_std_across_releases": 0.0,
+  "mean_gated_accuracy": 0.78662109375,
+  "accuracy_delta": -0.00341796875,
+  "pick_fraction": {
+   "0.0": 0.0,
+   "0.125": 0.0,
+   "0.25": 0.0,
+   "0.5": 0.0,
+   "1.0": 0.0,
+   "2.0": 1.0,
+   "4.0": 0.0,
+   "8.0": 0.0
+  }
+ },
+ "summary_alt_validation": {
+  "128": {
+   "mean_ce": 0.5518262090773915,
+   "gain_over_control": 0.10981782159132258,
+   "mean_accuracy": 0.78662109375,
+   "accuracy_delta": -0.00341796875
+  }
+ },
+ "summary_fixed_multiplier_1": {
+  "mean_ce": 0.5880724160828762,
+  "gain_over_control": 0.07357161458583794,
+  "mean_accuracy": 0.79443359375,
+  "accuracy_delta": 0.00439453125
+ },
+ "oracle": {
+  "per_client_mean_oracle_auc": [
+   0.5,
+   0.5,
+   0.5,
+   0.5,
+   0.5,
+   0.5,
+   0.5,
+   0.5
+  ],
+  "mean_update_norm": 0.25840792596010703,
+  "mean_noise_std": 0.0,
+  "fraction_clipped": 0.0
+ },
+ "provenance": {
+  "python_version": "3.13.5",
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "library_versions": {
+   "flwr": "1.32.1",
+   "numpy": "2.5.1",
+   "torch": "2.10.0",
+   "datasets": "4.8.5"
+  },
+  "git_commit": "e2852ecea818a26877311501eb1b076ec4fe7146",
+  "git_dirty": true
+ }
+}

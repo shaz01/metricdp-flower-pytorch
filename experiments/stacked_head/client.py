@@ -89,6 +89,10 @@ def message_config(train_config) -> StackedHeadConfig:
 @app.train()
 def train(msg: Message, context: Context) -> Message:
     run_config = runtime_config(context)
+    if str(run_config.get("mechanism", "stacked")) != "stacked":
+        from experiments.stacked_head.baseline import baseline_train
+
+        return baseline_train(msg, context, run_config, client_data)
     client_id = int(context.node_config["partition-id"])
     train_config = msg.content["config"]
     server_round = int(train_config["server-round"])

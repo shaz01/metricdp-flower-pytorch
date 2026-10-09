@@ -29,23 +29,26 @@ def auc(in_scores: np.ndarray, out_scores: np.ndarray) -> float:
     return float(roc_auc_score(labels, np.r_[in_scores, out_scores]))
 
 
-def world_path(directory: Path, task: str, public_set: int, label: str, world: str) -> Path:
-    stem = "frontiernf" if label == "nf" else "frontier"
+STEMS = {"stacked": ("frontier", "frontiernf"), "global-dp": ("frontiergdp", "frontiernfvan"), "metric-privacy": ("frontiermdp", "frontiernfvan")}
+
+
+def world_path(directory: Path, task: str, public_set: int, label: str, world: str, mechanism: str = "stacked") -> Path:
+    stem = STEMS[mechanism][1] if label == "nf" else STEMS[mechanism][0]
     risk = "q65" if label == "nf" else label
     return Path(directory) / f"{task}_b32_s{public_set}_A_{risk}_{stem}{world}.json"
 
 
-def collect(directory: Path, tasks: tuple[str, ...], sets: tuple[int, ...]) -> list[dict]:
+def collect(directory: Path, tasks: tuple[str, ...], sets: tuple[int, ...], mechanism: str = "stacked") -> list[dict]:
     rows = []
     for task in tasks:
         for label in RISK_LABELS:
             for public_set in sets:
-                in_path = world_path(directory, task, public_set, label, "in")
+                in_path = world_path(directory, task, public_set, label, "in", mechanism)
                 if not in_path.exists():
                     continue
                 in_result, in_arrays = json.loads(in_path.read_text(encoding="utf-8")), np.load(in_path.with_suffix(".releases.npz"))
                 for target in TARGETS:
-                    out_path = world_path(directory, task, public_set, label, f"out{target}")
+                    out_path = world_path(directory, task, public_set, label, f"out{target}", mechanism)
                     if not out_path.exists():
                         continue
                     out_arrays = np.load(out_path.with_suffix(".releases.npz"))

@@ -41,6 +41,11 @@ PRESETS = {
     # Protocol experiments/stacked_head/protocols/2026-10-09_accuracy_aware_gate.md: fresh public sets AND fresh (test-split) evaluation images.
     "confirm_sweep": {"tasks": ["kmnist_classes0to3", "kmnist_classes4to7"], "budgets": [32], "sets": list(range(30, 60)), "cohorts": ["A"], "risks": [0.65, 0.8], "rounds": 256, "tag": "confirmsweep", "eval_split": "test"},
     "confirm_transfer": {"tasks": ["mnist_classes0to3", "mnist_classes4to7", "fmnist_classes4to7"], "budgets": [32], "sets": list(range(10, 20)), "cohorts": ["A"], "risks": [0.65, 0.8], "rounds": 256, "tag": "confirmtransfer", "eval_split": "test"},
+    # Protocol 2026-10-09_baseline_comparison.md Part 1: baselines on exactly the confirmation cells (fresh sets, test-split evaluation).
+    **{f"{abbr}_confirm_{kind}": {"tasks": tasks, "budgets": [32], "sets": sets, "cohorts": ["A"], "risks": [0.65] if mech == "vanilla" else [0.65, 0.8], "rounds": 1 if mech == "vanilla" else 256,
+                                  "tag": f"{abbr}confirm{kind}", "eval_split": "test", "mechanism": mech, "tuned": "results/stacked_head/baseline_tuning.json"}
+       for abbr, mech in (("gdp", "global-dp"), ("mdp", "metric-privacy"), ("van", "vanilla"))
+       for kind, tasks, sets in (("sweep", ["kmnist_classes0to3", "kmnist_classes4to7"], list(range(30, 60))), ("transfer", ["mnist_classes0to3", "mnist_classes4to7", "fmnist_classes4to7"], list(range(10, 20))))},
     # Protocol 2026-10-09_budgets_and_cohorts.md
     "budget_map": {"tasks": ["kmnist_classes0to3", "kmnist_classes4to7", "mnist_classes0to3", "mnist_classes4to7", "fmnist_classes4to7"], "budgets": [128, 512], "sets": list(range(10)), "cohorts": ["A"], "risks": [0.65, 0.8], "rounds": 256, "tag": "budgetmap"},
     "cohorts": {"tasks": ["kmnist_classes0to3", "kmnist_classes4to7"], "budgets": [32], "sets": list(range(10)), "cohorts": ["B", "C", "D"], "risks": [0.65, 0.8], "rounds": 256, "tag": "cohorts"},
@@ -78,6 +83,14 @@ def _add_cell_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--log-messages", action="store_true", help="save every client message of every round next to the result")
     parser.add_argument("--absent-clients", default="", help="comma-separated client ids that send only their noise share (dummy world)")
     parser.add_argument("--noise-free", action="store_true")
+    parser.add_argument("--mechanism", choices=("stacked", "global-dp", "metric-privacy", "vanilla"), default="stacked",
+                        help="stacked construction, or a server-side baseline on the same base/data: Flower global DP (noise multiplier matched to --risk unless given), the paper's metric-privacy, or vanilla FedAvg")
+    parser.add_argument("--tuned", default="", help="baselines: baseline_tuning.json whose frozen parameters override local-lr/steps, clip norm and noise multiplier for (mechanism, risk)")
+    parser.add_argument("--local-lr", type=float, default=0.3, help="baselines: local gradient step size")
+    parser.add_argument("--local-steps", type=int, default=5, help="baselines: local full-batch steps")
+    parser.add_argument("--clip-norm", type=float, default=0.5, help="baselines: update clipping norm C")
+    parser.add_argument("--noise-multiplier", type=float, default=None, help="baselines: noise multiplier z (global-dp default: matched to --risk; metric-privacy: required)")
+    parser.add_argument("--multipliers", default="", help="comma-separated step multipliers of the gate (baseline default: 0,1/8,1/4,1/2,1,2,4,8)")
     parser.add_argument("--attack-records", action="store_true", help="also record the own-records membership statistic for targets 0-3 (attacker simulation; needs the clients' data on the server host)")
     parser.add_argument("--backend", choices=("ray", "inprocess"), default="ray")
     parser.add_argument("--max-parallel-clients", type=int, default=8)
@@ -85,9 +98,18 @@ def _add_cell_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--verbose", action="store_true")
 
 
+def apply_tuned(args: argparse.Namespace) -> None:
+    if getattr(args, "tuned", "") and args.mechanism != "stacked":
+        from experiments.stacked_head.baseline_tuning import tuned_parameters
+
+        values = tuned_parameters(Path(args.tuned), args.mechanism, float(args.risk))
+        args.local_lr, args.local_steps, args.clip_norm, args.noise_multiplier = values["local-lr"], int(values["local-steps"]), values["clip-norm"], values["noise-multiplier"]
+
+
 def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
+    apply_tuned(args)
     rounds = 1 if args.single_release else int(args.rounds)
-    tag = args.tag or ("single" if args.single_release else args.noise_source)
+    tag = args.tag or ("single" if args.single_release else (args.noise_source if args.mechanism == "stacked" else args.mechanism))
     config: dict[str, Any] = {
         "task": args.task,
         "budget": int(args.budget),
@@ -105,6 +127,12 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
         "frozen-config": args.frozen_config,
         "frozen-key": args.frozen_key,
         "attack-records": bool(getattr(args, "attack_records", False)),
+        "mechanism": args.mechanism,
+        "local-lr": float(args.local_lr),
+        "local-steps": int(args.local_steps),
+        "clip-norm": float(args.clip_norm),
+        "noise-multiplier": args.noise_multiplier,
+        "multipliers": args.multipliers,
         "bundle-dir": str(args.bundle_dir),
         "output-dir": str(args.output_dir),
         "eval-split": args.eval_split,
@@ -216,6 +244,12 @@ def _parser() -> argparse.ArgumentParser:
     frontier.add_argument("--shard", default="0/1")
     frontier.add_argument("--overwrite", action="store_true")
     frontier.add_argument("--dry-run", action="store_true")
+    tune = sub.add_parser("tune", help="development tuning grids for the baselines (protocols/2026-10-09_baseline_comparison.md)")
+    _add_cell_arguments(tune)
+    tune.add_argument("--stage", choices=("gdp", "vanilla", "mdp"), required=True)
+    tune.add_argument("--shard", default="0/1")
+    tune.add_argument("--overwrite", action="store_true")
+    tune.add_argument("--dry-run", action="store_true")
     attack = sub.add_parser("attack", help="IN/OUT known-alternative attack check on the real message path")
     _add_cell_arguments(attack)
     attack.add_argument("--target", type=int, default=3, help="client whose contribution the attacker tests for")
@@ -238,7 +272,8 @@ def cmd_matrix(args: argparse.Namespace) -> None:
                     for risk in preset["risks"]:
                         cell = argparse.Namespace(**{**vars(args), "task": task, "budget": budget, "public_set": public_set, "cohort": cohort, "risk": risk,
                                                      "rounds": preset["rounds"], "tag": preset.get("tag", args.tag),
-                                                     "eval_split": preset.get("eval_split", args.eval_split)})
+                                                     "eval_split": preset.get("eval_split", args.eval_split),
+                                                     "mechanism": preset.get("mechanism", args.mechanism), "tuned": preset.get("tuned", args.tuned)})
                         config = build_run_config(cell)
                         path = Path(config["output-dir"]) / f"{config['run-name']}.json"
                         if path.exists() and not args.overwrite:
@@ -254,15 +289,22 @@ FRONTIER = {"tasks": ["kmnist_classes0to3", "kmnist_classes4to7"], "budget": 32,
             "targets": [0, 1, 2, 3], "rounds": 256, "frozen_key": "noisy_65"}
 
 
-def frontier_cells() -> list[tuple[str, int, object, str, str]]:
-    """(task, public set, risk, world tag, absent-clients) for the protocol's IN world and one OUT world per target."""
+STEMS = {"stacked": "frontier", "global-dp": "frontiergdp", "metric-privacy": "frontiermdp"}
+
+
+def frontier_cells(mechanism: str = "stacked") -> list[tuple[str, int, object, str, str, str]]:
+    """(task, public set, risk, world tag, absent-clients, mechanism) for the IN world and one OUT world per target; the noise-free
+    point of a baseline frontier is vanilla FedAvg."""
     cells = []
     for task in FRONTIER["tasks"]:
         for public_set in FRONTIER["sets"]:
             for risk in FRONTIER["risks"]:
-                stem = "frontiernf" if risk == "nf" else "frontier"
-                cells.append((task, public_set, risk, f"{stem}in", ""))
-                cells.extend((task, public_set, risk, f"{stem}out{t}", str(t)) for t in FRONTIER["targets"])
+                if risk == "nf":
+                    stem, mech = ("frontiernf" if mechanism == "stacked" else "frontiernfvan"), ("stacked" if mechanism == "stacked" else "vanilla")
+                else:
+                    stem, mech = STEMS[mechanism], mechanism
+                cells.append((task, public_set, risk, f"{stem}in", "", mech))
+                cells.extend((task, public_set, risk, f"{stem}out{t}", str(t), mech) for t in FRONTIER["targets"])
     return cells
 
 
@@ -270,7 +312,7 @@ def cmd_frontier(args: argparse.Namespace) -> None:
     index, count = (int(part) for part in args.shard.split("/"))
     group = -1
     last = None
-    for task, public_set, risk, tag, absent in frontier_cells():
+    for task, public_set, risk, tag, absent, mech in frontier_cells(args.mechanism):
         if (task, public_set) != last:
             group, last = group + 1, (task, public_set)
         if group % count != index:
@@ -278,7 +320,7 @@ def cmd_frontier(args: argparse.Namespace) -> None:
         noise_free = risk == "nf"
         cell = argparse.Namespace(**{**vars(args), "task": task, "budget": FRONTIER["budget"], "public_set": public_set, "cohort": FRONTIER["cohort"],
                                      "risk": 0.65 if noise_free else risk, "rounds": 1 if noise_free else FRONTIER["rounds"], "single_release": noise_free,
-                                     "tag": tag, "absent_clients": absent, "noise_free": noise_free, "frozen_key": FRONTIER["frozen_key"], "attack_records": True})
+                                     "tag": tag, "absent_clients": absent, "noise_free": noise_free and mech == "stacked", "frozen_key": FRONTIER["frozen_key"], "attack_records": True, "mechanism": mech})
         config = build_run_config(cell)
         path = Path(config["output-dir"]) / f"{config['run-name']}.json"
         if path.exists() and not args.overwrite:
@@ -288,6 +330,48 @@ def cmd_frontier(args: argparse.Namespace) -> None:
         if args.dry_run:
             continue
         _print_summary(execute(cell, config))
+
+
+TUNE = {"task": "fmnist_classes0to3", "sets": [0, 1, 2, 3, 4], "risks": [0.65, 0.8], "lrs": [0.01, 0.03, 0.1, 0.3], "steps": [5, 20, 50], "clips": [0.01, 0.03, 0.1, 0.3, 1.0], "rounds": 32}
+
+
+def tune_cells(stage: str, tuning_file: Path) -> list[dict]:
+    cells = []
+    for public_set in TUNE["sets"]:
+        if stage == "gdp":
+            for risk in TUNE["risks"]:
+                for lr in TUNE["lrs"]:
+                    for steps in TUNE["steps"]:
+                        for clip in TUNE["clips"]:
+                            cells.append({"set": public_set, "mechanism": "global-dp", "risk": risk, "lr": lr, "steps": steps, "clip": clip, "nm": None, "rounds": TUNE["rounds"], "tag": f"tuneg_lr{lr}_st{steps}_c{clip}"})
+        elif stage == "vanilla":
+            for lr in TUNE["lrs"]:
+                for steps in TUNE["steps"]:
+                    cells.append({"set": public_set, "mechanism": "vanilla", "risk": 0.65, "lr": lr, "steps": steps, "clip": 0.0, "nm": None, "rounds": 1, "tag": f"tunev_lr{lr}_st{steps}"})
+        else:
+            frozen = json.loads(tuning_file.read_text(encoding="utf-8"))["global-dp"]
+            for ref, risk in (("q65", 0.65), ("q80", 0.8)):
+                p = frozen[ref]
+                cells.append({"set": public_set, "mechanism": "metric-privacy", "risk": risk, "lr": p["local-lr"], "steps": p["local-steps"], "clip": p["clip-norm"], "nm": 1.0, "rounds": TUNE["rounds"], "tag": f"tunem_{ref}"})
+    return cells
+
+
+def cmd_tune(args: argparse.Namespace) -> None:
+    index, count = (int(part) for part in args.shard.split("/"))
+    for i, cell in enumerate(tune_cells(args.stage, Path(args.output_dir) / "baseline_tuning.json")):
+        if i % count != index:
+            continue
+        ns = argparse.Namespace(**{**vars(args), "task": TUNE["task"], "budget": 32, "public_set": cell["set"], "cohort": "A", "risk": cell["risk"], "rounds": cell["rounds"], "single_release": cell["rounds"] == 1,
+                                   "tag": cell["tag"], "mechanism": cell["mechanism"], "local_lr": cell["lr"], "local_steps": cell["steps"], "clip_norm": cell["clip"], "noise_multiplier": cell["nm"], "tuned": ""})
+        config = build_run_config(ns)
+        path = Path(config["output-dir"]) / f"{config['run-name']}.json"
+        if path.exists() and not args.overwrite:
+            print(f"skip (done): {path.name}", flush=True)
+            continue
+        print(f"run: {config['run-name']}", flush=True)
+        if args.dry_run:
+            continue
+        _print_summary(execute(ns, config))
 
 
 def cmd_attack(args: argparse.Namespace) -> None:
@@ -318,6 +402,8 @@ def main() -> None:
         return cmd_attack(args)
     if args.command == "frontier":
         return cmd_frontier(args)
+    if args.command == "tune":
+        return cmd_tune(args)
     try:
         config = build_run_config(args)
     except ValueError as error:

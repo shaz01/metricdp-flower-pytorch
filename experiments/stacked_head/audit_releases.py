@@ -14,6 +14,15 @@ from pathlib import Path
 import numpy as np
 
 
+TIE = 1e-5   # validation CEs closer than this are indistinguishable after float32 storage, so either pick is admissible
+
+
+def tie_bounds(val: np.ndarray, eval_ce: np.ndarray) -> tuple[float, float]:
+    """Lowest and highest mean held-out CE over every pick that is within float32 resolution of each release's validation minimum."""
+    admissible = val <= val.min(axis=1, keepdims=True) + TIE
+    return float(np.where(admissible, eval_ce, np.inf).min(axis=1).mean()), float(np.where(admissible, eval_ce, -np.inf).max(axis=1).mean())
+
+
 def audit_cell(path: Path) -> int:
     result = json.loads(path.read_text(encoding="utf-8"))
     arrays = np.load(path.with_suffix(".releases.npz"))
@@ -27,16 +36,21 @@ def audit_cell(path: Path) -> int:
     assert abs(control["ce"] - result["bundle"]["control"]["ce"]) < 1e-9 and abs(arrays["control"][0] - control["ce"]) < 1e-6
     rows = np.arange(count)
     picks = val_ce.argmin(axis=1)
-    assert [multipliers[i] for i in picks] == [r["multiplier"] for r in rounds], f"{path.name}: strategy pick != recomputed pick"
-    gated = eval_ce[rows, picks]
+    reported = np.array([r["multiplier"] for r in rounds])
+    recomputed = np.array([multipliers[i] for i in picks])
+    admissible = val_ce <= val_ce.min(axis=1, keepdims=True) + TIE
+    reported_index = np.array([multipliers.index(m) for m in reported])
+    assert admissible[rows, reported_index].all(), f"{path.name}: strategy pick is not a validation minimiser"
+    gated = eval_ce[rows, reported_index]
     assert np.allclose(gated, [r["eval-ce"] for r in rounds], atol=2e-5), path.name
     summary = result["summary"]
     assert abs(summary["gain_over_control"] - (control["ce"] - gated.mean())) < 2e-5, path.name
-    assert abs(summary["accuracy_delta"] - (eval_accuracy[rows, picks].mean() - control["accuracy"])) < 2e-5, path.name
+    assert abs(summary["accuracy_delta"] - (eval_accuracy[rows, reported_index].mean() - control["accuracy"])) < 2e-5, path.name
     checks = 6
     for size, block in (result["summary_alt_validation"] or {}).items():
-        alt_picks = arrays[f"val{size}_ce"].astype(float).argmin(axis=1)
-        assert abs(block["gain_over_control"] - (control["ce"] - eval_ce[rows, alt_picks].mean())) < 2e-5, path.name
+        low, high = tie_bounds(arrays[f"val{size}_ce"].astype(float), eval_ce)
+        gain = block["gain_over_control"]
+        assert control["ce"] - high - 2e-5 <= gain <= control["ce"] - low + 2e-5, f"{path.name}: alternative-gate gain outside tie bounds"
         checks += 1
     if result["summary_fixed_multiplier_1"] is not None:
         column = multipliers.index(1.0)
