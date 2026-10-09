@@ -70,6 +70,7 @@ def _add_cell_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--eval-split", choices=("train", "test"), default="train", help="held-out evaluation images: the task's train-split role, or a fixed subset of the dataset's test split")
     parser.add_argument("--train-seed", type=int, default=20261012)
     parser.add_argument("--frozen-config", default=FROZEN)
+    parser.add_argument("--frozen-key", default="", help="entry of the frozen config to use (default: the one for --risk, e.g. noisy_65)")
     parser.add_argument("--bundle-dir", default=DEFAULT_BUNDLES)
     parser.add_argument("--output-dir", default=DEFAULT_RESULTS)
     parser.add_argument("--tag", default=None, help="result-name suffix (default: the noise source)")
@@ -77,6 +78,7 @@ def _add_cell_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--log-messages", action="store_true", help="save every client message of every round next to the result")
     parser.add_argument("--absent-clients", default="", help="comma-separated client ids that send only their noise share (dummy world)")
     parser.add_argument("--noise-free", action="store_true")
+    parser.add_argument("--attack-records", action="store_true", help="also record the own-records membership statistic for targets 0-3 (attacker simulation; needs the clients' data on the server host)")
     parser.add_argument("--backend", choices=("ray", "inprocess"), default="ray")
     parser.add_argument("--max-parallel-clients", type=int, default=8)
     parser.add_argument("--client-cpus", type=float, default=1.0)
@@ -101,6 +103,8 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
         "role-seed": int(args.role_seed),
         "train-seed": int(args.train_seed),
         "frozen-config": args.frozen_config,
+        "frozen-key": args.frozen_key,
+        "attack-records": bool(getattr(args, "attack_records", False)),
         "bundle-dir": str(args.bundle_dir),
         "output-dir": str(args.output_dir),
         "eval-split": args.eval_split,
@@ -207,6 +211,11 @@ def _parser() -> argparse.ArgumentParser:
     matrix.add_argument("--overwrite", action="store_true", help="re-run cells whose result file already exists (results are deterministic)")
     matrix.add_argument("--shard", default="0/1", help="I/N: run only every N-th (task, budget, public-set) group, so parallel processes never share a bundle")
     matrix.add_argument("--dry-run", action="store_true")
+    frontier = sub.add_parser("frontier", help="model-only attack (IN/OUT) and utility along a range of risk targets; see protocols/")
+    _add_cell_arguments(frontier)
+    frontier.add_argument("--shard", default="0/1")
+    frontier.add_argument("--overwrite", action="store_true")
+    frontier.add_argument("--dry-run", action="store_true")
     attack = sub.add_parser("attack", help="IN/OUT known-alternative attack check on the real message path")
     _add_cell_arguments(attack)
     attack.add_argument("--target", type=int, default=3, help="client whose contribution the attacker tests for")
@@ -241,6 +250,46 @@ def cmd_matrix(args: argparse.Namespace) -> None:
                         _print_summary(execute(cell, config))
 
 
+FRONTIER = {"tasks": ["kmnist_classes0to3", "kmnist_classes4to7"], "budget": 32, "sets": [0, 1, 2, 3, 4], "cohort": "A", "risks": [0.55, 0.65, 0.8, 0.9, 0.95, "nf"],
+            "targets": [0, 1, 2, 3], "rounds": 256, "frozen_key": "noisy_65"}
+
+
+def frontier_cells() -> list[tuple[str, int, object, str, str]]:
+    """(task, public set, risk, world tag, absent-clients) for the protocol's IN world and one OUT world per target."""
+    cells = []
+    for task in FRONTIER["tasks"]:
+        for public_set in FRONTIER["sets"]:
+            for risk in FRONTIER["risks"]:
+                stem = "frontiernf" if risk == "nf" else "frontier"
+                cells.append((task, public_set, risk, f"{stem}in", ""))
+                cells.extend((task, public_set, risk, f"{stem}out{t}", str(t)) for t in FRONTIER["targets"])
+    return cells
+
+
+def cmd_frontier(args: argparse.Namespace) -> None:
+    index, count = (int(part) for part in args.shard.split("/"))
+    group = -1
+    last = None
+    for task, public_set, risk, tag, absent in frontier_cells():
+        if (task, public_set) != last:
+            group, last = group + 1, (task, public_set)
+        if group % count != index:
+            continue
+        noise_free = risk == "nf"
+        cell = argparse.Namespace(**{**vars(args), "task": task, "budget": FRONTIER["budget"], "public_set": public_set, "cohort": FRONTIER["cohort"],
+                                     "risk": 0.65 if noise_free else risk, "rounds": 1 if noise_free else FRONTIER["rounds"], "single_release": noise_free,
+                                     "tag": tag, "absent_clients": absent, "noise_free": noise_free, "frozen_key": FRONTIER["frozen_key"], "attack_records": True})
+        config = build_run_config(cell)
+        path = Path(config["output-dir"]) / f"{config['run-name']}.json"
+        if path.exists() and not args.overwrite:
+            print(f"skip (done): {path.name}", flush=True)
+            continue
+        print(f"run: {config['run-name']}", flush=True)
+        if args.dry_run:
+            continue
+        _print_summary(execute(cell, config))
+
+
 def cmd_attack(args: argparse.Namespace) -> None:
     from experiments.stacked_head.attack import evaluate_attack
 
@@ -267,6 +316,8 @@ def main() -> None:
         return cmd_matrix(args)
     if args.command == "attack":
         return cmd_attack(args)
+    if args.command == "frontier":
+        return cmd_frontier(args)
     try:
         config = build_run_config(args)
     except ValueError as error:

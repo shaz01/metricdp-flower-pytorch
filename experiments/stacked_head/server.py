@@ -19,6 +19,7 @@ from metricdp_pytorch.stacked_head_strategy import (
     DEFAULT_MULTIPLIERS,
     StackedHeadConfig,
     StackedHeadStrategy,
+    head_class_ce,
     head_scores,
     head_theta,
 )
@@ -35,7 +36,8 @@ def construction_from_config(config: dict[str, Any]) -> StackedHeadConfig:
     frozen: dict[str, Any] = {}
     path = config.get("frozen-config", DEFAULT_FROZEN_CONFIG)
     if path and not all(key in config for key in ("cap", "eta", "dimension", "mode")):
-        frozen = json.loads(Path(path).read_text(encoding="utf-8"))["frozen"][f"noisy_{int(round(risk * 100))}"]
+        key = config.get("frozen-key") or f"noisy_{int(round(risk * 100))}"
+        frozen = json.loads(Path(path).read_text(encoding="utf-8"))["frozen"][key]
     pick = lambda key: config[key] if key in config else frozen[key]  # noqa: E731
     multipliers = config.get("multipliers", "")
     return StackedHeadConfig(
@@ -130,6 +132,24 @@ def gated_summary(control: dict[str, float], eval_ce: np.ndarray, eval_accuracy:
     return {"mean_ce": float(ce.mean()), "gain_over_control": float(control["ce"] - ce.mean()), "mean_accuracy": float(accuracy.mean()), "accuracy_delta": float(accuracy.mean() - control["accuracy"])}
 
 
+def target_records(config: dict[str, Any], bundle: Bundle, targets) -> dict[int, tuple[np.ndarray, np.ndarray]]:
+    """Features (under the public base's frozen body) and labels of the clients' own training records, for the attacker simulation."""
+    import torch
+
+    from experiments.stacked_head.cnn import Net, embed
+
+    model = Net()
+    model.load_state_dict({key: torch.tensor(value) for key, value in bundle.state.items()})
+    model.eval()
+    task = str(config["task"])
+    dataset, first = task_data.parse_task(task)
+    out = {}
+    for t in targets:
+        indices = task_data.client_indices(task, int(config.get("role-seed", 20261012)), str(config["cohort"]), int(t))
+        out[int(t)] = (embed(model, task_data.load_images(dataset, indices)), task_data.relabel(task_data.split_labels(dataset)[indices], first))
+    return out
+
+
 def run(grid: Grid, config: dict[str, Any]) -> dict[str, Any]:
     """Execute the configured rounds, evaluate each released model on the held-out images, and write the result JSON."""
     bundle = load_run_bundle(config)
@@ -145,8 +165,16 @@ def run(grid: Grid, config: dict[str, Any]) -> dict[str, Any]:
 
     alt_sizes = [int(size) for size in str(config.get("extra-validation-sizes", "128")).split(",") if size.strip()]
     subsets = {size: validation_subset(bundle.validation_labels, size) for size in alt_sizes}
+    # Shadow mix of target client k: its dominant class k (205 examples) against 17 of each other class.
+    mix = np.full((task_data.NUM_CLIENTS // 2, 4), task_data.OFF_CLASS_COUNT, dtype=float)
+    mix[np.arange(4), np.arange(4)] = task_data.DOMINANT_COUNT
+    mix /= task_data.CLIENT_SIZE
+    # Primary attacker: holds the target client's own records (256 each) and measures the base-minus-released CE on them.
+    attack_records: dict[int, tuple[np.ndarray, np.ndarray]] = {}
+    if bool(config.get("attack-records", False)):
+        attack_records = target_records(config, bundle, targets=range(4))
     per_release: dict[str, list[np.ndarray]] = {
-        "val_ce": [], "val_accuracy": [], "eval_ce": [], "eval_accuracy": [],
+        "val_ce": [], "val_accuracy": [], "eval_ce": [], "eval_accuracy": [], "attack_gain": [], "attack_records_gain": [],
         **{f"val{size}_ce": [] for size in alt_sizes}, **{f"val{size}_accuracy": [] for size in alt_sizes},
     }
     strategy_box: list[StackedHeadStrategy] = []
@@ -164,6 +192,17 @@ def run(grid: Grid, config: dict[str, Any]) -> dict[str, Any]:
             sub_ce, sub_accuracy = head_scores(bundle.validation_features[subset], bundle.validation_labels[subset], candidates)
             per_release[f"val{size}_ce"].append(sub_ce)
             per_release[f"val{size}_accuracy"].append(sub_accuracy)
+        # Practical model-only attack statistic: shadow-weighted CE decrease of the released head relative to the base.
+        class_ce = head_class_ce(bundle.validation_features, bundle.validation_labels, candidates)
+        base_ce = head_class_ce(bundle.validation_features, bundle.validation_labels, strategy_box[0].candidates_for(np.zeros(construction.dimension))[:1])[0]
+        released = class_ce[int(val_ce.argmin())]
+        per_release["attack_gain"].append(mix @ (base_ce - released))
+        if attack_records:
+            chosen = candidates[int(val_ce.argmin())][None]
+            base_theta = strategy_box[0].candidates_for(np.zeros(construction.dimension))[:1]
+            per_release["attack_records_gain"].append(np.array([
+                head_scores(f, y, base_theta)[0][0] - head_scores(f, y, chosen)[0][0] for f, y in (attack_records[t] for t in range(4))
+            ]))
         ce, accuracy = head_scores(bundle.evaluation_features, bundle.evaluation_labels, candidates)
         per_release["eval_ce"].append(ce)
         per_release["eval_accuracy"].append(accuracy)

@@ -154,3 +154,32 @@ def test_release_diagnostics_agree_with_the_strategy_gate_and_alternative_gates(
     alt_picks = stored["val64_ce"].argmin(axis=1)
     assert alt["mean_ce"] == pytest.approx(float(stored["eval_ce"][np.arange(6), alt_picks].mean()), abs=1e-5)
     assert result["summary"]["gain_over_control"] == pytest.approx(result["control"]["ce"] - float(gated.mean()), abs=1e-5)
+
+
+def test_attack_statistics_equal_a_direct_recomputation_and_records_are_optional(world, patched, tmp_path, monkeypatch):
+    from metricdp_pytorch.stacked_head_strategy import head_class_ce
+
+    _, bundle, clients = world
+    model = base_model(bundle)
+    records = {t: (embed(model, clients[t][0]), clients[t][1]) for t in range(4)}
+    monkeypatch.setattr(server_module, "target_records", lambda config, bundle_, targets: records)
+    result, config = execute(world, tmp_path, rounds=3, replicate=True, **{"attack-records": True, "run-name": "atk"})
+    stored = np.load(tmp_path / "atk.releases.npz")
+    assert stored["attack_gain"].shape == (3, 4) and stored["attack_records_gain"].shape == (3, 4)
+    # Recompute release 1 from the logged messages' sum: rerun with message logging for the same cell and noise.
+    execute(world, tmp_path, rounds=3, replicate=True, **{"attack-records": True, "log-messages": True, "run-name": "atk2"})
+    total = np.load(tmp_path / "atk2.messages.npz")["messages"][0].sum(axis=0)
+    theta0 = head_theta(ArrayRecord({k: Array(v) for k, v in bundle.state.items()}))
+    basis = bundle.basis[:, :DIMENSION]
+    multipliers = server_module.construction_from_config(config).multipliers
+    candidates = np.stack([theta0 - ETA * m * (total @ basis.T).reshape(3, -1) for m in multipliers])
+    pick = int(head_scores(bundle.validation_features, bundle.validation_labels, candidates)[0].argmin())
+    class_ce = head_class_ce(bundle.validation_features, bundle.validation_labels, candidates)
+    mix = np.full((4, 4), 17.0)
+    mix[np.arange(4), np.arange(4)] = 205.0
+    mix /= 256.0
+    assert stored["attack_gain"][0] == pytest.approx(mix @ (class_ce[0] - class_ce[pick]), abs=1e-5)
+    direct = [head_scores(f, y, theta0[None])[0][0] - head_scores(f, y, candidates[pick][None])[0][0] for f, y in (records[t] for t in range(4))]
+    assert stored["attack_records_gain"][0] == pytest.approx(direct, abs=1e-5)
+    plain, _ = execute(world, tmp_path, rounds=2, replicate=True, **{"run-name": "plain"})
+    assert "attack_records_gain" not in np.load(tmp_path / "plain.releases.npz").files   # only stored when the attacker simulation is requested

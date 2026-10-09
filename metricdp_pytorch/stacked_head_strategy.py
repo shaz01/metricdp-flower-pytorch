@@ -95,6 +95,15 @@ def head_scores(features: np.ndarray, labels: np.ndarray, thetas: np.ndarray) ->
     return ce, (logits.argmax(axis=2) == labels).mean(axis=1)
 
 
+def head_class_ce(features: np.ndarray, labels: np.ndarray, thetas: np.ndarray) -> np.ndarray:
+    """Mean cross-entropy of each head in ``thetas`` ((M, 3, D)) on each class separately, shape (M, 4)."""
+    weights = np.einsum("ca,nad->ncd", CONTRAST, thetas)
+    logits = np.einsum("md,ncd->nmc", features, weights)
+    top = logits.max(axis=2)
+    losses = top + np.log(np.exp(logits - top[:, :, None]).sum(axis=2)) - logits[:, np.arange(len(labels)), labels]
+    return np.stack([losses[:, labels == k].mean(axis=1) for k in range(NUM_CLASSES)], axis=1)
+
+
 def projection_basis(features: np.ndarray, theta: np.ndarray, dimension: int) -> np.ndarray:
     """Top-``dimension`` eigenvectors of the public head Hessian, with a deterministic sign convention."""
     probs = class_probabilities(features, theta)
