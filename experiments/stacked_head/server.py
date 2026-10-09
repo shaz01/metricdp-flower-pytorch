@@ -118,6 +118,18 @@ def summarize(control: dict[str, float], rounds: list[dict[str, float]], multipl
     }
 
 
+def validation_subset(labels: np.ndarray, size: int) -> np.ndarray:
+    """Indices of the first ``size // 4`` validation examples of each class (a smaller public validation set)."""
+    return np.concatenate([np.where(labels == k)[0][: size // 4] for k in range(4)])
+
+
+def gated_summary(control: dict[str, float], eval_ce: np.ndarray, eval_accuracy: np.ndarray, picks: np.ndarray) -> dict[str, float]:
+    """Mean outcome of choosing ``picks[r]`` (a multiplier index) at every release r."""
+    rows = np.arange(len(picks))
+    ce, accuracy = eval_ce[rows, picks], eval_accuracy[rows, picks]
+    return {"mean_ce": float(ce.mean()), "gain_over_control": float(control["ce"] - ce.mean()), "mean_accuracy": float(accuracy.mean()), "accuracy_delta": float(accuracy.mean() - control["accuracy"])}
+
+
 def run(grid: Grid, config: dict[str, Any]) -> dict[str, Any]:
     """Execute the configured rounds, evaluate each released model on the held-out images, and write the result JSON."""
     bundle = load_run_bundle(config)
@@ -131,8 +143,23 @@ def run(grid: Grid, config: dict[str, Any]) -> dict[str, Any]:
     history: list[dict[str, float]] = []
     message_log: dict[int, np.ndarray] = {}
 
+    alt_sizes = [int(size) for size in str(config.get("extra-validation-sizes", "128")).split(",") if size.strip()]
+    subsets = {size: validation_subset(bundle.validation_labels, size) for size in alt_sizes}
+    per_release: dict[str, list[np.ndarray]] = {"val_ce": [], "eval_ce": [], "eval_accuracy": [], **{f"val{size}_ce": [] for size in alt_sizes}}
+    strategy_box: list[StackedHeadStrategy] = []
+
     def on_replies(server_round: int, vectors: dict[int, np.ndarray], metrics: dict[str, float]) -> None:
         history.append({"round": server_round, **metrics})
+        total = np.zeros(construction.dimension)
+        for client_id in sorted(vectors):
+            total += vectors[client_id]
+        candidates = strategy_box[0].candidates_for(total)
+        per_release["val_ce"].append(head_scores(bundle.validation_features, bundle.validation_labels, candidates)[0])
+        for size, subset in subsets.items():
+            per_release[f"val{size}_ce"].append(head_scores(bundle.validation_features[subset], bundle.validation_labels[subset], candidates)[0])
+        ce, accuracy = head_scores(bundle.evaluation_features, bundle.evaluation_labels, candidates)
+        per_release["eval_ce"].append(ce)
+        per_release["eval_accuracy"].append(accuracy)
         if bool(config.get("log-messages", False)):
             message_log[server_round] = np.stack([vectors.get(i, np.full(construction.dimension, np.nan)) for i in range(num_clients)])
 
@@ -155,11 +182,21 @@ def run(grid: Grid, config: dict[str, Any]) -> dict[str, Any]:
         min_train_nodes=num_clients,
         min_available_nodes=num_clients,
     )
+    strategy_box.append(strategy)
     initial = ArrayRecord({key: Array(value) for key, value in bundle.state.items()})
     strategy.start(grid, initial_arrays=initial, num_rounds=rounds, train_config=ConfigRecord(), evaluate_fn=evaluate)
 
     control = {"ce": evaluations[0]["eval-ce"], "accuracy": evaluations[0]["eval-accuracy"]}
     released = [{**row, **evaluations[row["round"]]} for row in sorted(history, key=lambda r: r["round"])]
+    multipliers = construction.multipliers
+    releases = {key: np.stack(value) for key, value in per_release.items() if value}
+    summary_alt = summary_fixed = None
+    if releases:
+        summary_alt = {
+            str(size): gated_summary(control, releases["eval_ce"], releases["eval_accuracy"], releases[f"val{size}_ce"].argmin(axis=1)) for size in alt_sizes
+        }
+        if 1.0 in multipliers:
+            summary_fixed = gated_summary(control, releases["eval_ce"], releases["eval_accuracy"], np.full(len(releases["eval_ce"]), multipliers.index(1.0)))
     result = {
         "kind": "Stacked-head one-shot release rounds (independent releases from one public base when replicate=true).",
         "run_name": config.get("run-name"),
@@ -173,12 +210,17 @@ def run(grid: Grid, config: dict[str, Any]) -> dict[str, Any]:
         "control": control,
         "rounds": released,
         "summary": summarize(control, released, construction.multipliers) if released else None,
+        "summary_alt_validation": summary_alt,
+        "summary_fixed_multiplier_1": summary_fixed,
         "contributions": {str(k): v.tolist() for k, v in sorted(strategy.contributions.items())} if strategy.contributions else None,
         "provenance": provenance(),
     }
     output = Path(config["output-dir"])
     output.mkdir(parents=True, exist_ok=True)
     name = str(config["run-name"])
+    if releases:
+        np.savez_compressed(output / f"{name}.releases.npz", multipliers=np.array(multipliers), control=np.array([control["ce"], control["accuracy"]]),
+                            **{key: value.astype(np.float32) for key, value in releases.items()})
     if message_log:
         np.savez_compressed(output / f"{name}.messages.npz", rounds=np.array(sorted(message_log)), messages=np.stack([message_log[r] for r in sorted(message_log)]))
     (output / f"{name}.json").write_text(json.dumps(clean(result), indent=1, allow_nan=False) + "\n", encoding="utf-8")

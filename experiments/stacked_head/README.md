@@ -38,7 +38,8 @@ is not composed across rounds. `--single-release` is one real one-shot round.
 | `local.py` | in-process `Grid` running the same server/client code without Ray |
 | `runner.py` | `prepare`, `run`, `matrix`, `attack` commands |
 | `attack.py` | known-alternative IN/OUT attack on the real message log |
-| `analysis.py` | summarises finished cells and applies the research phase's gate |
+| `analysis.py` | summarises finished cells, applies the research phase's gate, and writes the public-set sweep report (distribution over public sets, Wilson intervals, failure anatomy) |
+| `protocols/` | decision rules fixed before the sweep/transfer cells were run |
 | `validate_equivalence.py` | compares a probe-noise run with the stored research-probe cell |
 
 ## Running it
@@ -53,6 +54,10 @@ uv run python -m experiments.stacked_head.runner run --backend inprocess --round
 # on a laptop CPU), budgets (48 cells, budgets 32 and 128; roughly 2 hours)
 uv run python -m experiments.stacked_head.runner matrix --preset gate
 uv run python -m experiments.stacked_head.analysis results/stacked_head
+# Public-set sweep (30 sets x 2 KMNIST tasks x 2 risks) and cross-dataset transfer (MNIST, Fashion-MNIST); see protocols/.
+# In-process is bit-identical to the Ray simulation here and much faster; shards split work by (task, budget, public-set).
+for i in 0 1 2; do uv run python -m experiments.stacked_head.runner matrix --preset sweep32 --backend inprocess --shard $i/3 & done; wait
+uv run python -m experiments.stacked_head.analysis results/stacked_head --tag sweep --sweep-report
 # Attack check on the real message path (noise-free contribution run + IN + OUT worlds)
 uv run python -m experiments.stacked_head.runner attack --target 3 --risk 0.65 --rounds 2048
 # Replay the research probe's noise and compare with results/client_specific_noise/cnn_head.*
@@ -61,7 +66,7 @@ uv run python -m experiments.stacked_head.validate_equivalence results/stacked_h
 ```
 
 Results go to `results/stacked_head/<task>_b<budget>_s<set>_<cohort>_q<risk>_<tag>.json` (config, construction,
-bundle metadata, control, every release, summary, provenance); `--log-messages` adds `<name>.messages.npz`. Public
+bundle metadata, control, every release, summary, provenance); `<name>.releases.npz` stores, for every release, the validation CE (512 and 128 images) and held-out CE/accuracy of all eight step multipliers (any gate rule can be evaluated offline on identical releases); `--log-messages` adds `<name>.messages.npz`. Public
 bundles are cached in `.stacked_head_cache/bundles/` (gitignored). `matrix` skips cells whose result file exists.
 
 ### On a server

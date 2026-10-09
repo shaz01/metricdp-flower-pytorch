@@ -51,3 +51,19 @@ def test_client_partitions_follow_the_label_stress_design():
         expected[client % 4] = 205
         assert np.array_equal(counts, expected)
     assert len(np.unique(np.concatenate(parts))) == 8 * task_data.CLIENT_SIZE
+
+
+def test_extra_public_sets_never_move_earlier_roles_and_stay_disjoint():
+    labels = synthetic_labels(per_class=4000)
+    base = task_data.build_roles(labels, 4, 20261012)
+    more = task_data.build_roles(labels, 4, 20261012, public_sets=30)
+    assert len(more.public) == 2 * 30
+    assert np.array_equal(base.validation, more.validation) and np.array_equal(base.evaluation, more.evaluation)
+    assert all(np.array_equal(base.cohorts[c], more.cohorts[c]) for c in base.cohorts)
+    assert all(np.array_equal(base.public[key], more.public[key]) for key in base.public)
+    ids = more.all_indices()
+    assert len(np.unique(ids)) == len(ids)
+    for s in range(3, 30):
+        assert np.array_equal(np.bincount(labels[more.public[(32, s)]] - 4, minlength=4), [8] * 4)
+    with pytest.raises(ValueError):
+        task_data.build_roles(labels, 4, 1, public_sets=2)

@@ -35,6 +35,9 @@ PRESETS = {
     "smoke": {"tasks": ["kmnist_classes0to3"], "budgets": [32], "sets": [0], "cohorts": ["A"], "risks": [0.65], "rounds": 16},
     "gate": {"tasks": ["kmnist_classes0to3", "kmnist_classes4to7"], "budgets": [32], "sets": [0, 1, 2], "cohorts": ["A", "B"], "risks": [0.65, 0.8], "rounds": 512},
     "budgets": {"tasks": ["kmnist_classes0to3", "kmnist_classes4to7"], "budgets": [32, 128], "sets": [0, 1, 2], "cohorts": ["A", "B"], "risks": [0.65, 0.8], "rounds": 512},
+    # Protocol experiments/stacked_head/protocols/2026-10-09_public_set_sweep_and_transfer.md
+    "sweep32": {"tasks": ["kmnist_classes0to3", "kmnist_classes4to7"], "budgets": [32], "sets": list(range(30)), "cohorts": ["A"], "risks": [0.65, 0.8], "rounds": 256, "tag": "sweep"},
+    "transfer32": {"tasks": ["mnist_classes0to3", "mnist_classes4to7", "fmnist_classes4to7"], "budgets": [32], "sets": list(range(10)), "cohorts": ["A"], "risks": [0.65, 0.8], "rounds": 256, "tag": "transfer"},
 }
 
 
@@ -93,6 +96,8 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
         "frozen-config": args.frozen_config,
         "bundle-dir": str(args.bundle_dir),
         "output-dir": str(args.output_dir),
+        "public-sets": max(3, int(args.public_set) + 1),
+        "extra-validation-sizes": "128",
         "run-name": run_name(args.task, args.budget, args.public_set, args.cohort, args.risk, tag),
         "cell-key": run_name(args.task, args.budget, args.public_set, args.cohort, args.risk, ""),
         "diagnostics": bool(args.diagnostics),
@@ -111,7 +116,7 @@ def prepare(config: dict[str, Any], *, force: bool = False) -> Path:
 
     return prepare_bundle(
         config["task"], config["budget"], config["public-set"], Path(config["bundle-dir"]),
-        role_seed=config["role-seed"], train_seed=config["train-seed"], force=force,
+        role_seed=config["role-seed"], train_seed=config["train-seed"], public_sets=config.get("public-sets", 3), force=force,
     )
 
 
@@ -192,6 +197,7 @@ def _parser() -> argparse.ArgumentParser:
     matrix = sub.add_parser("matrix", help="run a preset grid of cells (resumable)")
     _add_cell_arguments(matrix)
     matrix.add_argument("--preset", choices=sorted(PRESETS), default="smoke")
+    matrix.add_argument("--shard", default="0/1", help="I/N: run only every N-th (task, budget, public-set) group, so parallel processes never share a bundle")
     matrix.add_argument("--dry-run", action="store_true")
     attack = sub.add_parser("attack", help="IN/OUT known-alternative attack check on the real message path")
     _add_cell_arguments(attack)
@@ -201,12 +207,20 @@ def _parser() -> argparse.ArgumentParser:
 
 def cmd_matrix(args: argparse.Namespace) -> None:
     preset = PRESETS[args.preset]
+    index, count = (int(part) for part in args.shard.split("/"))
+    if not 0 <= index < count:
+        raise ValueError("--shard must look like I/N with 0 <= I < N.")
+    group = -1
     for task in preset["tasks"]:
         for budget in preset["budgets"]:
             for public_set in preset["sets"]:
+                group += 1
+                if group % count != index:
+                    continue
                 for cohort in preset["cohorts"]:
                     for risk in preset["risks"]:
-                        cell = argparse.Namespace(**{**vars(args), "task": task, "budget": budget, "public_set": public_set, "cohort": cohort, "risk": risk, "rounds": preset["rounds"]})
+                        cell = argparse.Namespace(**{**vars(args), "task": task, "budget": budget, "public_set": public_set, "cohort": cohort, "risk": risk,
+                                                     "rounds": preset["rounds"], "tag": preset.get("tag", args.tag)})
                         config = build_run_config(cell)
                         path = Path(config["output-dir"]) / f"{config['run-name']}.json"
                         if path.exists():

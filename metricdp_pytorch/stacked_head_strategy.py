@@ -230,6 +230,14 @@ class StackedHeadStrategy(FedAvg):
         record = RecordDict({self.arrayrecord_key: arrays, self.configrecord_key: config, PUBLIC_KEY: public})
         return self._construct_messages(record, node_ids, "train")
 
+    def candidates_for(self, total: np.ndarray) -> np.ndarray:
+        """Candidate heads (one per step multiplier, shape (M, 3, D)) for a released sum ``total`` applied to the sent base."""
+        if self.current_arrays is None:
+            raise RuntimeError("configure_train must run before candidates_for.")
+        theta0 = head_theta(self.current_arrays)
+        delta = (total @ self.basis.T).reshape(theta0.shape)
+        return np.stack([theta0 - self.config.eta * m * delta for m in self.config.multipliers])
+
     def aggregate_train(self, server_round: int, replies: Iterable[Message]) -> tuple[ArrayRecord | None, MetricRecord | None]:
         if self.current_arrays is None:
             raise RuntimeError("configure_train must run before aggregate_train.")
@@ -244,9 +252,7 @@ class StackedHeadStrategy(FedAvg):
             vector = reply.content[UPDATE_KEY]["vector"].numpy().astype(float)
             vectors[int(next(iter(reply.content.metric_records.values()))["client-id"])] = vector
             total += vector
-        theta0 = head_theta(self.current_arrays)
-        delta = (total @ self.basis.T).reshape(theta0.shape)
-        candidates = np.stack([theta0 - self.config.eta * m * delta for m in self.config.multipliers])
+        candidates = self.candidates_for(total)
         validation = np.asarray(self.validation_ce(candidates), dtype=float)
         pick = int(validation.argmin())
         self.last_round_metrics = {

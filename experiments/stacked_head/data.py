@@ -58,14 +58,26 @@ class TaskRoles:
         return np.concatenate(parts)
 
 
-def build_roles(raw_labels: np.ndarray, first_class: int, role_seed: int, budgets: tuple[int, ...] = DEFAULT_BUDGETS) -> TaskRoles:
-    """Carve per-class roles from the labels. The shuffle order is part of the experiment's identity."""
+def build_roles(
+    raw_labels: np.ndarray,
+    first_class: int,
+    role_seed: int,
+    budgets: tuple[int, ...] = DEFAULT_BUDGETS,
+    public_sets: int = PUBLIC_SETS,
+) -> TaskRoles:
+    """Carve per-class roles from the labels. The shuffle order is part of the experiment's identity.
+
+    Public sets beyond the first ``PUBLIC_SETS`` are sliced AFTER the evaluation role, so asking for more sets never
+    moves any earlier role (validation, cohorts, evaluation and sets 0..2 are identical for every ``public_sets``).
+    """
+    if public_sets < PUBLIC_SETS:
+        raise ValueError(f"public_sets must be at least {PUBLIC_SETS}.")
     rng = np.random.default_rng(role_seed + first_class)
-    public = {(b, s): [] for b in budgets for s in range(PUBLIC_SETS)}
+    public = {(b, s): [] for b in budgets for s in range(public_sets)}
     validation, cohorts, evaluation = [], {c: [] for c in COHORTS}, []
     for k in range(4):
         ids = np.where(raw_labels == first_class + k)[0].copy()
-        needed = sum(b // 4 for b in budgets) * PUBLIC_SETS + VALIDATION_PER_CLASS + len(COHORTS) * COHORT_PER_CLASS + EVALUATION_PER_CLASS
+        needed = sum(b // 4 for b in budgets) * public_sets + VALIDATION_PER_CLASS + len(COHORTS) * COHORT_PER_CLASS + EVALUATION_PER_CLASS
         if len(ids) < needed:
             raise ValueError(f"Class {first_class + k} has {len(ids)} examples; {needed} are needed.")
         rng.shuffle(ids)
@@ -77,6 +89,10 @@ def build_roles(raw_labels: np.ndarray, first_class: int, role_seed: int, budget
         for target, count in [(validation, VALIDATION_PER_CLASS), *[(cohorts[c], COHORT_PER_CLASS) for c in COHORTS], (evaluation, EVALUATION_PER_CLASS)]:
             target.append(ids[position : position + count])
             position += count
+        for b in budgets:
+            for s in range(PUBLIC_SETS, public_sets):
+                public[(b, s)].append(ids[position : position + b // 4])
+                position += b // 4
     roles = TaskRoles(
         first_class=first_class,
         public={key: np.concatenate(value) for key, value in public.items()},
@@ -122,9 +138,9 @@ def load_images(dataset: str, indices: np.ndarray) -> np.ndarray:
 
 
 @lru_cache(maxsize=None)
-def task_roles(task: str, role_seed: int, budgets: tuple[int, ...] = DEFAULT_BUDGETS) -> TaskRoles:
+def task_roles(task: str, role_seed: int, budgets: tuple[int, ...] = DEFAULT_BUDGETS, public_sets: int = PUBLIC_SETS) -> TaskRoles:
     dataset, first = parse_task(task)
-    return build_roles(split_labels(dataset), first, role_seed, budgets)
+    return build_roles(split_labels(dataset), first, role_seed, budgets, public_sets)
 
 
 def relabel(raw: np.ndarray, first_class: int) -> np.ndarray:

@@ -138,3 +138,19 @@ def test_default_frozen_config_is_read_for_the_risk_target():
     construction = server_module.construction_from_config({"risk": 0.65})
     assert (construction.cap, construction.eta, construction.dimension, construction.mode) == (0.003, 100.0, 51, "target_center")
     assert server_module.construction_from_config({"risk": 0.8}).eta == 100.0
+
+
+def test_release_diagnostics_agree_with_the_strategy_gate_and_alternative_gates(world, patched, tmp_path):
+    result, _ = execute(world, tmp_path, rounds=6, replicate=True, **{"run-name": "diag", "extra-validation-sizes": "64"})
+    stored = np.load(tmp_path / "diag.releases.npz")
+    multipliers = list(stored["multipliers"])
+    assert stored["eval_ce"].shape == (6, len(multipliers)) and stored["val64_ce"].shape == stored["val_ce"].shape
+    picks = stored["val_ce"].argmin(axis=1)
+    assert [multipliers[i] for i in picks] == pytest.approx([r["multiplier"] for r in result["rounds"]])
+    gated = stored["eval_ce"][np.arange(6), picks]
+    assert gated == pytest.approx([r["eval-ce"] for r in result["rounds"]], abs=1e-5)
+    assert result["summary_fixed_multiplier_1"]["mean_ce"] == pytest.approx(float(stored["eval_ce"][:, multipliers.index(1.0)].mean()), abs=1e-5)
+    alt = result["summary_alt_validation"]["64"]
+    alt_picks = stored["val64_ce"].argmin(axis=1)
+    assert alt["mean_ce"] == pytest.approx(float(stored["eval_ce"][np.arange(6), alt_picks].mean()), abs=1e-5)
+    assert result["summary"]["gain_over_control"] == pytest.approx(result["control"]["ce"] - float(gated.mean()), abs=1e-5)

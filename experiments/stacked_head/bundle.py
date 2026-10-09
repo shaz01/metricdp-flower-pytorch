@@ -8,6 +8,7 @@ clients receive the base model and public geometry inside Flower messages.
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -104,7 +105,7 @@ def save_bundle(bundle: Bundle, path: Path) -> None:
         meta=np.array(json.dumps(bundle.meta)),
     )
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(path.name + ".tmp.npz")
+    temporary = path.with_name(f"{path.name}.{os.getpid()}.tmp.npz")  # unique per process: parallel shards may prepare one bundle
     np.savez_compressed(temporary, **arrays)
     temporary.replace(path)
 
@@ -137,6 +138,7 @@ def prepare_bundle(
     role_seed: int = DEFAULT_ROLE_SEED,
     train_seed: int = DEFAULT_TRAIN_SEED,
     budgets: tuple[int, ...] = task_data.DEFAULT_BUDGETS,
+    public_sets: int = task_data.PUBLIC_SETS,
     force: bool = False,
 ) -> Path:
     """Build (or reuse) the bundle for one public set of one task. Reads the dataset; the server then needs only the file."""
@@ -144,7 +146,7 @@ def prepare_bundle(
     if path.exists() and not force:
         return path
     dataset, first = task_data.parse_task(task)
-    roles = task_data.task_roles(task, role_seed, budgets)
+    roles = task_data.task_roles(task, role_seed, budgets, max(public_sets, public_set + 1))
     labels = task_data.split_labels(dataset)
     public_ids = roles.public[(budget, public_set)]
     bundle = prepare_from_arrays(
