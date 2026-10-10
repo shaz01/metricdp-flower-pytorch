@@ -1,0 +1,128 @@
+{
+ "D1": {
+  "strongest_objections": [
+   "Accuracy gain may just reflect better generalization (less overfitting) rather than a privacy-specific effect \u2014 confounds with Liu 2021's known generalization-vs-MIA link; need to show PGS beats a plain 'reduce epochs/regularize for generalization' baseline at matched utility, not just matched defense-aware AUC.",
+   "Composing PGS+GDP requires re-deriving the noise calibration (d_t, pairwise distances) under the suppressed-signature regime; if PGS changes which client is the max-distance pair, the metric-privacy noise floor itself shifts, so 'matched attack strength' comparisons risk comparing against a mis-calibrated DP baseline rather than its best setting.",
+   "Evidence (3)/(4) shows CIA risk is highly heterogeneous (0.20-0.99) and dominated by outlier clients; PGS mechanisms (early stopping, sample caps, FedProx) may only compress the easy-target cases while leaving the outlier-driven worst-case TPR@1%FPR untouched \u2014 averaged AUC could hide a non-improvement on the actual threat model (single curious client targeting a vulnerable peer)."
+  ],
+  "possible_prior_work": [
+   "FinP (PoPETs 2026) - SIA risk-weighted aggregation + anti-overfitting regularization",
+   "CoFedMID - record-level MIA defense in federated learning",
+   "Nasr et al., 'Comprehensive Privacy Analysis of Deep Learning' / adversarial regularization against MIA (verify)",
+   "Shejwalkar & Houmansadr, distillation-based membership-inference defense (verify)"
+  ],
+  "falsification_test": "Run FedAvg with early stopping/FedProx alone (no DP) on EuroSAT-48/Dirichlet-0.3, measure defense-aware CIA TPR@1%FPR per-target including outliers vs. accuracy; if the resulting privacy-utility curve coincides with (or is dominated by) plain global-DP at the same accuracy, the PGS mechanism adds nothing beyond known generalization-regularization and the claim is dead.",
+  "scores": {
+   "novelty": 2,
+   "expected_gain_vs_metric_privacy": 3,
+   "feasibility": 4,
+   "theoretical_soundness": 2
+  },
+  "one_line_verdict": "Cheap and testable, but likely rediscovers 'generalization regularization reduces MIA signal' (Liu 2021, Nasr, FinP) rather than a genuinely new defense; must beat a plain-regularization baseline and cover outlier-target worst case before the accuracy-over-metric-privacy claim holds."
+ },
+ "D2": {
+  "strongest_objections": [
+   "The noise-variance side-channel assumes the attacker can isolate sigma_t from one 289k-dim release to ~0.1% precision, which requires knowing the true (unnoised) aggregate or the other clients' models to compute d_t \u2014 that's not a realistic client-side capability, it's a different (much stronger) threat model than 'curious participant with a shadow sample', and the claim needs an explicit, justified attacker-knowledge spec before any number is trusted.",
+   "The analytic 'client GLiR' projection and the earlier GMIP arithmetic both live in full-parameter space (d=289k, n=48); you already showed GMIP's crowd-randomness bound is vacuous in that regime (n<<d) \u2014 the proposal needs to argue why the projection attack escapes the same curse-of-dimensionality collapse rather than just asserting a new estimator fixes it.",
+   "Running three attack methodologies (shadow-federation LiRA, analytic projection, side-channel) plus engineering a new 'leak-free' quantile-calibrated defense, all at matched defense-aware strength with TPR@low-FPR over many targets, is a lot of shadow-model and many-target compute against a ~50 min/100-round EuroSAT budget \u2014 the plan as scoped is likely to blow the stated compute envelope before producing the headline comparison."
+  ],
+  "possible_prior_work": [
+   "Carlini et al., 'Membership Inference Attacks From First Principles' (LiRA), 2022",
+   "Salem et al., 'Update-Leak: Data Set Inference and Reconstruction Attacks in Online Learning' (verify)",
+   "Andrew et al., 'Differentially Private Learning with Adaptive Clipping', NeurIPS 2021 (relevant to the privatized-quantile 'leak-free' variant)",
+   "Hu et al., 'Source Inference Attacks in Federated Learning' (verify)"
+  ],
+  "falsification_test": "On the already-instrumented 3-client runs, have the attacker estimate sigma_t purely from the released global update (no oracle access to other clients' models or n) and check whether that blind estimate still separates IN/OUT at the claimed precision \u2014 if it collapses to noise, the side-channel claim is dead without further assumptions.",
+  "scores": {
+   "novelty": 3,
+   "expected_gain_vs_metric_privacy": 3,
+   "feasibility": 2,
+   "theoretical_soundness": 2
+  },
+  "one_line_verdict": "Interesting attack-side framing but the side-channel's attacker-knowledge assumptions are underspecified and likely too strong, the projection attack may inherit the same n<<d collapse as GMIP, and the three-attack-plus-new-defense scope doesn't fit the stated compute budget."
+ },
+ "D3": {
+  "strongest_objections": [
+   "Project's own GMIP arithmetic (evidence 6) shows crowd-randomness term is negligible unless n>=d; at d=289k vs n=48 (or 3) the 'subtract supplied noise' calibration collapses to vanilla DP noise, predicting the same null result already found for metric privacy (evidence 1).",
+   "GDP CLT composition and Gaussian between-client covariance assume many roughly-exchangeable client contributions per round, but evidence 3/4 shows CIA scores are outlier-dominated and the target sits in the max-distance pair 97-98% of rounds \u2014 the target is structurally non-exchangeable, which breaks the meta-distribution/CLT premise exactly where it matters most.",
+   "Privately releasing crowd statistics (covariance, max pairwise distance) adds a second leakage channel \u2014 the same max-distance statistic evidence (4) shows moves 3-9% when the target participates, so the released stats themselves may leak membership, and accounting for that formally likely consumes the budget gain the method is built to buy."
+  ],
+  "possible_prior_work": [
+   "McMahan et al. 2018, 'Learning Differentially Private Recurrent Language Models' (client-level DP-FedAvg baseline)",
+   "Dong, Roth & Su 2019, 'Gaussian Differential Privacy' (f-DP foundations needed for the GDP/CLT composition claim)",
+   "Suri & Evans, 'Subject Membership Inference Attacks in Federated Learning' (verify exact title/year)",
+   "Group privacy amplification bounds for DP-SGD/FedAvg (verify \u2014 e.g. Kairouz-style group-DP composition) as a trivial competing calibration"
+  ],
+  "falsification_test": "In the existing 3-client setup, compute the f-CMIP crowd-adjusted noise std and compare defense-aware TPR@low-FPR against vanilla-DP-calibrated noise at matched total noise budget; if indistinguishable (as already seen for metric privacy), the direction is dead.",
+  "scores": {
+   "novelty": 2,
+   "expected_gain_vs_metric_privacy": 2,
+   "feasibility": 3,
+   "theoretical_soundness": 3
+  },
+  "one_line_verdict": "Theoretically tidy generalization of GMIP to clients, but the project's own math (evidence 6) and outlier-driven covariance (evidence 3-4) predict it reduces to relabeled vanilla DP with no measured privacy-utility gain."
+ },
+ "D4": {
+  "strongest_objections": [
+   "Registered-slot adjacency (absent client sends c) is a nonstandard adjacency notion chosen to make the sensitivity bound look good; it doesn't obviously bound what CIA attackers exploit (participation signal), and needs its own DP proof, not an analogy to centered clipping.",
+   "rho is itself privately released from a dispersion quantile, and c is often the previous noisy global update \u2014 both channels are exactly where project finding (4) already showed participation shifts the statistic (3-9% larger max distance, target in max pair 97-98% of rounds); centering likely moves the leak into rho/c rather than removing it.",
+   "This is a variant of the client-side/placement/anisotropic family the project already tested and found does not beat server-side mechanisms (evidence 2), plus the project's own one-shot head-step result found 'little headroom for public-residual centering' \u2014 D4 looks like a relabeling of an already-falsified direction without new theory closing the gap."
+  ],
+  "possible_prior_work": [
+   "Karimireddy et al. 2021, Learning from History for Byzantine Robust Optimization (centered clipping)",
+   "Andrew et al. 2021, Differentially Private Learning with Adaptive Clipping (private quantile-based clip norm)",
+   "Levy et al. 2021, Learning with User-Level Privacy (concentration radius)",
+   "Pillutla et al., Robust Aggregation for Federated Learning (verify)"
+  ],
+  "falsification_test": "Reuse the already-logged 3-client (and EuroSAT 48-client) update norms to compute the proposed rho quantile (||u_i - c||) per round and check whether it shifts when the target participates the same way d_t did in finding (4); if rho correlates with target participation at a similar magnitude, the attacker gets equivalent TPR@low-FPR by attacking the rho-release channel, killing the claimed sensitivity gain without running any new training.",
+  "scores": {
+   "novelty": 2,
+   "expected_gain_vs_metric_privacy": 2,
+   "feasibility": 4,
+   "theoretical_soundness": 2
+  },
+  "one_line_verdict": "Probably just moves the participation signal from the noise-scale channel (d_t) into the rho/c-release channel; test against existing logs before spending any new compute."
+ },
+ "D5": {
+  "strongest_objections": [
+   "Reallocating noise to rounds 1-25 is calibrated to the *current* uniform-noise leakage curve; once the schedule changes, the attacker's signal may simply migrate to the now-less-noised later rounds, so AUC could stay flat rather than drop (same circularity critique as Kiani et al., just inverted for privacy instead of utility).",
+   "This is the fourth shape intervention in the project's own log (client-specific shapes, non-Gaussian densities, client-side placement, anisotropic noise) to try beating uniform server-side noise, and all three failed; temporal allocation doesn't touch the n<<d bottleneck in evidence (6), so there's no mechanism identified for why reshaping noise over time escapes that limit when reshaping over clients/dimensions didn't.",
+   "'Equal formal guarantee' needs a real mu-GDP/RDP composition over heterogeneous per-round sigmas, which is standard math, but the paper's privacy claim (formal bound) and its empirical claim (CIA AUC) are different objects \u2014 matching the formal budget says nothing about whether the empirical leakage curve assumption (rounds 1-25) transfers across the 0.20-0.99 per-target CIA score spread already observed, so the headline comparison risks being an average over high-variance per-target scores with no stated power analysis."
+  ],
+  "possible_prior_work": [
+   "Kiani et al., ICLR 2025 (cited) - utility-oriented time-adaptive DP noise, the mirror-image baseline",
+   "DP-FTRL / matrix-mechanism multi-round noise correlation (Denisov et al. 2022, Choquette-Choi et al.) (verify applicability to allocation-for-privacy rather than allocation-for-utility)",
+   "Nasr et al., 'Adversary Instantiation' / auditing DP-SGD - analyzing where privacy loss/leakage accrues across training steps (verify)",
+   "Source/round-wise membership inference in FL (e.g., Hu et al. Source Inference Attacks, or work tracking MIA vulnerability by training epoch) (verify)"
+  ],
+  "falsification_test": "Using already-collected 48-client EuroSAT round-by-round logs, post-hoc reweight noise (same total budget, front-loaded to rounds 1-25 vs. uniform) without retraining and recompute CIA TPR@lowFPR/AUC; if the gap collapses or merely shifts to later rounds instead of shrinking, the direction is dead for near-zero compute cost.",
+  "scores": {
+   "novelty": 2,
+   "expected_gain_vs_metric_privacy": 2,
+   "feasibility": 3,
+   "theoretical_soundness": 2
+  },
+  "one_line_verdict": "Plausible-sounding but likely another failed noise-shaping variant (Kiani-in-reverse) that doesn't address the n<<d limit already identified, and conflates a formal composition guarantee with an empirical, highly target-variable attack metric \u2014 cheap to kill, should be falsified before any full run."
+ },
+ "D6": {
+  "strongest_objections": [
+   "Shrinking the shared dimension likely relocates the client signature into the un-attacked personalization/local layers rather than erasing it; needs proof that drift in those layers doesn't leak back through the shared head's gradients/BN stats over rounds.",
+   "The n>=d regime from GMIP Corollary 5.1 only holds for near-trivial heads (e.g. linear probe over frozen backbone); any adapter/head with realistic capacity keeps d>>n, so the core theoretical payoff may never actually trigger.",
+   "Evidence (2) already shows client-specific noise shaping and client-side placement failed to beat server-side DP; FedPer/LG-FedAvg-style local retention is a close cousin of that family and may just reproduce the same null result under a new name."
+  ],
+  "possible_prior_work": [
+   "FedPer: Federated Learning with Personalization Layers (Arivazhagan et al.)",
+   "FedRep: Exploiting Shared Representations for Personalized Federated Learning",
+   "LG-FedAvg: Think Locally, Act Globally",
+   "Membership/participation inference against personalized or clustered FL (IFCA-MIR and follow-ups) (verify)"
+  ],
+  "falsification_test": "Run FedPer/FedRep on the EuroSAT-48 Dirichlet-0.3 setup with a deliberately tiny head (d approaching n) and apply the defense-aware CIA attack only to the shared-head sequence, matched for utility against the existing full-model + metric-privacy point; if TPR@low-FPR doesn't drop relative to that baseline (or only drops because utility drops), the direction is dead.",
+  "scores": {
+   "novelty": 2,
+   "expected_gain_vs_metric_privacy": 2,
+   "feasibility": 4,
+   "theoretical_soundness": 2
+  },
+  "one_line_verdict": "Cheap to test but probably rediscovers the already-falsified finding that moving signal client-side doesn't beat server-side DP, unless a genuinely tiny head reaches n~d without wrecking utility."
+ }
+}

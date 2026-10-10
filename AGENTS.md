@@ -29,6 +29,7 @@ See `README.md` and each experiment's own `README.md` (where present) for full f
 - `metricdp_pytorch/` — core library (privacy mechanism, strategy factory, data/device utils). Shared across all experiments.
 - `experiments/<name>/` — one folder per experiment (`reproduce`, `cia`, `client_scaling`, `port_equivalence`, `stacked_head`), each with its own code and, where applicable, its own `tests/`.
 - `research/` — the closed client-specific-noise research direction (2026-10-09): literature review, proposals and findings, and its one-off calculations (`research/calculations/`, with tests). Historical record, not an active plan; the Flower implementation of its surviving construction is `experiments/stacked_head/`.
+- `research/cia_review_2026-10/` — exception to the above: the **active** CIA research programme (2026-10-10). Entry point `HANDOFF.md` at the repo root; autonomous agents follow `research/cia_review_2026-10/agent_roadmap.md` (binding owner decisions, work packages, gates, file ownership).
 - `results/<name>/` — every experiment's real output data lives here on `master`, organized to mirror the experiment folder names. Raw logs, one-off shell scripts, and lock/status files don't belong here — only real result data (run JSONs, evaluation summaries, READMEs).
 - `papers/` — reference PDFs, not experiment code.
 - `docs/` — gitignored, local-only notes. Don't expect it to exist on a fresh clone, and don't treat its absence as a problem.

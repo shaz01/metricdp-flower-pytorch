@@ -5,6 +5,11 @@ wording inside the documents below is historical: those steps were either carrie
 roadmap documents `literature_review/research_plan.md` and `literature_review/next_step_handoff.md` were removed at closure;
 they remain in git history (last present at merge parent `0d504bfc`).
 
+> **Added 2026-10-10 (separate from the closed record):** `cia_review_2026-10/` holds a new literature review, an
+> evidence summary of the whole project, and ranked proposals for the next direction against client inference attacks
+> (recommended: defense-aware CIA audit, then signature-suppressing local training under a fixed client-level DP noise
+> law). It is a proposal awaiting the owner's decision. Entry point: `../HANDOFF.md`; index: `cia_review_2026-10/README.md`.
+
 ## The question
 
 Can noise that each client constructs for itself (an individually built distribution) improve protection against client

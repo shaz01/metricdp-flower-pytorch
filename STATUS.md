@@ -1,7 +1,9 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-09, client-specific-noise research direction closed and merged; nothing from it is active
+**Last updated:** 2026-10-10, CIA literature review and next-direction proposal added (`HANDOFF.md`,
+`research/cia_review_2026-10/`, execution plan `agent_roadmap.md`). 2026-10-09: client-specific-noise research direction
+closed and merged; nothing from it is active
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -14,6 +16,16 @@ section (including the Currently running table) updates more often, at "worth a 
 granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
+
+**CIA research programme (2026-10-10): approved for autonomous execution by agents under
+`research/cia_review_2026-10/agent_roadmap.md` (work packages WP0-WP6, gates, file ownership; agents never merge into
+`master`); nothing running yet.**
+New directory `research/cia_review_2026-10/` (literature review with 97 verified references, project evidence summary,
+ranked directions D1-D6 with kill criteria and staged experiments, analyses of committed logs only) and root `HANDOFF.md`
+(entry point, first experiment step by step). Recommended: defense-aware CIA audit (D2) and signature-suppressing local
+training under a fixed, public client-level DP noise law (D1). New log findings: the metric-privacy noise-level side
+channel is weak at 48 clients but the noise reveals the participant count in the 3-vs-2-client runs for both mechanisms;
+per-target CIA exposure rises with client weight.
 
 **Client-specific noise research direction: CLOSED (2026-10-09, owner decision).** Question: can noise that each client
 builds for itself improve CIA protection over the paper's server-side metric calibration at useful accuracy? Merged into
