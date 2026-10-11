@@ -7,16 +7,7 @@ from experiments.cia.datasets.shadow import ShadowDataModule
 from experiments.reproduce.matrix import Combo
 from experiments.reproduce.paper_loss import sparse_categorical_cross_entropy
 from metricdp_pytorch.model_module import load_model
-
-
-def _to_device(tensor: torch.Tensor, device: torch.device) -> torch.Tensor:
-    """Copy a batch to ``device``; asynchronous copies only on CUDA.
-
-    With torch 2.10, asynchronous host-to-MPS copies of DataLoader batches gave
-    wrong, run-to-run varying losses (round-0 Alzheimer shadow loss 0.70-0.92
-    instead of the CPU's 1.4408); blocking copies matched the CPU exactly.
-    """
-    return tensor.to(device, non_blocking=torch.device(device).type == "cuda")
+from metricdp_pytorch.utils.device import to_device
 
 
 def _calculate_loss(
@@ -31,8 +22,8 @@ def _calculate_loss(
     examples = 0
     with torch.no_grad():
         for images, labels in loader:
-            images = _to_device(images, device)
-            labels = _to_device(labels, device)
+            images = to_device(images, device)
+            labels = to_device(labels, device)
             probabilities = model(images)
             total_loss += sparse_categorical_cross_entropy(
                 probabilities, labels, reduction="sum"
@@ -60,8 +51,8 @@ def shadow_loss_and_gradient_norm(
     total_loss = 0.0
     examples = 0
     for images, labels in loader:
-        images = _to_device(images, device)
-        labels = _to_device(labels, device)
+        images = to_device(images, device)
+        labels = to_device(labels, device)
         loss = sparse_categorical_cross_entropy(model(images), labels, reduction="sum")
         loss.backward()
         total_loss += loss.item()

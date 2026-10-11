@@ -59,18 +59,6 @@ def test_empty_loader_is_rejected() -> None:
         shadow_loss_and_gradient_norm(_softmax_model(), empty, torch.device("cpu"))
 
 
-def test_only_cuda_copies_are_asynchronous(monkeypatch) -> None:
-    from experiments.cia import cia
-
-    calls = []
-    monkeypatch.setattr(torch.Tensor, "to", lambda self, device, non_blocking=False: calls.append(
-        (str(device), non_blocking)) or self)
-    for device in ("cpu", "mps", "cuda"):
-        cia._to_device(torch.zeros(1), torch.device(device))
-
-    assert calls == [("cpu", False), ("mps", False), ("cuda", True)]
-
-
 @pytest.mark.skipif(not torch.backends.mps.is_available(), reason="needs an Apple MPS device")
 def test_mps_shadow_scalars_match_cpu() -> None:
     """Regression: asynchronous host-to-MPS copies corrupted evaluation batches."""

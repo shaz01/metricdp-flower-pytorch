@@ -45,3 +45,22 @@ cannot be excluded from that scan alone. The compute server (CUDA) is unaffected
 3. Move WP1 to the compute server. Contradicts the owner decision that small federations run on the owner PC.
 
 Until the owner decides, Agent A does not launch WP1 training on the owner PC.
+
+## Resolution (2026-10-11, owner chose option 1)
+
+All batch copies now go through `metricdp_pytorch.utils.device.to_device` (asynchronous only on CUDA): client
+training (`paper_training.py`, edited by Agent A with the owner's approval), server evaluation (`paper_loss.py`),
+post-training evaluation (`detailed_evaluation.py`) and the CIA evaluation (`experiments/cia/cia.py`). Nothing changes on
+CUDA or CPU.
+
+Follow-up measurement (torch 2.10.0, single process, no Flower/Ray, PaperCNN, 256 synthetic 128x128 images, Adam,
+dropout on, 5 epochs): MPS with blocking copies gave bit-identical weights in three runs (max abs diff 0.0) and across
+two separate processes (10 epochs, identical weight hash); with `non_blocking=True` the weights were NaN. The
+2026-08-04 note in `resolve_device` attributed single-process MPS non-determinism to the backward kernels; this
+measurement points to the copy race instead (its `torch.mps.synchronize()` check ran after the optimizer step, after
+the race). A dated correction was added to that docstring. Concurrent multi-actor Ray training on MPS was not
+re-measured.
+
+Regression tests (skipped without MPS; both fail when the asynchronous copy is reinstated):
+`tests/test_device.py::test_mps_training_with_to_device_is_reproducible`,
+`experiments/cia/tests/test_round_scalars.py::test_mps_shadow_scalars_match_cpu`. Status: resolved; WP1 unblocked.
