@@ -49,20 +49,41 @@ def test_alzheimer_partitions_are_canonical_across_removal_and_respect_the_minim
     assert view.num_active_partitions == 4 and 2 not in view.active_partition_ids
 
 
-def test_execute_shared_skips_a_trajectory_another_worker_holds(tmp_path, monkeypatch) -> None:
+def _record(combo, targets, output, max_parallel_clients):
+    (output / "executed.txt").open("a").write(combo.run_name() + "\n")
+
+
+def _hang(combo, targets, output, max_parallel_clients):
+    import os
+    import time
+
+    os.setsid()
+    time.sleep(600)
+
+
+def test_execute_shared_skips_a_trajectory_another_worker_holds(tmp_path) -> None:
     import fcntl
     import hashlib
     import tempfile
     from pathlib import Path
 
-    import results.cia_frontier.eurosat_frontier.runner as frontier
-
-    executed = []
-    monkeypatch.setattr(frontier, "_execute", lambda combos, *args: executed.append(combos[0].run_name()))
     held, free = runner.build_audit_combos("alzheimer", 3, "global-dp", seeds=[42])[:2]
     identity = str((tmp_path / held.run_name()).resolve()).encode()
     lock = Path(tempfile.gettempdir()) / ("auc-frontier-" + hashlib.sha256(identity).hexdigest() + ".lock")
     with lock.open("w") as handle:
         fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        runner.execute_shared([held, free], [0, 1, 2], tmp_path, 1)
-    assert executed == [free.run_name()]
+        runner.execute_shared([held, free], [0, 1, 2], tmp_path, 1, worker=_record, poll_seconds=0.1)
+    assert (tmp_path / "executed.txt").read_text().split() == [free.run_name()]
+
+
+def test_execute_shared_kills_a_stalled_trajectory_and_moves_on(tmp_path) -> None:
+    import time
+
+    hung, after = runner.build_audit_combos("alzheimer", 3, "global-dp", seeds=[42])[:2]
+    started = time.monotonic()
+    stalled = runner.execute_shared([hung], [0, 1, 2], tmp_path, 1, worker=_hang,
+                                    stall_minutes=1 / 60, poll_seconds=0.2)
+    assert stalled == [hung.run_name()]
+    assert time.monotonic() - started < 30
+    assert runner.execute_shared([after], [0, 1, 2], tmp_path, 1, worker=_record, poll_seconds=0.1) == []
+    assert (tmp_path / "executed.txt").read_text().split() == [after.run_name()]

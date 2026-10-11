@@ -89,16 +89,50 @@ def trajectory_hours(combo, dataset):
     return combo.hyperparams.rounds * TRAJECTORY_HOURS_PER_ROUND * DATASETS[dataset]["relative_cost"]
 
 
-def execute_shared(combos, targets, output, max_parallel_clients):
-    """Train and evaluate each trajectory unless another worker holds it."""
-    import fcntl
-    import hashlib
-    import tempfile
+def _run_isolated(combo, targets, output, max_parallel_clients):
+    """Child-process entry point: own session, so a stall kill reaches Ray's processes too."""
+    import os
 
+    os.setsid()
     from results.cia_frontier.eurosat_frontier.runner import _execute
 
+    _execute([combo], targets, output, max_parallel_clients)
+
+
+def _last_activity(folder):
+    import os
+
+    try:
+        return max((entry.stat().st_mtime for entry in os.scandir(folder)), default=None)
+    except FileNotFoundError:
+        return None
+
+
+def execute_shared(combos, targets, output, max_parallel_clients, *, stall_minutes=30.0,
+                   worker=_run_isolated, poll_seconds=60.0):
+    """Train and evaluate each trajectory unless another worker holds it.
+
+    Each trajectory runs in a child process. If its folder shows no file activity for
+    ``stall_minutes``, the child's process group is killed and the worker moves on; the
+    trajectory has no ``complete.json`` and is retried by the next run of the same
+    command. Seen twice in 12 smoke trajectories on the owner PC (2026-10-11): Ray forks
+    its dashboard process with a ``preexec_fn`` while Flower's server thread runs, the
+    forked child blocks in a Python at-fork hook on a lock held at fork time, never
+    execs, and the server waits forever for client actors (round 0 written, no raylet).
+    """
+    import fcntl
+    import hashlib
+    import multiprocessing
+    import os
+    import signal
+    import tempfile
+    import time
+
+    context = multiprocessing.get_context("spawn")
+    stalled = []
     for combo in combos:
-        identity = str((output / combo.run_name()).resolve()).encode()
+        folder = output / combo.run_name()
+        identity = str(folder.resolve()).encode()
         lock = Path(tempfile.gettempdir()) / ("auc-frontier-" + hashlib.sha256(identity).hexdigest() + ".lock")
         with lock.open("w") as handle:
             try:
@@ -106,7 +140,31 @@ def execute_shared(combos, targets, output, max_parallel_clients):
             except BlockingIOError:
                 print(f"[AUDIT] skip (another worker holds it): {combo.run_name()}", flush=True)
                 continue
-            _execute([combo], targets, output, max_parallel_clients)
+            process = context.Process(target=worker, args=(combo, targets, output, max_parallel_clients))
+            process.start()
+            seen, since = _last_activity(folder), time.monotonic()
+            while True:
+                process.join(poll_seconds)
+                if not process.is_alive():
+                    break
+                activity = _last_activity(folder)
+                if activity != seen:
+                    seen, since = activity, time.monotonic()
+                elif time.monotonic() - since > stall_minutes * 60:
+                    print(f"[AUDIT] stalled for {stall_minutes} min, killing: {combo.run_name()}", flush=True)
+                    try:  # the child's session: Ray's processes and the forked runner
+                        os.killpg(process.pid, signal.SIGKILL)
+                    except (ProcessLookupError, PermissionError):
+                        pass  # not yet a session leader
+                    process.kill()
+                    process.join()
+                    stalled.append(combo.run_name())
+                    break
+            if process.exitcode not in (0, -signal.SIGKILL) and combo.run_name() not in stalled:
+                raise RuntimeError(f"Trajectory failed (exit {process.exitcode}): {combo.run_name()}")
+    if stalled:
+        print(f"[AUDIT] {len(stalled)} stalled trajectories; rerun the same command to retry them", flush=True)
+    return stalled
 
 
 def main():
@@ -122,6 +180,8 @@ def main():
                         help="smoke test only: at most 5 rounds, requires an --output outside results/")
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--max-parallel-clients", type=int, default=8)
+    parser.add_argument("--stall-minutes", type=float, default=30.0,
+                        help="kill a trajectory whose folder shows no file activity for this long")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     if args.max_parallel_clients < 1:
@@ -144,7 +204,8 @@ def main():
                       "cells": summary}, indent=2))
     if args.execute:
         for path, targets, combos in cells:
-            execute_shared(combos, targets, output / path, args.max_parallel_clients)
+            execute_shared(combos, targets, output / path, args.max_parallel_clients,
+                           stall_minutes=args.stall_minutes)
 
 
 if __name__ == "__main__":
