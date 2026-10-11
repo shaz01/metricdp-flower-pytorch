@@ -35,10 +35,9 @@ per-target CIA exposure rises with client weight.
   Committed results that record a device all ran on CUDA. Also fixed: the EuroSAT frontier runner was unusable on
   `master` since 2026-10-02 (its data module rejected the forwarded `dirichlet_alpha`); `run_one_combo` now accepts
   checkpoint round 0.
-- **WP1 D2 Stage A side-channel audit (Agent A, `feature/cia-audit`, 2026-10-11): launched on the compute server
-  (owner confirmed 50.6 t-h), then `blocked` after the first trajectory: measured cost projects to 65-71 h vs the
-  63.3 h escalation threshold (training 1.10x the plan plus per-target evaluation; `ESCALATION.md`, Escalation 2). 2 of 228
-  trajectories complete, workers stopped.** Protocol
+- **WP1 D2 Stage A side-channel audit (Agent A, `feature/cia-audit`, 2026-10-11): running on the compute server
+  since 2026-10-11 18:30.** Measured cost 65-71 h vs the 50.6 t-h plan (training 1.10x the plan plus per-target
+  evaluation); the owner raised the budget to 71 h (`ESCALATION.md`, Escalation 2, option 1; design unchanged). Protocol
   `results/cia_frontier/side_channel_audit/PROTOCOL.md` (EuroSAT and Alzheimer, Dirichlet alpha 0.3, 3/5/8 clients,
   every client a target, global DP and metric privacy with fixed noise std, equal weights, seeds 42-44, 50 rounds;
   228 trajectories), runner with stall guard, increment attacker (`experiments/cia/increment_attack.py`), analysis
@@ -168,7 +167,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `results.cia_frontier.side_channel_audit.runner --execute` (Agent A, WP1) | compute server, GPU 1 (shared), 2 workers; 2 of 228 trajectories | stopped 2026-10-11 18:22, blocked on owner (cost escalation) |
+| `results.cia_frontier.side_channel_audit.runner --execute` (Agent A, WP1) | compute server, GPU 1 (shared with another user), 2 workers; 2 of 228 trajectories at launch | running since 2026-10-11 18:30 (about 1.5-2 days) |
 
 ## What's established on `master`
 
