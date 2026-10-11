@@ -1,10 +1,10 @@
 package: WP1
-status: blocked (measured cost projects to 65-71 h vs the 63.3 h escalation threshold; see ESCALATION.md, Escalation 2)
+status: running (owner chose Escalation 2 option 1: budget 71 h, escalate above 89 h)
 gate: G1 = not evaluated (2 of 228 trajectories)
 protocol: results/cia_frontier/side_channel_audit/PROTOCOL.md @ f7076a58
 machine: compute server (owner decision 2026-10-11; the roadmap planned the owner PC)
-cost so far: 2 of 228 trajectories complete (about 1.2 h of trajectory wall time). Plan 50.6 t-h; owner budget 50.6 t-h; re-estimate from the first two trajectories 65.0-70.6 h
-next: wait for the owner's decision on ESCALATION.md Escalation 2, then resume with the same command (completed trajectories are skipped)
+cost so far: 2 of 228 trajectories complete (about 1.2 h of trajectory wall time). Plan 50.6 t-h; re-estimate 65.0-70.6 h; owner budget 71 h (escalate above 89 h)
+next: run to 228/228; re-check the cost after the first Alzheimer trajectory; then analyze.py and gate G1
 needs from others: none
 
 ## Owner decisions (2026-10-11)

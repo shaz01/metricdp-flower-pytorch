@@ -92,6 +92,9 @@ EuroSAT evaluation term shrinks), not enough on its own to be sure of staying un
 3. Keep about 63 h by amending the design (owner decision, dated amendment before further runs), e.g. drop one seed
    from the 5-client cells. Changes what G1 pools over; the gate rule itself is unchanged.
 
-## Status
+## Decision (owner, 2026-10-11)
 
-2 of 228 trajectories complete; no worker running; GPU claim released. Waiting for the owner.
+The owner replied "lets start" to this escalation, which recommended option 1; recorded as **option 1**: design
+unchanged, no code change, budget raised to **71 h** (projection upper end), escalation above **89 h** (71 x 1.25),
+cost re-checked after the first Alzheimer trajectory. Resumed on GPU 1 of the compute server with two workers
+(8-client cells at most 4 parallel clients per worker; execution setting only, see `STATE.md`).
