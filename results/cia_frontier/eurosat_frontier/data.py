@@ -56,7 +56,10 @@ class DirichletEuroSAT(EurosatDataModule):
 
     def client_loaders(self, partition_id, *, num_partitions, partition_mode,
                        batch_size, seed, partition_profile="auto", client_weights=None,
-                       max_samples=0):
+                       dirichlet_alpha=None, max_samples=0):
+        # ``dirichlet_alpha`` is forwarded by the partition views since 2026-10-02 (e6419e8b);
+        # this experiment's alpha comes from the partition profile (``self.alpha``) instead.
+        del dirichlet_alpha
         if partition_mode != "non-iid" or client_weights is not None:
             raise ValueError("This experiment requires label-Dirichlet non-IID without weights")
         layout = self._layout_seed(seed)

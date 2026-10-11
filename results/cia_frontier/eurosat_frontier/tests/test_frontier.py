@@ -208,3 +208,19 @@ def test_diagnostics_log_increments_without_changing_training_identity(tmp_path,
     assert row["clean_grad_norm_start"] == 2.0 and row["noisy_grad_norm_start"] == 3.0
     assert rows[(1, 0)]["clean_loss_before"] == 10.0  # the round-0 (initial) model
     assert not list(tmp_path.glob("*/*.pt"))
+
+
+def test_dirichlet_eurosat_accepts_every_keyword_the_partition_views_forward():
+    """Since 2026-10-02 the partition views forward ``dirichlet_alpha``; the frontier
+    module must accept it, or every client fails before training (round skipped)."""
+    import inspect
+
+    from experiments.cia.datasets.partitions import PartitionViewDataModule
+    from results.cia_frontier.eurosat_frontier.data import DirichletEuroSAT
+
+    forwarded = {name for name, parameter in inspect.signature(
+        PartitionViewDataModule.client_loaders).parameters.items()
+        if parameter.kind is inspect.Parameter.KEYWORD_ONLY}
+    accepted = set(inspect.signature(DirichletEuroSAT.client_loaders).parameters)
+    assert "dirichlet_alpha" in forwarded
+    assert forwarded <= accepted
