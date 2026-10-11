@@ -26,6 +26,7 @@ from experiments.reproduce.paper_loss import make_evaluate_fn
 from experiments.reproduce.paper_strategies import create_paper_strategy
 from experiments.reproduce.paper_training import create_initial_model, seed_training
 from metricdp_pytorch.data_module import load_data_module
+from metricdp_pytorch.dp_diagnostics import LeaveOneOutResidualLogging
 from metricdp_pytorch.model_module import load_model
 from metricdp_pytorch.utils.device import resolve_device
 from metricdp_pytorch.utils.runtime import runtime_config
@@ -187,6 +188,8 @@ def run(
         clipping_norm=float(config.get("clipping-norm", 5.0)),
         weighting=str(config.get("aggregation-weighting", "num-examples")),
     )
+    if bool(config.get("log-loo-residuals", False)):
+        strategy = LeaveOneOutResidualLogging(strategy)
     return strategy.start(
         grid=grid,
         initial_arrays=initial_arrays,
@@ -280,6 +283,8 @@ def main(grid: Grid, context: Context) -> None:
             **({"influence_fraction": float(config["influence-fraction"]),
                 "influence_cap": float(config["influence-cap"])}
                if str(config["privacy"]) == "influence-noise" else {}),
+            **({"log_loo_residuals": True}
+               if bool(config.get("log-loo-residuals", False)) else {}),
             "initialization_pretrained": bool(initialization_losses),
             "initialization_epochs": len(initialization_losses),
             "initialization_final_loss": (

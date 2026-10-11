@@ -196,3 +196,21 @@ def test_auto_client_gpus_never_oversubscribes_the_device(
     concurrent = max(1, min(num_clients, max_parallel_clients))
     assert share > 0.0
     assert share * concurrent <= 1.0
+
+
+def test_runner_accepts_initial_model_checkpoint_round_zero(tmp_path) -> None:
+    config = build_run_config(
+        _args("--checkpoint-rounds", "0", "1", "--output-dir", str(tmp_path))
+    )
+
+    assert config["checkpoint-rounds"] == [0, 1]
+    with pytest.raises(ValueError, match="checkpoint-rounds"):
+        build_run_config(_args("--checkpoint-rounds", "-1", "--output-dir", str(tmp_path)))
+
+
+def test_runner_adds_loo_residual_logging_only_when_requested(tmp_path) -> None:
+    default = build_run_config(_args("--output-dir", str(tmp_path)))
+    enabled = build_run_config(_args("--log-loo-residuals", "--output-dir", str(tmp_path)))
+
+    assert "log-loo-residuals" not in default
+    assert enabled["log-loo-residuals"] is True
