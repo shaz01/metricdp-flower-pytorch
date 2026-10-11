@@ -112,6 +112,28 @@ def round_rows(round_number, target, before, after):
     return row
 
 
+EUROSAT_DATA_MODULE = "results.cia_frontier.eurosat_frontier.data:create_data_module"
+
+
+def data_package(combo):
+    """Python module behind ``combo.data_module``.
+
+    It must provide ``create_data_module`` (training), ``base_module(alpha,
+    partition_seed)`` (canonical module for shadow views) and ``partition_summary``.
+    """
+    import importlib
+    return importlib.import_module(combo.data_module.split(":", 1)[0])
+
+
+def release_norm(previous_state, state):
+    """L2 norm of a released global-model update over all floating state entries."""
+    import torch
+    squared = sum(float(torch.sum((state[key].double() - previous_state[key].double()) ** 2))
+                  for key in state if state[key].is_floating_point())
+    count = sum(state[key].numel() for key in state if state[key].is_floating_point())
+    return squared ** 0.5, count
+
+
 def atomic_json(path, value):
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(value, indent=2, allow_nan=False) + "\n")
@@ -135,10 +157,10 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
     # Imports are delayed so planning cannot load data or initialize training.
     from experiments.cia.iter_combos import iter_combos
     from experiments.cia import cia
+    import torch
     from experiments.cia.datasets.shadow import ShadowDataModule
     from metricdp_pytorch.utils.noisy_dataset import NoisyDataModule
     from metricdp_pytorch.utils.device import resolve_device
-    from results.cia_frontier.eurosat_frontier.data import DirichletEuroSAT, partition_summary
 
     output.mkdir(parents=True, exist_ok=True)
     device = resolve_device()
@@ -156,6 +178,8 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
             manifest["partition_seed"] = combo.partition_seed
         if combo.diagnostics:
             manifest["diagnostics"] = True
+        if combo.data_module != EUROSAT_DATA_MODULE:
+            manifest["data_module"] = combo.data_module
         manifest_path = folder / "manifest.json"
         if manifest_path.exists() and json.loads(manifest_path.read_text()) != manifest:
             raise ValueError(f"Manifest mismatch: {folder}; use a separate output directory")
@@ -168,7 +192,8 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
         rows = json.loads(report.read_text()) if report.exists() else []
         if (folder / "complete.json").exists() and {(r["round"], r["target"]) for r in rows} == expected:
             continue
-        atomic_json(folder / "partitions.json", partition_summary(
+        package = data_package(combo)
+        atomic_json(folder / "partitions.json", package.partition_summary(
             combo.alpha, combo.canonical_clients, combo.layout_seed,
         ))
         import os
@@ -201,14 +226,22 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
             eval_combo = replace(combo, seed=combo.layout_seed)
             shadows = {}
             for target in chosen:
-                base = DirichletEuroSAT(combo.alpha, partition_seed=combo.partition_seed)
+                base = package.base_module(combo.alpha, partition_seed=combo.partition_seed)
                 kwargs = dict(num_clients=combo.canonical_clients, target_partition_id=target,
                               shadow_fraction=0.10, partition_mode="non-iid", partition_profile="auto")
                 shadows[target] = (ShadowDataModule(base, **kwargs),
                                    ShadowDataModule(NoisyDataModule(base, std_fraction=0.20), **kwargs))
             rows = []
             previous = {}  # target -> evaluation of the previous checkpoint (diagnostics)
+            releases, previous_state = [], None  # diagnostics: released-update norms
             for round_number, path in zip(checkpoint_rounds, paths, strict=True):
+                if combo.diagnostics:
+                    state = torch.load(path, map_location="cpu", weights_only=True)
+                    if previous_state is not None:
+                        norm, count = release_norm(previous_state, state)
+                        releases.append(dict(round=round_number, update_norm=norm,
+                                             parameter_count=count))
+                    previous_state = state
                 for target, (clean, noisy) in shadows.items():
                     views = dict(clean_data_module=clean, noisy_data_module=noisy,
                                  device=device, combo=eval_combo)
@@ -226,6 +259,8 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
                 path.unlink()  # only after ALL targets at this round are persisted
                 print(f"[FRONTIER EVAL {round_number}/{len(rounds)}] targets={len(chosen)} "
                       f"elapsed={time.monotonic() - trained:.1f}s", flush=True)
+            if combo.diagnostics:
+                atomic_json(folder / "releases.json", releases)
             finished = time.monotonic()
             atomic_json(folder / "complete.json", {
                 "complete": True, "training_seconds": round(trained - started, 1),

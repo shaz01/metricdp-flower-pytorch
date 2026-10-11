@@ -178,11 +178,14 @@ def test_diagnostics_log_increments_without_changing_training_identity(tmp_path,
     assert "--log-loo-residuals" not in args(plain)
     assert args(logged) == (*args(plain), "--log-loo-residuals")
 
+    import torch
+
     def fake_training(runs, **kwargs):
         assert kwargs["checkpoint_rounds"] == (0, 1, 2)
         paths = tuple(kwargs["output_dir"] / f"round{r}.pt" for r in kwargs["checkpoint_rounds"])
-        for path in paths:
-            path.touch()
+        for r, path in zip(kwargs["checkpoint_rounds"], paths):
+            # weights 3^r * (1, 1); an integer buffer that must be ignored
+            torch.save({"w": torch.full((2,), 3.0 ** r), "steps": torch.tensor(r)}, path)
         yield runs[0], True, paths
     monkeypatch.setattr(training, "iter_combos", fake_training)
     # Loss at round r for target t: 10 - r + t (clean), 20 - 2r (noisy); grad norm 1 + r.
@@ -208,6 +211,11 @@ def test_diagnostics_log_increments_without_changing_training_identity(tmp_path,
     assert row["clean_grad_norm_start"] == 2.0 and row["noisy_grad_norm_start"] == 3.0
     assert rows[(1, 0)]["clean_loss_before"] == 10.0  # the round-0 (initial) model
     assert not list(tmp_path.glob("*/*.pt"))
+    releases = json.loads((folder / "releases.json").read_text())
+    assert [r["round"] for r in releases] == [1, 2]
+    assert releases[0]["update_norm"] == pytest.approx(2 * 2 ** 0.5)  # (3 - 1) * sqrt(2)
+    assert releases[1]["update_norm"] == pytest.approx(6 * 2 ** 0.5)  # (9 - 3) * sqrt(2)
+    assert {r["parameter_count"] for r in releases} == {2}
 
 
 def test_dirichlet_eurosat_accepts_every_keyword_the_partition_views_forward():
