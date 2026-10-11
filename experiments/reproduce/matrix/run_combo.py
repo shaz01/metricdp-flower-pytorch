@@ -48,8 +48,9 @@ def run_one_combo(
     checkpoint_rounds: tuple[int, ...] = (),
 ) -> bool:
     """Run one combo through the reproduction runner, or skip it when complete."""
-    if any(value < 1 or value > combo.hyperparams.rounds for value in checkpoint_rounds):
-        raise ValueError("checkpoint_rounds must be between 1 and combo rounds.")
+    # Round 0 is the initial global model (the reproduction runner accepts it too).
+    if any(value < 0 or value > combo.hyperparams.rounds for value in checkpoint_rounds):
+        raise ValueError("checkpoint_rounds must be between 0 and combo rounds.")
     name = combo.run_name()
     result_path = combo.result_path(output_dir)
 
