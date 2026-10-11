@@ -1,10 +1,10 @@
 package: WP1
-status: planning (budget confirmed 2026-10-11; launching on the compute server)
-gate: G1 = not evaluated (no protocol run yet)
+status: blocked (measured cost projects to 65-71 h vs the 63.3 h escalation threshold; see ESCALATION.md, Escalation 2)
+gate: G1 = not evaluated (2 of 228 trajectories)
 protocol: results/cia_frontier/side_channel_audit/PROTOCOL.md @ f7076a58
 machine: compute server (owner decision 2026-10-11; the roadmap planned the owner PC)
-cost so far: 0 t-h of protocol runs; smoke tests only (owner PC, scratch output). Projection 50.6 t-h; budget 50.6 t-h (owner-confirmed, cap raised from 15 t-h)
-next: launch one worker, time the first trajectory, re-estimate the cost (escalate if > 63.3 t-h = 50.6 x 1.25), then add workers
+cost so far: 2 of 228 trajectories complete (about 1.2 h of trajectory wall time). Plan 50.6 t-h; owner budget 50.6 t-h; re-estimate from the first two trajectories 65.0-70.6 h
+next: wait for the owner's decision on ESCALATION.md Escalation 2, then resume with the same command (completed trajectories are skipped)
 needs from others: none
 
 ## Owner decisions (2026-10-11)
@@ -16,6 +16,21 @@ needs from others: none
   ESCALATION.md, Decision section.
 - GPU: the owner assigned GPU 1 of the compute server, shared with another user's running job; WP1 must not
   interrupt it or exceed the GPU's memory, so parallelism is sized to the free memory.
+
+## Compute-server execution log
+
+| When (2026-10-11, +03:00) | Event |
+|---|---|
+| 17:30 | Worktree `feature/cia-audit` (sparse), shared main venv; `uv run pytest`: 596 passed, 2 skipped (MPS only), 5 deselected; plan: 228 trajectories, 50.62 t-h |
+| 17:38 | Worker 0 on GPU 1 (`CUDA_VISIBLE_DEVICES=1`, `--max-parallel-clients 8`); GPU 1 shared with another user's job (12.4 GB) |
+| 17:46-17:56 | Worker 1 on GPU 1 (owner asked for more parallelism; two workers is the most GPU 1's free memory allows) |
+| 18:14 | First trajectory complete (EuroSAT, 3 clients, global DP, seed 42, IN): training 1,475.0 s, evaluation 696.2 s = 0.603 h vs 0.37 h planned. First re-estimate counted every target in every trajectory (109 h); workers stopped |
+| 18:22 | Worker 1's trajectory complete (OUT-0, seed 42): training 1,461.6 s, evaluation 143.7 s (OUT scores only its own target). Corrected re-estimate 65.0-70.6 h > 63.3 h: Escalation 2 raised, worker 1 stopped |
+
+Measured footprint per worker (3 clients): GPU about 0.43 GB server + 0.5-0.73 GB per client actor; RAM about 1.45 GB
+per client actor. For resumption on the shared GPU 1: 8-client cells with `--max-parallel-clients 4` per worker so two
+workers hold at most 8 client actors (about 9 GB); this only limits concurrent Ray actors and does not change what is
+computed (aggregation order is deterministic).
 
 ## Ready for the server
 
