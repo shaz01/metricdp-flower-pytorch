@@ -1,10 +1,10 @@
 package: WP0
 status: ready
-gate: G0 = pass (`uv run pytest`: 573 passed, 5 deselected; fixed-noise IN/OUT and hand-computed scalar tests below)
+gate: G0 = pass (`uv run pytest`: 577 passed, 5 deselected; fixed-noise IN/OUT and hand-computed scalar tests below)
 protocol: none (WP0 is infrastructure, no runs; specification is agent_roadmap.md Section 2, WP0 items 1-4)
 machine: owner PC
 cost so far: 0 t-h of 0 (no training; one 1-round `--smoke` integration check of the Flower path, 3 clients, capped data)
-next: Agent A starts WP1 on feature/cia-audit (protocol first)
+next: WP1 is on feature/cia-audit (its STATE.md); later fixes here: frontier data module accepts dirichlet_alpha, run_one_combo accepts checkpoint round 0
 needs from others: none (ESCALATION.md resolved 2026-10-11, owner chose option 1)
 
 ## What WP0 delivers (all default-off; with the flags off, run names, manifests and result keys are unchanged)
