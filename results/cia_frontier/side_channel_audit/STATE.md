@@ -28,11 +28,11 @@ needs from others: none
 | 18:22 | Worker 1's trajectory complete (OUT-0, seed 42): training 1,461.6 s, evaluation 143.7 s (OUT scores only its own target). Corrected re-estimate 65.0-70.6 h > 63.3 h: Escalation 2 raised, worker 1 stopped |
 | 18:30 | Owner chose option 1 (budget 71 h). Resumed: workers 0 and 1 on GPU 1, each under a rerun loop in tmux (`wp1-w0`, `wp1-w1`): every cycle runs the 3- and 5-client cells with `--max-parallel-clients 8`, then the 8-client cells with `--max-parallel-clients 4`, until the plan reports 228/228; the interrupted OUT-1 trajectory is retrained from scratch |
 | 19:33 | Another user started a second job on GPU 1 (8.2 GB at start; its twin on GPU 0 uses 14 GB), leaving too little headroom for two WP1 workers without risking the other user's jobs. Worker 1 stopped at a trajectory boundary (nothing lost); one worker continues. 5 of 228 complete |
+| 20:15 | The other user's second job grew to 14.0 GB (GPU 1: 26.4 GB used by other users, 32.7 GB total). Worker 0 restarted at a trajectory boundary with `--max-parallel-clients 3` for every cell (about 2.6 GB for WP1; execution setting only, results unchanged); the limit is now read before every pass from a config file on the server. 7 of 228 complete |
 
 Measured footprint per worker (3 clients): GPU about 0.43 GB server + 0.5-0.73 GB per client actor; RAM about 1.45 GB
-per client actor. For resumption on the shared GPU 1: 8-client cells with `--max-parallel-clients 4` per worker so two
-workers hold at most 8 client actors (about 9 GB); this only limits concurrent Ray actors and does not change what is
-computed (aggregation order is deterministic).
+per client actor. The number of parallel client actors only limits concurrent Ray actors and does not change what is computed
+(aggregation order is deterministic); it is set to fit the GPU memory other users leave free (see the log below).
 
 ## Ready for the server
 
