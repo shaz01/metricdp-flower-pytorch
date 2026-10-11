@@ -113,7 +113,12 @@ CUDA_VISIBLE_DEVICES=0 nohup uv run python -m results.cia_frontier.side_channel_
 
 Several workers (one per GPU, same command, different `CUDA_VISIBLE_DEVICES`) share the plan: each trajectory is
 locked while it trains, locked ones are skipped, and completed ones (`complete.json`) are skipped on restart, so a
-crashed worker is restarted with the same command. Shard by `--datasets`, `--clients`, `--privacy` or `--seeds`
+crashed worker is restarted with the same command. A trajectory whose folder shows no file activity for
+`--stall-minutes` (default 30) is killed with its whole process group and left without `complete.json`; the worker
+continues, and the next run of the same command retrains it from scratch (never a partial mix). Reason: on the owner PC
+Ray occasionally deadlocks while forking its dashboard process (a forked child blocks in a Python at-fork hook and
+never execs; the server then waits forever for client actors). Repeat the command until the plan (run without
+`--execute`) reports `complete` equal to `trajectories`. Shard by `--datasets`, `--clients`, `--privacy` or `--seeds`
 when useful. Logs (`worker-*.log`) are not committed. Record each launch in `STATE.md` and in this agent's rows of the
 `STATUS.md` Currently running table (machine-role label only).
 

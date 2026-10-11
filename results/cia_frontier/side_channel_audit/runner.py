@@ -90,13 +90,31 @@ def trajectory_hours(combo, dataset):
 
 
 def _run_isolated(combo, targets, output, max_parallel_clients):
-    """Child-process entry point: own session, so a stall kill reaches Ray's processes too."""
-    import os
-
-    os.setsid()
+    """Child-process entry point for one trajectory."""
     from results.cia_frontier.eurosat_frontier.runner import _execute
 
     _execute([combo], targets, output, max_parallel_clients)
+
+
+def _kill_tree(pid):
+    """SIGKILL a process and every descendant, collected before anything dies.
+
+    A process group is not enough: the reproduction runner relaunches itself in an
+    isolated venv in a new process group, and Ray's processes live under that one.
+    """
+    import psutil
+
+    try:
+        root = psutil.Process(pid)
+    except psutil.NoSuchProcess:
+        return
+    processes = root.children(recursive=True) + [root]
+    for process in processes:
+        try:
+            process.kill()
+        except psutil.NoSuchProcess:
+            pass
+    psutil.wait_procs(processes, timeout=30)
 
 
 def _last_activity(folder):
@@ -113,7 +131,7 @@ def execute_shared(combos, targets, output, max_parallel_clients, *, stall_minut
     """Train and evaluate each trajectory unless another worker holds it.
 
     Each trajectory runs in a child process. If its folder shows no file activity for
-    ``stall_minutes``, the child's process group is killed and the worker moves on; the
+    ``stall_minutes``, the child and all its descendants are killed and the worker moves on; the
     trajectory has no ``complete.json`` and is retried by the next run of the same
     command. Seen twice in 12 smoke trajectories on the owner PC (2026-10-11): Ray forks
     its dashboard process with a ``preexec_fn`` while Flower's server thread runs, the
@@ -123,7 +141,6 @@ def execute_shared(combos, targets, output, max_parallel_clients, *, stall_minut
     import fcntl
     import hashlib
     import multiprocessing
-    import os
     import signal
     import tempfile
     import time
@@ -152,11 +169,7 @@ def execute_shared(combos, targets, output, max_parallel_clients, *, stall_minut
                     seen, since = activity, time.monotonic()
                 elif time.monotonic() - since > stall_minutes * 60:
                     print(f"[AUDIT] stalled for {stall_minutes} min, killing: {combo.run_name()}", flush=True)
-                    try:  # the child's session: Ray's processes and the forked runner
-                        os.killpg(process.pid, signal.SIGKILL)
-                    except (ProcessLookupError, PermissionError):
-                        pass  # not yet a session leader
-                    process.kill()
+                    _kill_tree(process.pid)
                     process.join()
                     stalled.append(combo.run_name())
                     break
@@ -196,10 +209,12 @@ def main():
     output = args.output or DEFAULT_OUTPUT
     cells = plan(args.datasets, args.clients, args.privacy, args.seeds, args.adjacency, args.out_targets, rounds)
     summary = [dict(cell=str(path), trajectories=len(combos),
+                    complete=sum((output / path / c.run_name() / "complete.json").exists() for c in combos),
                     trajectory_hours=round(sum(trajectory_hours(c, str(path).split("/")[0]) for c in combos), 2))
                for path, _, combos in cells]
     print(json.dumps({"execute": args.execute, "rounds": rounds, "seeds": args.seeds,
                       "trajectories": sum(c["trajectories"] for c in summary),
+                      "complete": sum(c["complete"] for c in summary),
                       "trajectory_hours": round(sum(c["trajectory_hours"] for c in summary), 2),
                       "cells": summary}, indent=2))
     if args.execute:

@@ -54,10 +54,12 @@ def _record(combo, targets, output, max_parallel_clients):
 
 
 def _hang(combo, targets, output, max_parallel_clients):
-    import os
+    """Hang with a grandchild in its own process group (like the isolated runner and Ray)."""
+    import subprocess
     import time
 
-    os.setsid()
+    child = subprocess.Popen(["sleep", "600"], start_new_session=True)
+    (output / "grandchild.pid").write_text(str(child.pid))
     time.sleep(600)
 
 
@@ -82,8 +84,12 @@ def test_execute_shared_kills_a_stalled_trajectory_and_moves_on(tmp_path) -> Non
     hung, after = runner.build_audit_combos("alzheimer", 3, "global-dp", seeds=[42])[:2]
     started = time.monotonic()
     stalled = runner.execute_shared([hung], [0, 1, 2], tmp_path, 1, worker=_hang,
-                                    stall_minutes=1 / 60, poll_seconds=0.2)
+                                    stall_minutes=0.1, poll_seconds=0.2)
     assert stalled == [hung.run_name()]
-    assert time.monotonic() - started < 30
+    assert time.monotonic() - started < 90
+    import psutil
+
+    grandchild = int((tmp_path / "grandchild.pid").read_text())
+    assert not psutil.pid_exists(grandchild) or psutil.Process(grandchild).status() == psutil.STATUS_ZOMBIE
     assert runner.execute_shared([after], [0, 1, 2], tmp_path, 1, worker=_record, poll_seconds=0.1) == []
     assert (tmp_path / "executed.txt").read_text().split() == [after.run_name()]
