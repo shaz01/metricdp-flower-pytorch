@@ -161,6 +161,13 @@ def gate_decision(low, high, threshold):
     return "inconclusive"
 
 
+def side_channel_attribution(oracle_metric_ci_low, blind_metric, blind_global_dp):
+    """PROTOCOL.md pre-run revision: which channel a G1(a) pass is attributed to."""
+    if oracle_metric_ci_low > G1A_THRESHOLD and blind_metric > blind_global_dp:
+        return "metric-privacy noise level"
+    return "update norm (both mechanisms)"
+
+
 def analyze(root):
     cells = load(root)
     report = {"cells": [], "gate": {}}
@@ -186,6 +193,14 @@ def analyze(root):
     if strata:
         g1a = _summary(strata, "noise_level", "auc")
         g1a["decision"] = gate_decision(*g1a["ci95"], G1A_THRESHOLD)
+        oracle = _summary(strata, "oracle_noise_level", "auc")
+        control = [clusters(cells[k], PRIMARY_VIEW, "top_decile") for k in sorted(cells) if k[2] == "global-dp"]
+        blind_global_dp = _summary(control, "noise_level", "auc") if control else None
+        g1a["oracle_metric_privacy_auc"] = oracle
+        g1a["blind_global_dp_auc"] = blind_global_dp
+        if blind_global_dp is not None:
+            g1a["attribution"] = side_channel_attribution(
+                oracle["ci95"][0], g1a["value"], blind_global_dp["value"])
         report["gate"]["G1a"] = g1a
 
     # G1(b): macro average over all cells of TPR at 5% FPR, increment minus loss attacker,

@@ -146,6 +146,23 @@ uv run python -m results.cia_frontier.side_channel_audit.analyze results/cia_fro
 - Metric privacy at 3-8 clients may become unstable (small `d_t`, large noise); accuracies are reported for every
   trajectory and nothing is excluded.
 
+## Pre-run revision (2026-10-11, before any protocol run; gate and thresholds unchanged)
+
+The end-to-end smoke (Section 9) showed that the blind noise-level score also separates IN from OUT under global DP,
+whose noise is identical in both worlds (its oracle score, built from the true noise std, sits at exactly 0.5). The
+released update is `noise + mean of the client updates`, and the mean changes when a client is removed; with `D`
+between 0.3 and 6.5 million the noise norm is so concentrated that this signal difference is visible. The blind
+estimate therefore measures two channels: the **update-norm channel** (both mechanisms) and the **noise-level channel**
+(metric privacy only, through `d_t`). G1(a) stays as defined in Section 6 (it is the roadmap's attack). Fixed now for
+the write-up:
+
+- The side-channel claim is attributed to metric privacy's noise level only if the oracle noise-level score for
+  metric privacy (top-decile targets, pooled as in G1(a)) also has an AUC interval above 0.55, and the blind
+  metric-privacy AUC exceeds the blind global-DP AUC on the same targets. Otherwise a G1(a) pass is reported as an
+  update-norm channel common to both mechanisms.
+- The blind global-DP noise-level AUC (all targets and top decile) is reported as the size of the update-norm channel.
+- These numbers are smoke diagnostics (3 rounds, 2 seeds), not results; they are not used anywhere else.
+
 ## Amendments
 
 None.

@@ -105,3 +105,14 @@ def test_gate_decision_rule() -> None:
     assert analyze.gate_decision(0.56, 0.7, 0.55) == "pass"
     assert analyze.gate_decision(0.4, 0.55, 0.55) == "fail"
     assert analyze.gate_decision(0.5, 0.6, 0.55) == "inconclusive"
+
+
+def test_side_channel_attribution_rule() -> None:
+    assert analyze.side_channel_attribution(0.6, 0.8, 0.7) == "metric-privacy noise level"
+    assert analyze.side_channel_attribution(0.5, 0.8, 0.7) == "update norm (both mechanisms)"
+    assert analyze.side_channel_attribution(0.6, 0.7, 0.8) == "update norm (both mechanisms)"
+
+
+def test_report_carries_the_attribution_inputs(tmp_path) -> None:
+    g1a = analyze.analyze(_tree(tmp_path, separable=True))["gate"]["G1a"]
+    assert {"oracle_metric_privacy_auc", "blind_global_dp_auc", "attribution"} <= set(g1a)
