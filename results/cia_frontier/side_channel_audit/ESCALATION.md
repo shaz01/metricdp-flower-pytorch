@@ -34,3 +34,10 @@ assumed small federations were cheap.
 with the specified design, and Agent A prepares everything for it (protocol, runner, analysis, tests, smoke runs,
 launch instructions). **Open:** explicit confirmation of the 50.6 t-h budget (3.4 times the cap). No protocol run
 starts before it is recorded in `STATE.md`.
+
+## Decision (owner, 2026-10-11)
+
+The owner confirms the **50.6 t-h budget** for WP1 as written in `PROTOCOL.md` (design unchanged: 228 trajectories,
+50 rounds, seeds 42-44; the declared seed-45 extension stays conditional on an inconclusive gate part). WP1 runs on the
+compute server on the GPU the owner assigned (one GPU, shared with another user's job; see `STATE.md`). Escalation
+resolved; WP1 unblocked.

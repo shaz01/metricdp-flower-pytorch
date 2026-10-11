@@ -1,18 +1,21 @@
 package: WP1
-status: blocked (ready to launch on the compute server; waiting for the owner's budget confirmation, see ESCALATION.md)
+status: planning (budget confirmed 2026-10-11; launching on the compute server)
 gate: G1 = not evaluated (no protocol run yet)
 protocol: results/cia_frontier/side_channel_audit/PROTOCOL.md @ f7076a58
 machine: compute server (owner decision 2026-10-11; the roadmap planned the owner PC)
-cost so far: 0 t-h of protocol runs; smoke tests only (owner PC, scratch output). Projection 50.6 t-h vs cap 15 t-h
-next: on confirmation, launch on the compute server (PROTOCOL.md Section 8), record the launch here and in STATUS.md
-needs from others: none (owner: confirm the 50.6 t-h budget)
+cost so far: 0 t-h of protocol runs; smoke tests only (owner PC, scratch output). Projection 50.6 t-h; budget 50.6 t-h (owner-confirmed, cap raised from 15 t-h)
+next: launch one worker, time the first trajectory, re-estimate the cost (escalate if > 63.3 t-h = 50.6 x 1.25), then add workers
+needs from others: none
 
 ## Owner decisions (2026-10-11)
 
 - WP1 runs on the compute server, not the owner PC (measured on the owner PC: 67 s per EuroSAT round at 3 or 8
   clients, so the specified design is about 137 h there).
 - Every non-homogeneous partition is label-Dirichlet; the 3-client Alzheimer federation uses Dirichlet alpha 0.3.
-- Open: confirm the 50.6 t-h budget (3.4 times the 15 t-h cap).
+- Budget: the owner confirmed 50.6 t-h (3.4 times the 15 t-h cap) as written in PROTOCOL.md; recorded in
+  ESCALATION.md, Decision section.
+- GPU: the owner assigned GPU 1 of the compute server, shared with another user's running job; WP1 must not
+  interrupt it or exceed the GPU's memory, so parallelism is sized to the free memory.
 
 ## Ready for the server
 
