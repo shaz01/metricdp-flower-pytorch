@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
+from logging import INFO
 
 import numpy as np
-from flwr.app import ArrayRecord, Message, MetricRecord
+from flwr.app import ArrayRecord, ConfigRecord, Message, MetricRecord
+from flwr.common import log
+from flwr.serverapp import Grid
+from flwr.serverapp.strategy import Strategy
 
 
 def model_update_l2_norm(model: ArrayRecord, reference: ArrayRecord) -> float:
@@ -96,3 +100,106 @@ def add_diagnostics(metrics: MetricRecord | None, values: dict) -> MetricRecord:
     for key, value in values.items():
         output[key] = value
     return output
+
+
+def leave_one_out_residual_diagnostics(
+    replies: Sequence[Message],
+    *,
+    current_arrays: ArrayRecord,
+    arrayrecord_key: str = "arrays",
+) -> dict[str, list[float] | list[int]]:
+    """Norm of each client's update minus the equal-weight mean of the others' updates.
+
+    With ``u_i = model_i - current_arrays`` and ``S = sum_j u_j`` over the ``n``
+    successful replies, the residual is ``u_i - (S - u_i) / (n - 1)
+    = (n u_i - S) / (n - 1)``. Measured on the raw replies, i.e. before any
+    clipping. Error replies and replies without an ArrayRecord are skipped, as
+    in ``clipping_diagnostics``; fewer than two usable replies give empty lists.
+    """
+    reference = [
+        np.asarray(array, dtype=np.float64) for array in current_arrays.to_numpy_ndarrays()
+    ]
+    rows: list[tuple[int, list[np.ndarray]]] = []
+    for fallback_id, reply in enumerate(replies):
+        if not reply.has_content():
+            continue
+        model = reply.content.get(arrayrecord_key)
+        if not isinstance(model, ArrayRecord):
+            continue
+        arrays = model.to_numpy_ndarrays()
+        if len(arrays) != len(reference) or any(
+            array.shape != base.shape for array, base in zip(arrays, reference, strict=True)
+        ):
+            raise ValueError("Model and reference arrays must have matching shapes.")
+        metrics = next(iter(reply.content.metric_records.values()), MetricRecord())
+        client_id = int(metrics.get("client-id", fallback_id))
+        update = [
+            np.asarray(array, dtype=np.float64) - base
+            for array, base in zip(arrays, reference, strict=True)
+        ]
+        rows.append((client_id, update))
+    rows.sort(key=lambda row: row[0])
+    count = len(rows)
+    if count < 2:
+        return {"loo-client-ids": [], "loo-residual-norms": []}
+    totals = [sum(update[layer] for _, update in rows) for layer in range(len(reference))]
+    norms = [
+        float(np.sqrt(sum(
+            float(np.sum(np.square(count * layer - total)))
+            for layer, total in zip(update, totals, strict=True)
+        ))) / (count - 1)
+        for _, update in rows
+    ]
+    return {
+        "loo-client-ids": [client_id for client_id, _ in rows],
+        "loo-residual-norms": norms,
+    }
+
+
+class LeaveOneOutResidualLogging(Strategy):
+    """Wrap any strategy and log ``leave_one_out_residual_diagnostics`` every round.
+
+    The wrapper sits outside the DP wrappers, so it sees the replies before they
+    are clipped, and it also works for vanilla strategies. Training and noise are
+    untouched; the only change is two extra keys in the round's train metrics.
+    """
+
+    def __init__(self, strategy: Strategy, arrayrecord_key: str = "arrays") -> None:
+        self.strategy = strategy
+        self.arrayrecord_key = arrayrecord_key
+        self.current_arrays = ArrayRecord()
+
+    def __repr__(self) -> str:
+        return f"LeaveOneOutResidualLogging({self.strategy!r})"
+
+    def summary(self) -> None:
+        log(INFO, "\t├──> Leave-one-out residual norms logged every round")
+        self.strategy.summary()
+
+    def configure_train(
+        self, server_round: int, arrays: ArrayRecord, config: ConfigRecord, grid: Grid
+    ) -> Iterable[Message]:
+        self.current_arrays = arrays
+        return self.strategy.configure_train(server_round, arrays, config, grid)
+
+    def aggregate_train(
+        self, server_round: int, replies: Iterable[Message]
+    ) -> tuple[ArrayRecord | None, MetricRecord | None]:
+        reply_list = list(replies)
+        diagnostics = leave_one_out_residual_diagnostics(
+            reply_list,
+            current_arrays=self.current_arrays,
+            arrayrecord_key=self.arrayrecord_key,
+        )
+        arrays, metrics = self.strategy.aggregate_train(server_round, reply_list)
+        return arrays, add_diagnostics(metrics, diagnostics)
+
+    def configure_evaluate(
+        self, server_round: int, arrays: ArrayRecord, config: ConfigRecord, grid: Grid
+    ) -> Iterable[Message]:
+        return self.strategy.configure_evaluate(server_round, arrays, config, grid)
+
+    def aggregate_evaluate(
+        self, server_round: int, replies: Iterable[Message]
+    ) -> MetricRecord | None:
+        return self.strategy.aggregate_evaluate(server_round, replies)

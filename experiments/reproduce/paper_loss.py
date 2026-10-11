@@ -14,7 +14,7 @@ from sklearn.metrics import auc, f1_score, precision_score, roc_curve
 from sklearn.preprocessing import label_binarize
 from torch.utils.data import DataLoader
 
-from metricdp_pytorch.utils.device import release_device_cache, resolve_device
+from metricdp_pytorch.utils.device import release_device_cache, resolve_device, to_device
 
 
 def sparse_categorical_cross_entropy(
@@ -52,8 +52,8 @@ def evaluate_model(
     all_probabilities: list[torch.Tensor] = []
     with torch.no_grad():
         for images, labels in testloader:
-            images = images.to(device, non_blocking=True)
-            labels = labels.to(device, non_blocking=True)
+            images = to_device(images, device)
+            labels = to_device(labels, device)
             probabilities = model(images)
             total_loss += sparse_categorical_cross_entropy(
                 probabilities, labels, reduction="sum"

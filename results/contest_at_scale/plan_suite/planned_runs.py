@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -43,6 +44,8 @@ from metricdp_pytorch.utils.split_data import partition_by_class_counts
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "results" / "contest_at_scale" / "plan_suite" / "results"
+# --fixed-noise-stdv changes the OUT groups' noise, so it never shares the default directory.
+FIXED_NOISE_STDV_OUTPUT_DIR = DEFAULT_OUTPUT_DIR / "fixed_noise_stdv"
 
 SEEDS = (42, 43, 44)
 PRIVACY_MODES = ("vanilla", "global-dp", "metric-privacy")
@@ -225,6 +228,27 @@ REPRODUCTION_MATRIX = Matrix(
     model_module="experiments.reproduce.paper_cnn:create_model",
 )
 
+def fixed_stdv_noise_multiplier(active_clients: int) -> float:
+    """Noise multiplier that gives ``active_clients`` the full federation's noise std.
+
+    Flower's server-side std is ``z * C / active_clients``; scaling ``z`` by
+    ``active / canonical`` keeps it at ``NOISE_MULTIPLIER * C / PAPER_CIA_NUM_CLIENTS``
+    whether or not the target participates (for metric privacy the distance
+    factor ``1 / d_t`` remains).
+    """
+    return NOISE_MULTIPLIER * active_clients / PAPER_CIA_NUM_CLIENTS
+
+
+def cia_groups(*, fixed_noise_stdv: bool = False) -> tuple[tuple[str, int, Matrix], ...]:
+    """The CIA adjacency groups; with ``fixed_noise_stdv`` the noise std ignores removal."""
+    if not fixed_noise_stdv:
+        return CIA_GROUPS
+    return tuple(
+        (name, clients, replace(matrix, noise_multipliers=(fixed_stdv_noise_multiplier(clients),)))
+        for name, clients, matrix in CIA_GROUPS
+    )
+
+
 CIA_GROUPS = (
     (
         "alzheimer-in-remove",
@@ -319,13 +343,20 @@ def _parser() -> argparse.ArgumentParser:
         choices=tuple(name for name, _clients, _matrix in CIA_GROUPS),
         help="run exactly one CIA adjacency group (overrides --suite)",
     )
-    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument(
+        "--fixed-noise-stdv",
+        action="store_true",
+        help="keep the server noise std identical IN and OUT (z scaled by active/3 clients); "
+        f"default output directory becomes {FIXED_NOISE_STDV_OUTPUT_DIR.relative_to(PROJECT_ROOT)}",
+    )
+    parser.add_argument("--output-dir", type=Path)
     return parser
 
 
 def main() -> None:
     args = _parser().parse_args()
-    output_dir = args.output_dir.resolve()
+    default_dir = FIXED_NOISE_STDV_OUTPUT_DIR if args.fixed_noise_stdv else DEFAULT_OUTPUT_DIR
+    output_dir = (args.output_dir or default_dir).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
     verdict: dict[str, Any] = {
@@ -337,6 +368,7 @@ def main() -> None:
             "noise_multiplier": NOISE_MULTIPLIER,
             "replacement_runs_included": False,
             "suite": args.suite,
+            **({"fixed_noise_stdv": True} if args.fixed_noise_stdv else {}),
         },
         "groups": {},
     }
@@ -361,7 +393,7 @@ def main() -> None:
         }
         all_complete &= reproduction_complete
 
-    for name_prefix, active_clients, matrix in CIA_GROUPS:
+    for name_prefix, active_clients, matrix in cia_groups(fixed_noise_stdv=args.fixed_noise_stdv):
         if args.group is not None and name_prefix != args.group:
             continue
         dataset_name = name_prefix.split("-", 1)[0]

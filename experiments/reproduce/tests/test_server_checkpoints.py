@@ -114,3 +114,32 @@ def test_require_trained_arrays_passes_on_nonempty_result_arrays() -> None:
     result.arrays = ArrayRecord({"weight": torch.tensor([1.0])})
 
     _require_trained_arrays(result, run_name="some-run")
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+def test_run_wraps_strategy_for_loo_residuals_only_when_configured(monkeypatch, enabled) -> None:
+    started: list[object] = []
+
+    class FakeStrategy:
+        def start(self, **kwargs):
+            started.append(self)
+            return Result()
+
+    class FakeWrapper(FakeStrategy):
+        def __init__(self, strategy):
+            self.strategy = strategy
+
+    inner = FakeStrategy()
+    monkeypatch.setattr(reproduce_server, "create_paper_strategy", lambda **kwargs: inner)
+    monkeypatch.setattr(reproduce_server, "LeaveOneOutResidualLogging", FakeWrapper)
+    config = {"aggregation": "fedavg", "privacy": "vanilla", "num-clients": 2,
+              "learning-rate": 0.001, "num-server-rounds": 1}
+    if enabled:
+        config["log-loo-residuals"] = True
+
+    reproduce_server.run(None, config, initial_arrays=ArrayRecord())
+
+    if enabled:
+        assert isinstance(started[0], FakeWrapper) and started[0].strategy is inner
+    else:
+        assert started == [inner]

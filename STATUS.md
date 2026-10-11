@@ -26,6 +26,13 @@ ranked directions D1-D6 with kill criteria and staged experiments, analyses of c
 training under a fixed, public client-level DP noise law (D1). New log findings: the metric-privacy noise-level side
 channel is weak at 48 clients but the noise reveals the participant count in the 3-vs-2-client runs for both mechanisms;
 per-target CIA exposure rises with client weight.
+- **WP0 shared infrastructure (Agent A, `feature/cia-infra`, 2026-10-11): G0 passed, `ready`.** Default-off fixed noise
+  std for the plan suite (`--fixed-noise-stdv`), server-side leave-one-out residual norms (`--log-loo-residuals`), and
+  per-round shadow increments and gradient norms (frontier runner `--diagnostics`); 573 tests pass. State and usage:
+  `results/cia_frontier/cia_infra/STATE.md`. Found and fixed (owner approved): asynchronous host-to-MPS batch copies
+  corrupted training (NaN weights) and evaluation on the owner PC; with blocking copies MPS training is bit-reproducible
+  in a single process, which corrects the 2026-08-04 note in `resolve_device` (`results/cia_frontier/cia_infra/ESCALATION.md`).
+  Committed results that record a device all ran on CUDA. Next: WP1 protocol on `feature/cia-audit`.
 
 **Client-specific noise research direction: CLOSED (2026-10-09, owner decision).** Question: can noise that each client
 builds for itself improve CIA protection over the paper's server-side metric calibration at useful accuracy? Merged into
