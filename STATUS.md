@@ -167,7 +167,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `results.cia_frontier.side_channel_audit.runner --execute` (Agent A, WP1) | compute server, GPU 1 (shared with another user), 2 workers; 2 of 228 trajectories at launch | running since 2026-10-11 18:30 (about 1.5-2 days) |
+| `results.cia_frontier.side_channel_audit.runner --execute` (Agent A, WP1) | compute server, GPU 1 (shared with another user's jobs), 1 worker since 19:33 (2 before); 5 of 228 at 19:33 | running since 2026-10-11 18:30 (about 3 days with one worker) |
 
 ## What's established on `master`
 
