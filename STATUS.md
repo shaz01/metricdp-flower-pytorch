@@ -28,11 +28,13 @@ channel is weak at 48 clients but the noise reveals the participant count in the
 per-target CIA exposure rises with client weight.
 - **WP0 shared infrastructure (Agent A, `feature/cia-infra`, 2026-10-11): G0 passed, `ready`.** Default-off fixed noise
   std for the plan suite (`--fixed-noise-stdv`), server-side leave-one-out residual norms (`--log-loo-residuals`), and
-  per-round shadow increments and gradient norms (frontier runner `--diagnostics`); 573 tests pass. State and usage:
+  per-round shadow increments and gradient norms (frontier runner `--diagnostics`); 577 tests pass. State and usage:
   `results/cia_frontier/cia_infra/STATE.md`. Found and fixed (owner approved): asynchronous host-to-MPS batch copies
   corrupted training (NaN weights) and evaluation on the owner PC; with blocking copies MPS training is bit-reproducible
   in a single process, which corrects the 2026-08-04 note in `resolve_device` (`results/cia_frontier/cia_infra/ESCALATION.md`).
-  Committed results that record a device all ran on CUDA. Next: WP1 protocol on `feature/cia-audit`.
+  Committed results that record a device all ran on CUDA. Also fixed: the EuroSAT frontier runner was unusable on
+  `master` since 2026-10-02 (its data module rejected the forwarded `dirichlet_alpha`); `run_one_combo` now accepts
+  checkpoint round 0.
 
 **Client-specific noise research direction: CLOSED (2026-10-09, owner decision).** Question: can noise that each client
 builds for itself improve CIA protection over the paper's server-side metric calibration at useful accuracy? Merged into
