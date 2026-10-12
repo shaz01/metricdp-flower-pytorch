@@ -1,10 +1,10 @@
 package: WP1
 status: running (owner chose Escalation 2 option 1: budget 71 h, escalate above 89 h)
-gate: G1 = not evaluated (2 of 228 trajectories)
+gate: G1 = not evaluated (132 of 228 trajectories)
 protocol: results/cia_frontier/side_channel_audit/PROTOCOL.md @ f7076a58
 machine: compute server (owner decision 2026-10-11; the roadmap planned the owner PC)
-cost so far: 2 of 228 trajectories complete (about 1.2 h of trajectory wall time). Plan 50.6 t-h; re-estimate 65.0-70.6 h; owner budget 71 h (escalate above 89 h)
-next: run to 228/228; re-check the cost after the first Alzheimer trajectory; then analyze.py and gate G1
+cost so far: 132 of 228 trajectories complete, 47.4 h of trajectory wall time (sum of training + evaluation seconds in their complete.json). Projection 78 h (remaining 41 EuroSAT 8-client trajectories at the measured 1,646 s each, 54 Alzheimer 8-client trajectories at about 800 s each, from the 5-client cells): above the 71 h budget, below the 89 h escalation line
+next: run to 228/228; then analyze.py and gate G1
 needs from others: none
 
 ## Owner decisions (2026-10-11)
@@ -19,7 +19,7 @@ needs from others: none
 
 ## Compute-server execution log
 
-| When (2026-10-11, +03:00) | Event |
+| When (2026-10-11 unless dated, +03:00) | Event |
 |---|---|
 | 17:30 | Worktree `feature/cia-audit` (sparse), shared main venv; `uv run pytest`: 596 passed, 2 skipped (MPS only), 5 deselected; plan: 228 trajectories, 50.62 t-h |
 | 17:38 | Worker 0 on GPU 1 (`CUDA_VISIBLE_DEVICES=1`, `--max-parallel-clients 8`); GPU 1 shared with another user's job (12.4 GB) |
@@ -31,6 +31,8 @@ needs from others: none
 | 20:15 | The other user's second job grew to 14.0 GB (GPU 1: 26.4 GB used by other users, 32.7 GB total). Worker 0 restarted at a trajectory boundary with `--max-parallel-clients 3` for every cell (about 2.6 GB for WP1; execution setting only, results unchanged); the limit is now read before every pass from a config file on the server. 7 of 228 complete |
 | 21:48 | Owner assigned GPU 0 as well (one of the other user's jobs there had ended; 16.3 GB free). Worker 1 started on GPU 0 under the same loop (tmux `wp1-w1`, at most 3 parallel clients, about 2.6 GB EuroSAT / about 3.5 GB Alzheimer estimated). Two workers: GPU 1 (worker 0) and GPU 0 (worker 1). 9 of 228 complete |
 | 22:32 | The other user's MOTR job on GPU 1 grew to 16.0 GB, leaving 1.3 GB free beside worker 0. Worker 0 stopped immediately (its in-progress trajectory restarts from scratch) and moved to GPU 0 (14.3 GB free there). Both workers now on GPU 0, nothing of WP1 on GPU 1. 12 of 228 complete |
+| 2026-10-12 19:10 | 132 of 228 complete: every 3- and 5-client cell of both datasets, 13 of 27 EuroSAT 8-client global-DP trajectories. Alzheimer cost check (after the first Alzheimer trajectories): 3-client 565 s training + 95 s evaluation, 5-client 645 s + 83 s, i.e. about 2.5 times the plan's 0.2 relative cost, but EuroSAT runs at about 1.2 times its plan, so the total projects to 78 h, inside the 89 h line. Both GPUs now free of other users' jobs |
+| 2026-10-12 19:11 | Owner asked for one more worker. Worker 2 started on GPU 1 (idle: no other user's compute job) under the same loop (tmux `wp1-w2`, at most 3 parallel clients). Three workers: two on GPU 0, one on GPU 1 |
 
 Measured footprint per worker (3 clients): GPU about 0.43 GB server + 0.5-0.73 GB per client actor; RAM about 1.45 GB
 per client actor. The number of parallel client actors only limits concurrent Ray actors and does not change what is computed
