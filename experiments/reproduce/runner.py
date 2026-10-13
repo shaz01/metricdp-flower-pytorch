@@ -81,6 +81,15 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=0.001)
     parser.add_argument("--weight-decay", type=float, default=0.0)
+    parser.add_argument("--proximal-mu", type=float,
+                        help="FedProx mu (fedprox only; default 0.5, the paper value)")
+    parser.add_argument("--proximal-normalization", choices=("mean", "sum"),
+                        help="proximal term: mean squared difference (default) or the "
+                             "FedProx paper's sum of squares")
+    parser.add_argument("--consensus-kl-beta", type=float, default=0.0,
+                        help="weight of KL(p_global || p_local) on local data (0 = off)")
+    parser.add_argument("--local-steps", type=int, default=0,
+                        help="fixed optimizer steps per round instead of --local-epochs (0 = off)")
     parser.add_argument(
         "--lr-schedule",
         choices=("none", "cosine"),
@@ -199,6 +208,16 @@ def _validate(args: argparse.Namespace) -> None:
         raise ValueError("rounds and local-epochs must be positive.")
     if args.weight_decay < 0:
         raise ValueError("weight-decay must be non-negative.")
+    if args.aggregation != "fedprox" and (
+        args.proximal_mu is not None or args.proximal_normalization is not None
+    ):
+        raise ValueError("--proximal-* flags apply only to --aggregation fedprox.")
+    if args.proximal_mu is not None and not (math.isfinite(args.proximal_mu) and args.proximal_mu >= 0):
+        raise ValueError("proximal-mu must be finite and non-negative.")
+    if not (math.isfinite(args.consensus_kl_beta) and args.consensus_kl_beta >= 0):
+        raise ValueError("consensus-kl-beta must be finite and non-negative.")
+    if args.local_steps < 0:
+        raise ValueError("local-steps must be non-negative.")
     if not math.isfinite(args.dirichlet_alpha) or args.dirichlet_alpha <= 0:
         raise ValueError("dirichlet-alpha must be positive and finite.")
     if len(set(args.checkpoint_rounds)) != len(args.checkpoint_rounds):
@@ -314,6 +333,14 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
         config["train-fraction"] = args.train_fraction
     if args.log_loo_residuals:
         config["log-loo-residuals"] = True
+    if args.proximal_mu is not None:
+        config["proximal-mu"] = args.proximal_mu
+    if args.proximal_normalization is not None:
+        config["proximal-normalization"] = args.proximal_normalization
+    if args.consensus_kl_beta:
+        config["consensus-kl-beta"] = args.consensus_kl_beta
+    if args.local_steps:
+        config["local-steps"] = args.local_steps
     return config
 
 

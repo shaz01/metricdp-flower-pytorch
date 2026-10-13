@@ -24,6 +24,10 @@ from flwr.serverapp.strategy import Result
 from experiments.reproduce.detailed_evaluation import evaluate_state_dict
 from experiments.reproduce.paper_loss import make_evaluate_fn
 from experiments.reproduce.paper_strategies import create_paper_strategy
+
+# Optional local-training options (set only by experiments that use them; absent keys
+# leave the run config, the strategy and the result metadata unchanged).
+LOCAL_TRAINING_KEYS = ("proximal-mu", "proximal-normalization", "consensus-kl-beta", "local-steps")
 from experiments.reproduce.paper_training import create_initial_model, seed_training
 from metricdp_pytorch.data_module import load_data_module
 from metricdp_pytorch.dp_diagnostics import LeaveOneOutResidualLogging
@@ -178,6 +182,8 @@ def run(
             "influence_cap": float(config["influence-cap"]),
             "seed": int(config.get("seed", 42)),
         }
+    if "proximal-mu" in config:
+        influence["proximal_mu"] = float(config["proximal-mu"])
     strategy = create_paper_strategy(
         **influence,
         aggregation=str(config["aggregation"]),
@@ -285,6 +291,7 @@ def main(grid: Grid, context: Context) -> None:
                if str(config["privacy"]) == "influence-noise" else {}),
             **({"log_loo_residuals": True}
                if bool(config.get("log-loo-residuals", False)) else {}),
+            **{key.replace("-", "_"): config[key] for key in LOCAL_TRAINING_KEYS if key in config},
             "initialization_pretrained": bool(initialization_losses),
             "initialization_epochs": len(initialization_losses),
             "initialization_final_loss": (

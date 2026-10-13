@@ -42,6 +42,7 @@ AGGREGATION_WEIGHTINGS = ("num-examples", "equal")
 UNIT_WEIGHT_KEY = "unit-weight"
 
 FEDOPT_ETA_0 = 0.01
+FEDPROX_MU = 0.5
 FEDOPT_ETA_DECAY = 0.15
 
 
@@ -148,6 +149,7 @@ def make_base_strategy(
     num_clients: int,
     fraction_evaluate: float = 1.0,
     weighting: str = "num-examples",
+    proximal_mu: float = FEDPROX_MU,
 ) -> Strategy:
     """Construct one of the six paper aggregation strategies.
 
@@ -178,7 +180,8 @@ def make_base_strategy(
     resolves that too, converging smoothly to 0.9625 accuracy over 20 real
     rounds -- see ``DecayingEtaFedAdam``.
 
-    fedprox: proximal_mu=0.5, the literal Table 4 value -- this DOES work
+    fedprox: proximal_mu=0.5 by default (``FEDPROX_MU``; other values only
+    for experiments that set it), the literal Table 4 value -- this DOES work
     once the proximal term itself is fixed (see
     ``experiments.reproduce.paper_training.proximal_term``). Real federated
     testing showed mu=0.5 traps training at an identical, frozen
@@ -228,7 +231,7 @@ def make_base_strategy(
     if aggregation == "fedmedian":
         return DeterministicFedMedian(**common)
     if aggregation == "fedprox":
-        return DeterministicFedProx(**common, proximal_mu=0.5)
+        return DeterministicFedProx(**common, proximal_mu=proximal_mu)
     if aggregation == "fedopt":
         return DecayingEtaFedAdam(
             **common,
@@ -259,13 +262,20 @@ def make_strategy(
     influence_cap: float | None = None,
     seed: int | None = None,
     weighting: str = "num-examples",
+    proximal_mu: float | None = None,
 ) -> Strategy:
-    """Construct an aggregation strategy and apply the selected DP wrapper."""
+    """Construct an aggregation strategy and apply the selected DP wrapper.
+
+    ``proximal_mu`` (FedProx only) defaults to ``FEDPROX_MU``.
+    """
+    if proximal_mu is not None and aggregation != "fedprox":
+        raise ValueError("proximal_mu applies only to the fedprox aggregation.")
     strategy = make_base_strategy(
         aggregation,
         num_clients=num_clients,
         fraction_evaluate=fraction_evaluate,
         weighting=weighting,
+        proximal_mu=FEDPROX_MU if proximal_mu is None else proximal_mu,
     )
     if privacy == "vanilla":
         return strategy

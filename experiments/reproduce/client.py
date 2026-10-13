@@ -30,6 +30,18 @@ def _weight_metrics(run_config: Mapping[str, Any]) -> dict[str, int]:
     return {}
 
 
+def _local_training_options(run_config: Mapping[str, Any]) -> dict[str, Any]:
+    """Optional local-training keyword arguments, passed only when the run sets them."""
+    options = {}
+    if "proximal-normalization" in run_config:
+        options["proximal_normalization"] = str(run_config["proximal-normalization"])
+    if "consensus-kl-beta" in run_config:
+        options["consensus_beta"] = float(run_config["consensus-kl-beta"])
+    if "local-steps" in run_config:
+        options["local_steps"] = int(run_config["local-steps"])
+    return options
+
+
 def _client_round_seed(base_seed: int, client_id: int, server_round: int) -> int:
     """Derive a reproducible, distinct RNG seed for one client round."""
     return base_seed + client_id * 100_000 + server_round
@@ -124,6 +136,7 @@ def train(msg: Message, context: Context) -> Message:
         weight_decay=float(run_config.get("weight-decay", 0.0)),
         device=device,
         proximal_mu=float(train_config.get("proximal-mu", 0.0)),
+        **_local_training_options(run_config),
     )
     model.cpu()
     release_device_cache(device)
