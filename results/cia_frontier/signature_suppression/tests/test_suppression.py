@@ -170,3 +170,54 @@ def test_client_passes_options_only_when_set():
     assert _local_training_options({"proximal-normalization": "sum", "consensus-kl-beta": 0.3,
                                     "local-steps": 58}) == {
         "proximal_normalization": "sum", "consensus_beta": 0.3, "local_steps": 58}
+
+
+def test_auc_and_tpr_match_brute_force():
+    from results.cia_frontier.signature_suppression.analyze import auc, tpr_at_fpr
+
+    rng = torch.Generator().manual_seed(3)
+    positive = (torch.randint(0, 6, (40,), generator=rng) / 2).tolist()
+    negative = (torch.randint(0, 5, (30,), generator=rng) / 2).tolist()
+    brute = sum((p > n) + 0.5 * (p == n) for p in positive for n in negative) / (40 * 30)
+    assert auc(positive, negative) == pytest.approx(brute)
+    level = 0.1
+    best = 0.0
+    for threshold in set(positive) | set(negative):
+        fpr = sum(n >= threshold for n in negative) / 30
+        if fpr <= level:
+            best = max(best, sum(p >= threshold for p in positive) / 40)
+    assert tpr_at_fpr(positive, negative, level) == pytest.approx(best)
+
+
+def _synthetic(shift, accuracy, targets=(23, 7, 1, 0, 3)):
+    """Gaps L_OUT - L_IN per target over 50 rounds: larger shift means more leakage."""
+    import numpy as np
+
+    rng = np.random.default_rng(int(shift * 1000) + 7)
+    cells = {(42, t): {view: rng.normal(shift * (1 + i / 4), 1.0, 50) for view in ("clean", "noisy")}
+             for i, t in enumerate(targets)}
+    return dict(cells=cells, accuracy=[accuracy] * 6, in_accuracy=[accuracy],
+                client_accuracy=[{t: accuracy for t in targets}], loo_median=[{t: 1.0 for t in targets}])
+
+
+def test_gate_pass_and_fail_on_synthetic_gaps():
+    from results.cia_frontier.signature_suppression import analyze
+
+    data = {"vanilla": _synthetic(1.5, 0.80), "weight-decay-5e-4": _synthetic(1.4, 0.80),
+            "local-epochs-1": _synthetic(1.0, 0.70), "consensus-kl-1": _synthetic(0.0, 0.80),
+            "fedprox-mu-1": _synthetic(0.0, 0.75)}
+    # The remaining candidates leak exactly like vanilla (identical gaps): they fail part 1.
+    for name in ("fedprox-mu-0.01", "fedprox-mu-0.1", "fixed-steps", "consensus-kl-0.3"):
+        data[name] = _synthetic(1.5, 0.80)
+    partial = analyze.evaluate({k: data[k] for k in ("vanilla", "consensus-kl-1")}, resamples=50)
+    assert partial["gate"]["G2"].startswith("incomplete")
+    result = analyze.evaluate(data, resamples=200)
+    gate = result["gate"]
+    # Leak removed at equal accuracy: holds both parts. Same leak removal at 5 pp accuracy loss: fails part 1.
+    assert gate["candidates"]["consensus-kl-1"]["part1"] == "holds"
+    assert gate["candidates"]["consensus-kl-1"]["part2"] == "holds"
+    assert gate["candidates"]["fedprox-mu-1"]["part1"] == "fails"
+    assert gate["candidates"]["fixed-steps"]["part1"] == "fails"
+    assert gate["G2"] == "pass" and gate["passing"] == ["consensus-kl-1"]
+    data["consensus-kl-1"] = _synthetic(1.5, 0.80)
+    assert analyze.evaluate(data, resamples=200)["gate"]["G2"] == "fail"

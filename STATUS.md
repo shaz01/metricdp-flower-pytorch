@@ -35,6 +35,13 @@ per-target CIA exposure rises with client weight.
   Committed results that record a device all ran on CUDA. Also fixed: the EuroSAT frontier runner was unusable on
   `master` since 2026-10-02 (its data module rejected the forwarded `dirichlet_alpha`); `run_one_combo` now accepts
   checkpoint round 0.
+- **WP2 D1 Stage A signature-suppression screen (Agent B role, `feature/signature-suppression`, from 2026-10-14):
+  protocol written, smoke tests on the compute server.** Protocol `results/cia_frontier/signature_suppression/PROTOCOL.md`:
+  EuroSAT alpha 0.3, 48 clients, seed 42, 50 rounds, no DP, equal weights, targets 23, 7 (the two largest), 1, 0, 3;
+  ten configurations (vanilla, size-weighted vanilla, weight decay 5e-4, 1 local epoch, FedProx mu 0.01/0.1/1 in the
+  FedProx paper's sum convention, 58 fixed local steps, consensus KL beta 0.3/1); 60 trajectories, 22.2 t-h planned of
+  the 30 t-h cap. New default-off options: runner `--proximal-mu`, `--proximal-normalization`, `--consensus-kl-beta`,
+  `--local-steps`. State: `results/cia_frontier/signature_suppression/STATE.md`.
 
 **Client-specific noise research direction: CLOSED (2026-10-09, owner decision).** Question: can noise that each client
 builds for itself improve CIA protection over the paper's server-side metric calibration at useful accuracy? Merged into
