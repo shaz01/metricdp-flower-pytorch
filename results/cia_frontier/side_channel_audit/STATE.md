@@ -1,10 +1,10 @@
 package: WP1
-status: running (owner chose Escalation 2 option 1: budget 71 h, escalate above 89 h)
-gate: G1 = not evaluated (132 of 228 trajectories)
+status: blocked (Escalation 3: G1(b) inconclusive; its declared extension would exceed the 89 h line)
+gate: G1(a) = 0.838 [0.779, 0.902] (pass; attributed to the metric-privacy noise level); G1(b) = +0.074 [-0.060, +0.116] (inconclusive), seeds 42-44
 protocol: results/cia_frontier/side_channel_audit/PROTOCOL.md @ f7076a58
 machine: compute server (owner decision 2026-10-11; the roadmap planned the owner PC)
-cost so far: 132 of 228 trajectories complete, 47.4 h of trajectory wall time (sum of training + evaluation seconds in their complete.json). Projection 78 h (remaining 41 EuroSAT 8-client trajectories at the measured 1,646 s each, 54 Alzheimer 8-client trajectories at about 800 s each, from the 5-client cells): above the 71 h budget, below the 89 h escalation line
-next: run to 228/228; then analyze.py and gate G1
+cost: 228 of 228 trajectories complete, 75.5 h of trajectory wall time (sum of training + evaluation seconds in their complete.json; work lost to restarts not counted): above the 71 h budget, below the 89 h escalation line. Mean per trajectory: EuroSAT 1,881 / 1,725 / 1,478 s and Alzheimer 658 / 729 / 790 s at 3 / 5 / 8 clients
+next: owner decision on Escalation 3 (run the seed-45 extension for G1(b), about 25 h, or record G1(b) as inconclusive); then FINDINGS.md
 needs from others: none
 
 ## Owner decisions (2026-10-11)
@@ -33,6 +33,8 @@ needs from others: none
 | 22:32 | The other user's MOTR job on GPU 1 grew to 16.0 GB, leaving 1.3 GB free beside worker 0. Worker 0 stopped immediately (its in-progress trajectory restarts from scratch) and moved to GPU 0 (14.3 GB free there). Both workers now on GPU 0, nothing of WP1 on GPU 1. 12 of 228 complete |
 | 2026-10-12 19:10 | 132 of 228 complete: every 3- and 5-client cell of both datasets, 13 of 27 EuroSAT 8-client global-DP trajectories. Alzheimer cost check (after the first Alzheimer trajectories): 3-client 565 s training + 95 s evaluation, 5-client 645 s + 83 s, i.e. about 2.5 times the plan's 0.2 relative cost, but EuroSAT runs at about 1.2 times its plan, so the total projects to 78 h, inside the 89 h line. Both GPUs now free of other users' jobs |
 | 2026-10-12 19:11 | Owner asked for one more worker. Worker 2 started on GPU 1 (idle: no other user's compute job) under the same loop (tmux `wp1-w2`, at most 3 parallel clients). Three workers: two on GPU 0, one on GPU 1 |
+| 2026-10-13 04:56 | 228 of 228 complete (last trajectory finished 04:39; the three worker loops exited on their own at 04:39-04:56). GPU claims released, worker sessions closed. No trajectory failed permanently; the rerun loop retrained the ones interrupted by worker moves |
+| 2026-10-13 11:27 | `analyze.py` finished (70 min, one core): G1(a) pass, attributed to the metric-privacy noise level; G1(b) inconclusive. Figures and tables built by `findings.py` from `analysis.json` and the committed trajectories. Escalation 3 raised: the declared G1(b) extension (76 trajectories, about 25 h) would bring WP1 to about 101 h |
 
 Measured footprint per worker (3 clients): GPU about 0.43 GB server + 0.5-0.73 GB per client actor; RAM about 1.45 GB
 per client actor. The number of parallel client actors only limits concurrent Ray actors and does not change what is computed

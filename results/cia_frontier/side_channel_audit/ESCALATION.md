@@ -98,3 +98,42 @@ The owner replied "lets start" to this escalation, which recommended option 1; r
 unchanged, no code change, budget raised to **71 h** (projection upper end), escalation above **89 h** (71 x 1.25),
 cost re-checked after the first Alzheimer trajectory. Resumed on GPU 1 of the compute server with two workers
 (8-client cells at most 4 parallel clients per worker; execution setting only, see `STATE.md`).
+
+# Escalation 3: G1(b) is inconclusive; its declared extension would take WP1 past the 89 h line
+
+Raised 2026-10-13 by Agent A after all 228 protocol trajectories completed and `analyze.py` ran
+(`analysis.json`, seeds 42-44). Rule: the owner's WP1 instruction (run the declared extension once if a part is
+inconclusive) together with the cost rule (escalate above 89 h, `ESCALATION.md` Escalation 2 decision) and
+agent_roadmap.md Section 4.4. Nothing is running.
+
+## Gate G1 at seeds 42-44 (`analysis.json`)
+
+| Part | Statistic | Value [95% interval] | Decision |
+|---|---|---|---|
+| G1(a) | blind noise-level AUC, metric privacy, top-decile targets, pooled over 6 cells | 0.838 [0.779, 0.902] | pass |
+| attribution | oracle noise-level AUC, metric privacy, same targets | 0.839 [0.781, 0.903] | above 0.55 |
+| attribution | blind noise-level AUC, global DP, same targets | 0.763 [0.706, 0.824] | below the blind metric-privacy AUC |
+| G1(b) | increment minus loss, TPR at 5% FPR, clean view, all targets, mean over 12 cells | +0.074 [-0.060, +0.116] | inconclusive |
+
+G1(a) passes and, by the pre-run attribution rule, is credited to metric privacy's noise level. G1(b) straddles 0.
+PROTOCOL.md Section 6 then prescribes the extension once: seed 45 for every trajectory of all twelve cells, then
+recompute with seeds 42-45.
+
+## Cost
+
+| Item | Measured or projected |
+|---|---|
+| Protocol run, 228 trajectories (sum of training + evaluation seconds in `complete.json`) | 75.5 h |
+| G1(b) extension, 76 trajectories (seed 45, 12 cells = exactly one third of the design) | about 25.2 h (75.5 / 3) |
+| Total with the extension | about 100.7 h, above the 89 h escalation line (budget 71 h) |
+
+Wall time with both compute-server GPUs free (as now): about 7-9 h with three or four workers.
+
+## Options
+
+1. **(Recommended)** Run the extension as declared, once: seed 45, all twelve cells, 76 trajectories; budget raised
+   to about 101 h (escalate above 126 h). No code or protocol change. If G1(b) still straddles 0 at seeds 42-45, it is
+   `inconclusive` and Agent A stops and escalates (no further runs). G1(a) stays decided at seeds 42-44.
+2. Do not run the extension: record G1(b) as `inconclusive` at seeds 42-44. Under the roadmap's G1 rule WP4 then uses
+   the current statistic as primary and the increment attacker as secondary (the on-fail branch, since G1(b) did not
+   pass).

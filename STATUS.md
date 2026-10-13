@@ -41,7 +41,7 @@ per-target CIA exposure rises with client weight.
   `results/cia_frontier/side_channel_audit/PROTOCOL.md` (EuroSAT and Alzheimer, Dirichlet alpha 0.3, 3/5/8 clients,
   every client a target, global DP and metric privacy with fixed noise std, equal weights, seeds 42-44, 50 rounds;
   228 trajectories), runner with stall guard, increment attacker (`experiments/cia/increment_attack.py`), analysis
-  with gate G1; 598 tests pass; smoke runs on the owner PC only. 132 of 228 trajectories complete on 2026-10-12 19:10 (every 3- and 5-client cell); cost projection 78 h, inside the 89 h line. State: `results/cia_frontier/side_channel_audit/STATE.md`.
+  with gate G1; 598 tests pass; smoke runs on the owner PC only. All 228 trajectories complete 2026-10-13 (75.5 h measured). Gate at seeds 42-44: G1(a) pass, 0.838 [0.779, 0.902], attributed to the metric-privacy noise level (oracle 0.839, global-DP control 0.763); G1(b) inconclusive, +0.074 [-0.060, +0.116]. **Blocked on Escalation 3**: the declared seed-45 extension for G1(b) (about 25 h) would take WP1 to about 101 h, past the 89 h line. State: `results/cia_frontier/side_channel_audit/STATE.md`.
 
 **Client-specific noise research direction: CLOSED (2026-10-09, owner decision).** Question: can noise that each client
 builds for itself improve CIA protection over the paper's server-side metric calibration at useful accuracy? Merged into
@@ -167,7 +167,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `results.cia_frontier.side_channel_audit.runner --execute` (Agent A, WP1) | compute server, 3 workers: 2 on GPU 0, 1 on GPU 1 (since 2026-10-12 19:11; both GPUs shared with other users); 132 of 228 at 19:10 | running since 2026-10-11 18:30 (expected to finish about 2026-10-13 morning) |
+| `results.cia_frontier.side_channel_audit.runner --execute` (Agent A, WP1) | compute server, GPUs 0 and 1 (released 2026-10-13) | done 2026-10-13 04:56: 228 of 228 |
 
 ## What's established on `master`
 
