@@ -4,7 +4,7 @@ gate: G1(a) = 0.838 [0.779, 0.902] (pass; attributed to the metric-privacy noise
 protocol: results/cia_frontier/side_channel_audit/PROTOCOL.md @ f7076a58
 machine: compute server (owner decision 2026-10-11; the roadmap planned the owner PC)
 cost: 228 of 228 trajectories complete, 75.5 h of trajectory wall time (sum of training + evaluation seconds in their complete.json; work lost to restarts not counted): above the 71 h budget, below the 89 h escalation line. Mean per trajectory: EuroSAT 1,881 / 1,725 / 1,478 s and Alzheimer 658 / 729 / 790 s at 3 / 5 / 8 clients
-next: run the 76 seed-45 trajectories; recompute G1(b) at seeds 42-45; FINDINGS.md
+next: G1(b) at seeds 42-45 (analysis running); FINDINGS.md
 needs from others: none
 
 ## Owner decisions (2026-10-11)
@@ -36,6 +36,7 @@ needs from others: none
 | 2026-10-13 04:56 | 228 of 228 complete (last trajectory finished 04:39; the three worker loops exited on their own at 04:39-04:56). GPU claims released, worker sessions closed. No trajectory failed permanently; the rerun loop retrained the ones interrupted by worker moves |
 | 2026-10-13 11:27 | `analyze.py` finished (70 min, one core): G1(a) pass, attributed to the metric-privacy noise level; G1(b) inconclusive. Figures and tables built by `findings.py` from `analysis.json` and the committed trajectories. Escalation 3 raised: the declared G1(b) extension (76 trajectories, about 25 h) would bring WP1 to about 101 h |
 | 2026-10-13 11:30 | Owner chose Escalation 3 option 1. Extension launched: `--seeds 45`, 76 trajectories, four workers in tmux (`wp1-x0`..`wp1-x3`), two per GPU (both GPUs free of other users' jobs), at most 3 parallel clients each |
+| 2026-10-13 17:26 | Extension complete: 76 of 76 seed-45 trajectories (last worker exited 17:25), 22.7 h of trajectory wall time; WP1 total 98.2 h, inside the 101 h budget. No stalls or errors in the worker logs. GPU claims released. `analyze.py` started on seeds 42-45 (output `analysis_seeds42-45.json`; `analysis.json` stays the seeds 42-44 record that decided G1(a)) |
 
 Measured footprint per worker (3 clients): GPU about 0.43 GB server + 0.5-0.73 GB per client actor; RAM about 1.45 GB
 per client actor. The number of parallel client actors only limits concurrent Ray actors and does not change what is computed

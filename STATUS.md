@@ -41,7 +41,7 @@ per-target CIA exposure rises with client weight.
   `results/cia_frontier/side_channel_audit/PROTOCOL.md` (EuroSAT and Alzheimer, Dirichlet alpha 0.3, 3/5/8 clients,
   every client a target, global DP and metric privacy with fixed noise std, equal weights, seeds 42-44, 50 rounds;
   228 trajectories), runner with stall guard, increment attacker (`experiments/cia/increment_attack.py`), analysis
-  with gate G1; 598 tests pass; smoke runs on the owner PC only. All 228 trajectories complete 2026-10-13 (75.5 h measured). Gate at seeds 42-44: G1(a) pass, 0.838 [0.779, 0.902], attributed to the metric-privacy noise level (oracle 0.839, global-DP control 0.763); G1(b) inconclusive, +0.074 [-0.060, +0.116]. The owner approved the declared seed-45 extension for G1(b) (Escalation 3, option 1; budget 101 h); running since 2026-10-13 11:30. State: `results/cia_frontier/side_channel_audit/STATE.md`.
+  with gate G1; 598 tests pass; smoke runs on the owner PC only. All 228 trajectories complete 2026-10-13 (75.5 h measured). Gate at seeds 42-44: G1(a) pass, 0.838 [0.779, 0.902], attributed to the metric-privacy noise level (oracle 0.839, global-DP control 0.763); G1(b) inconclusive, +0.074 [-0.060, +0.116]. The owner approved the declared seed-45 extension for G1(b) (Escalation 3, option 1; budget 101 h): 76 of 76 complete 2026-10-13 17:26 (WP1 total 98.2 h); G1(b) analysis at seeds 42-45 running. State: `results/cia_frontier/side_channel_audit/STATE.md`.
 
 **Client-specific noise research direction: CLOSED (2026-10-09, owner decision).** Question: can noise that each client
 builds for itself improve CIA protection over the paper's server-side metric calibration at useful accuracy? Merged into
@@ -168,7 +168,7 @@ section.
 | Command | What | Status |
 | --- | --- | --- |
 | `results.cia_frontier.side_channel_audit.runner --execute` (Agent A, WP1) | compute server, GPUs 0 and 1 (released 2026-10-13) | done 2026-10-13 04:56: 228 of 228 |
-| `results.cia_frontier.side_channel_audit.runner --execute --seeds 45` (Agent A, WP1 G1(b) extension) | compute server, 4 workers: 2 on GPU 0, 2 on GPU 1 | running since 2026-10-13 11:30 (76 trajectories, expected about 7-9 h) |
+| `results.cia_frontier.side_channel_audit.runner --execute --seeds 45` (Agent A, WP1 G1(b) extension) | compute server, 4 workers on GPUs 0 and 1 (released 2026-10-13) | done 2026-10-13 17:26: 76 of 76 |
 
 ## What's established on `master`
 
