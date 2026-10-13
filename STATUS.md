@@ -35,13 +35,16 @@ per-target CIA exposure rises with client weight.
   Committed results that record a device all ran on CUDA. Also fixed: the EuroSAT frontier runner was unusable on
   `master` since 2026-10-02 (its data module rejected the forwarded `dirichlet_alpha`); `run_one_combo` now accepts
   checkpoint round 0.
-- **WP1 D2 Stage A side-channel audit (Agent A, `feature/cia-audit`, 2026-10-11): running on the compute server
-  since 2026-10-11 18:30.** Measured cost 65-71 h vs the 50.6 t-h plan (training 1.10x the plan plus per-target
-  evaluation); the owner raised the budget to 71 h (`ESCALATION.md`, Escalation 2, option 1; design unchanged). Protocol
-  `results/cia_frontier/side_channel_audit/PROTOCOL.md` (EuroSAT and Alzheimer, Dirichlet alpha 0.3, 3/5/8 clients,
-  every client a target, global DP and metric privacy with fixed noise std, equal weights, seeds 42-44, 50 rounds;
-  228 trajectories), runner with stall guard, increment attacker (`experiments/cia/increment_attack.py`), analysis
-  with gate G1; 598 tests pass; smoke runs on the owner PC only. All 228 trajectories complete 2026-10-13 (75.5 h measured). Gate at seeds 42-44: G1(a) pass, 0.838 [0.779, 0.902], attributed to the metric-privacy noise level (oracle 0.839, global-DP control 0.763); G1(b) inconclusive, +0.074 [-0.060, +0.116]. The owner approved the declared seed-45 extension for G1(b) (Escalation 3, option 1; budget 101 h): 76 of 76 complete 2026-10-13 17:26 (WP1 total 98.2 h); G1(b) analysis at seeds 42-45 running. State: `results/cia_frontier/side_channel_audit/STATE.md`.
+- **WP1 D2 Stage A side-channel audit (Agent A, `feature/cia-audit`, 2026-10-11 to 2026-10-13): G1(a) passed, G1(b)
+  failed; done on the branch, awaiting the owner's merge decision.** Protocol `results/cia_frontier/side_channel_audit/PROTOCOL.md`
+  (EuroSAT and Alzheimer, Dirichlet alpha 0.3, 3/5/8 clients, every client a target, global DP and metric privacy with
+  fixed noise std, equal weights, 50 rounds; 228 trajectories at seeds 42-44 plus the declared seed-45 extension for
+  G1(b), 76 trajectories), run on the compute server, 98.2 h measured (owner budget 101 h). G1(a): metric privacy's
+  noise level reveals the largest client's participation, AUC 0.838 [0.779, 0.902], attributed to the noise level by
+  the pre-run rule (oracle 0.839; the global-DP update-norm control is 0.763 [0.706, 0.824], strong at 3 clients and
+  fading at 8). G1(b): the increment attacker does not beat the loss statistic at 5% FPR, -0.106 [-0.149, -0.005] at
+  seeds 42-45 (+0.074 [-0.060, +0.116], inconclusive, at seeds 42-44), so WP4 uses the loss statistic as primary.
+  Write-up `results/cia_frontier/side_channel_audit/FINDINGS.md`; state `STATE.md`.
 
 **Client-specific noise research direction: CLOSED (2026-10-09, owner decision).** Question: can noise that each client
 builds for itself improve CIA protection over the paper's server-side metric calibration at useful accuracy? Merged into
@@ -167,8 +170,6 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `results.cia_frontier.side_channel_audit.runner --execute` (Agent A, WP1) | compute server, GPUs 0 and 1 (released 2026-10-13) | done 2026-10-13 04:56: 228 of 228 |
-| `results.cia_frontier.side_channel_audit.runner --execute --seeds 45` (Agent A, WP1 G1(b) extension) | compute server, 4 workers on GPUs 0 and 1 (released 2026-10-13) | done 2026-10-13 17:26: 76 of 76 |
 
 ## What's established on `master`
 

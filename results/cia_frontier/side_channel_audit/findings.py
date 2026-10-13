@@ -1,11 +1,13 @@
 """Tables and figures for FINDINGS.md, read from committed files only (no training, no new statistics).
 
-Inputs: ``analysis.json`` (written by ``analyze.py``) and the committed trajectory folders under ``results/``
-(``manifest.json``, ``partitions.json`` and the run JSON's round-50 server accuracy).
+Inputs: ``analysis.json`` (``analyze.py`` on the protocol seeds 42-44; decides G1(a)), ``analysis_seeds42-45.json``
+(``analyze.py`` after the declared seed-45 extension; decides G1(b), used when present) and the committed trajectory
+folders under ``results/`` (``manifest.json``, ``partitions.json`` and the run JSON's round-50 server accuracy).
 
 Outputs (beside this file):
   figures/g1a_noise_level_auc.png   blind and oracle noise-level AUC per cell, top-decile targets, with G1(a)
-  figures/g1b_tpr_at_5pct_fpr.png   increment and loss TPR at 5% FPR per cell, all targets, with G1(b)
+  figures/g1b_tpr_at_5pct_fpr.png   increment and loss TPR at 5% FPR per cell, all targets, with G1(b) (extension
+                                    analysis when present)
   findings_tables.md                the full tables pasted into FINDINGS.md
 
 Run from the repository root:
@@ -56,7 +58,7 @@ def cell_entry(analysis, dataset, clients, mechanism):
     raise KeyError((dataset, clients, mechanism))
 
 
-def figures(analysis):
+def figures(analysis, extension=None):
     import matplotlib
 
     matplotlib.use("Agg")
@@ -65,11 +67,11 @@ def figures(analysis):
     labels = [f"{d}\n{c} clients" for d in DATASETS for c in CLIENTS]
     x = list(range(len(labels)))
 
-    def series(mechanism, view, attacker, metric):
+    def series(mechanism, view, attacker, metric, source=analysis):
         values, low, high = [], [], []
         for dataset in DATASETS:
             for clients in CLIENTS:
-                s = cell_entry(analysis, dataset, clients, mechanism)["attacks"][view][attacker][metric]
+                s = cell_entry(source, dataset, clients, mechanism)["attacks"][view][attacker][metric]
                 values.append(s["value"])
                 low.append(s["value"] - s["ci95"][0])
                 high.append(s["ci95"][1] - s["value"])
@@ -99,14 +101,16 @@ def figures(analysis):
     plt.close(fig)
 
     # Figure 2: G1(b), TPR at 5% FPR of the increment and loss attackers, all targets, clean view.
-    g1b = analysis["gate"]["G1b"]
+    source = extension or analysis
+    g1b = source["gate"]["G1b"]
+    seeds = "seeds 42-45" if extension else "seeds 42-44"
     fig, axes = plt.subplots(1, 2, figsize=(10, 4.2), sharey=True)
     for ax, mechanism in zip(axes, MECHANISMS):
         for offset, (attacker, label, color, marker) in zip(
                 (-0.12, 0.12),
                 (("increment", "increment attacker", "#1f6fb4", "o"),
                  ("loss", "loss statistic (current)", "#c4512b", "s"))):
-            values, errors = series(mechanism, "clean/all", attacker, "tpr_at_5pct_fpr")
+            values, errors = series(mechanism, "clean/all", attacker, "tpr_at_5pct_fpr", source)
             ax.errorbar([i + offset for i in x], values, yerr=errors, fmt=marker, color=color, capsize=3, label=label)
         ax.axhline(0.05, color="grey", linestyle=":", linewidth=1, label="chance (0.05)")
         ax.set_xticks(x, labels, fontsize=8)
@@ -114,14 +118,14 @@ def figures(analysis):
     axes[0].set_ylabel("TPR at 5% FPR (all targets, clean view)")
     axes[0].legend(fontsize=8, loc="best")
     low, high = g1b["ci95"]
-    fig.suptitle(f"G1(b): increment minus loss, mean over 12 cells {g1b['value']:+.3f} [{low:+.3f}, {high:+.3f}]: "
+    fig.suptitle(f"G1(b), {seeds}: increment minus loss, mean over 12 cells {g1b['value']:+.3f} [{low:+.3f}, {high:+.3f}]: "
                  f"{g1b['decision']}", fontsize=10)
     fig.tight_layout()
     fig.savefig(HERE / "figures" / "g1b_tpr_at_5pct_fpr.png", dpi=150)
     plt.close(fig)
 
 
-def tables(analysis, rows):
+def tables(analysis, rows, extension=None):
     out = []
     g1a, g1b = analysis["gate"]["G1a"], analysis["gate"]["G1b"]
     out += ["### Gate G1", "",
@@ -133,7 +137,11 @@ def tables(analysis, rows):
             f"| (attribution) | blind noise-level AUC, global DP, same targets (update-norm channel) | "
             f"{fmt(g1a['blind_global_dp_auc'])} | |",
             f"| G1(b) | increment minus loss, TPR at 5% FPR, all targets, clean view, mean over 12 cells | "
-            f"{g1b['value']:+.3f} [{g1b['ci95'][0]:+.3f}, {g1b['ci95'][1]:+.3f}] | {g1b['decision']} |"]
+            f"{g1b['value']:+.3f} [{g1b['ci95'][0]:+.3f}, {g1b['ci95'][1]:+.3f}] | {g1b['decision']} (seeds 42-44) |"]
+    if extension:
+        g1b_ext = extension["gate"]["G1b"]
+        out.append(f"| G1(b), extension | the same statistic at seeds 42-45 | {g1b_ext['value']:+.3f} "
+                   f"[{g1b_ext['ci95'][0]:+.3f}, {g1b_ext['ci95'][1]:+.3f}] | {g1b_ext['decision']} |")
     if "attribution" in g1a:
         out += ["", f"Attribution rule (pre-run revision): {g1a['attribution']}."]
 
@@ -150,12 +158,25 @@ def tables(analysis, rows):
                             out.append(f"| {dataset} | {clients} | {mechanism} | {attacker} | "
                                        + " | ".join(fmt(attacks[attacker][m]) for m in METRICS) + " |")
 
+    if extension:
+        out += ["", "### G1(b) extension: increment and loss attackers per cell, seeds 42-45, clean view, all targets", "",
+                "From `analysis_seeds42-45.json`. AUC; TPR at 5% FPR; TPR at 1% FPR; value [95% cluster-bootstrap "
+                "interval].", "",
+                "| Dataset | Clients | Mechanism | Attacker | AUC | TPR@5% | TPR@1% |", "|---|---|---|---|---|---|---|"]
+        for dataset in DATASETS:
+            for clients in CLIENTS:
+                for mechanism in MECHANISMS:
+                    attacks = cell_entry(extension, dataset, clients, mechanism)["attacks"]["clean/all"]
+                    for attacker in ("increment", "loss"):
+                        out.append(f"| {dataset} | {clients} | {mechanism} | {attacker} | "
+                                   + " | ".join(fmt(attacks[attacker][m]) for m in METRICS) + " |")
+
     out += ["", "### Top-decile targets", "",
             "The largest client by local dataset size in each federation and seed (`ceil(0.1 n)` = 1 here). The "
             "partition depends only on dataset, client count and seed, so both mechanisms share it.", "",
             "| Dataset | Clients | Seed | Top-decile target | Its records | Records of every client |", "|---|---|---|---|---|---|"]
     seen = set()
-    for row in rows:
+    for row in sorted(rows, key=lambda r: (DATASETS.index(r["dataset"]), r["clients"], r["seed"])):
         key = (row["dataset"], row["clients"], row["seed"])
         if row["out"] is not None or key in seen:
             continue
@@ -166,7 +187,8 @@ def tables(analysis, rows):
                    + ", ".join(f"{r:,}" for r in records) + " |")
 
     out += ["", "### Server test accuracy at round 50, every trajectory", "",
-            "IN = all clients; OUT-t = the federation without client t. Accuracy as a fraction.", ""]
+            "IN = all clients; OUT-t = the federation without client t. Accuracy as a fraction. Seed 45 is the G1(b) "
+            "extension.", ""]
     for dataset in DATASETS:
         width = max(CLIENTS)
         out += ["", f"**{dataset}**", "",
@@ -174,7 +196,7 @@ def tables(analysis, rows):
                 "|---|---|---|---|" + "---|" * width]
         for clients in CLIENTS:
             for mechanism in MECHANISMS:
-                for seed in (42, 43, 44):
+                for seed in sorted({r["seed"] for r in rows}):
                     mine = {r["out"]: r["accuracy"] for r in rows
                             if (r["dataset"], r["clients"], r["mechanism"], r["seed"]) == (dataset, clients, mechanism, seed)}
                     cells = [f"{mine[t]:.4f}" if t in mine else "" for t in range(width)]
@@ -184,11 +206,13 @@ def tables(analysis, rows):
 
 def main():
     analysis = json.loads((HERE / "analysis.json").read_text())
+    extension_path = HERE / "analysis_seeds42-45.json"
+    extension = json.loads(extension_path.read_text()) if extension_path.exists() else None
     rows = trajectories()
-    if len(rows) != 228:
-        raise ValueError(f"Expected 228 trajectories, found {len(rows)}")
-    figures(analysis)
-    (HERE / "findings_tables.md").write_text(tables(analysis, rows))
+    if len(rows) != 304:
+        raise ValueError(f"Expected 304 trajectories (228 + 76 seed-45), found {len(rows)}")
+    figures(analysis, extension)
+    (HERE / "findings_tables.md").write_text(tables(analysis, rows, extension))
     print(f"{len(rows)} trajectories; wrote figures/ and findings_tables.md")
 
 
