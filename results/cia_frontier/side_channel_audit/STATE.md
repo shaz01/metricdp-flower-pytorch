@@ -1,10 +1,10 @@
 package: WP1
-status: blocked (Escalation 3: G1(b) inconclusive; its declared extension would exceed the 89 h line)
+status: running: G1(b) extension (owner chose Escalation 3 option 1: seed 45, all 12 cells; budget 101 h, escalate above 126 h)
 gate: G1(a) = 0.838 [0.779, 0.902] (pass; attributed to the metric-privacy noise level); G1(b) = +0.074 [-0.060, +0.116] (inconclusive), seeds 42-44
 protocol: results/cia_frontier/side_channel_audit/PROTOCOL.md @ f7076a58
 machine: compute server (owner decision 2026-10-11; the roadmap planned the owner PC)
 cost: 228 of 228 trajectories complete, 75.5 h of trajectory wall time (sum of training + evaluation seconds in their complete.json; work lost to restarts not counted): above the 71 h budget, below the 89 h escalation line. Mean per trajectory: EuroSAT 1,881 / 1,725 / 1,478 s and Alzheimer 658 / 729 / 790 s at 3 / 5 / 8 clients
-next: owner decision on Escalation 3 (run the seed-45 extension for G1(b), about 25 h, or record G1(b) as inconclusive); then FINDINGS.md
+next: run the 76 seed-45 trajectories; recompute G1(b) at seeds 42-45; FINDINGS.md
 needs from others: none
 
 ## Owner decisions (2026-10-11)

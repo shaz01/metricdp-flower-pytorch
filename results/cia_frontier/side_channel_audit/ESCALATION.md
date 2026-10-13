@@ -137,3 +137,10 @@ Wall time with both compute-server GPUs free (as now): about 7-9 h with three or
 2. Do not run the extension: record G1(b) as `inconclusive` at seeds 42-44. Under the roadmap's G1 rule WP4 then uses
    the current statistic as primary and the increment attacker as secondary (the on-fail branch, since G1(b) did not
    pass).
+
+## Decision (owner, 2026-10-13)
+
+The owner chose **option 1**: run the declared extension once (seed 45, all twelve cells, 76 trajectories); budget
+raised to about **101 h**, escalation above **126 h** (101 x 1.25). No code or protocol change. G1(a) stays decided at
+seeds 42-44; G1(b) is recomputed at seeds 42-45, and if it still straddles 0 it is recorded as `inconclusive` and work
+stops with an escalation.
