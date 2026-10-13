@@ -35,6 +35,7 @@ needs from others: none
 | 2026-10-12 19:11 | Owner asked for one more worker. Worker 2 started on GPU 1 (idle: no other user's compute job) under the same loop (tmux `wp1-w2`, at most 3 parallel clients). Three workers: two on GPU 0, one on GPU 1 |
 | 2026-10-13 04:56 | 228 of 228 complete (last trajectory finished 04:39; the three worker loops exited on their own at 04:39-04:56). GPU claims released, worker sessions closed. No trajectory failed permanently; the rerun loop retrained the ones interrupted by worker moves |
 | 2026-10-13 11:27 | `analyze.py` finished (70 min, one core): G1(a) pass, attributed to the metric-privacy noise level; G1(b) inconclusive. Figures and tables built by `findings.py` from `analysis.json` and the committed trajectories. Escalation 3 raised: the declared G1(b) extension (76 trajectories, about 25 h) would bring WP1 to about 101 h |
+| 2026-10-13 11:30 | Owner chose Escalation 3 option 1. Extension launched: `--seeds 45`, 76 trajectories, four workers in tmux (`wp1-x0`..`wp1-x3`), two per GPU (both GPUs free of other users' jobs), at most 3 parallel clients each |
 
 Measured footprint per worker (3 clients): GPU about 0.43 GB server + 0.5-0.73 GB per client actor; RAM about 1.45 GB
 per client actor. The number of parallel client actors only limits concurrent Ray actors and does not change what is computed
