@@ -181,4 +181,17 @@ configuration end to end (IN and all five OUT, 2 rounds) through `analyze.py`. R
 
 ## Amendments
 
-None.
+### Amendment 1 (2026-10-14, after the 60 seed-42 runs, before any extension run; gate and thresholds unchanged)
+
+The seed-42 analysis (`analysis.json`) left G2 inconclusive: no candidate holds both parts, five fail, and `fixed-steps`
+is open on both parts (its `D_S` interval straddles 0.05). Section 6 therefore applies, with these mechanics made
+explicit (they only say how Section 6 is computed):
+
+- Extension runs: seed 43 with the seed-42 layout for `fixed-steps` (the only not-failed candidate, so "the two best"
+  is one), `vanilla`, and both controls (part 2 is open): 4 configurations x 6 = 24 trajectories, about 6.2 h at the
+  measured 0.26 h per trajectory, bringing WP2 to about 21.7 h of the 30 t-h cap. Seed-43 run names carry `-p42`.
+- Extension analysis (`analyze.py --extension analysis.json`, written to `analysis_seeds42-43.json`): every statistic
+  is recomputed over the configurations that have both seeds, with 10 clusters (target-seed pairs) and the same paired
+  bootstrap. Candidates that failed at seed 42 and were not extended keep their seed-42 records and stay failed. G2 then
+  passes if `fixed-steps` holds both parts, fails if it fails either, and is otherwise `inconclusive` (stop and
+  escalate). `analysis.json` stays the seed-42 record.

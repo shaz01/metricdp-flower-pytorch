@@ -114,7 +114,19 @@ def load(root):
     return data
 
 
-def evaluate(data, resamples=RESAMPLES):
+def extension_subset(data):
+    """Configurations that cover every seed of the reference (PROTOCOL.md Amendment 1)."""
+    seeds = {seed for seed, _ in data[REFERENCE]["cells"]}
+    return {c: d for c, d in data.items() if {seed for seed, _ in d["cells"]} == seeds}
+
+
+def evaluate(data, resamples=RESAMPLES, carried=None):
+    """``carried``: candidate -> its gate record from the seed-42 analysis, for candidates that
+    failed there and were not extended (PROTOCOL.md Amendment 1); they stay failed."""
+    carried = {v: dict(record, carried_from_seed_42=True) for v, record in (carried or {}).items()
+               if v not in data}
+    if any("fails" not in (r["part1"], r["part2"]) for r in carried.values()):
+        raise ValueError("Only failed candidates may be carried over unextended")
     configs = sorted(data)
     clusters = sorted(data[REFERENCE]["cells"])
     for config in configs:
@@ -188,10 +200,11 @@ def evaluate(data, resamples=RESAMPLES):
                        reduction_score=dict(point=reductions["score"][0], ci95=reductions["score"][1]),
                        reduction_auc=dict(point=reductions["auc"][0], ci95=reductions["auc"][1]),
                        part1=part1, part2_statistic=key, beats_controls=beats, part2=part2)
+    gate.update(carried)
     passing = [v for v, g in gate.items() if g["part1"] == "holds" and g["part2"] == "holds"]
     failed = [v for v, g in gate.items() if "fails" in (g["part1"], g["part2"])]
     verdict = "pass" if passing else "fail" if len(failed) == len(gate) else "inconclusive"
-    if set(CANDIDATES + CONTROLS + (REFERENCE,)) - set(data):
+    if set(CANDIDATES + CONTROLS + (REFERENCE,)) - set(data) - set(carried):
         verdict = "incomplete (missing configurations; not a gate result)"
     rank = lambda v: gate[v]["reduction_score" if gate[v]["part2_statistic"] == "score" else "reduction_auc"]["point"]
     open_candidates = sorted((v for v in gate if v not in failed), key=lambda v: -gate[v]["reduction_score"]["point"])
@@ -209,8 +222,15 @@ def main():
     parser.add_argument("root", type=Path)
     parser.add_argument("--out", type=Path)
     parser.add_argument("--resamples", type=int, default=RESAMPLES)
+    parser.add_argument("--extension", type=Path, metavar="SEED42_ANALYSIS",
+                        help="extension analysis: configurations with every seed, candidates that failed "
+                             "in this seed-42 analysis.json carried over (PROTOCOL.md Amendment 1)")
     args = parser.parse_args()
-    text = json.dumps(evaluate(load(args.root), args.resamples), indent=2, allow_nan=False)
+    data, carried = load(args.root), None
+    if args.extension:
+        data = extension_subset(data)
+        carried = json.loads(args.extension.read_text())["gate"]["candidates"]
+    text = json.dumps(evaluate(data, args.resamples, carried), indent=2, allow_nan=False)
     if args.out:
         args.out.write_text(text + "\n")
     print(text)

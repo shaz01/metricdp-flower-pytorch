@@ -221,3 +221,35 @@ def test_gate_pass_and_fail_on_synthetic_gaps():
     assert gate["G2"] == "pass" and gate["passing"] == ["consensus-kl-1"]
     data["consensus-kl-1"] = _synthetic(1.5, 0.80)
     assert analyze.evaluate(data, resamples=200)["gate"]["G2"] == "fail"
+
+
+def test_extension_seed_keeps_the_seed_42_layout():
+    base = runner.build_suppression_combos("fixed-steps")
+    extended = runner.build_suppression_combos("fixed-steps", seeds=(42, 43))
+    assert [c.run_name() for c in extended[:6]] == [c.run_name() for c in base]
+    for combo in extended[6:]:
+        assert combo.seed == 43 and combo.partition_seed == 42 and combo.layout_seed == 42
+        assert "-p42-" in combo.run_name() and combo.local_steps == 58
+
+
+def test_extension_analysis_carries_failed_candidates():
+    from results.cia_frontier.signature_suppression import analyze
+
+    def two_seeds(shift, accuracy):
+        one = _synthetic(shift, accuracy)
+        cells = {(seed, t): v for (_, t), v in one["cells"].items() for seed in (42, 43)}
+        return dict(one, cells=cells, accuracy=one["accuracy"] * 2, in_accuracy=one["in_accuracy"] * 2,
+                    client_accuracy=one["client_accuracy"] * 2, loo_median=one["loo_median"] * 2)
+
+    data = {"vanilla": two_seeds(1.5, 0.80), "weight-decay-5e-4": two_seeds(1.4, 0.80),
+            "local-epochs-1": two_seeds(1.0, 0.70), "fixed-steps": two_seeds(0.0, 0.80),
+            "consensus-kl-1": _synthetic(0.0, 0.80)}  # seed 42 only: dropped from the extension
+    data = analyze.extension_subset(data)
+    assert "consensus-kl-1" not in data
+    failed = {"part1": "fails", "part2": "open"}
+    carried = {v: failed for v in analyze.CANDIDATES if v != "fixed-steps"}
+    result = analyze.evaluate(data, resamples=100, carried=carried)
+    assert len(result["clusters"]) == 10 and result["gate"]["G2"] == "pass"
+    assert result["gate"]["candidates"]["consensus-kl-1"]["carried_from_seed_42"]
+    with pytest.raises(ValueError):
+        analyze.evaluate(data, resamples=10, carried={"consensus-kl-1": {"part1": "open", "part2": "open"}})

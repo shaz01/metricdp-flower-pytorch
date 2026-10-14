@@ -22,6 +22,7 @@ from results.contest_at_scale.auc_frontier.eurosat_remove import HYPERPARAMS
 ALPHA = 0.3
 CLIENTS = 48
 SEEDS = (42,)
+LAYOUT_SEED = 42
 ROUNDS = 50
 # Fixed before any run (PROTOCOL.md Section 3): the two largest clients of the seed-42
 # federation (23: 1,150 records, 7: 1,089), then clients 1 (149), 0 (304) and 3 (588).
@@ -80,9 +81,12 @@ def build_suppression_combos(config, seeds=SEEDS, targets=TARGETS, adjacency="bo
     hyperparams = replace(HYPERPARAMS, rounds=rounds,
                           weight_decay=changes.pop("weight_decay", HYPERPARAMS.weight_decay),
                           local_epochs=changes.pop("local_epochs", HYPERPARAMS.local_epochs))
-    combos = build_combos(alpha=ALPHA, seeds=list(seeds), targets=list(targets), clients=CLIENTS,
-                          privacy="vanilla", ratios=None, adjacency=adjacency, out_targets=out_targets,
-                          diagnostics=True)
+    # Seed 42 keeps the frontier convention (one seed for layout and training, run names
+    # unchanged); extension seeds keep the seed-42 layout (PROTOCOL.md Section 6).
+    combos = [combo for seed in seeds for combo in build_combos(
+        alpha=ALPHA, seeds=[seed], targets=list(targets), clients=CLIENTS, privacy="vanilla", ratios=None,
+        adjacency=adjacency, out_targets=out_targets, diagnostics=True,
+        partition_seed=None if seed == LAYOUT_SEED else LAYOUT_SEED)]
     return [SuppressionCombo(**{
         **{field.name: getattr(combo, field.name) for field in fields(FrontierCombo)},
         "name_prefix": f"{config}-{combo.name_prefix}",
