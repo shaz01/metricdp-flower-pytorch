@@ -195,3 +195,17 @@ explicit (they only say how Section 6 is computed):
   bootstrap. Candidates that failed at seed 42 and were not extended keep their seed-42 records and stay failed. G2 then
   passes if `fixed-steps` holds both parts, fails if it fails either, and is otherwise `inconclusive` (stop and
   escalate). `analysis.json` stays the seed-42 record.
+
+### Amendment 2 (2026-10-14, owner decision after the escalation, before any further run; gate and thresholds unchanged)
+
+The owner chose option 3 of `ESCALATION.md`: more seeds for `fixed-steps`. Fixed now:
+
+- Runs: seeds 44 and 45, seed-42 layout, for `fixed-steps`, `vanilla`, `weight-decay-5e-4` and `local-epochs-1` (the
+  same four configurations as the extension, so every comparison stays paired): 48 trajectories, about 11.1 h at the
+  measured 0.232 h per trajectory. WP2 total about 32.2 h, 7% above the 30 t-h cap (below the 25% escalation line).
+- Analysis: `analyze.py --extension analysis.json` over seeds 42-45 (20 clusters), written to
+  `analysis_seeds42-45.json`; the other five candidates keep their seed-42 failures. Same gate rule as Section 5.
+- This is the last addition. If G2 is still neither pass nor fail, it stays `inconclusive` and goes back to the owner;
+  no further seeds without a new owner decision. Expectation stated before the runs: with 20 clusters the interval
+  half-width should shrink from about 0.076 to about 0.054, so with a reduction near 0.044 the interval may well still
+  straddle 0.05.
