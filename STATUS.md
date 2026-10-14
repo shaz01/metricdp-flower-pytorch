@@ -35,8 +35,11 @@ per-target CIA exposure rises with client weight.
   Committed results that record a device all ran on CUDA. Also fixed: the EuroSAT frontier runner was unusable on
   `master` since 2026-10-02 (its data module rejected the forwarded `dirichlet_alpha`); `run_one_combo` now accepts
   checkpoint round 0.
-- **WP2 D1 Stage A signature-suppression screen (Agent B role, `feature/signature-suppression`, from 2026-10-14):
-  running on the compute server since 2026-10-14 00:50.** Protocol `results/cia_frontier/signature_suppression/PROTOCOL.md`:
+- **WP2 D1 Stage A signature-suppression screen (Agent B role, `feature/signature-suppression`, 2026-10-14): G2
+  inconclusive after the declared seed-43 extension; blocked, escalated to the owner (`ESCALATION.md`).** Seed 42: five of
+  six candidates fail; consensus KL beta 0.3 cuts the clean-view score by 0.148 [0.048, 0.224] but costs 1.95 pp
+  accuracy (limit 1 pp); fixed steps open, and after the extension its reduction is 0.044 [-0.034, 0.118] (threshold
+  0.05). 84 trajectories, 21.1 h of the 30 t-h cap. Protocol `results/cia_frontier/signature_suppression/PROTOCOL.md`:
   EuroSAT alpha 0.3, 48 clients, seed 42, 50 rounds, no DP, equal weights, targets 23, 7 (the two largest), 1, 0, 3;
   ten configurations (vanilla, size-weighted vanilla, weight decay 5e-4, 1 local epoch, FedProx mu 0.01/0.1/1 in the
   FedProx paper's sum convention, 58 fixed local steps, consensus KL beta 0.3/1); 60 trajectories, 22.2 t-h planned of
@@ -158,6 +161,8 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
+Nothing running.
+
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
 it, so machine-to-results provenance isn't lost; see `AGENTS.md`'s "Working across machines"
@@ -165,7 +170,6 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `python -m results.cia_frontier.signature_suppression.runner --execute --max-parallel-clients 8` (3 workers, GPUs 0 and 1) | WP2 Stage A screen, 60 trajectories (`feature/signature-suppression`), compute server, from 2026-10-14 00:50 | running |
 
 ## What's established on `master`
 
