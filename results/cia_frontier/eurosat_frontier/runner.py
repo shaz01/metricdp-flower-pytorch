@@ -20,6 +20,9 @@ class FrontierCombo(Combo):
     out_target: int | None
     noise_ratio: float
     partition_seed: int | None = None  # None: ``seed`` controls data layout too
+    # Default-off WP0 logging (not part of run_name; training is unchanged): server-side
+    # leave-one-out residual norms, plus per-round shadow increments and gradient norms.
+    diagnostics: bool = False
 
     @property
     def layout_seed(self) -> int:
@@ -30,15 +33,16 @@ class FrontierCombo(Combo):
                    "out_target": self.out_target}
         if self.partition_seed is not None:
             profile["partition_seed"] = self.partition_seed
-        return (*super().runner_args(**kwargs), "--partition-profile",
+        args = (*super().runner_args(**kwargs), "--partition-profile",
                 json.dumps(profile, sort_keys=True))
+        return (*args, "--log-loo-residuals") if self.diagnostics else args
 
 
 ADJACENCIES = ("both", "in", "out")
 
 
 def build_combos(*, alpha, seeds, targets, clients, privacy, ratios, pilot=False,
-                 adjacency="both", out_targets=None, partition_seed=None):
+                 adjacency="both", out_targets=None, partition_seed=None, diagnostics=False):
     """Build trajectories. ``targets`` is the fixed panel every shared IN evaluates.
 
     ``adjacency``/``out_targets`` only select which trajectories this process
@@ -87,8 +91,47 @@ def build_combos(*, alpha, seeds, targets, clients, privacy, ratios, pilot=False
         data_module="results.cia_frontier.eurosat_frontier.data:create_data_module",
         model_module="experiments.reproduce.eurosat_cnn:create_model",
         alpha=alpha, canonical_clients=clients, out_target=target, noise_ratio=ratio,
-        partition_seed=partition_seed,
+        partition_seed=partition_seed, diagnostics=diagnostics,
     ) for ratio in ratios for seed in seeds for target in selected]
+
+
+def round_rows(round_number, target, before, after):
+    """One diagnostics measurement row: the usual losses plus the round's increments.
+
+    ``before``/``after`` are ``cia.eval_model_with_gradients`` outputs for the models
+    before and after round ``round_number``'s update. Gradient norms are taken at the
+    start model, the point where the round's update is applied.
+    """
+    row = dict(round=round_number, target=target, aggregate_loss=after["aggregate_loss"],
+               clean_loss=after["clean_loss"], noisy_loss=after["noisy_loss"],
+               shadow_size=after["shadow_size"])
+    for view in ("clean", "noisy"):
+        row[f"{view}_loss_before"] = before[f"{view}_loss"]
+        row[f"{view}_increment"] = after[f"{view}_loss"] - before[f"{view}_loss"]
+        row[f"{view}_grad_norm_start"] = before[f"{view}_grad_norm"]
+    return row
+
+
+EUROSAT_DATA_MODULE = "results.cia_frontier.eurosat_frontier.data:create_data_module"
+
+
+def data_package(combo):
+    """Python module behind ``combo.data_module``.
+
+    It must provide ``create_data_module`` (training), ``base_module(alpha,
+    partition_seed)`` (canonical module for shadow views) and ``partition_summary``.
+    """
+    import importlib
+    return importlib.import_module(combo.data_module.split(":", 1)[0])
+
+
+def release_norm(previous_state, state):
+    """L2 norm of a released global-model update over all floating state entries."""
+    import torch
+    squared = sum(float(torch.sum((state[key].double() - previous_state[key].double()) ** 2))
+                  for key in state if state[key].is_floating_point())
+    count = sum(state[key].numel() for key in state if state[key].is_floating_point())
+    return squared ** 0.5, count
 
 
 def atomic_json(path, value):
@@ -114,10 +157,10 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
     # Imports are delayed so planning cannot load data or initialize training.
     from experiments.cia.iter_combos import iter_combos
     from experiments.cia import cia
+    import torch
     from experiments.cia.datasets.shadow import ShadowDataModule
     from metricdp_pytorch.utils.noisy_dataset import NoisyDataModule
     from metricdp_pytorch.utils.device import resolve_device
-    from results.cia_frontier.eurosat_frontier.data import DirichletEuroSAT, partition_summary
 
     output.mkdir(parents=True, exist_ok=True)
     device = resolve_device()
@@ -133,17 +176,24 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
                     "run_name": combo.run_name(), "score_direction": "lower loss indicates IN"}
         if combo.partition_seed is not None:
             manifest["partition_seed"] = combo.partition_seed
+        if combo.diagnostics:
+            manifest["diagnostics"] = True
+        if combo.data_module != EUROSAT_DATA_MODULE:
+            manifest["data_module"] = combo.data_module
         manifest_path = folder / "manifest.json"
         if manifest_path.exists() and json.loads(manifest_path.read_text()) != manifest:
             raise ValueError(f"Manifest mismatch: {folder}; use a separate output directory")
         atomic_json(manifest_path, manifest)
         report = folder / "measurements.json"
         rounds = tuple(range(1, combo.hyperparams.rounds + 1))
+        # Diagnostics also checkpoint the initial model (round 0) for round 1's increment.
+        checkpoint_rounds = (0, *rounds) if combo.diagnostics else rounds
         expected = {(r, t) for r in rounds for t in chosen}
         rows = json.loads(report.read_text()) if report.exists() else []
         if (folder / "complete.json").exists() and {(r["round"], r["target"]) for r in rows} == expected:
             continue
-        atomic_json(folder / "partitions.json", partition_summary(
+        package = data_package(combo)
+        atomic_json(folder / "partitions.json", package.partition_summary(
             combo.alpha, combo.canonical_clients, combo.layout_seed,
         ))
         import os
@@ -164,7 +214,7 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
         started = time.monotonic()
         for _, success, paths in iter_combos(
             [combo], output_dir=folder, max_parallel_clients=max_parallel_clients,
-            force=True, log=print, checkpoint_rounds=rounds,
+            force=True, log=print, checkpoint_rounds=checkpoint_rounds,
         ):
             if not success:
                 raise RuntimeError(f"Training failed: {combo.run_name()}")
@@ -176,25 +226,41 @@ def _execute(combos, targets, output, max_parallel_clients, pilot=False):
             eval_combo = replace(combo, seed=combo.layout_seed)
             shadows = {}
             for target in chosen:
-                base = DirichletEuroSAT(combo.alpha, partition_seed=combo.partition_seed)
+                base = package.base_module(combo.alpha, partition_seed=combo.partition_seed)
                 kwargs = dict(num_clients=combo.canonical_clients, target_partition_id=target,
                               shadow_fraction=0.10, partition_mode="non-iid", partition_profile="auto")
                 shadows[target] = (ShadowDataModule(base, **kwargs),
                                    ShadowDataModule(NoisyDataModule(base, std_fraction=0.20), **kwargs))
             rows = []
-            for round_number, path in zip(rounds, paths, strict=True):
+            previous = {}  # target -> evaluation of the previous checkpoint (diagnostics)
+            releases, previous_state = [], None  # diagnostics: released-update norms
+            for round_number, path in zip(checkpoint_rounds, paths, strict=True):
+                if combo.diagnostics:
+                    state = torch.load(path, map_location="cpu", weights_only=True)
+                    if previous_state is not None:
+                        norm, count = release_norm(previous_state, state)
+                        releases.append(dict(round=round_number, update_norm=norm,
+                                             parameter_count=count))
+                    previous_state = state
                 for target, (clean, noisy) in shadows.items():
-                    aggregate, clean_loss, noisy_loss, size = cia.eval_model(
-                        path, clean_data_module=clean, noisy_data_module=noisy,
-                        device=device, combo=eval_combo,
-                    )
-                    rows.append(dict(round=round_number, target=target,
-                                     aggregate_loss=aggregate, clean_loss=clean_loss,
-                                     noisy_loss=noisy_loss, shadow_size=size))
+                    views = dict(clean_data_module=clean, noisy_data_module=noisy,
+                                 device=device, combo=eval_combo)
+                    if combo.diagnostics:
+                        after = cia.eval_model_with_gradients(path, **views)
+                        if round_number > 0:
+                            rows.append(round_rows(round_number, target, previous[target], after))
+                        previous[target] = after
+                    else:
+                        aggregate, clean_loss, noisy_loss, size = cia.eval_model(path, **views)
+                        rows.append(dict(round=round_number, target=target,
+                                         aggregate_loss=aggregate, clean_loss=clean_loss,
+                                         noisy_loss=noisy_loss, shadow_size=size))
                 atomic_json(report, rows)
                 path.unlink()  # only after ALL targets at this round are persisted
                 print(f"[FRONTIER EVAL {round_number}/{len(rounds)}] targets={len(chosen)} "
                       f"elapsed={time.monotonic() - trained:.1f}s", flush=True)
+            if combo.diagnostics:
+                atomic_json(folder / "releases.json", releases)
             finished = time.monotonic()
             atomic_json(folder / "complete.json", {
                 "complete": True, "training_seconds": round(trained - started, 1),
@@ -218,6 +284,9 @@ def main():
     parser.add_argument("--partition-seed", type=int,
                         help="Fix data layout independently of --seeds (training randomness only)")
     parser.add_argument("--alpha-pilot", action="store_true")
+    parser.add_argument("--diagnostics", action="store_true",
+                        help="log leave-one-out residual norms (server) and per-round shadow "
+                             "increments and gradient norms (attack); training is unchanged")
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--max-parallel-clients", type=int, default=6)
     parser.add_argument("--output", type=Path, default=Path("results/cia_frontier/eurosat_frontier/results"))
@@ -227,7 +296,8 @@ def main():
     combos = build_combos(alpha=args.alpha, seeds=args.seeds, targets=args.targets,
                           clients=args.clients, privacy=args.privacy, ratios=args.ratios,
                           pilot=args.alpha_pilot, adjacency=args.adjacency,
-                          out_targets=args.out_targets, partition_seed=args.partition_seed)
+                          out_targets=args.out_targets, partition_seed=args.partition_seed,
+                          diagnostics=args.diagnostics)
     print(json.dumps({"training_runs": len(combos), "execute": args.execute,
                       "target_panel": args.targets, "adjacency": args.adjacency,
                       "rounds_recorded": [1, HYPERPARAMS.rounds],

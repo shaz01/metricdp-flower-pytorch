@@ -13,8 +13,9 @@ from metricdp_pytorch.utils.split_data import split_stratified
 
 
 @lru_cache(maxsize=128)
-def dirichlet_partitions(labels: tuple[int, ...], clients: int, alpha: float, seed: int):
-    """Allocate each class by Dirichlet proportions; reject partitions <10 records.
+def dirichlet_partitions(labels: tuple[int, ...], clients: int, alpha: float, seed: int,
+                         min_records: int = 10):
+    """Allocate each class by Dirichlet proportions; reject partitions < ``min_records``.
 
     Bounded rejection is explicit: very small alpha may be infeasible. No silent
     redistribution or fallback to the old quantity-skew partitioner.
@@ -31,9 +32,9 @@ def dirichlet_partitions(labels: tuple[int, ...], clients: int, alpha: float, se
             counts = rng.multinomial(len(indices), rng.dirichlet(np.full(clients, alpha)))
             for part, chunk in zip(parts, np.split(indices, np.cumsum(counts)[:-1]), strict=True):
                 part.extend(chunk.tolist())
-        if min(map(len, parts)) >= 10:
+        if min(map(len, parts)) >= min_records:
             return tuple(tuple(p) for p in parts)
-    raise ValueError("No Dirichlet allocation with >=10 records/client after 1000 attempts")
+    raise ValueError(f"No Dirichlet allocation with >={min_records} records/client after 1000 attempts")
 
 
 class DirichletEuroSAT(EurosatDataModule):
@@ -56,7 +57,10 @@ class DirichletEuroSAT(EurosatDataModule):
 
     def client_loaders(self, partition_id, *, num_partitions, partition_mode,
                        batch_size, seed, partition_profile="auto", client_weights=None,
-                       max_samples=0):
+                       dirichlet_alpha=None, max_samples=0):
+        # ``dirichlet_alpha`` is forwarded by the partition views since 2026-10-02 (e6419e8b);
+        # this experiment's alpha comes from the partition profile (``self.alpha``) instead.
+        del dirichlet_alpha
         if partition_mode != "non-iid" or client_weights is not None:
             raise ValueError("This experiment requires label-Dirichlet non-IID without weights")
         layout = self._layout_seed(seed)
@@ -74,6 +78,11 @@ class DirichletEuroSAT(EurosatDataModule):
         return super().server_loaders(
             batch_size=batch_size, seed=self._layout_seed(seed), max_samples=max_samples,
         )
+
+
+def base_module(alpha, partition_seed=None):
+    """Canonical (all-client) module; the frontier runner builds shadow views on it."""
+    return DirichletEuroSAT(alpha, partition_seed=partition_seed)
 
 
 def partition_summary(alpha, clients, seed):

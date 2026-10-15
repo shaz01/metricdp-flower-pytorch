@@ -12,7 +12,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from experiments.reproduce.paper_loss import sparse_categorical_cross_entropy
-from metricdp_pytorch.utils.device import resolve_device
+from metricdp_pytorch.utils.device import resolve_device, to_device
 
 STATEFUL_AGGREGATIONS = frozenset({"fedavgm", "fedopt", "fedyogi"})
 PAPER_INITIALIZATION_EPOCHS = 20
@@ -105,8 +105,8 @@ def train_with_adam(
         total_loss = 0.0
         examples = 0
         for images, labels in trainloader:
-            images = images.to(device, non_blocking=True)
-            labels = labels.to(device, non_blocking=True)
+            images = to_device(images, device)
+            labels = to_device(labels, device)
             optimizer.zero_grad()
             probabilities = model(images)
             loss = sparse_categorical_cross_entropy(probabilities, labels)

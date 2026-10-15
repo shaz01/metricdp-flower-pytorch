@@ -83,6 +83,20 @@ def resolve_device() -> torch.device:
     critical validation runs -- e.g. a run whose numbers are going into a
     committed report or a cross-run comparison -- where correctness matters
     more than wall-clock time.
+
+    **Correction, 2026-10-11 (feature/cia-infra)**: the single-process
+    non-determinism above was most likely not the backward kernels but the
+    training and evaluation loops' ``non_blocking=True`` host-to-MPS batch
+    copies, which let the model read a batch before its copy finished (the
+    ``torch.mps.synchronize()`` test above ran after the optimizer step, after
+    the race). Measured with torch 2.10.0 (single process, no Flower/Ray,
+    PaperCNN, 256 synthetic images, Adam, dropout on): blocking copies gave
+    bit-identical weights run to run (max abs diff 0.0) and across two separate
+    processes (10 epochs, identical weight hash); ``non_blocking=True`` gave NaN
+    weights. Evaluation showed the same: one checkpoint's shadow loss was 0.70,
+    0.83, 0.92 with asynchronous copies and 1.440792 (= CPU) with blocking ones.
+    All batch copies now go through ``to_device``. Concurrent multi-actor Ray
+    training on MPS has NOT been re-measured since this fix.
     """
     if torch.cuda.is_available():
         return torch.device("cuda:0")
@@ -91,6 +105,16 @@ def resolve_device() -> torch.device:
     if torch.backends.mps.is_available():
         return torch.device("mps")
     return torch.device("cpu")
+
+
+def to_device(tensor: torch.Tensor, device: torch.device | str) -> torch.Tensor:
+    """Copy a batch to ``device``; asynchronous (``non_blocking``) copies only on CUDA.
+
+    Asynchronous host-to-MPS copies corrupted batches with torch 2.10.0 (wrong,
+    run-to-run varying losses in evaluation, NaN weights in training; see the
+    2026-10-11 correction in ``resolve_device``). On CUDA they stay asynchronous.
+    """
+    return tensor.to(device, non_blocking=torch.device(device).type == "cuda")
 
 
 def release_device_cache(device: torch.device) -> None:

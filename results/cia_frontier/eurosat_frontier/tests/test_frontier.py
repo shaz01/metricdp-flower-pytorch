@@ -163,3 +163,72 @@ def test_combo_subclass_keeps_master_combo_and_historical_run_names():
         "__clients-48__seed-42__nm0p074208__clip5__rounds-100__epochs-5__data__eurosat_cnn")
     with pytest.raises(TypeError):
         FrontierCombo(*[None] * 15)  # subclass fields are keyword-only
+
+
+def test_diagnostics_log_increments_without_changing_training_identity(tmp_path, monkeypatch):
+    import experiments.cia.iter_combos as training
+    import results.cia_frontier.eurosat_frontier.data as data
+    from experiments.cia import cia
+    import metricdp_pytorch.utils.device as device
+    monkeypatch.setattr(data, "partition_summary", lambda *args: {})
+    monkeypatch.setattr(device, "resolve_device", lambda: "cpu")
+    plain, logged = combos(seeds=[42])[0], combos(seeds=[42], diagnostics=True)[0]
+    assert plain.run_name() == logged.run_name()
+    args = lambda c: c.runner_args(output_dir=tmp_path, max_parallel_clients=1, client_cpus=1)
+    assert "--log-loo-residuals" not in args(plain)
+    assert args(logged) == (*args(plain), "--log-loo-residuals")
+
+    import torch
+
+    def fake_training(runs, **kwargs):
+        assert kwargs["checkpoint_rounds"] == (0, 1, 2)
+        paths = tuple(kwargs["output_dir"] / f"round{r}.pt" for r in kwargs["checkpoint_rounds"])
+        for r, path in zip(kwargs["checkpoint_rounds"], paths):
+            # weights 3^r * (1, 1); an integer buffer that must be ignored
+            torch.save({"w": torch.full((2,), 3.0 ** r), "steps": torch.tensor(r)}, path)
+        yield runs[0], True, paths
+    monkeypatch.setattr(training, "iter_combos", fake_training)
+    # Loss at round r for target t: 10 - r + t (clean), 20 - 2r (noisy); grad norm 1 + r.
+    def fake_eval(path, **kwargs):
+        r = int(path.stem.removeprefix("round"))
+        target = kwargs["clean_data_module"].target_partition_id
+        return {"aggregate_loss": 1.0, "clean_loss": 10.0 - r + target,
+                "noisy_loss": 20.0 - 2 * r, "shadow_size": 5,
+                "clean_grad_norm": 1.0 + r, "noisy_grad_norm": 2.0 + r}
+    monkeypatch.setattr(cia, "eval_model_with_gradients", fake_eval)
+    monkeypatch.setattr(cia, "eval_model", lambda *a, **k: pytest.fail("plain evaluation used"))
+
+    logged = replace(logged, hyperparams=replace(logged.hyperparams, rounds=2))
+    execute([logged], [0, 47], tmp_path, 1)
+
+    folder = next(tmp_path.glob("*/manifest.json")).parent
+    assert json.loads((folder / "manifest.json").read_text())["diagnostics"] is True
+    rows = {(r["round"], r["target"]): r for r in json.loads((folder / "measurements.json").read_text())}
+    assert set(rows) == {(r, t) for r in (1, 2) for t in (0, 47)}
+    row = rows[(2, 47)]
+    assert row["clean_loss"] == 55.0 and row["clean_loss_before"] == 56.0
+    assert row["clean_increment"] == -1.0 and row["noisy_increment"] == -2.0
+    assert row["clean_grad_norm_start"] == 2.0 and row["noisy_grad_norm_start"] == 3.0
+    assert rows[(1, 0)]["clean_loss_before"] == 10.0  # the round-0 (initial) model
+    assert not list(tmp_path.glob("*/*.pt"))
+    releases = json.loads((folder / "releases.json").read_text())
+    assert [r["round"] for r in releases] == [1, 2]
+    assert releases[0]["update_norm"] == pytest.approx(2 * 2 ** 0.5)  # (3 - 1) * sqrt(2)
+    assert releases[1]["update_norm"] == pytest.approx(6 * 2 ** 0.5)  # (9 - 3) * sqrt(2)
+    assert {r["parameter_count"] for r in releases} == {2}
+
+
+def test_dirichlet_eurosat_accepts_every_keyword_the_partition_views_forward():
+    """Since 2026-10-02 the partition views forward ``dirichlet_alpha``; the frontier
+    module must accept it, or every client fails before training (round skipped)."""
+    import inspect
+
+    from experiments.cia.datasets.partitions import PartitionViewDataModule
+    from results.cia_frontier.eurosat_frontier.data import DirichletEuroSAT
+
+    forwarded = {name for name, parameter in inspect.signature(
+        PartitionViewDataModule.client_loaders).parameters.items()
+        if parameter.kind is inspect.Parameter.KEYWORD_ONLY}
+    accepted = set(inspect.signature(DirichletEuroSAT.client_loaders).parameters)
+    assert "dirichlet_alpha" in forwarded
+    assert forwarded <= accepted

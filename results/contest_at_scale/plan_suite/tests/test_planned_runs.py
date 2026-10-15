@@ -124,3 +124,15 @@ def test_in_out_factories_share_canonical_target_partition() -> None:
         assert out_view.canonical_num_partitions == 3
         assert in_view.active_partition_ids == (0, 1, 2)
         assert out_view.active_partition_ids == (0, 1)
+
+
+def test_fixed_noise_stdv_scales_only_the_noise_and_uses_its_own_directory() -> None:
+    fixed = planned_runs.cia_groups(fixed_noise_stdv=True)
+    assert [name for name, _c, _m in fixed] == [name for name, _c, _m in planned_runs.CIA_GROUPS]
+    for (_, clients, matrix), (_, _, original) in zip(fixed, planned_runs.CIA_GROUPS):
+        assert matrix.noise_multipliers == (planned_runs.NOISE_MULTIPLIER * clients / 3,)
+        assert matrix.privacy_modes == original.privacy_modes
+        assert matrix.data_module == original.data_module
+    assert planned_runs._parser().parse_args([]).fixed_noise_stdv is False
+    assert planned_runs._parser().parse_args([]).output_dir is None
+    assert planned_runs.FIXED_NOISE_STDV_OUTPUT_DIR != planned_runs.DEFAULT_OUTPUT_DIR

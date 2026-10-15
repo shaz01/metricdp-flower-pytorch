@@ -26,7 +26,7 @@ from torch.utils.data import DataLoader
 from experiments.reproduce.dataset.alzheimer import AlzheimerDataModule, CLASS_NAMES
 from metricdp_pytorch.data_module import FederatedDataModule, load_data_module
 from metricdp_pytorch.model_module import load_model
-from metricdp_pytorch.utils.device import resolve_device
+from metricdp_pytorch.utils.device import resolve_device, to_device
 
 
 def predict_probabilities(
@@ -40,7 +40,7 @@ def predict_probabilities(
     model.eval()
     with torch.no_grad():
         for images, labels in loader:
-            images = images.to(device, non_blocking=True)
+            images = to_device(images, device)
             probabilities_out.append(model(images).cpu().numpy())
             labels_out.append(labels.numpy())
     if not labels_out:

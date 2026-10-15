@@ -149,6 +149,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--run-name")
     parser.add_argument("--save-model", action="store_true")
     parser.add_argument(
+        "--log-loo-residuals",
+        action="store_true",
+        help="log each client's update minus the leave-one-out mean update (norm, before clipping)",
+    )
+    parser.add_argument(
         "--checkpoint-rounds",
         nargs="+",
         type=int,
@@ -198,8 +203,9 @@ def _validate(args: argparse.Namespace) -> None:
         raise ValueError("dirichlet-alpha must be positive and finite.")
     if len(set(args.checkpoint_rounds)) != len(args.checkpoint_rounds):
         raise ValueError("checkpoint-rounds must not contain duplicates.")
-    if any(round_number < 1 or round_number > args.rounds for round_number in args.checkpoint_rounds):
-        raise ValueError("checkpoint-rounds must be between 1 and rounds.")
+    # Round 0 is the initial (pre-training) global model, evaluated by Strategy.start().
+    if any(round_number < 0 or round_number > args.rounds for round_number in args.checkpoint_rounds):
+        raise ValueError("checkpoint-rounds must be between 0 and rounds.")
     if args.batch_size < 1 or args.initialization_batch_size < 1:
         raise ValueError("batch sizes must be positive.")
     if args.initialization_epochs < 1:
@@ -306,6 +312,8 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
         config["shadow-fraction"] = args.shadow_fraction
     if args.train_fraction is not None:
         config["train-fraction"] = args.train_fraction
+    if args.log_loo_residuals:
+        config["log-loo-residuals"] = True
     return config
 
 
