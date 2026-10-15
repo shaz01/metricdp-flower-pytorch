@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import math
 import random
 from collections.abc import Callable, Iterable, Sequence
@@ -68,6 +69,27 @@ def proximal_term(
     return total_squared_difference / total_parameters
 
 
+PROXIMAL_NORMALIZATIONS = ("mean", "sum")
+
+
+def consensus_kl_term(
+    local_probabilities: torch.Tensor,
+    consensus_probabilities: torch.Tensor,
+) -> torch.Tensor:
+    """Batch mean of ``KL(p_consensus || p_local)`` from softmax probabilities.
+
+    ``p_consensus`` comes from the global model a client received this round
+    (a constant), so the term pulls the local model's predictions on its own
+    inputs toward the consensus; it is zero when they agree.
+    """
+    tiny = torch.finfo(local_probabilities.dtype).tiny
+    consensus = consensus_probabilities.detach()
+    return (
+        consensus
+        * (consensus.clamp_min(tiny).log() - local_probabilities.clamp_min(tiny).log())
+    ).sum(dim=1).mean()
+
+
 def train_with_adam(
     model: nn.Module,
     trainloader: DataLoader,
@@ -77,11 +99,20 @@ def train_with_adam(
     weight_decay: float = 0.0,
     device: torch.device | None = None,
     proximal_mu: float = 0.0,
+    proximal_normalization: str = "mean",
+    consensus_beta: float = 0.0,
+    local_steps: int = 0,
 ) -> list[float]:
     """Train with Adam, sparse categorical CE, and optional FedProx penalty.
 
-    The proximal term is measured from the model state at function entry.
-    Returns one example-weighted mean objective value per epoch.
+    The proximal term is measured from the model state at function entry:
+    ``(mu/2) * proximal_term`` (``"mean"``, the repository convention) or
+    ``(mu/2) * ||w - w_init||^2`` (``"sum"``, the FedProx paper's convention).
+    ``consensus_beta > 0`` adds ``beta * consensus_kl_term`` against the model
+    state at function entry (evaluated in eval mode, no gradient).
+    ``local_steps > 0`` replaces the epoch count by a fixed number of optimizer
+    steps, cycling through the loader as often as needed (the last pass may be
+    partial). Returns one example-weighted mean objective value per pass.
     """
     if epochs < 1:
         raise ValueError("epochs must be at least one.")
@@ -91,16 +122,34 @@ def train_with_adam(
         raise ValueError("weight_decay must be non-negative.")
     if proximal_mu < 0:
         raise ValueError("proximal_mu must be non-negative.")
+    if proximal_normalization not in PROXIMAL_NORMALIZATIONS:
+        raise ValueError(f"proximal_normalization must be one of {PROXIMAL_NORMALIZATIONS}.")
+    if consensus_beta < 0:
+        raise ValueError("consensus_beta must be non-negative.")
+    if local_steps < 0:
+        raise ValueError("local_steps must be non-negative.")
     if device is None:
         device = resolve_device()
 
     model.to(device)
     initial_parameters = [parameter.detach().clone() for parameter in model.parameters()]
+    # proximal_term is a mean; the "sum" convention multiplies it back by the count.
+    proximal_scale = (
+        sum(initial.numel() for initial in initial_parameters)
+        if proximal_normalization == "sum"
+        else 1
+    )
+    consensus_model = None
+    if consensus_beta > 0:
+        consensus_model = copy.deepcopy(model).eval()
+        for parameter in consensus_model.parameters():
+            parameter.requires_grad_(False)
     optimizer = torch.optim.Adam(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
     epoch_losses: list[float] = []
-    for _ in range(epochs):
+    steps = 0
+    while True:
         model.train()
         total_loss = 0.0
         examples = 0
@@ -111,18 +160,28 @@ def train_with_adam(
             probabilities = model(images)
             loss = sparse_categorical_cross_entropy(probabilities, labels)
             if proximal_mu > 0:
-                loss = loss + 0.5 * proximal_mu * proximal_term(
+                loss = loss + 0.5 * proximal_mu * proximal_scale * proximal_term(
                     model.parameters(), initial_parameters
+                )
+            if consensus_model is not None:
+                with torch.no_grad():
+                    consensus_probabilities = consensus_model(images)
+                loss = loss + consensus_beta * consensus_kl_term(
+                    probabilities, consensus_probabilities
                 )
             loss.backward()
             optimizer.step()
             batch_size = len(labels)
             total_loss += loss.item() * batch_size
             examples += batch_size
+            steps += 1
+            if local_steps and steps == local_steps:
+                break
         if examples == 0:
             raise ValueError("The validation loader must not be empty.")
         epoch_losses.append(total_loss / examples)
-    return epoch_losses
+        if (steps == local_steps) if local_steps else (len(epoch_losses) == epochs):
+            return epoch_losses
 
 
 def cosine_decayed_lr(

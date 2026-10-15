@@ -1,9 +1,9 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-10, CIA literature review and next-direction proposal added (`HANDOFF.md`,
-`research/cia_review_2026-10/`, execution plan `agent_roadmap.md`). 2026-10-09: client-specific-noise research direction
-closed and merged; nothing from it is active
+**Last updated:** 2026-10-15, CIA programme WP0 (infrastructure), WP1 (side-channel audit) and WP2 (D1 Stage A
+screen) merged into `master`; D1 stopped by owner decision; WP3 starting. 2026-10-10: CIA literature review and
+agent roadmap added (`HANDOFF.md`, `research/cia_review_2026-10/`)
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -19,14 +19,15 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 **CIA research programme (2026-10-10): approved for autonomous execution by agents under
 `research/cia_review_2026-10/agent_roadmap.md` (work packages WP0-WP6, gates, file ownership; agents never merge into
-`master`); nothing running yet.**
+`master`). WP0-WP2 finished and merged 2026-10-15; WP3 next.**
 New directory `research/cia_review_2026-10/` (literature review with 97 verified references, project evidence summary,
 ranked directions D1-D6 with kill criteria and staged experiments, analyses of committed logs only) and root `HANDOFF.md`
 (entry point, first experiment step by step). Recommended: defense-aware CIA audit (D2) and signature-suppressing local
 training under a fixed, public client-level DP noise law (D1). New log findings: the metric-privacy noise-level side
 channel is weak at 48 clients but the noise reveals the participant count in the 3-vs-2-client runs for both mechanisms;
 per-target CIA exposure rises with client weight.
-- **WP0 shared infrastructure (Agent A, `feature/cia-infra`, 2026-10-11): G0 passed, `ready`.** Default-off fixed noise
+- **WP0 shared infrastructure (Agent A, `feature/cia-infra`, 2026-10-11): G0 passed; merged into `master` 2026-10-15
+  (with WP1).** Default-off fixed noise
   std for the plan suite (`--fixed-noise-stdv`), server-side leave-one-out residual norms (`--log-loo-residuals`), and
   per-round shadow increments and gradient norms (frontier runner `--diagnostics`); 577 tests pass. State and usage:
   `results/cia_frontier/cia_infra/STATE.md`. Found and fixed (owner approved): asynchronous host-to-MPS batch copies
@@ -36,7 +37,7 @@ per-target CIA exposure rises with client weight.
   `master` since 2026-10-02 (its data module rejected the forwarded `dirichlet_alpha`); `run_one_combo` now accepts
   checkpoint round 0.
 - **WP1 D2 Stage A side-channel audit (Agent A, `feature/cia-audit`, 2026-10-11 to 2026-10-13): G1(a) passed, G1(b)
-  failed; done on the branch, awaiting the owner's merge decision.** Protocol `results/cia_frontier/side_channel_audit/PROTOCOL.md`
+  failed; merged into `master` 2026-10-15.** Protocol `results/cia_frontier/side_channel_audit/PROTOCOL.md`
   (EuroSAT and Alzheimer, Dirichlet alpha 0.3, 3/5/8 clients, every client a target, global DP and metric privacy with
   fixed noise std, equal weights, 50 rounds; 228 trajectories at seeds 42-44 plus the declared seed-45 extension for
   G1(b), 76 trajectories), run on the compute server, 98.2 h measured (owner budget 101 h). G1(a): metric privacy's
@@ -45,6 +46,13 @@ per-target CIA exposure rises with client weight.
   fading at 8). G1(b): the increment attacker does not beat the loss statistic at 5% FPR, -0.106 [-0.149, -0.005] at
   seeds 42-45 (+0.074 [-0.060, +0.116], inconclusive, at seeds 42-44), so WP4 uses the loss statistic as primary.
   Write-up `results/cia_frontier/side_channel_audit/FINDINGS.md`; state `STATE.md`.
+- **WP2 D1 Stage A signature-suppression screen (Agent B role, `feature/signature-suppression`, 2026-10-14 to
+  2026-10-15): G2 inconclusive; owner decision: Stage A does not support D1, D1 stops; merged into `master`
+  2026-10-15.** EuroSAT alpha 0.3, 48 clients, 50 rounds, no DP, equal weights, ten configurations, five
+  targets; 132 trajectories, 34.5 h (cap 30 t-h, extra seeds by owner decision). No variant cuts the clean-view score by
+  0.05 within 1 pp accuracy: consensus KL beta 0.3 cuts it by 0.148 [0.048, 0.224] at -1.95 pp (seed 42 only); fixed
+  local steps keeps accuracy but its reduction is -0.001 [-0.079, +0.076] over seeds 42-45. WP4 does not start; WP6
+  (this role) waits for WP3. Write-up `results/cia_frontier/signature_suppression/FINDINGS.md`.
 
 **Client-specific noise research direction: CLOSED (2026-10-09, owner decision).** Question: can noise that each client
 builds for itself improve CIA protection over the paper's server-side metric calibration at useful accuracy? Merged into
@@ -172,6 +180,13 @@ section.
 | --- | --- | --- |
 
 ## What's established on `master`
+
+- **CIA programme WP1 and WP2 (2026-10-15)** (`results/cia_frontier/side_channel_audit/FINDINGS.md`,
+  `results/cia_frontier/signature_suppression/FINDINGS.md`): with a fixed noise std in 3-8 client federations, metric
+  privacy's noise level reveals the largest client's participation (AUC 0.838 [0.779, 0.902]); a per-round increment
+  attacker does not beat the loss statistic at 5% FPR. Signature-suppressing local training (FedProx, fixed local
+  steps, consensus KL) does not cut CIA leakage by 0.05 within 1 pp accuracy on EuroSAT without DP (G2 inconclusive,
+  D1 stopped by owner decision). No `reports/` write-up yet (owner's call).
 
 - **AUC-targeted noise sweep** (`results/contest_at_scale/auc_frontier/reports/auc_targeted_noise_sweep.md`, `results/contest_at_scale/auc_frontier/reports/auc_frontier.html`):
   4 datasets (EuroSAT n=48, Alzheimer n=48, Fashion-MNIST n=48, CIFAR-10 n=100) x 2 partition modes
