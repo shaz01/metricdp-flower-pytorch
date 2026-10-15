@@ -36,8 +36,9 @@ per-target CIA exposure rises with client weight.
   `master` since 2026-10-02 (its data module rejected the forwarded `dirichlet_alpha`); `run_one_combo` now accepts
   checkpoint round 0.
 - **WP2 D1 Stage A signature-suppression screen (Agent B role, `feature/signature-suppression`, 2026-10-14): G2
-  inconclusive after the declared seed-43 extension; owner chose more seeds (seeds 44-45 for fixed steps and its
-  comparisons, PROTOCOL.md Amendment 2), waiting for a free GPU on the compute server.** Seed 42: five of
+  inconclusive after the declared seed-43 extension; owner chose more seeds (PROTOCOL.md Amendment 2); over seeds
+  42-45 fixed steps shows no effect (-0.001 [-0.079, +0.076]) and G2 is still inconclusive; back to the owner
+  (`ESCALATION.md`). 132 trajectories, 34.5 h.** Seed 42: five of
   six candidates fail; consensus KL beta 0.3 cuts the clean-view score by 0.148 [0.048, 0.224] but costs 1.95 pp
   accuracy (limit 1 pp); fixed steps open, and after the extension its reduction is 0.044 [-0.034, 0.118] (threshold
   0.05). 84 trajectories, 21.1 h of the 30 t-h cap. Protocol `results/cia_frontier/signature_suppression/PROTOCOL.md`:

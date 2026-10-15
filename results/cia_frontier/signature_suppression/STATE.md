@@ -1,10 +1,10 @@
 package: WP2
-status: running
-gate: G2 = inconclusive after the extension (fixed-steps score reduction +0.044 [-0.034, +0.118] vs threshold 0.05; part 2 open); escalated, owner chose more seeds (Amendment 2)
+status: blocked
+gate: G2 = inconclusive after Amendment 2 (seeds 42-45, 20 clusters: fixed-steps score reduction -0.001 [-0.079, +0.076] vs threshold 0.05; part 2 open); back to the owner (ESCALATION.md)
 protocol: results/cia_frontier/signature_suppression/PROTOCOL.md @ bb9bfd44
 machine: compute server (smoke tests on the compute server too, at most 5 rounds, scratch output; the owner assigned WP2 to this agent on 2026-10-14)
-cost so far: 21.1 h of trajectory wall time (15.54 h seed 42 + 5.56 h seed-43 extension) of the 30 t-h cap
-next: seeds 44-45 for fixed-steps, vanilla and both controls (PROTOCOL.md Amendment 2, 48 trajectories) as soon as a GPU is free of other users' jobs; then analysis_seeds42-45.json and G2
+cost so far: 34.5 h of trajectory wall time (15.54 h seed 42 + 5.56 h seed 43 + 13.39 h seeds 44-45) of the 30 t-h cap (+15%, below the 25% escalation line)
+next: owner decides (ESCALATION.md, section after Amendment 2); no runs until then
 needs from others: none (feature/cia-infra merged, its STATE.md says ready)
 
 ## Log
@@ -21,3 +21,5 @@ needs from others: none (feature/cia-infra merged, its STATE.md says ready)
 | 2026-10-14 20:06 | Seed-43 extension complete (24 trajectories, 5.56 h, two workers on GPU 0 from 17:18, no stalls or errors); GPU claim released. Old Ray session logs of this account under /tmp/ray (7.6 GB, back to August) removed at the owner's request; the two live sessions were kept. |
 | 2026-10-14 22:55 | Extension analysis (`analysis_seeds42-43.json`, 10 clusters, Amendment 1). Vanilla score 0.812 [0.690, 0.906], accuracy 0.821; fixed-steps 0.768 [0.672, 0.860], accuracy 0.820; weight decay 0.796, 0.811; one local epoch 0.810, 0.678. fixed-steps reduction 0.044 [-0.034, 0.118] (part 1 open), vs controls at matched accuracy +0.042 [-0.039, 0.120] and +0.044 [-0.034, 0.118] (part 2 open). The five other candidates keep their seed-42 failures. **G2 inconclusive -> stop and escalate (ESCALATION.md).** |
 | 2026-10-14 22:55 | Owner decision on the escalation: option 3, more seeds for `fixed-steps`. PROTOCOL.md Amendment 2: seeds 44 and 45 for the four extension configurations (48 trajectories, about 11.1 h; total about 32.2 h, 7% over the cap). Both GPUs are busy with other users' jobs, so a launcher waits for an idle GPU before starting two workers. |
+| 2026-10-15 02:51-09:36 | Seeds 44-45 (Amendment 2): the launcher found GPU 0 idle at 02:51 and started two workers; 48 trajectories complete at 09:36, 13.39 h, no stalls or errors; claim released. |
+| 2026-10-15 21:05 | Analysis over seeds 42-45 (`analysis_seeds42-45.json`, 20 clusters). Score [95%] and accuracy: vanilla 0.762 [0.659, 0.854], 0.828; fixed-steps 0.763 [0.704, 0.822], 0.825; weight decay 0.763 [0.666, 0.851], 0.816; one local epoch 0.848 [0.780, 0.911], 0.685. fixed-steps reduction -0.001 [-0.079, +0.076] (AUC -0.008 [-0.098, +0.068]); vs controls at matched accuracy -0.001 and +0.001, intervals about +/-0.077. Part 1 and part 2 open under the rule (upper ends above 0.05 and 0), point estimates at zero. **G2 inconclusive; back to the owner as Amendment 2 fixed.** |
