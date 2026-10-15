@@ -21,6 +21,23 @@ needs from others: none (WP0-WP2 are merged into master)
   GDP parameter `C / (n sigma)` of the same release, in at least one runnable regime (EuroSAT or CIFAR-10, 8-48 clients),
   with the regime parameters taken from committed logs only.
 
+## G3 (D3) evaluation, fixed before any regime number is computed (2026-10-15)
+
+- Attacker class: the one-dimensional shadow-loss statistic per round (`k = 1`, the repository's loss attacker and
+  WP1's increment attacker), with the target's update known to the attacker (the crowd-only relaxation, which bounds
+  every shadow-sample size `m`). Bound per round: `mu_PK,r <= rho_r C / (n sigma)` with
+  `rho_r^2 = sigma^2 g_r^2 / V_r`, `g_r` the shadow-gradient norm, `V_r` the variance of the increment across
+  federations without the target. GDP bound: `C / (n sigma)`. Composition: crowd terms independent across rounds,
+  giving the composed ratio `sqrt(mean_r rho_r^2)` (the worst case over cross-round crowd correlation is GDP itself;
+  stated in the note).
+- Estimation: per cell and round, `V_r` pooled over the cell's OUT trajectories of all targets around each target's
+  seed mean (WP1 seeds 42-45; WP2 vanilla seeds 42-45), `sigma^2 g_r^2` averaged over the same trajectories. Regimes:
+  WP1 EuroSAT global DP with 3, 5 and 8 clients (8 is the runnable one; Alzheimer and 3-5 clients reported, not used for
+  the gate), and EuroSAT 48 clients from WP2 vanilla trajectories with the frontier noise `sigma = 0.001546 x 5` added
+  analytically (no DP run with increment diagnostics exists at 48 clients). CIFAR-10 has no committed run with the
+  needed diagnostics.
+- G3 (D3) passes if the composed ratio is at most 0.8 in at least one runnable regime (EuroSAT 8 or 48 clients).
+
 ## Log
 
 | When | What |
