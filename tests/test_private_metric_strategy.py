@@ -63,6 +63,9 @@ def test_gdp_conversion_matches_closed_form():
     assert gaussian_delta(1.0, 0.0) == pytest.approx(phi(0.5) - phi(-0.5))
     epsilon = gaussian_epsilon(2.0, 1e-5)
     assert gaussian_delta(2.0, epsilon) == pytest.approx(1e-5, rel=1e-6)
+    # Vacuous budgets (the frontier's noise, mu ~ 100) stay finite.
+    large = gaussian_epsilon(135.0, 1e-5)
+    assert math.isfinite(large) and gaussian_delta(135.0, large) == pytest.approx(1e-5, rel=1e-4)
 
 
 def test_accounting_and_ten_percent_share():

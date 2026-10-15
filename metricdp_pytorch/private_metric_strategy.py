@@ -57,14 +57,20 @@ def quantile_update(quantile: float, noisy_fraction: float, *, target: float, le
     return float(min(max(quantile * math.exp(-learning_rate * (noisy_fraction - target)), minimum), maximum))
 
 
+def _log_phi(x: float) -> float:
+    """log of the standard normal CDF, stable far into the lower tail."""
+    if x > -30:
+        return math.log(0.5 * math.erfc(-x / math.sqrt(2)))
+    return -x * x / 2 - math.log(-x) - 0.5 * math.log(2 * math.pi) + math.log1p(-1 / x ** 2 + 3 / x ** 4)
+
+
 def gaussian_delta(mu: float, epsilon: float) -> float:
     """``delta(epsilon)`` of a mu-GDP mechanism (Dong, Roth and Su 2022, Corollary 2.13)."""
-    from statistics import NormalDist
-
-    phi = NormalDist().cdf
     if mu == 0:
         return 0.0
-    return phi(-epsilon / mu + mu / 2) - math.exp(epsilon) * phi(-epsilon / mu - mu / 2)
+    first = math.exp(_log_phi(-epsilon / mu + mu / 2))
+    second = math.exp(epsilon + _log_phi(-epsilon / mu - mu / 2))
+    return max(first - second, 0.0)
 
 
 def gaussian_epsilon(mu: float, delta: float) -> float:
