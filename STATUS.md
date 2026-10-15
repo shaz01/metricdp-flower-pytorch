@@ -53,6 +53,14 @@ per-target CIA exposure rises with client weight.
   0.05 within 1 pp accuracy: consensus KL beta 0.3 cuts it by 0.148 [0.048, 0.224] at -1.95 pp (seed 42 only); fixed
   local steps keeps accuracy but its reduction is -0.001 [-0.079, +0.076] over seeds 42-45. WP4 does not start; WP6
   (this role) waits for WP3. Write-up `results/cia_frontier/signature_suppression/FINDINGS.md`.
+- **WP3 D3 theory and D4 item 1 (Agent C role, `feature/private-dispersion`, 2026-10-15): G3 passed; done on the
+  branch, awaiting the owner's merge decision.** D3 (`research/cia_review_2026-10/theory/f_cmip.md`): for the loss
+  attacker, not knowing the other clients makes the bound 0.546x (EuroSAT 8 clients) and 0.619x (48 clients) the GDP
+  bound at the frontier noise, but both bounds are vacuous there and the gain disappears at useful noise levels. D4.1:
+  `metricdp_pytorch/private_metric_strategy.py`, metric privacy with a privately tracked median client distance,
+  `sqrt(T (q_max^2/z^2 + 1/sigma_b^2))`-GDP, median release 10% of the budget, no noise-level side channel; at a matched
+  formal guarantee it cannot use less noise than global DP. Write-up `research/cia_review_2026-10/theory/FINDINGS.md`.
+  WP6 can start.
 
 **Client-specific noise research direction: CLOSED (2026-10-09, owner decision).** Question: can noise that each client
 builds for itself improve CIA protection over the paper's server-side metric calibration at useful accuracy? Merged into
