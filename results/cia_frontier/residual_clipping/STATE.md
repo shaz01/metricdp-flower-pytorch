@@ -1,10 +1,10 @@
 package: WP6
-status: planning
+status: running
 gate: G6 = not yet measured
 protocol: results/cia_frontier/residual_clipping/PROTOCOL.md (committed with this STATE update, before any run)
 machine: compute server (owner assigned WP6 to this agent on 2026-10-15, after WP3 passed G3)
 cost so far: 0 t-h of 60
-next: smoke tests, then the 24 protocol trajectories
+next: let the 24 protocol trajectories finish, then analyze.py and G6
 needs from others: none (feature/private-dispersion merged for the private quantile)
 
 ## Pre-analysis from committed logs (no training; `pre_analysis.py`, `pre_analysis.csv`)
@@ -28,3 +28,4 @@ order of the clipping norm. With a median-tracked `rho`, `rho` would settle abov
 |---|---|
 | 2026-10-15 | Owner asked to start WP6. Branch `feature/residual-clipping` from master 5a9a2201 with `feature/private-dispersion` (22bf9d17, WP3 passed) merged. Pre-analysis above. |
 | 2026-10-15 | Owner decision: run the screen as specified despite the pre-analysis. Strategy `metricdp_pytorch/residual_clipping_strategy.py` (+ 7 tests; runner/server plumbing `--privacy residual-clipping`), `THEORY.md` (proof: `sqrt(T (1/z^2 + 1/sigma_b^2))`-GDP; noise-feedback prediction: fail), `PROTOCOL.md`, `runner.py` (24 trajectories, 8.9 t-h planned), `analyze.py`. |
+| 2026-10-15 22:14-22:30 | Smoke (compute server, GPU 0, 2 rounds, scratch output, claim released): every mechanism's IN trajectory plus `plain` and `residual-median` end to end (14 trajectories, no errors); run JSONs record the residual settings; `analyze.py` ran on the pair. Round 2 already shows the predicted feedback: centre norm 4.24-4.46 (the previous release, mostly noise), median residual 5.85-6.02 > C, 98-100% of residuals clipped in the `previous`-centre mechanisms; plain clipping 21% clipped, noise std 0.00773 as planned. `uv run pytest` on the branch: 631 passed, 2 skipped. Smoke numbers are not results. |

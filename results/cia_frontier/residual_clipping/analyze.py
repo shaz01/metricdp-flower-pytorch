@@ -83,6 +83,7 @@ def evaluate(data, resamples=RESAMPLES):
     point = {c: {v: stats(c, v, everything) for v in ("clean", "noisy")} for c in configs}
     boot = {c: [stats(c, "clean", d) for d in draws] for c in configs}
     interval = lambda xs: [float(x) for x in np.quantile(xs, [0.025, 0.975])]
+    late = lambda xs: xs[10:] or xs  # rounds 11 on (all rounds in short smoke runs)
     accuracy = {c: float(np.mean(data[c]["accuracy"])) for c in configs}
     report = {}
     for c in configs:
@@ -93,10 +94,10 @@ def evaluate(data, resamples=RESAMPLES):
             per_target_score={f"{s}-{t}": float((d["cells"][(s, t)]["clean"] > 0).mean()) for s, t in clusters},
             accuracy_mean=accuracy[c], accuracy_in=d["in_accuracy"],
             accuracy_range=[min(d["accuracy"]), max(d["accuracy"])], trajectories=len(d["accuracy"]),
-            rho_median_rounds_11_on=float(np.median(d["rho_median_by_round"][10:])),
-            noise_std_median_rounds_11_on=float(np.median(d["noise_median_by_round"][10:])),
-            fraction_clipped_mean_rounds_11_on=float(np.mean(d["clipped_mean_by_round"][10:])),
-            residual_norm_median_rounds_11_on=float(np.median(d["residual_median_by_round"][10:])),
+            rho_median_rounds_11_on=float(np.median(late(d["rho_median_by_round"]))),
+            noise_std_median_rounds_11_on=float(np.median(late(d["noise_median_by_round"]))),
+            fraction_clipped_mean_rounds_11_on=float(np.mean(late(d["clipped_mean_by_round"]))),
+            residual_norm_median_rounds_11_on=float(np.median(late(d["residual_median_by_round"]))),
             rho_median_by_round=d["rho_median_by_round"], noise_median_by_round=d["noise_median_by_round"],
         )
     gate = {}
