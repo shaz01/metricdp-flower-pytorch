@@ -156,6 +156,32 @@ def result_to_dict(result: Result, metadata: Mapping[str, Any]) -> dict[str, Any
     }
 
 
+RESIDUAL_KEYS = ("num-slots", "residual-center", "residual-rho", "residual-quantile", "residual-rho-min",
+                 "residual-rho-max", "residual-bit-noise-std")
+
+
+def residual_clipping_strategy(config):
+    """WP6: residual clipping around the previous released update (``--privacy residual-clipping``)."""
+    from metricdp_pytorch.residual_clipping_strategy import ResidualClippingServerSide
+    from metricdp_pytorch.strategy_factory import make_base_strategy
+
+    base = make_base_strategy(str(config["aggregation"]), num_clients=int(config["num-clients"]),
+                              fraction_evaluate=float(config.get("fraction-evaluate", 1.0)),
+                              weighting=str(config.get("aggregation-weighting", "num-examples")))
+    adaptive = "residual-quantile" in config
+    return ResidualClippingServerSide(
+        base, noise_multiplier=float(config["noise-multiplier"]), num_slots=int(config["num-slots"]),
+        center=str(config["residual-center"]),
+        rho=None if adaptive else float(config["residual-rho"]),
+        target_quantile=float(config["residual-quantile"]) if adaptive else None,
+        initial_rho=float(config["clipping-norm"]) if adaptive else None,
+        minimum_rho=float(config["residual-rho-min"]) if adaptive else None,
+        maximum_rho=float(config["residual-rho-max"]) if adaptive else None,
+        bit_noise_std=float(config["residual-bit-noise-std"]) if adaptive else None,
+        seed=int(config.get("seed", 42)),
+    )
+
+
 def run(
         grid: Grid,
         config: Mapping[str, Any],
@@ -184,16 +210,19 @@ def run(
         }
     if "proximal-mu" in config:
         influence["proximal_mu"] = float(config["proximal-mu"])
-    strategy = create_paper_strategy(
-        **influence,
-        aggregation=str(config["aggregation"]),
-        privacy=str(config["privacy"]),
-        num_clients=int(config["num-clients"]),
-        fraction_evaluate=float(config.get("fraction-evaluate", 1.0)),
-        noise_multiplier=float(config.get("noise-multiplier", 0.01)),
-        clipping_norm=float(config.get("clipping-norm", 5.0)),
-        weighting=str(config.get("aggregation-weighting", "num-examples")),
-    )
+    if str(config["privacy"]) == "residual-clipping":
+        strategy = residual_clipping_strategy(config)
+    else:
+        strategy = create_paper_strategy(
+            **influence,
+            aggregation=str(config["aggregation"]),
+            privacy=str(config["privacy"]),
+            num_clients=int(config["num-clients"]),
+            fraction_evaluate=float(config.get("fraction-evaluate", 1.0)),
+            noise_multiplier=float(config.get("noise-multiplier", 0.01)),
+            clipping_norm=float(config.get("clipping-norm", 5.0)),
+            weighting=str(config.get("aggregation-weighting", "num-examples")),
+        )
     if bool(config.get("log-loo-residuals", False)):
         strategy = LeaveOneOutResidualLogging(strategy)
     return strategy.start(
@@ -291,6 +320,7 @@ def main(grid: Grid, context: Context) -> None:
                if str(config["privacy"]) == "influence-noise" else {}),
             **({"log_loo_residuals": True}
                if bool(config.get("log-loo-residuals", False)) else {}),
+            **{key.replace("-", "_"): config[key] for key in RESIDUAL_KEYS if key in config},
             **{key.replace("-", "_"): config[key] for key in LOCAL_TRAINING_KEYS if key in config},
             "initialization_pretrained": bool(initialization_losses),
             "initialization_epochs": len(initialization_losses),

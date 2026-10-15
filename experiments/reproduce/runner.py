@@ -39,6 +39,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _GPU_SHARE_SAFETY = 0.99
 
 
+
+# WP6 residual clipping (metricdp_pytorch.residual_clipping_strategy), built by experiments.reproduce.server.
+RESIDUAL_PRIVACY = "residual-clipping"
+
 def _auto_client_gpus(*, num_clients: int, max_parallel_clients: int) -> float:
     """Split one CUDA device across the concurrently-running client actors.
 
@@ -63,7 +67,7 @@ def _parser() -> argparse.ArgumentParser:
         help="partition mode interpreted by the selected data module",
     )
     parser.add_argument(
-        "--privacy", choices=PRIVACY_MODES + EXPERIMENTAL_PRIVACY_MODES, default="vanilla"
+        "--privacy", choices=PRIVACY_MODES + EXPERIMENTAL_PRIVACY_MODES + (RESIDUAL_PRIVACY,), default="vanilla"
     )
     parser.add_argument(
         "--aggregation", choices=AGGREGATION_METHODS, default="fedavg"
@@ -81,6 +85,14 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=0.001)
     parser.add_argument("--weight-decay", type=float, default=0.0)
+    residual = parser.add_argument_group("residual clipping (--privacy residual-clipping, WP6)")
+    residual.add_argument("--num-slots", type=int, help="public slot count (denominator); default num-clients")
+    residual.add_argument("--residual-center", choices=("previous", "zero"), default="previous")
+    residual.add_argument("--residual-rho", type=float, help="fixed residual clipping norm")
+    residual.add_argument("--residual-quantile", type=float, help="target quantile of a private rho")
+    residual.add_argument("--residual-rho-min", type=float)
+    residual.add_argument("--residual-rho-max", type=float)
+    residual.add_argument("--residual-bit-noise-std", type=float)
     parser.add_argument("--proximal-mu", type=float,
                         help="FedProx mu (fedprox only; default 0.5, the paper value)")
     parser.add_argument("--proximal-normalization", choices=("mean", "sum"),
@@ -199,7 +211,29 @@ def _project_defaults() -> dict[str, Any]:
     return dict(project["tool"]["flwr"]["app"]["config"])
 
 
+def _validate_residual(args: argparse.Namespace) -> None:
+    options = (args.num_slots, args.residual_rho, args.residual_quantile, args.residual_rho_min,
+               args.residual_rho_max, args.residual_bit_noise_std)
+    if args.privacy != RESIDUAL_PRIVACY:
+        if any(value is not None for value in options) or args.residual_center != "previous":
+            raise ValueError("--num-slots and --residual-* flags apply only to --privacy residual-clipping.")
+        return
+    if args.aggregation_weighting != "equal":
+        raise ValueError("residual-clipping requires --aggregation-weighting equal.")
+    if args.num_slots is not None and args.num_slots < args.num_clients:
+        raise ValueError("num-slots must be at least num-clients.")
+    if (args.residual_rho is None) == (args.residual_quantile is None):
+        raise ValueError("residual-clipping needs exactly one of --residual-rho and --residual-quantile.")
+    if args.residual_quantile is not None and None in (
+        args.residual_rho_min, args.residual_rho_max, args.residual_bit_noise_std
+    ):
+        raise ValueError("--residual-quantile needs --residual-rho-min, --residual-rho-max and --residual-bit-noise-std.")
+    if args.noise_multiplier <= 0:
+        raise ValueError("residual-clipping needs a positive noise multiplier.")
+
+
 def _validate(args: argparse.Namespace) -> None:
+    _validate_residual(args)
     if args.num_clients < 2:
         raise ValueError("num-clients must be at least two.")
     if not 0.0 < args.fraction_evaluate <= 1.0:
@@ -333,6 +367,13 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
         config["train-fraction"] = args.train_fraction
     if args.log_loo_residuals:
         config["log-loo-residuals"] = True
+    if args.privacy == RESIDUAL_PRIVACY:
+        config["num-slots"] = args.num_slots or args.num_clients
+        config["residual-center"] = args.residual_center
+        for key in ("rho", "quantile", "rho-min", "rho-max", "bit-noise-std"):
+            value = getattr(args, "residual_" + key.replace("-", "_"))
+            if value is not None:
+                config["residual-" + key] = value
     if args.proximal_mu is not None:
         config["proximal-mu"] = args.proximal_mu
     if args.proximal_normalization is not None:

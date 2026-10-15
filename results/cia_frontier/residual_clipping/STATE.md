@@ -1,10 +1,10 @@
 package: WP6
 status: planning
 gate: G6 = not yet measured
-protocol: not yet written
+protocol: results/cia_frontier/residual_clipping/PROTOCOL.md (committed with this STATE update, before any run)
 machine: compute server (owner assigned WP6 to this agent on 2026-10-15, after WP3 passed G3)
 cost so far: 0 t-h of 60
-next: owner decision on the pre-analysis below (screen as specified, or stop at the pre-analysis)
+next: smoke tests, then the 24 protocol trajectories
 needs from others: none (feature/private-dispersion merged for the private quantile)
 
 ## Pre-analysis from committed logs (no training; `pre_analysis.py`, `pre_analysis.csv`)
@@ -27,3 +27,4 @@ order of the clipping norm. With a median-tracked `rho`, `rho` would settle abov
 | When | What |
 |---|---|
 | 2026-10-15 | Owner asked to start WP6. Branch `feature/residual-clipping` from master 5a9a2201 with `feature/private-dispersion` (22bf9d17, WP3 passed) merged. Pre-analysis above. |
+| 2026-10-15 | Owner decision: run the screen as specified despite the pre-analysis. Strategy `metricdp_pytorch/residual_clipping_strategy.py` (+ 7 tests; runner/server plumbing `--privacy residual-clipping`), `THEORY.md` (proof: `sqrt(T (1/z^2 + 1/sigma_b^2))`-GDP; noise-feedback prediction: fail), `PROTOCOL.md`, `runner.py` (24 trajectories, 8.9 t-h planned), `analyze.py`. |
