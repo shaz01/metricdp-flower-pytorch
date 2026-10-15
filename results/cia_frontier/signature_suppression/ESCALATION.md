@@ -51,3 +51,7 @@ Remaining options: **1 (recommended now more strongly)**: record Stage A as not 
 bar; the only open one shows no effect at four seeds), write `FINDINGS.md`, stop D1, Agent B role moves to WP6.
 **2**: carry consensus KL beta 0.3 into WP4 by owner decision (its seed-42 cut of 0.148 [0.048, 0.224] at -1.95 pp
 accuracy is the only clear leakage reduction; it was never re-run at other seeds).
+
+## Resolution (2026-10-15)
+
+Owner chose option 1: Stage A is recorded as not supporting D1, D1 stops, `FINDINGS.md` written.

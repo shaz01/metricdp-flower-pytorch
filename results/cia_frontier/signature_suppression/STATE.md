@@ -1,11 +1,11 @@
 package: WP2
-status: blocked
-gate: G2 = inconclusive after Amendment 2 (seeds 42-45, 20 clusters: fixed-steps score reduction -0.001 [-0.079, +0.076] vs threshold 0.05; part 2 open); back to the owner (ESCALATION.md)
+status: inconclusive
+gate: G2 = inconclusive (seeds 42-45: fixed-steps score reduction -0.001 [-0.079, +0.076], threshold 0.05; every other candidate failed at seed 42; consensus-kl-0.3 cut 0.148 [0.048, 0.224] at -1.95 pp accuracy). Owner decision 2026-10-15: Stage A does not support D1; D1 stops
 protocol: results/cia_frontier/signature_suppression/PROTOCOL.md @ bb9bfd44
 machine: compute server (smoke tests on the compute server too, at most 5 rounds, scratch output; the owner assigned WP2 to this agent on 2026-10-14)
 cost so far: 34.5 h of trajectory wall time (15.54 h seed 42 + 5.56 h seed 43 + 13.39 h seeds 44-45) of the 30 t-h cap (+15%, below the 25% escalation line)
-next: owner decides (ESCALATION.md, section after Amendment 2); no runs until then
-needs from others: none (feature/cia-infra merged, its STATE.md says ready)
+next: none for WP2 (FINDINGS.md written); WP4 does not start; WP6 (Agent B role) waits for WP3; owner decides on the merge
+needs from others: none
 
 ## Log
 
@@ -23,3 +23,4 @@ needs from others: none (feature/cia-infra merged, its STATE.md says ready)
 | 2026-10-14 22:55 | Owner decision on the escalation: option 3, more seeds for `fixed-steps`. PROTOCOL.md Amendment 2: seeds 44 and 45 for the four extension configurations (48 trajectories, about 11.1 h; total about 32.2 h, 7% over the cap). Both GPUs are busy with other users' jobs, so a launcher waits for an idle GPU before starting two workers. |
 | 2026-10-15 02:51-09:36 | Seeds 44-45 (Amendment 2): the launcher found GPU 0 idle at 02:51 and started two workers; 48 trajectories complete at 09:36, 13.39 h, no stalls or errors; claim released. |
 | 2026-10-15 21:05 | Analysis over seeds 42-45 (`analysis_seeds42-45.json`, 20 clusters). Score [95%] and accuracy: vanilla 0.762 [0.659, 0.854], 0.828; fixed-steps 0.763 [0.704, 0.822], 0.825; weight decay 0.763 [0.666, 0.851], 0.816; one local epoch 0.848 [0.780, 0.911], 0.685. fixed-steps reduction -0.001 [-0.079, +0.076] (AUC -0.008 [-0.098, +0.068]); vs controls at matched accuracy -0.001 and +0.001, intervals about +/-0.077. Part 1 and part 2 open under the rule (upper ends above 0.05 and 0), point estimates at zero. **G2 inconclusive; back to the owner as Amendment 2 fixed.** |
+| 2026-10-15 | Owner decision on the escalation: option 1, record Stage A as not supporting D1 and stop D1. `FINDINGS.md` (two claims with one figure each, full tables from `findings.py` / `findings_tables.md`, all 132 trajectories) written; status set to inconclusive. |

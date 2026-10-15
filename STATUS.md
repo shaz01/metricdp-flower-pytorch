@@ -35,18 +35,13 @@ per-target CIA exposure rises with client weight.
   Committed results that record a device all ran on CUDA. Also fixed: the EuroSAT frontier runner was unusable on
   `master` since 2026-10-02 (its data module rejected the forwarded `dirichlet_alpha`); `run_one_combo` now accepts
   checkpoint round 0.
-- **WP2 D1 Stage A signature-suppression screen (Agent B role, `feature/signature-suppression`, 2026-10-14): G2
-  inconclusive after the declared seed-43 extension; owner chose more seeds (PROTOCOL.md Amendment 2); over seeds
-  42-45 fixed steps shows no effect (-0.001 [-0.079, +0.076]) and G2 is still inconclusive; back to the owner
-  (`ESCALATION.md`). 132 trajectories, 34.5 h.** Seed 42: five of
-  six candidates fail; consensus KL beta 0.3 cuts the clean-view score by 0.148 [0.048, 0.224] but costs 1.95 pp
-  accuracy (limit 1 pp); fixed steps open, and after the extension its reduction is 0.044 [-0.034, 0.118] (threshold
-  0.05). 84 trajectories, 21.1 h of the 30 t-h cap. Protocol `results/cia_frontier/signature_suppression/PROTOCOL.md`:
-  EuroSAT alpha 0.3, 48 clients, seed 42, 50 rounds, no DP, equal weights, targets 23, 7 (the two largest), 1, 0, 3;
-  ten configurations (vanilla, size-weighted vanilla, weight decay 5e-4, 1 local epoch, FedProx mu 0.01/0.1/1 in the
-  FedProx paper's sum convention, 58 fixed local steps, consensus KL beta 0.3/1); 60 trajectories, 22.2 t-h planned of
-  the 30 t-h cap. New default-off options: runner `--proximal-mu`, `--proximal-normalization`, `--consensus-kl-beta`,
-  `--local-steps`. State: `results/cia_frontier/signature_suppression/STATE.md`.
+- **WP2 D1 Stage A signature-suppression screen (Agent B role, `feature/signature-suppression`, 2026-10-14 to
+  2026-10-15): G2 inconclusive; owner decision: Stage A does not support D1, D1 stops; done on the branch, awaiting the
+  owner's merge decision.** EuroSAT alpha 0.3, 48 clients, 50 rounds, no DP, equal weights, ten configurations, five
+  targets; 132 trajectories, 34.5 h (cap 30 t-h, extra seeds by owner decision). No variant cuts the clean-view score by
+  0.05 within 1 pp accuracy: consensus KL beta 0.3 cuts it by 0.148 [0.048, 0.224] at -1.95 pp (seed 42 only); fixed
+  local steps keeps accuracy but its reduction is -0.001 [-0.079, +0.076] over seeds 42-45. WP4 does not start; WP6
+  (this role) waits for WP3. Write-up `results/cia_frontier/signature_suppression/FINDINGS.md`.
 
 **Client-specific noise research direction: CLOSED (2026-10-09, owner decision).** Question: can noise that each client
 builds for itself improve CIA protection over the paper's server-side metric calibration at useful accuracy? Merged into
