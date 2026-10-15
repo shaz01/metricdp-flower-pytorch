@@ -189,7 +189,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `python -m results.cia_frontier.residual_clipping.runner --execute --max-parallel-clients 8` (2 workers, GPU 0, shared with another user's job by owner decision) | WP6 residual-clipping screen, 24 trajectories (`feature/residual-clipping`), compute server, from 2026-10-15 22:40 | running |
+| `python -m results.cia_frontier.residual_clipping.runner --execute --max-parallel-clients 8` (2 workers, GPU 0, shared with another user's job by owner decision) | WP6 residual-clipping screen, 24 trajectories (`feature/residual-clipping`), compute server, from 2026-10-15 22:34 | running |
 
 ## What's established on `master`
 
