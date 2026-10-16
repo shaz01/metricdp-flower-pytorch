@@ -21,7 +21,11 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 **CIA research programme (2026-10-10): approved for autonomous execution by agents under
 `research/cia_review_2026-10/agent_roadmap.md` (work packages WP0-WP6, gates, file ownership; agents never merge into
 `master`). WP0-WP3 and WP6 finished and merged (2026-10-15/16); WP4 and WP5 do not start (G2 did not pass, D1
-stopped); D5 and D6 stay on hold until the owner assigns them. Next: the end-of-programme synthesis (roadmap Section 6).**
+stopped); D5 and D6 stay on hold until the owner assigns them. End-of-programme synthesis on `feature/cia-synthesis`
+(`research/cia_review_2026-10/SYNTHESIS.md`, 2026-10-16): metric privacy's noise level leaks in small federations and its
+formal repair cannot beat global DP at a matched guarantee; local training (D1) and residual clipping (D4.2) did not
+reduce leakage through the proposed mechanisms. Open for the owner: WP6 plain-clipping control, D5/D6, a `reports/`
+write-up.**
 New directory `research/cia_review_2026-10/` (literature review with 97 verified references, project evidence summary,
 ranked directions D1-D6 with kill criteria and staged experiments, analyses of committed logs only) and root `HANDOFF.md`
 (entry point, first experiment step by step). Recommended: defense-aware CIA audit (D2) and signature-suppressing local

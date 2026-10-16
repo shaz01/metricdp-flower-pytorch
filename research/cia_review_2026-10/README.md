@@ -8,6 +8,7 @@ files, and a verified literature corpus; no training was run.
 
 | File | Contents |
 |---|---|
+| [SYNTHESIS.md](SYNTHESIS.md) | End-of-programme synthesis (2026-10-16): where every direction ended, what the evidence supports, open items for the owner |
 | [agent_roadmap.md](agent_roadmap.md) | Execution plan for autonomous agents: binding owner decisions, work packages WP0-WP6, gates, file ownership, escalation, prompts |
 | [project_state.md](project_state.md) | Goal and baseline, codebase map, chronology, why client-specific noise failed, new log analyses, constraints |
 | [literature_review.md](literature_review.md) | Review of client-level inference threats, metric and data-dependent privacy, client-level DP, distributional privacy (GMIP), signal-reduction defenses, measurement practice; gaps mapped to D1-D6 |
