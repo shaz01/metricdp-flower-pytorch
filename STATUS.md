@@ -1,10 +1,10 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-16, CIA programme WP3 (theory and private median), WP6 (residual clipping) and the
-consensus-KL follow-up merged into `master`; every runnable work package is finished. 2026-10-15: WP0-WP2 merged, D1
-stopped by owner decision. 2026-10-10: CIA literature review and agent roadmap added (`HANDOFF.md`,
-`research/cia_review_2026-10/`)
+**Last updated:** 2026-10-16, CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
+(`research/cia_review_2026-10/SYNTHESIS.md`) merged into `master`; the owner is choosing new directions from the
+synthesis. 2026-10-15: WP0-WP2 merged, D1 stopped. 2026-10-10: CIA literature review and agent roadmap added
+(`HANDOFF.md`, `research/cia_review_2026-10/`)
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -21,11 +21,11 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 **CIA research programme (2026-10-10): approved for autonomous execution by agents under
 `research/cia_review_2026-10/agent_roadmap.md` (work packages WP0-WP6, gates, file ownership; agents never merge into
 `master`). WP0-WP3 and WP6 finished and merged (2026-10-15/16); WP4 and WP5 do not start (G2 did not pass, D1
-stopped); D5 and D6 stay on hold until the owner assigns them. End-of-programme synthesis on `feature/cia-synthesis`
-(`research/cia_review_2026-10/SYNTHESIS.md`, 2026-10-16): metric privacy's noise level leaks in small federations and its
+stopped); D5 and D6 stay on hold until the owner assigns them. Programme closed 2026-10-16 with the synthesis
+`research/cia_review_2026-10/SYNTHESIS.md` (merged): metric privacy's noise level leaks in small federations and its
 formal repair cannot beat global DP at a matched guarantee; local training (D1) and residual clipping (D4.2) did not
-reduce leakage through the proposed mechanisms. Open for the owner: WP6 plain-clipping control, D5/D6, a `reports/`
-write-up.**
+reduce leakage through the proposed mechanisms. Its Section 5 lists unvetted candidate directions (P1-P6) for the
+owner's next round; also open: WP6 plain-clipping control, D5/D6, a `reports/` write-up. Nothing running.**
 New directory `research/cia_review_2026-10/` (literature review with 97 verified references, project evidence summary,
 ranked directions D1-D6 with kill criteria and staged experiments, analyses of committed logs only) and root `HANDOFF.md`
 (entry point, first experiment step by step). Recommended: defense-aware CIA audit (D2) and signature-suppressing local
