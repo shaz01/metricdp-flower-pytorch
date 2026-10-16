@@ -1,9 +1,10 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-15, CIA programme WP0 (infrastructure), WP1 (side-channel audit) and WP2 (D1 Stage A
-screen) merged into `master`; D1 stopped by owner decision; WP3 starting. 2026-10-10: CIA literature review and
-agent roadmap added (`HANDOFF.md`, `research/cia_review_2026-10/`)
+**Last updated:** 2026-10-16, CIA programme WP3 (theory and private median), WP6 (residual clipping) and the
+consensus-KL follow-up merged into `master`; every runnable work package is finished. 2026-10-15: WP0-WP2 merged, D1
+stopped by owner decision. 2026-10-10: CIA literature review and agent roadmap added (`HANDOFF.md`,
+`research/cia_review_2026-10/`)
 (see `git log` for anything more recent)
 
 This file is a short, git-tracked pickup point for any Claude Code session — this machine or
@@ -19,7 +20,8 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 **CIA research programme (2026-10-10): approved for autonomous execution by agents under
 `research/cia_review_2026-10/agent_roadmap.md` (work packages WP0-WP6, gates, file ownership; agents never merge into
-`master`). WP0-WP2 finished and merged 2026-10-15; WP3 next.**
+`master`). WP0-WP3 and WP6 finished and merged (2026-10-15/16); WP4 and WP5 do not start (G2 did not pass, D1
+stopped); D5 and D6 stay on hold until the owner assigns them. Next: the end-of-programme synthesis (roadmap Section 6).**
 New directory `research/cia_review_2026-10/` (literature review with 97 verified references, project evidence summary,
 ranked directions D1-D6 with kill criteria and staged experiments, analyses of committed logs only) and root `HANDOFF.md`
 (entry point, first experiment step by step). Recommended: defense-aware CIA audit (D2) and signature-suppressing local
@@ -53,8 +55,8 @@ per-target CIA exposure rises with client weight.
   0.05 within 1 pp accuracy: consensus KL beta 0.3 cuts it by 0.148 [0.048, 0.224] at -1.95 pp (seed 42 only); fixed
   local steps keeps accuracy but its reduction is -0.001 [-0.079, +0.076] over seeds 42-45. WP4 does not start; WP6
   (this role) waits for WP3. Write-up `results/cia_frontier/signature_suppression/FINDINGS.md`.
-- **WP3 D3 theory and D4 item 1 (Agent C role, `feature/private-dispersion`, 2026-10-15): G3 passed; done on the
-  branch, awaiting the owner's merge decision.** D3 (`research/cia_review_2026-10/theory/f_cmip.md`): for the loss
+- **WP3 D3 theory and D4 item 1 (Agent C role, `feature/private-dispersion`, 2026-10-15): G3 passed; merged into
+  `master` 2026-10-16.** D3 (`research/cia_review_2026-10/theory/f_cmip.md`): for the loss
   attacker, not knowing the other clients makes the bound 0.546x (EuroSAT 8 clients) and 0.619x (48 clients) the GDP
   bound at the frontier noise, but both bounds are vacuous there and the gain disappears at useful noise levels. D4.1:
   `metricdp_pytorch/private_metric_strategy.py`, metric privacy with a privately tracked median client distance,
@@ -62,11 +64,19 @@ per-target CIA exposure rises with client weight.
   formal guarantee it cannot use less noise than global DP. Write-up `research/cia_review_2026-10/theory/FINDINGS.md`.
   WP6 can start.
 - **WP6 D4 item 2 residual clipping (`feature/residual-clipping`, 2026-10-15 to 2026-10-16): G6 passed as written,
-  not through the proposed mechanism; done on the branch, awaiting the owner's merge decision.** At the same formal
+  not through the proposed mechanism; merged into `master` 2026-10-16.** At the same formal
   guarantee the private-`rho` variants cut the top-decile clean-view score by 0.044 [0.012, 0.080] (median) and 0.092
   [0.032, 0.152] (90% quantile) at no accuracy cost, but `rho` settled above C (6.69 / 8.09 vs 5) because the centre
   carries the previous round's noise, so the server added 1.41x / 1.70x more noise; centring alone changed little
   (0.020 [-0.016, 0.056]). 24 trajectories, 7.08 h. Write-up `results/cia_frontier/residual_clipping/FINDINGS.md`.
+- **Consensus-KL follow-up (owner request 2026-10-16, `feature/consensus-kl`; not a roadmap package): steps 1 and 3
+  done; closed by owner decision 2026-10-16 (step 2, smaller beta, not run); merged into `master`
+  2026-10-16.** Step 1 (consensus KL 0.3 at seeds 43-45, 18 trajectories, 5.6 h): the seed-42
+  reduction does not replicate; over seeds 42-45 the clean-view score changes by -0.033 [-0.112, +0.048] vs vanilla
+  (more leakage) at -2.6 pp accuracy. Step 3 (global DP with and without consensus KL at 1/2/4x frontier noise, seed 42,
+  36 trajectories, 10.9 h): the pre-declared matched-leakage rule returns "supports", but gdp's score does not fall with
+  noise over this range, so the match is not meaningful; at matched noise consensus KL costs accuracy at every level and
+  never lowers leakage significantly. Write-up `results/cia_frontier/consensus_kl/FINDINGS.md`.
 
 **Client-specific noise research direction: CLOSED (2026-10-09, owner decision).** Question: can noise that each client
 builds for itself improve CIA protection over the paper's server-side metric calibration at useful accuracy? Merged into
@@ -183,7 +193,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Nothing running.
+Nothing running (consensus-KL follow-up rows below finished 2026-10-16).
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -192,6 +202,8 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| `signature_suppression.runner --configs consensus-kl-0.3 --seeds 43 44 45` (compute server, GPU 1) | Consensus-KL follow-up step 1, 18 trajectories | done 2026-10-16 |
+| `consensus_kl.runner_dp --execute` (compute server, GPU 1) | Consensus-KL follow-up step 3, 36 trajectories | done 2026-10-16 |
 
 ## What's established on `master`
 
