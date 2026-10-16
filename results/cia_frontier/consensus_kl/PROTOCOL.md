@@ -54,7 +54,8 @@ noise std and per-client accuracy.
 
 ## Step 2 (smaller beta)
 
-To be fixed in a dated section before its runs.
+Not run: owner decision 2026-10-16, after steps 1 and 3 (the seed-42 reduction did not replicate). The
+consensus-KL line is closed; see `FINDINGS.md`.
 
 ## Amendments
 

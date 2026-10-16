@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-16 (consensus-KL follow-up steps 1 and 3 on `feature/consensus-kl`); 2026-10-15, CIA programme WP0 (infrastructure), WP1 (side-channel audit) and WP2 (D1 Stage A
+**Last updated:** 2026-10-16 (consensus-KL follow-up closed on `feature/consensus-kl`); 2026-10-15, CIA programme WP0 (infrastructure), WP1 (side-channel audit) and WP2 (D1 Stage A
 screen) merged into `master`; D1 stopped by owner decision; WP3 starting. 2026-10-10: CIA literature review and
 agent roadmap added (`HANDOFF.md`, `research/cia_review_2026-10/`)
 (see `git log` for anything more recent)
@@ -54,12 +54,12 @@ per-target CIA exposure rises with client weight.
   local steps keeps accuracy but its reduction is -0.001 [-0.079, +0.076] over seeds 42-45. WP4 does not start; WP6
   (this role) waits for WP3. Write-up `results/cia_frontier/signature_suppression/FINDINGS.md`.
 - **Consensus-KL follow-up (owner request 2026-10-16, `feature/consensus-kl`; not a roadmap package): steps 1 and 3
-  done, awaiting the owner on step 2.** Step 1 (consensus KL 0.3 at seeds 43-45, 18 trajectories, 5.6 h): the seed-42
+  done; closed by owner decision 2026-10-16 (step 2, smaller beta, not run); not merged.** Step 1 (consensus KL 0.3 at seeds 43-45, 18 trajectories, 5.6 h): the seed-42
   reduction does not replicate; over seeds 42-45 the clean-view score changes by -0.033 [-0.112, +0.048] vs vanilla
   (more leakage) at -2.6 pp accuracy. Step 3 (global DP with and without consensus KL at 1/2/4x frontier noise, seed 42,
   36 trajectories, 10.9 h): the pre-declared matched-leakage rule returns "supports", but gdp's score does not fall with
   noise over this range, so the match is not meaningful; at matched noise consensus KL costs accuracy at every level and
-  never lowers leakage significantly. State and numbers: `results/cia_frontier/consensus_kl/STATE.md`.
+  never lowers leakage significantly. Write-up `results/cia_frontier/consensus_kl/FINDINGS.md`.
 
 **Client-specific noise research direction: CLOSED (2026-10-09, owner decision).** Question: can noise that each client
 builds for itself improve CIA protection over the paper's server-side metric calibration at useful accuracy? Merged into
