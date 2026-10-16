@@ -61,6 +61,12 @@ per-target CIA exposure rises with client weight.
   `sqrt(T (q_max^2/z^2 + 1/sigma_b^2))`-GDP, median release 10% of the budget, no noise-level side channel; at a matched
   formal guarantee it cannot use less noise than global DP. Write-up `research/cia_review_2026-10/theory/FINDINGS.md`.
   WP6 can start.
+- **WP6 D4 item 2 residual clipping (`feature/residual-clipping`, 2026-10-15 to 2026-10-16): G6 passed as written,
+  not through the proposed mechanism; done on the branch, awaiting the owner's merge decision.** At the same formal
+  guarantee the private-`rho` variants cut the top-decile clean-view score by 0.044 [0.012, 0.080] (median) and 0.092
+  [0.032, 0.152] (90% quantile) at no accuracy cost, but `rho` settled above C (6.69 / 8.09 vs 5) because the centre
+  carries the previous round's noise, so the server added 1.41x / 1.70x more noise; centring alone changed little
+  (0.020 [-0.016, 0.056]). 24 trajectories, 7.08 h. Write-up `results/cia_frontier/residual_clipping/FINDINGS.md`.
 
 **Client-specific noise research direction: CLOSED (2026-10-09, owner decision).** Question: can noise that each client
 builds for itself improve CIA protection over the paper's server-side metric calibration at useful accuracy? Merged into
