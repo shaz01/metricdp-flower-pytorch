@@ -41,7 +41,7 @@ larger clipping norm at the same `z` would very likely show the same effect; tha
 - **Tracker dynamics.** The median-tracked `rho` oscillates with period 2 around a slowly rising level (geometric step
   0.2), while the 90%-quantile `rho` is steady after round 10.
 - **Per target.** The reductions are largest for clients 23 and 18 (q90: 0.86 to 0.70, 0.92 to 0.74); client 40 stays at
-  1.00 under every mechanism.
+  0.98-1.00 under every mechanism.
 - **Accuracy.** IN-trajectory accuracy is slightly higher for the residual variants (0.811 and 0.813 vs 0.802), mean
   accuracy over all six trajectories is within 0.5 pp.
 - **Formal value.** The pre-run analysis (`THEORY.md` Section 3) shows the inherited noise can be absorbed only when
