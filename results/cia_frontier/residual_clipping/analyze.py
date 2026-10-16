@@ -111,11 +111,22 @@ def evaluate(data, resamples=RESAMPLES):
         gate[v] = dict(accuracy=accuracy[v], accuracy_baseline=accuracy[BASELINE], accuracy_condition=accuracy_ok,
                        score_reduction=dict(point=reduction, ci95=ci), auc_reduction=dict(point=auc, ci95=auc_ci),
                        verdict=verdict)
+    # Descriptive (not part of the gate): every mechanism against plain clipping, with its noise ratio.
+    decomposition = {}
+    for v in configs:
+        if v == BASELINE:
+            continue
+        decomposition[v] = dict(
+            score_reduction=point[BASELINE]["clean"]["score"] - point[v]["clean"]["score"],
+            score_reduction_ci95=interval([b["score"] - x["score"] for b, x in zip(boot[BASELINE], boot[v], strict=True)]),
+            noise_ratio_to_plain=report[v]["noise_std_median_rounds_11_on"] / report[BASELINE]["noise_std_median_rounds_11_on"],
+            rho_ratio_to_plain=report[v]["rho_median_rounds_11_on"] / report[BASELINE]["rho_median_rounds_11_on"],
+            accuracy_difference=accuracy[v] - accuracy[BASELINE])
     verdicts = [g["verdict"] for g in gate.values()]
     g6 = ("incomplete (missing configurations; not a gate result)" if set(CANDIDATES + (BASELINE,)) - set(configs)
           else "pass" if "holds" in verdicts else "fail" if all(x == "fails" for x in verdicts) else "inconclusive")
     return dict(clusters=[f"{s}-{t}" for s, t in clusters], baseline=BASELINE, resamples=resamples,
-                bootstrap_seed=BOOTSTRAP_SEED, configurations=report,
+                bootstrap_seed=BOOTSTRAP_SEED, configurations=report, decomposition=decomposition,
                 gate=dict(G6=g6, candidates=gate,
                           extension_candidates=[v for v, g in gate.items() if g["verdict"] == "open"]
                           if g6 == "inconclusive" else []))

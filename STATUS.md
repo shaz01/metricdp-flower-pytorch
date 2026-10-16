@@ -61,11 +61,12 @@ per-target CIA exposure rises with client weight.
   `sqrt(T (q_max^2/z^2 + 1/sigma_b^2))`-GDP, median release 10% of the budget, no noise-level side channel; at a matched
   formal guarantee it cannot use less noise than global DP. Write-up `research/cia_review_2026-10/theory/FINDINGS.md`.
   WP6 can start.
-- **WP6 D4 item 2 residual clipping (`feature/residual-clipping`, from 2026-10-15): screen running on the compute
-  server.** Mechanism `metricdp_pytorch/residual_clipping_strategy.py` (residuals around the previous release, clipped
-  to a fixed or privately tracked `rho`; proof and a pre-run prediction of failure from the noise fed back through the
-  centre in `results/cia_frontier/residual_clipping/THEORY.md`); EuroSAT, 48 slots, 50 rounds, top-decile targets
-  23/7/40/18/33, four mechanisms at the same per-round guarantee; 24 trajectories. State: `.../residual_clipping/STATE.md`.
+- **WP6 D4 item 2 residual clipping (`feature/residual-clipping`, 2026-10-15 to 2026-10-16): G6 passed as written,
+  not through the proposed mechanism; done on the branch, awaiting the owner's merge decision.** At the same formal
+  guarantee the private-`rho` variants cut the top-decile clean-view score by 0.044 [0.012, 0.080] (median) and 0.092
+  [0.032, 0.152] (90% quantile) at no accuracy cost, but `rho` settled above C (6.69 / 8.09 vs 5) because the centre
+  carries the previous round's noise, so the server added 1.41x / 1.70x more noise; centring alone changed little
+  (0.020 [-0.016, 0.056]). 24 trajectories, 7.08 h. Write-up `results/cia_frontier/residual_clipping/FINDINGS.md`.
 
 **Client-specific noise research direction: CLOSED (2026-10-09, owner decision).** Question: can noise that each client
 builds for itself improve CIA protection over the paper's server-side metric calibration at useful accuracy? Merged into
@@ -182,6 +183,8 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
+Nothing running.
+
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
 it, so machine-to-results provenance isn't lost; see `AGENTS.md`'s "Working across machines"
@@ -189,7 +192,6 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `python -m results.cia_frontier.residual_clipping.runner --execute --max-parallel-clients 8` (2 workers, GPU 0, shared with another user's job by owner decision) | WP6 residual-clipping screen, 24 trajectories (`feature/residual-clipping`), compute server, from 2026-10-15 22:34 | running |
 
 ## What's established on `master`
 

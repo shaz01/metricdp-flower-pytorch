@@ -1,10 +1,10 @@
 package: WP6
-status: running
-gate: G6 = not yet measured
+status: passed
+gate: G6 = pass as written (residual-median: top-decile score reduction 0.044 [0.012, 0.080], accuracy +0.09 pp; residual-q90: 0.092 [0.032, 0.152], -0.41 pp), but through 1.41x / 1.70x more noise (private rho 6.69 / 8.09 > C = 5), not through lower sensitivity; centring alone 0.020 [-0.016, 0.056]
 protocol: results/cia_frontier/residual_clipping/PROTOCOL.md (committed with this STATE update, before any run)
 machine: compute server (owner assigned WP6 to this agent on 2026-10-15, after WP3 passed G3)
-cost so far: 0 t-h of 60
-next: let the 24 protocol trajectories finish, then analyze.py and G6
+cost so far: 7.08 h of trajectory wall time of the 60 t-h cap
+next: owner reads FINDINGS.md; optional control (plain clipping with C = measured rho at the same z) needs an owner decision
 needs from others: none (feature/private-dispersion merged for the private quantile)
 
 ## Pre-analysis from committed logs (no training; `pre_analysis.py`, `pre_analysis.csv`)
@@ -30,3 +30,5 @@ order of the clipping norm. With a median-tracked `rho`, `rho` would settle abov
 | 2026-10-15 | Owner decision: run the screen as specified despite the pre-analysis. Strategy `metricdp_pytorch/residual_clipping_strategy.py` (+ 7 tests; runner/server plumbing `--privacy residual-clipping`), `THEORY.md` (proof: `sqrt(T (1/z^2 + 1/sigma_b^2))`-GDP; noise-feedback prediction: fail), `PROTOCOL.md`, `runner.py` (24 trajectories, 8.9 t-h planned), `analyze.py`. |
 | 2026-10-15 22:14-22:30 | Smoke (compute server, GPU 0, 2 rounds, scratch output, claim released): every mechanism's IN trajectory plus `plain` and `residual-median` end to end (14 trajectories, no errors); run JSONs record the residual settings; `analyze.py` ran on the pair. Round 2 already shows the predicted feedback: centre norm 4.24-4.46 (the previous release, mostly noise), median residual 5.85-6.02 > C, 98-100% of residuals clipped in the `previous`-centre mechanisms; plain clipping 21% clipped, noise std 0.00773 as planned. `uv run pytest` on the branch: 631 passed, 2 skipped. Smoke numbers are not results. |
 | 2026-10-15 22:30-22:34 | Protocol run launched on GPU 0 at 22:30, then stopped about two minutes later (by PID, own processes only) because another user's job had started on GPU 0 during the smoke tests (claims convention: busy GPUs are off-limits); both GPUs were busy. Owner decision: share GPU 0 with that job. Relaunched 22:34: two workers on GPU 0 (8 parallel client actors each); partial trajectories from the first launch are retrained from scratch by the resumable runner. |
+| 2026-10-16 02:17 | All 24 trajectories complete (two workers on GPU 0, shared with another user's job by owner decision; no stalls or errors); claim released. |
+| 2026-10-16 | Analysis (`analysis.json`): G6 pass as written; mechanism diagnostics show `rho` above C and noise 1.41x / 1.70x plain, matching the pre-run prediction for the mechanism; the predicted gate fail did not happen because the extra noise cost no accuracy at this vacuous noise level. Descriptive decomposition added to `analyze.py` (each mechanism against plain, with noise and `rho` ratios). `FINDINGS.md`, figures and tables written. |
