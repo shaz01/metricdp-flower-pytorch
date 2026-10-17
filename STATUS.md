@@ -238,6 +238,7 @@ section.
 | Command | What | Status |
 | --- | --- | --- |
 | `frozen_head.runner tune/evaluate --execute --workers 8` (compute server, CPU only) | B4 tuning (1,440) and evaluation (160) head-only runs | done 2026-10-17 |
+| `frozen_head` Amendment 1 chain: audit, extended grid, public sweep (compute server, CPU only, 8 workers) | B4 owner follow-up, about 14,500 head-only runs | running |
 | `signature_suppression.runner --configs consensus-kl-0.3 --seeds 43 44 45` (compute server, GPU 1) | Consensus-KL follow-up step 1, 18 trajectories | done 2026-10-16 |
 | `consensus_kl.runner_dp --execute` (compute server, GPU 1) | Consensus-KL follow-up step 3, 36 trajectories | done 2026-10-16 |
 | `randomized_inclusion.runner --config cost-gdp-r1x ... --replicate-subset 0` (compute server, GPU 1, shared by owner approval) | CIA v2 M0 cost run, 1 randomized-inclusion run | done 2026-10-17 18:51 (0.20 GPU-h) |
