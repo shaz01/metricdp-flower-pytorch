@@ -1,10 +1,10 @@
 package: M1
-status: planning (blocked by G-M0)
+status: running (waiting for an idle, unclaimed GPU; G-M0 passed)
 gate: G-M1 = not evaluated yet
 protocol: this file (Design section); M1 repeats v1's consensus-KL step 3 global-DP arm with one change
 machine: compute server
 cost so far: 0 GPU-h of the 6 GPU-h cap
-next: runner and analysis code while M0 finishes; launch after G-M0 passes and a GPU is idle and unclaimed
+next: 12 trajectories start on the first idle GPU (~/cia-server/m1-wait.sh in tmux m1-wait: two workers); then analyze.py and the G-M1 verdict
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, M1 (Agent A, branch `feature/cia-v2-measurement`).
@@ -77,3 +77,4 @@ The verdict uses the point estimate of the 4x pooled score, as the table states.
 | When | What |
 |---|---|
 | 2026-10-17 | STATE written before any M1 code; M1 waits for G-M0. |
+| 2026-10-17 | Code: `runner.py` (v1's `build_dp_combos("gdp", ...)` with per-world seeds; 7 tests check that only the private seeds and the run names differ from v1) and `analyze.py` (v1's `load` and `cell_statistics`). On v1's coupled step-3 trajectories it reproduces 0.788 (1x), 0.808 (2x) and 0.792 (4x), with noise-energy correlations IN vs OUT of 0.925-0.997 (regression test). G-M0 passed. Both GPUs are busy with another user's jobs, so a launcher waits for an idle, unclaimed GPU. |
