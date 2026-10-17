@@ -1,13 +1,13 @@
 package: B4 (plus the subsampled-Gaussian accountant for B1 and C1)
-status: awaiting owner (Amendments 1-2 complete; original verdict: failed, unchanged)
+status: verdict recorded by the owner (2026-10-17: G-B4 fail accepted; scarce-public positive recorded as exploration); not declared finished, no merge
 gate: G-B4 = best DP gain 3.49 [2.37, 4.64] pp over public-only (n 480, T 20, mu 8) (fail)
 protocol: results/cia_v2/formal_regime/PROTOCOL.md @ 44fe21f9; Amendment 1 @ 3ec476ee; Amendment 2 @ 6c23c129
 machine: compute server (CPU only; no GPU claimed)
 cost so far: 0 GPU-h of 10 (23.1 CPU-h of runs: 1.76 original, 21.3 Amendments 1-2)
-next: owner decision on FINDINGS.md "Options for the owner" (accept the fail; also record the scarce-public conditional positive, optionally confirmed on a fresh layout; or stop)
+next: none scheduled. On the owner's go: a confirmatory run of the scarce-public result on a fresh layout (new protocol, about 1 CPU-h)
 needs from others: none. Agent B: read the accountant line below before using it.
 
-accountant: ready (`metricdp_pytorch/accounting.py`, tests `tests/test_accounting.py`, note `research/cia_roadmap_v2/theory/accounting.md`); commit hash in the Log below. Agent B may merge `feature/cia-v2-formal-regime` into its own branch or copy the two files. Run with `uv run --with dp-accounting==0.6.0` (not a project dependency; owner's call). Use `dominating_mu(...).mu` (delta floor 1e-10) as the amplified formal mu for G-B1, and read the note's Section 1 on when amplification applies.
+accountant: ready (`metricdp_pytorch/accounting.py`, tests `tests/test_accounting.py`, note `research/cia_roadmap_v2/theory/accounting.md`); commit hash in the Log below. Agent B may merge `feature/cia-v2-formal-regime` into its own branch or copy the two files. `dp-accounting==0.6.0` is a project dependency since 2026-10-17 (owner decision), so plain `uv run` works after `uv sync`. Use `dominating_mu(...).mu` (delta floor 1e-10) as the amplified formal mu for G-B1, and read the note's Section 1 on when amplification applies.
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, B4 (Agent C, branch `feature/cia-v2-formal-regime`, worktree
 `metricdp-pytorch-feature-cia-v2-formal-regime`). B4 depends on no other package; the calculations come first.
@@ -185,7 +185,7 @@ Tests in `tests/test_accounting.py`:
 | File | Change |
 |---|---|
 | `metricdp_pytorch/accounting.py` (new), `tests/test_accounting.py` (new) | The accountant and its tests |
-| `pyproject.toml`, `uv.lock` | Add `dp-accounting==0.6.0`. These files have no owner in Section 6, so the owner is asked first. Fallback: a lazy import used through `uv run --with dp-accounting`. |
+| `pyproject.toml`, `uv.lock` | Add `dp-accounting==0.6.0`. These files have no owner in Section 6, so the owner was asked first; added 2026-10-17 on the owner's instruction. |
 | `experiments/frozen_head/` (new: `features.py`, `data.py`, `fedavg.py`, `public_only.py`, `crowd.py`, `runner.py`, `tests/`) | Feature cache, layouts, head-only DP-FedAvg simulator (in process, NumPy/torch on CPU), crowd bound, runner (plans unless `--execute`, resumable, atomic JSON) |
 | `research/cia_roadmap_v2/theory/` (new: `accounting.md`, `accounting_checks.py`, `formal_regime_calcs.py`, `tables/`) | The accountant's definitions and checks; the B4 calculations (their narrative is in this package's `FINDINGS.md`) |
 | `results/cia_v2/formal_regime/` (`STATE.md`, `PROTOCOL.md`, `FINDINGS.md`, `tables/`, `figures/`, `results/`) | This package |
@@ -212,3 +212,4 @@ if it is reused unchanged.
 | 2026-10-17 | Owner: "try a smaller public dataset and run the secondary attack check. before we accept the fail we should analyze carefully". Merged `feature/cia-v2-measurement` @ b8122d9d (M0 `ready`, G-M0 passed) for Agent A's attackers; full suite 773 passed, 27 skipped. Amendment 1 written and committed at 3ec476ee before any of its runs: A public-set sweep (20-500 images, 5 subsets), B extended-grid sensitivity, C randomized-inclusion audit (M0's resolved design: 32 candidates, R = 32, pair jackknife at 97.5%). Smoke: the refactored runner reproduces a committed evaluation run exactly; the 48-client panel equals M0's CANDIDATES. Launched C, then B, then A (compute server, CPU, 8 workers; log `~/cia-server/logs/b4-amend1.log`). |
 | 2026-10-17 | Amendment 1 done (log `~/cia-server/logs/b4-amend1.log`; results @ 97c51b18): audit 640 runs, no bound violated, no-noise AUC 0.84-0.98, mu = 1 AUC 0.52-0.61 (bound 0.760); extended grid fails (best 3.81 pp, mu <= 2 best 2.90); public sweep passes at 20/50/100/200 images and fails at 500. Since a mu <= 2 setting passed, Amendment 2 written at 6c23c129 before its runs: D conditional audit at 20 public images (384 runs), E public-only baseline strength (5 fits per subset). Code d96cc23b (tests: frozen_head 22 pass). |
 | 2026-10-17 | Amendment 2 done (log `~/cia-server/logs/b4-amend2.log`): protocol baseline recomputed exactly for all 2,000 records; per-size verdicts unchanged against best legitimate and oracle-L2 baselines; at 200 images no mu <= 2 setting is robust. Audit at 20 public: no violation, AUCs within -0.038..+0.021 of the full-public audit. Group-privacy caveat added: n = 480 protects a pseudo-client (10 mu per real client). FINDINGS.md "Owner follow-up" section written; options for the owner revised. |
+| 2026-10-17 | Owner: "record all of them and add to toml". FINDINGS "Owner decisions" written: G-B4 fail accepted with its nuance; the scarce-public positive recorded as exploration (confirmatory run not run); client subsampling recorded as an open direction. `uv add dp-accounting==0.6.0`: adds absl-py, dm-tree, wrapt; attrs 26.1.0 to 23.2.0. Full suite 804 passed, 4 skipped, 5 deselected (was 773 passed, 27 skipped). Docs no longer say `--with`. |

@@ -1,6 +1,6 @@
 """B4 calculation stage (no DP training): noise-to-signal table, predicted accuracy loss, crowd bound.
 
-    uv run --with dp-accounting==0.6.0 python research/cia_roadmap_v2/theory/formal_regime_calcs.py [--part nsr|predict|crowd|all]
+    uv run python research/cia_roadmap_v2/theory/formal_regime_calcs.py [--part nsr|predict|crowd|all]
 
 Writes ``tables/formal_regime_{nsr,predicted_accuracy,crowd}.csv`` beside this file. The
 ``predict`` and ``crowd`` parts need the cached frozen features (``experiments.frozen_head.features``)

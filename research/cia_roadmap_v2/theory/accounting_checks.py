@@ -1,6 +1,6 @@
 """Tables behind ``accounting.md`` (no training).
 
-    uv run --with dp-accounting==0.6.0 python research/cia_roadmap_v2/theory/accounting_checks.py [published] [floor] [calibration]
+    uv run python research/cia_roadmap_v2/theory/accounting_checks.py [published] [floor] [calibration]
 
 Writes ``tables/accounting_published.csv``, ``tables/accounting_floor.csv`` and
 ``tables/accounting_calibration.csv`` beside this file.

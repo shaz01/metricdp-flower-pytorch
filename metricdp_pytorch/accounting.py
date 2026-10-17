@@ -16,8 +16,8 @@ Gaussian mechanism with noise multiplier ``z``; ``T`` rounds compose it ``T`` ti
 * ``mu_clt`` is the central-limit approximation ``q sqrt(T (exp(1/z^2) - 1))`` for Poisson
   sampling (Bu, Dong, Long and Su 2020, Eq. (5) and Theorem 5): asymptotic, not a guarantee.
 
-``dp-accounting`` is imported lazily, so this module loads without it; the project venv does not
-ship it. Run code that uses PLD or RDP through ``uv run --with dp-accounting==0.6.0``.
+``dp-accounting`` is a project dependency pinned at 0.6.0 (``pyproject.toml``). It is imported lazily,
+so the closed forms load without it.
 Definitions and checks: ``research/cia_roadmap_v2/theory/accounting.md``.
 """
 
@@ -44,7 +44,7 @@ def _dp_accounting() -> Any:
     except ImportError as error:  # pragma: no cover - depends on the environment
         raise ImportError(
             "metricdp_pytorch.accounting needs Google's dp-accounting for q < 1 or RDP; "
-            f"run with `uv run --with dp-accounting=={DP_ACCOUNTING_VERSION}`."
+            f"install the project dependencies (`uv sync`; pinned dp-accounting=={DP_ACCOUNTING_VERSION})."
         ) from error
     return dp_accounting
 

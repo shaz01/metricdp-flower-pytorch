@@ -371,20 +371,32 @@ The full table (`mu` = 4 included, maxima and minima) is in the CSV.
   `10 mu` by group privacy, so the `n = 480` rows stand in for a federation of 480 genuine small owners.
 - **Public-sweep precision:** 5 public subsets per size. The subset term dominates the intervals.
 
-## Options for the owner (not decided here)
+## Owner decisions (2026-10-17)
 
-The original options are superseded by the follow-up. As of Amendment 2:
+The owner said: "record all of them and add to toml". The three options listed after Amendment 2 are recorded as
+follows.
 
-1. **Accept the G-B4 fail for this setup.**
-   - Record: "no non-vacuous client-level regime at this scale with a 1,350-image public set".
-   - Add the nuance: about 2 pp at `mu = 1` with 480 (pseudo-)clients, and a realistic attacker at implied `mu` 0.09-0.41.
-2. **Also record the conditional positive.**
+1. **G-B4 fails for this setup, accepted.**
+   - Recorded statement: "no non-vacuous client-level regime at this scale with a 1,350-image public set".
+   - Nuance: at `mu = 1`, 480 (pseudo-)clients gain about 2 pp (2.07-2.40 pp). The realistic attacker sits at an
+     implied `mu` of 0.09-0.41.
+2. **Conditional positive, recorded as exploration (not a pre-registered gate result).**
    - Statement: "with at most 10-20 public images per class, head-only DP-FedAvg at `mu <= 2` beats the public-only
      head by 5-26 pp".
    - Against the strongest legitimate baseline it is robust:
      - at 20-100 images for `n = 480`;
      - at 20 images for `n = 48`, except `T = 20`, `mu = 1`.
-   - This is exploration after the fact, not a pre-registered gate result. A confirmatory run on a fresh layout and
-     fresh subsets (for example layout 44, 20 and 50 images) would make it a result. It costs about 1 CPU-hour and
-     would need a new protocol.
-3. **Client subsampling at `n = 480`** with the accountant, as listed before. It is not pursued here.
+   - At 200 images it is marginal (no `mu <= 2` setting robust), and at 500 it fails.
+   - The `n = 480` rows protect a pseudo-client (`10 mu` per real client).
+   - A confirmatory run on a fresh layout and fresh subsets (for example layout 44 with 20 and 50 images, about 1
+     CPU-hour) has not been run. It would need a new protocol and the owner's go.
+3. **Client subsampling at `n = 480`, recorded as an open direction.**
+   - Poisson client sampling with the accountant's amplified `mu` could tighten the `n = 480` guarantee.
+   - It is not pursued in B4. Note `accounting.md` Section 4: at matched `mu`, sampling puts 1.04-3.06x more noise on
+     each released average.
+
+**Dependency:** `dp-accounting==0.6.0` is now a project dependency (`pyproject.toml`, `uv.lock`).
+- `uv sync` added `absl-py`, `dm-tree` and `wrapt`, and moved `attrs` from 26.1.0 to 23.2.0 (dp-accounting's
+  constraint).
+- Full suite: 804 passed, 4 skipped, 5 deselected. The library-backed accountant tests now run in a plain
+  `uv run pytest`.

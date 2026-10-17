@@ -149,14 +149,14 @@ absent from most rounds and from the different per-round signal, which is what B
 
 ```bash
 # Main checkout
-uv run --with dp-accounting==0.6.0 python -c "from metricdp_pytorch import accounting as a; print(a.report(a.SubsampledGaussian(1.0, 0.25, 50)))"
+uv run python -c "from metricdp_pytorch import accounting as a; print(a.report(a.SubsampledGaussian(1.0, 0.25, 50)))"
 # Worktree sharing the main venv (AGENTS.md worktree rules)
-PYTHONPATH="$PWD" UV_PROJECT_ENVIRONMENT=<main>/.venv uv run --no-sync --with dp-accounting==0.6.0 pytest tests/test_accounting.py
+PYTHONPATH="$PWD" UV_PROJECT_ENVIRONMENT=<main>/.venv uv run --no-sync pytest tests/test_accounting.py
 ```
 
-- `dp-accounting` is not a project dependency. The module imports it lazily, and the closed forms work without it.
-  The library-backed tests skip themselves when it is missing, so a plain `uv run pytest` stays green. Adding it to
-  `pyproject.toml` is the owner's call.
+- `dp-accounting` is a project dependency, pinned at `==0.6.0` in `pyproject.toml` (owner decision, 2026-10-17). The
+  published-value checks depend on the library version. The module still imports it lazily, so the closed forms work
+  without it, and the library-backed tests skip themselves if it is missing.
 - The RDP accountant logs absl warnings when its series for a fractional order does not converge. It then excludes
   that order, and the result is still a valid bound.
 - Runtime: `dominating_mu` takes 1-10 s at moderate noise and longer at small `z` (the PLD support grows like `1/z^2`);

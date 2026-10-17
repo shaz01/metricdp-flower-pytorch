@@ -1,7 +1,7 @@
 """Accountant for client-level DP-FedAvg (roadmap v2, Agent C; used by B1 and C1).
 
-Closed-form tests run everywhere. Tests that need Google's ``dp-accounting`` are skipped unless
-it is importable: ``uv run --with dp-accounting==0.6.0 pytest tests/test_accounting.py``.
+Closed-form tests run everywhere. Tests that need Google's ``dp-accounting`` (a project dependency,
+pinned at 0.6.0) skip themselves if it is not importable, for example in an environment without ``uv sync``.
 
 Published values (each checked against its source on 2026-10-17):
 
