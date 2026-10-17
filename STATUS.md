@@ -27,13 +27,14 @@ which probably explains "leakage barely responds to noise". The roadmap rebuilds
 independent randomness between worlds and randomized inclusion), then the audit of metric privacy (A1-A2), then
 mechanisms (B1-B5, C1).
 
-- **Agent C, B4 formal regime + accountant (`feature/cia-v2-formal-regime`, 2026-10-17): accountant ready, B4
-  running.** `metricdp_pytorch/accounting.py` (client-level DP-FedAvg with Poisson client sampling, PLD via
+- **Agent C, B4 formal regime + accountant (`feature/cia-v2-formal-regime`, 2026-10-17): accountant ready; G-B4
+  fails.** `metricdp_pytorch/accounting.py` (client-level DP-FedAvg with Poisson client sampling, PLD via
   `dp-accounting` 0.6.0 used through `uv run --with`; reproduces TF Privacy and Abadi et al. published epsilons; amplified
-  mu defined with a delta floor) is ready for Agent B's B1/C1. B4: linear head on frozen ResNet-18 ImageNet features;
-  calculation stage predicts G-B4 fails (headroom over the public-only head at most 5.04 pp; best predicted gain
-  1.6 pp); protocol `results/cia_v2/formal_regime/PROTOCOL.md`; CPU-only tuning running. State:
-  `results/cia_v2/formal_regime/STATE.md`.
+  mu defined with a delta floor) is ready for Agent B's B1/C1. B4 (linear head on frozen ResNet-18 ImageNet features,
+  EuroSAT, 48 and 480 clients, 10-20 rounds, mu 1-8): best DP gain over the public-only head 3.49 [2.37, 4.64] pp, so
+  "no non-vacuous client-level regime at this scale"; headroom is at most 5.04 pp because the 1,350-image public head is
+  strong. Nuance: at 480 clients mu = 1 still gains 2.1-2.4 pp. Crowd bound gives no material help where mu <= 2.
+  `results/cia_v2/formal_regime/FINDINGS.md`; owner options listed there.
 
 **CIA research programme (2026-10-10): approved for autonomous execution by agents under
 `research/cia_review_2026-10/agent_roadmap.md` (work packages WP0-WP6, gates, file ownership; agents never merge into
@@ -223,7 +224,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `frozen_head.runner tune --execute --workers 8` (compute server, CPU only) | B4 tuning, 1,440 head-only runs | running |
+| `frozen_head.runner tune/evaluate --execute --workers 8` (compute server, CPU only) | B4 tuning (1,440) and evaluation (160) head-only runs | done 2026-10-17 |
 | `signature_suppression.runner --configs consensus-kl-0.3 --seeds 43 44 45` (compute server, GPU 1) | Consensus-KL follow-up step 1, 18 trajectories | done 2026-10-16 |
 | `consensus_kl.runner_dp --execute` (compute server, GPU 1) | Consensus-KL follow-up step 3, 36 trajectories | done 2026-10-16 |
 

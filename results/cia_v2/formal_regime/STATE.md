@@ -1,10 +1,10 @@
 package: B4 (plus the subsampled-Gaussian accountant for B1 and C1)
-status: running
-gate: G-B4 = not evaluated yet
+status: failed
+gate: G-B4 = best DP gain 3.49 [2.37, 4.64] pp over public-only (n 480, T 20, mu 8) (fail)
 protocol: results/cia_v2/formal_regime/PROTOCOL.md @ 44fe21f9
 machine: compute server (CPU only; no GPU claimed)
-cost so far: 0 GPU-h of 10
-next: tuning runs (1,440, CPU), then selection and evaluation (160 runs), then analysis and FINDINGS; crowd-bound calculation running
+cost so far: 0 GPU-h of 10 (1.76 CPU-h of runs)
+next: owner decision on FINDINGS.md options (accept fail with nuance; smaller public set or subsampling; secondary audit after G-M0); accountant calibration table pending
 needs from others: none. Agent B: read the accountant line below before using it.
 
 accountant: ready (`metricdp_pytorch/accounting.py`, tests `tests/test_accounting.py`, note `research/cia_roadmap_v2/theory/accounting.md`); commit hash in the Log below. Agent B may merge `feature/cia-v2-formal-regime` into its own branch or copy the two files. Run with `uv run --with dp-accounting==0.6.0` (not a project dependency; owner's call). Use `dominating_mu(...).mu` (delta floor 1e-10) as the amplified formal mu for G-B1, and read the note's Section 1 on when amplification applies.
@@ -187,7 +187,7 @@ Tests in `tests/test_accounting.py`:
 | `metricdp_pytorch/accounting.py` (new), `tests/test_accounting.py` (new) | The accountant and its tests |
 | `pyproject.toml`, `uv.lock` | Add `dp-accounting==0.6.0`. These files have no owner in Section 6, so the owner is asked first. Fallback: a lazy import used through `uv run --with dp-accounting`. |
 | `experiments/frozen_head/` (new: `features.py`, `data.py`, `fedavg.py`, `public_only.py`, `crowd.py`, `runner.py`, `tests/`) | Feature cache, layouts, head-only DP-FedAvg simulator (in process, NumPy/torch on CPU), crowd bound, runner (plans unless `--execute`, resumable, atomic JSON) |
-| `research/cia_roadmap_v2/theory/` (new: `accounting.md`, `formal_regime.md`, `formal_regime_calcs.py`) | The accountant's definitions and checks; the B4 calculations |
+| `research/cia_roadmap_v2/theory/` (new: `accounting.md`, `accounting_checks.py`, `formal_regime_calcs.py`, `tables/`) | The accountant's definitions and checks; the B4 calculations (their narrative is in this package's `FINDINGS.md`) |
 | `results/cia_v2/formal_regime/` (`STATE.md`, `PROTOCOL.md`, `FINDINGS.md`, `tables/`, `figures/`, `results/`) | This package |
 | `STATUS.md` | Agent C's bullet and rows only |
 
@@ -206,3 +206,4 @@ if it is reused unchanged.
 | 2026-10-17 | Headroom check (exploratory, before the protocol; no DP): public-only head (CV-selected inverse L2 0.1) 0.9044 on the server test set; centralized non-private probe on all 48 clients' training data 0.9548 at best over three L2 values chosen on the test set (an optimistic ceiling). Headroom at most 5.04 pp, so G-B4 can pass only if DP-FedAvg on the non-IID clients loses almost nothing against that ceiling. These numbers get recomputed by the calc script for FINDINGS. |
 | 2026-10-17 | Tuning metric amended before any run: the public set cannot select (the initial head is fit on it, 0.98 there) and the test split overlaps across layouts, so selection uses the tuning layout's pooled client local-test splits (PROTOCOL Section 5). Prediction table written: best predicted gain 1.6 pp (PROTOCOL Section 8). PROTOCOL.md committed at 44fe21f9 before any tuning or evaluation run. |
 | 2026-10-17 | Tuning launched on the compute server (CPU, 8 single-thread workers, nohup; log `~/cia-server/logs/b4-tune.log`). |
+| 2026-10-17 | Tuning done (1,440 runs; every DP selection on at least one grid edge, mostly the smaller clip multiplier; no grid extension, as declared). Evaluation done (160 runs). **G-B4 fails**: best DP gain 3.49 [2.37, 4.64] pp (n 480, T 20, mu 8), outside the 4-6 pp extension band, so no extension. No-noise references reach at most 4.07 pp. At n 480, mu 1 (AUC bound 0.76) gives 2.07-2.40 pp with intervals excluding 0. Crowd bound (D6): ratio to GDP 0.85-0.99 (top decile, full release) and 0.70-0.99 (loss statistic) where mu <= 2. FINDINGS.md written. Correction to the exploratory log line: on the protocol's full CV grid the public-only head selects inverse L2 0.03 (0.9044 test accuracy, as before). |
