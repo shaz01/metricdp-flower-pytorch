@@ -32,13 +32,15 @@ mechanisms (B1-B5, C1).
   1.000 with equal noise seeds). The v2 attack library and randomized-inclusion runner are in place. Two design fixes
   were found on synthetic data before any run: leaving out only the trial biases the null AUC to 0.42 (fixed with
   balanced references), and a per-candidate 11-dimensional ratio is inefficient (replaced by a pooled-direction
-  projection). Still open: the cost run (waiting for an idle GPU; both GPUs busy with other users) and the power
-  table. M1 code is ready. **Escalation (`results/cia_v2/measurement/ESCALATION.md`), resolved 2026-10-17 under the
-  owner's delegation:** the specified audit design (16 candidates, R = 8-16, two-way bootstrap) could detect only AUC
-  differences of about 0.2. Agent A packages now use 32 candidates per run, R = 32 for gated comparisons, a calibrated
-  leave-one-pair-out jackknife interval conditional on the candidate panel (two-way bootstrap reported alongside),
-  G-M2 on all candidates plus the top-decile point estimate, and an M2 cap of 64 GPU-h (was 30). M1 and the M0 cost
-  run are running (GPU 1, shared by owner approval). State: `results/cia_v2/measurement/STATE.md`.
+  projection). Cost run done: 0.20 GPU-h per randomized-inclusion run. **Escalation
+  (`results/cia_v2/measurement/ESCALATION.md`), resolved 2026-10-17 under the owner's delegation:** the specified audit
+  design (16 candidates, R = 8-16, two-way bootstrap) could detect only AUC differences of about 0.2. Agent A packages
+  now use 32 candidates per run, R = 32 for gated comparisons, a calibrated leave-one-pair-out jackknife interval
+  conditional on the candidate panel (two-way bootstrap reported alongside), G-M2 on all candidates plus the
+  top-decile point estimate, and an M2 cap of 64 GPU-h (was 30). **M1 done, G-M1 confirmed:** with independent
+  noise and client seeds per world, v1's step-3 paired score at 4x noise falls from 0.792 (coupled) to 0.516
+  (95% interval 0.468-0.548); at 1x it stays 0.788. v1's flat noise response was a shared-noise artifact; v1 DP
+  leakage numbers are now labelled "paired, shared noise". M2 proceeds. State: `results/cia_v2/measurement/STATE.md`.
 
 **CIA research programme (2026-10-10): approved for autonomous execution by agents under
 `research/cia_review_2026-10/agent_roadmap.md` (work packages WP0-WP6, gates, file ownership; agents never merge into
@@ -219,7 +221,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-CIA v2 M0 cost run and M1 running on the compute server (Agent A); consensus-KL follow-up rows below finished 2026-10-16.
+CIA v2 A2 pilot running on the compute server (Agent A; M0 cost run and M1 done); consensus-KL follow-up rows below finished 2026-10-16.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -231,7 +233,7 @@ section.
 | `signature_suppression.runner --configs consensus-kl-0.3 --seeds 43 44 45` (compute server, GPU 1) | Consensus-KL follow-up step 1, 18 trajectories | done 2026-10-16 |
 | `consensus_kl.runner_dp --execute` (compute server, GPU 1) | Consensus-KL follow-up step 3, 36 trajectories | done 2026-10-16 |
 | `randomized_inclusion.runner --config cost-gdp-r1x ... --replicate-subset 0` (compute server, GPU 1, shared by owner approval) | CIA v2 M0 cost run, 1 randomized-inclusion run | done 2026-10-17 18:51 (0.20 GPU-h) |
-| `cia_v2.measurement.m1.runner --execute` (compute server, GPU 1, two workers) | CIA v2 M1, 12 trajectories | running (started 2026-10-17 18:39) |
+| `cia_v2.measurement.m1.runner --execute` (compute server, GPU 1, two workers) | CIA v2 M1, 12 trajectories | done 2026-10-17 20:51 (about 2.2 GPU-h; G-M1 confirmed) |
 | `cia_v2.side_channel.runner --stage pilot --multiple 1 ...` (compute server, GPU 1, shared by owner approval; branch `feature/cia-v2-side-channel`) | CIA v2 A2 pilot at 1x, 32 trajectories | running (started 2026-10-17 19:00) |
 
 ## What's established on `master`
