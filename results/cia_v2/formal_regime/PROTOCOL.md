@@ -272,3 +272,55 @@ before it runs.
 ### Cost and order
 
 CPU only, at most 8 single-thread workers: C, then B, then A. About 13 CPU-hours, about 2.5 h wall time. No GPU.
+
+## Amendment 2 (2026-10-17, after Amendment 1's results, before any of the runs below)
+
+Amendment 1 is complete (results committed @ `97c51b18`):
+
+- Part A passes at 20, 50, 100 and 200 public images and fails at 500.
+- Part B fails.
+- Part C finds no bound violation.
+
+At 20 images, all 8 settings with `mu_total <= 2` reach 5 pp. That triggers Part C's conditional. The owner asked
+for a careful analysis before the fail is accepted, so this amendment also adds a check on the strength of the
+public-only baseline. A Part A pass compares against that baseline, and at 20-200 images it is fit by 2-5-fold
+cross-validation. Neither part changes a recorded verdict. Code: `experiments/frozen_head/audit.py` (`--public-size`)
+and `experiments/frozen_head/baseline_check.py`.
+
+### D. Conditional audit at 20 public images
+
+- **Settings:**
+  - The 8 settings with `mu_total <= 2` at 20 public images.
+  - The 4 no-noise references at that size, which measure leakage without DP from the same initial head.
+  - 12 x 32 = 384 runs.
+- **Public set:** evaluation-layout subset 0 of size 20 (public-only server-test accuracy 0.713). The standardizer,
+  the initial head and the shadow-loss scaling come from that subset. The clip base norm is Part A's for size 20.
+- **Hyperparameters:** Part A's tuning selections at size 20.
+- **Everything else:** as Part C (candidates, design, seeds, shadow samples, attackers, intervals, bounds).
+- **Readings:**
+  - Part C's three readings: validity, gap and leakage without DP.
+  - A side-by-side with Part C's full-public audit for the same `(n, T, mu)`: does a weaker initial head change the
+    measured leakage? This is descriptive and has no threshold.
+
+### E. Strength of the public-only baseline (no federated runs)
+
+- **Fits:** for every Part A size (20-500) and evaluation subset (0-4), five public-only heads are fit on that subset
+  only and scored on the 1,350-image server test set:
+  1. `protocol`: the protocol's head, recomputed. It must match the recorded accuracy exactly, and a mismatch stops
+     the check.
+  2. `wide_cv`: the same rule over a wide inverse-L2 grid, `10^(k/2)` for `k = -10..8` (1e-5 to 1e4).
+  3. `l2norm_cv`: raw features L2-normalized per image (no standardizer), with the wide grid and the same rule.
+  4. `nearest_mean`: the nearest class mean (Euclidean) on the subset's standardized features.
+  5. `oracle_c`: standardized features with the wide grid, choosing L2 by **server-test** accuracy. It uses test
+     labels, so it is an optimistic ceiling for a tuned logistic baseline, not a legitimate baseline.
+- **Readings:** Part A's gains and per-size verdicts are recomputed with Part A's bootstrap against two baselines:
+  - `best_legit`: per subset, whichever of 1-4 has the highest server-test accuracy. Choosing by test accuracy
+    favours the baseline, so this reading is conservative for the gain.
+  - `oracle_c`.
+- **What it tests:** the DP runs are not repeated. They keep the protocol's initial head, so this checks the
+  comparison, not a better DP pipeline. FINDINGS reports, per size, whether Part A's verdict survives each baseline.
+
+### Cost
+
+CPU only, at most 8 single-thread workers. D: 384 runs of 1-15 s each. E: about 25 x 5 small fits. Under 1 CPU-hour
+in all.
