@@ -4,10 +4,10 @@ gate: G-B4 = not evaluated yet
 protocol: results/cia_v2/formal_regime/PROTOCOL.md (to be written before the first head-only run; this STATE fixes the design)
 machine: compute server (CPU only; no GPU claimed)
 cost so far: 0 GPU-h of 10
-next: accountant `metricdp_pytorch/accounting.py` with tests against published values, then the B4 calculations (noise-to-signal table, predicted accuracy loss, crowd bound)
+next: B4 calculations (predicted accuracy loss, crowd bound) on the cached features, then PROTOCOL.md and the tuning runs
 needs from others: none. Agent B: read the accountant line below before using it.
 
-accountant: planning. When it is ready, this line reads `ready @ <commit>`, and Agent B may merge `feature/cia-v2-formal-regime` into its own branch.
+accountant: ready (`metricdp_pytorch/accounting.py`, tests `tests/test_accounting.py`, note `research/cia_roadmap_v2/theory/accounting.md`); commit hash in the Log below. Agent B may merge `feature/cia-v2-formal-regime` into its own branch or copy the two files. Run with `uv run --with dp-accounting==0.6.0` (not a project dependency; owner's call). Use `dominating_mu(...).mu` (delta floor 1e-10) as the amplified formal mu for G-B1, and read the note's Section 1 on when amplification applies.
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, B4 (Agent C, branch `feature/cia-v2-formal-regime`, worktree
 `metricdp-pytorch-feature-cia-v2-formal-regime`). B4 depends on no other package; the calculations come first.
@@ -48,8 +48,10 @@ ImageNet features. The headroom over public-only is therefore expected to be sma
 - `n = 48`: the seed-42 EuroSAT layout, built by the frontier data module
   (`results/cia_frontier/eurosat_frontier/data.py`, Dirichlet alpha 0.3, `layout_seed = 42`, client train/test split
   as there). This is the layout of WP2, WP6 and M0, with top-decile clients 23, 7, 40, 18, 33.
-- `n = 480`: the same 21,600 training images split into 480 clients by the same partition function, alpha 0.3,
-  `layout_seed = 42`.
+- `n = 480`: each client of the `n = 48` layout split uniformly at random into 10 pseudo-clients
+  (`default_rng([layout_seed, t])`; same data and label skew; 5-115 records, median 41). Amended 2026-10-17 before
+  any run: a direct 480-client Dirichlet layout at alpha 0.3 is infeasible (the partitioner's 10-record minimum
+  fails 1,000 attempts).
 - Server: the frontier module's server split, which halves the 2,700-image test split. The public half (1,350 images)
   trains the public-only head. The other half (1,350 images) is the server test set on which the gate is evaluated.
 - Tuning layout: `layout_seed = 43` with the same `n`, used only for hyperparameter selection.
@@ -197,3 +199,8 @@ if it is reused unchanged.
 | When | What |
 |---|---|
 | 2026-10-17 | Branch `feature/cia-v2-formal-regime` from master 7fda7242; sparse worktree opened. Read HANDOFF, REVIEW, ROADMAP, SYNTHESIS, WP3's `f_cmip.md`, the stacked-head README, the EuroSAT and frontier data modules (server split 1,350 public plus 1,350 test), and Agent A's M0 STATE. Checked that `dp-accounting` 0.6.0 installs on Python 3.13 and that the ResNet-18 ImageNet weights are cached. This STATE written before any code change. |
+| 2026-10-17 | Owner: "go". No reply on the dependency question, so the stated fallback applies: `dp-accounting` 0.6.0 imported lazily, used via `uv run --with`; `pyproject.toml`/`uv.lock` untouched. |
+| 2026-10-17 | **Accountant delivered** (this commit): `metricdp_pytorch/accounting.py`, 59 tests (library-backed ones skip without `dp-accounting`; full suite 678 passed, 24 skipped). Published values reproduced: TF Privacy 3.01 / 1.19 / 7.10 and Abadi 1.26 to two decimals with the classical RDP conversion, Abadi's 2.55 to 0.024. Sources and theorem numbers checked in the PDFs (Abadi Sec. 5.1; Dong-Roth-Su Cor. 2.13, 3.3; Balle-Wang Thm 8; Mironov Prop. 3; Bu et al. Eq. (5), Thm 5). The amplified mu is defined with an explicit delta floor (1e-10): the subsampled Gaussian's tail makes "mu-GDP for all eps" floor-dependent (4-15% between 1e-4 and 1e-12); mu_CLT is not a bound in either direction. |
+| 2026-10-17 | Features cached (ResNet-18, train fingerprint `30ee5d8828e2339c`, test `cdd8f364245a012b`). Layout check: n = 48 seed 42 top decile is 23, 7, 40, 18, 33 as declared; public 1,350, server test 1,350. n = 480 Dirichlet infeasible, so the pseudo-client split above. |
+| 2026-10-17 | Calculation: `tables/formal_regime_nsr.csv` (theory dir). NSR at d = 5,130 is 0.06-6.7 against 9.9-79 for the full network. Attack bounds implied by mu-GDP: AUC <= 0.760 / 0.921 / 0.998 / 1.000 at mu = 1 / 2 / 4 / 8, TPR at 5% FPR <= 0.26 / 0.64 / 0.99 / 1.00; so the gate's mu <= 8 includes settings whose guarantee constrains no attacker. The gate is unchanged; results will be reported per mu. |
+| 2026-10-17 | Headroom check (exploratory, before the protocol; no DP): public-only head (CV-selected inverse L2 0.1) 0.9044 on the server test set; centralized non-private probe on all 48 clients' training data 0.9548 at best over three L2 values chosen on the test set (an optimistic ceiling). Headroom at most 5.04 pp, so G-B4 can pass only if DP-FedAvg on the non-IID clients loses almost nothing against that ceiling. These numbers get recomputed by the calc script for FINDINGS. |
