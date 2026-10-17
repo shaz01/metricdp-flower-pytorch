@@ -10,16 +10,14 @@ from flwr.serverapp.strategy import (
     DifferentialPrivacyServerSideFixedClipping,
     Strategy,
 )
-from flwr.supercore.differential_privacy import (
-    add_gaussian_noise_inplace,
-    compute_stdv,
-)
+from flwr.supercore.differential_privacy import compute_stdv
 
 from metricdp_pytorch.dp_diagnostics import (
     add_diagnostics,
     clipping_diagnostics,
     signal_to_noise_diagnostics,
 )
+from metricdp_pytorch.seeded_noise import SeededNoiseMixin
 
 # Full per-round pairwise-distance/client-id lists are diagnostic-only --
 # the calibration itself only ever uses their max/min/median/mean/count
@@ -66,7 +64,7 @@ def maximum_pairwise_model_distance(models: Sequence[ArrayRecord]) -> float:
 
 
 class MetricPrivacyServerSideFixedClipping(
-    DifferentialPrivacyServerSideFixedClipping
+    SeededNoiseMixin, DifferentialPrivacyServerSideFixedClipping
 ):
     """Calibrate server-side Gaussian DP noise by client-model distance.
 
@@ -97,6 +95,7 @@ class MetricPrivacyServerSideFixedClipping(
         self.current_distance: float | None = None
         self.current_noise_stdv: float | None = None
         self.current_round_diagnostics: dict[str, float | int] = {}
+        self.noise_round_diagnostics: dict[str, float | list[float]] = {}
 
     def __repr__(self) -> str:
         """Return a concise strategy description."""
@@ -250,6 +249,7 @@ class MetricPrivacyServerSideFixedClipping(
 
         diagnostics["metric-dp-aggregation-collapsed"] = 0.0
         diagnostics.update(self.current_round_diagnostics)
+        diagnostics.update(self.noise_round_diagnostics)
         if self.current_noise_stdv is not None:
             diagnostics["metric-dp-noise-stdv"] = self.current_noise_stdv
         return aggregated_arrays, add_diagnostics(aggregated_metrics, diagnostics)
@@ -272,8 +272,7 @@ class MetricPrivacyServerSideFixedClipping(
             current_arrays=self.current_arrays,
             noise_stdv=stdv,
         )
-        aggregated_ndarrays = aggregated_arrays.to_numpy_ndarrays()
-        add_gaussian_noise_inplace(aggregated_ndarrays, stdv)
+        aggregated_ndarrays = self._noisy_copy(aggregated_arrays.to_numpy_ndarrays(), stdv)
         self.current_noise_stdv = stdv
 
         log(
