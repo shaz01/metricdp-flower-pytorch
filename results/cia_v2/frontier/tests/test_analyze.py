@@ -73,3 +73,13 @@ def test_vanilla_summary_is_valid_json():
     result = analyze.config_summary(synthetic_audit(0.5), noise_ratio=0.0, resamples=50)
     assert result["formal_mu"] is None
     json.dumps(result, allow_nan=False)
+
+
+def test_surrogate_auc_is_reported_when_surrogates_were_scored():
+    from dataclasses import replace
+
+    audit = synthetic_audit(0.5)
+    with_surrogates = replace(audit, surrogate_losses=audit.losses + 0.01)
+    result = analyze.config_summary(with_surrogates, noise_ratio=0.001546, resamples=50)
+    assert result["all"]["auc_surrogate"] == pytest.approx(result["all"]["auc"]["estimate"], abs=0.05)
+    assert analyze.config_summary(audit, noise_ratio=0.001546, resamples=50)["all"]["auc_surrogate"] is None

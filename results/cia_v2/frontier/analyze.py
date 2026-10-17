@@ -48,7 +48,7 @@ def _interval(result):
     return {"estimate": result.estimate, "low": result.low, "high": result.high}
 
 
-def _subset_metrics(losses, membership, resamples):
+def _subset_metrics(losses, membership, resamples, surrogates=None):
     scores = calibrated_scores(losses, membership)
     return {
         "auc": _interval(pair_jackknife(scores, membership, roc_auc)),
@@ -58,6 +58,9 @@ def _subset_metrics(losses, membership, resamples):
         "tpr_at_1pct_fpr": tpr_at_fpr(scores, membership, 0.01),
         "auc_final_round": roc_auc(calibrated_scores(losses[..., -1:], membership), membership),
         "auc_threshold": roc_auc(threshold_scores(losses), membership),
+        # Label-matched public surrogates scored like the shadow samples (B5 diagnostic; no gate).
+        "auc_surrogate": (None if surrogates is None
+                          else roc_auc(calibrated_scores(surrogates, membership), membership)),
     }
 
 
@@ -72,8 +75,9 @@ def config_summary(audit, *, noise_ratio, resamples=RESAMPLES):
         "formal_mu": formal_mu(noise_ratio) if noise_ratio > 0 else None,  # vanilla: no guarantee
         "replicates": int(audit.membership.shape[1]),
         "gate_level": GATE_LEVEL,
-        "all": _subset_metrics(audit.losses, audit.membership, resamples),
-        "top-decile": _subset_metrics(audit.losses[top], audit.membership[top], resamples),
+        "all": _subset_metrics(audit.losses, audit.membership, resamples, audit.surrogate_losses),
+        "top-decile": _subset_metrics(audit.losses[top], audit.membership[top], resamples,
+                                      None if audit.surrogate_losses is None else audit.surrogate_losses[top]),
         "accuracy": {"estimate": float(accuracy.mean()), "low": float(low), "high": float(high)},
         "min_client_accuracy": (None if audit.min_client_accuracy is None
                                 else float(np.mean(audit.min_client_accuracy))),
