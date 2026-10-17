@@ -1,10 +1,10 @@
 package: M0
-status: ready (G-M0 passed 2026-10-17; cost run still to be recorded)
+status: ready (G-M0 passed 2026-10-17; all M0 deliverables complete)
 gate: G-M0 = pass (720 tests passed, 2 skipped (MPS-only); calibration test recovers the Gaussian trade-off; noise-independence correlations 1.0000 equal seeds, 1.0000 equal noise seed with different client seed, -0.107 different seeds)
 protocol: results/cia_v2/measurement/PROTOCOL.md (written before the cost run)
 machine: compute server
-cost so far: cost run in progress (a 1-round smoke ran on the CPU)
-next: cost run running on GPU 1 (tmux m0-cost, started 18:39); record GPU-h when complete
+cost so far: 0.20 GPU-h (the cost run; a 1-round smoke ran on the CPU)
+next: none for M0 (M1 running on the same branch)
 needs from others: none (ESCALATION.md resolved 2026-10-17 under the owner's delegation; Agent B: see its Resolution section)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, M0 (Agent A, branch `feature/cia-v2-measurement`, worktree
@@ -224,3 +224,4 @@ per-candidate difficulty offsets. 100-200 simulated audits per cell.
 | 2026-10-17 | Power tables for the resolved design (200 simulations per point): the 95% jackknife interval was liberal (6-9% false positives for all candidates, up to 12% for the top decile), so the gate level was calibrated by simulation (`interval_calibration.py`, 400 pairs per cell) and set to 97.5% (2.2-3.0% false positives). Final power table at that level: detectable difference 0.087 / 0.088 (vanilla-sized / half baseline). `GATE_LEVEL` is now the default of the gate functions. |
 | 2026-10-17 | GPUs: both busy with another user's jobs (89-93% utilization, running 16 h), so off-limits under the server conventions. Smoke run (1 round, replicate 0, global DP at the frontier noise, surrogates) runs on the CPU instead, into scratch output. The cost run waits for an idle, unclaimed GPU (`~/cia-server/m0-cost-wait.sh`, outside the repo). |
 | 2026-10-17 18:39 | Owner approved sharing GPU 1 with another user's process that showed 0% GPU utilization for a minute (2 of 32 GB). Cost run started there (tmux m0-cost), alongside one M1 worker (two workers per GPU, as M2 will run). Both reached round 1; claims recorded. The second M1 worker starts when the cost run ends. |
+| 2026-10-17 18:51 | **Cost run complete** (`cost_run/`): one randomized-inclusion run (32 active clients, global DP at the frontier noise, 32 candidates scored with surrogates at 11 checkpoints) took 672.6 s training and 43.2 s scoring, **0.20 GPU-h** of wall time, on an NVIDIA RTX 5000 Ada shared with one M1 worker and another user's idle process. Final accuracy 0.810. This is well below the roadmap's 0.5 GPU-h estimate: M2's 128 runs at `R = 32` come to about 26 GPU-h, within the original 30 GPU-h cap. The raised cap (64) stays as headroom for fill-in levels (about 6.4 GPU-h each). |

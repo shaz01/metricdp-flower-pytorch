@@ -134,7 +134,9 @@ offered to Agent B for theirs. Everything else in Section 2 stands.
      below. The top-decile interval is reported but not gated: 5 clients cannot narrow it.
    - The lower interval end of mean accuracy is 0.70 or higher.
 5. **Budget.** M2's cap rises from 30 to 64 GPU-h: 4 configurations x 32 runs at the estimated 0.5 GPU-h, to be
-   re-estimated from the cost run before M2's protocol is fixed. Caps for A1, A2 and the B packages are set when their
+   re-estimated from the cost run before M2's protocol is fixed. *Update:* the cost run measured 0.20 GPU-h per run
+   (two workers per GPU). M2's 128 runs are therefore about 26 GPU-h, within the original 30 GPU-h cap, and the
+   higher cap is used only for fill-in levels. Caps for A1, A2 and the B packages are set when their
    protocols are written, from the measured cost. The roadmap total will rise accordingly; each new cap is recorded in
    that package's STATE.md and in STATUS.md, so the owner can stop any of them.
 
