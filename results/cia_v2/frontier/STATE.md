@@ -1,11 +1,11 @@
 package: M2
-status: planning (blocked by G-M1; protocol and analysis code being prepared)
+status: ready to launch stage 1 (G-M1 confirmed); waiting for a GPU
 gate: G-M2 = not evaluated yet
-protocol: results/cia_v2/frontier/PROTOCOL.md (to be fixed after the M0 cost run and G-M1, before any M2 run)
+protocol: results/cia_v2/frontier/PROTOCOL.md (fixed before any M2 run)
 machine: compute server
 cost so far: 0 GPU-h of the 64 GPU-h cap (raised from 30 by the ESCALATION.md resolution of 2026-10-17)
-next: analysis code and tests; protocol once the M0 cost run gives the cost per run; launch only after G-M1
-needs from others: M1 (G-M1 verdict), M0 cost run (GPU-h per run)
+next: stage 1 (replicates 0-15 of vanilla, 1x, 4x, 16x; `~/cia-server/m2-worker.sh`), then the fill-in rule and stage 2
+needs from others: none (M1: G-M1 confirmed, 4x decoupled paired score 0.516; M0 cost run: 0.20 GPU-h per run)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, M2 (Agent A, branch `feature/cia-v2-frontier`, branched from
 `feature/cia-v2-measurement` at 158b2380). The design follows the measurement standard as amended by
@@ -94,3 +94,4 @@ The top-decile interval is reported but not gated.
 | When | What |
 |---|---|
 | 2026-10-17 | Branch `feature/cia-v2-frontier` from `feature/cia-v2-measurement` at 158b2380; sparse worktree opened. STATE written before any M2 code. M1 and the M0 cost run are still waiting for an idle GPU. |
+| 2026-10-17 21:00 | G-M1 confirmed on `feature/cia-v2-measurement` (172a587a): M2 unblocked. Stage-1 worker script ready; runs go flat into `results/cia_v2/frontier/results/<run name>` (run names begin `ri-<config>-d2-`), the layout of PROTOCOL.md's commands and of `load_audit`. |
