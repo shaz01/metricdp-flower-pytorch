@@ -26,6 +26,30 @@ review: the IN and OUT trajectories of a seed draw identical DP noise (realized-
 which probably explains "leakage barely responds to noise". The roadmap rebuilds the measurement first (M0-M2, with
 independent randomness between worlds and randomized inclusion), then the audit of metric privacy (A1-A2), then
 mechanisms (B1-B5, C1).
+- **Agent A, M0 measurement infrastructure (`feature/cia-v2-measurement`, 2026-10-17): G-M0 passed; status ready
+  (Agent B may branch from it).** Separate layout, init, client and noise seeds, and server noise from a dedicated
+  generator: IN and OUT no longer share noise once seeds differ (realized-noise-energy correlation -0.107, against
+  1.000 with equal noise seeds). The v2 attack library and randomized-inclusion runner are in place. Two design fixes
+  were found on synthetic data before any run: leaving out only the trial biases the null AUC to 0.42 (fixed with
+  balanced references), and a per-candidate 11-dimensional ratio is inefficient (replaced by a pooled-direction
+  projection). Still open: the cost run (waiting for an idle GPU; both GPUs busy with other users) and the power
+  table. M1 code is ready. **Escalation (`results/cia_v2/measurement/ESCALATION.md`), resolved 2026-10-17 under the
+  owner's delegation:** the specified audit design (16 candidates, R = 8-16, two-way bootstrap) could detect only AUC
+  differences of about 0.2. Agent A packages now use 32 candidates per run, R = 32 for gated comparisons, a calibrated
+  leave-one-pair-out jackknife interval conditional on the candidate panel (two-way bootstrap reported alongside),
+  G-M2 on all candidates plus the top-decile point estimate, and an M2 cap of 64 GPU-h (was 30). M1 and the M0 cost
+  run are running (GPU 1, shared by owner approval). State: `results/cia_v2/measurement/STATE.md`.
+
+- **Agent C, B4 formal regime + accountant (`feature/cia-v2-formal-regime`, 2026-10-17): accountant ready; G-B4
+  closed by the owner 2026-10-17 (fail accepted; scarce-public positive recorded as exploration); branch awaiting the owner's merge.** `metricdp_pytorch/accounting.py` (client-level DP-FedAvg
+  with Poisson client sampling, PLD via `dp-accounting` 0.6.0, now a pinned project dependency; reproduces TF Privacy and
+  Abadi et al. published epsilons; amplified mu defined with a delta floor) is ready for Agent B's B1/C1. B4 (linear
+  head on frozen ResNet-18 ImageNet features, EuroSAT, 48 and 480 clients, 10-20 rounds, mu 1-8): best DP gain over the
+  1,350-image public-only head 3.49 [2.37, 4.64] pp, so G-B4 fails; an extended grid does not change it (3.81 pp).
+  Follow-up: with 20-100 public images the gain at mu <= 2 is 5-26 pp and survives a stronger baseline check (at 500
+  it fails); the randomized-inclusion audit never exceeds the GDP bound (mu = 1: AUC 0.52-0.61 vs 0.760; no noise
+  0.84-0.98). n = 480 is a pseudo-client split (10 mu per real client). `results/cia_v2/formal_regime/FINDINGS.md`
+  ("Owner decisions"). Not merged. Parked: a confirmatory scarce-public run (about 1 CPU-h).
 
 **CIA research programme (2026-10-10): approved for autonomous execution by agents under
 `research/cia_review_2026-10/agent_roadmap.md` (work packages WP0-WP6, gates, file ownership; agents never merge into
@@ -206,7 +230,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Nothing running (consensus-KL follow-up rows below finished 2026-10-16).
+CIA v2 M0 cost run and M1 running on the compute server (Agent A); consensus-KL follow-up rows below finished 2026-10-16.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -215,8 +239,13 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| `frozen_head.runner tune/evaluate --execute --workers 8` (compute server, CPU only) | B4 tuning (1,440) and evaluation (160) head-only runs | done 2026-10-17 |
+| `frozen_head` Amendment 1 chain: audit, extended grid, public sweep (compute server, CPU only, 8 workers) | B4 owner follow-up, about 14,500 head-only runs | done 2026-10-17 |
+| `frozen_head` Amendment 2 chain: baseline check, audit at 20 public images (compute server, CPU only, 8 workers) | B4 owner follow-up, 384 head-only runs | done 2026-10-17 |
 | `signature_suppression.runner --configs consensus-kl-0.3 --seeds 43 44 45` (compute server, GPU 1) | Consensus-KL follow-up step 1, 18 trajectories | done 2026-10-16 |
 | `consensus_kl.runner_dp --execute` (compute server, GPU 1) | Consensus-KL follow-up step 3, 36 trajectories | done 2026-10-16 |
+| `randomized_inclusion.runner --config cost-gdp-r1x ... --replicate-subset 0` (compute server, GPU 1, shared by owner approval) | CIA v2 M0 cost run, 1 randomized-inclusion run | done 2026-10-17 18:51 (0.20 GPU-h) |
+| `cia_v2.measurement.m1.runner --execute` (compute server, GPU 1, two workers) | CIA v2 M1, 12 trajectories | running (started 2026-10-17 18:39) |
 
 ## What's established on `master`
 
