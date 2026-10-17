@@ -1,6 +1,6 @@
 """Tables behind ``accounting.md`` (no training).
 
-    uv run --with dp-accounting==0.6.0 python research/cia_roadmap_v2/theory/accounting_checks.py
+    uv run --with dp-accounting==0.6.0 python research/cia_roadmap_v2/theory/accounting_checks.py [published] [floor] [calibration]
 
 Writes ``tables/accounting_published.csv``, ``tables/accounting_floor.csv`` and
 ``tables/accounting_calibration.csv`` beside this file.
@@ -67,18 +67,34 @@ def floors() -> list[dict]:
     return rows
 
 
-def calibration() -> list[dict]:
-    rows = []
-    for q, rounds in CALIBRATION:
-        for mu in TARGET_MUS:
-            z = acc.noise_multiplier_for_mu(mu, sampling_rate=q, rounds=rounds, rtol=1e-3)
-            rows.append({"q": q, "rounds": rounds, "target_mu": mu, "noise_multiplier": round(z, 4),
-                         "mu_dominating": round(acc.dominating_mu(SubsampledGaussian(z, q, rounds)).mu, 4),
-                         "epsilon_pld_1e-5": round(acc.epsilon(SubsampledGaussian(z, q, rounds), 1e-5), 4)})
-    return rows
+CALIBRATION_RTOL = 1e-2
+
+
+def _calibration_cell(cell: tuple[float, int, float]) -> dict:
+    q, rounds, mu = cell
+    z = acc.noise_multiplier_for_mu(mu, sampling_rate=q, rounds=rounds, rtol=CALIBRATION_RTOL)
+    mechanism = SubsampledGaussian(z, q, rounds)
+    return {"q": q, "rounds": rounds, "target_mu": mu, "noise_multiplier": round(z, 4),
+            "rtol": CALIBRATION_RTOL, "mu_dominating": round(acc.dominating_mu(mechanism).mu, 4),
+            "mu_full_participation_same_z": round(acc.gdp_mu(z, rounds), 4),
+            "epsilon_pld_1e-5": round(acc.epsilon(mechanism, 1e-5), 4)}
+
+
+def calibration(workers: int = 8) -> list[dict]:
+    from concurrent.futures import ProcessPoolExecutor
+
+    cells = [(q, rounds, mu) for q, rounds in CALIBRATION for mu in TARGET_MUS]
+    with ProcessPoolExecutor(max_workers=workers) as pool:
+        return list(pool.map(_calibration_cell, cells))
 
 
 if __name__ == "__main__":
-    _write("accounting_published.csv", published())
-    _write("accounting_floor.csv", floors())
-    _write("accounting_calibration.csv", calibration())
+    import sys
+
+    parts = sys.argv[1:] or ["published", "floor", "calibration"]
+    if "published" in parts:
+        _write("accounting_published.csv", published())
+    if "floor" in parts:
+        _write("accounting_floor.csv", floors())
+    if "calibration" in parts:
+        _write("accounting_calibration.csv", calibration())
