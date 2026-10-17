@@ -26,6 +26,14 @@ review: the IN and OUT trajectories of a seed draw identical DP noise (realized-
 which probably explains "leakage barely responds to noise". The roadmap rebuilds the measurement first (M0-M2, with
 independent randomness between worlds and randomized inclusion), then the audit of metric privacy (A1-A2), then
 mechanisms (B1-B5, C1).
+- **Agent A, M0 measurement infrastructure (`feature/cia-v2-measurement`, 2026-10-17): G-M0 passed; status ready
+  (Agent B may branch from it).** Separate layout, init, client and noise seeds, and server noise from a dedicated
+  generator: IN and OUT no longer share noise once seeds differ (realized-noise-energy correlation -0.107, against
+  1.000 with equal noise seeds). The v2 attack library and randomized-inclusion runner are in place. Two design fixes
+  were found on synthetic data before any run: leaving out only the trial biases the null AUC to 0.42 (fixed with
+  balanced references), and a per-candidate 11-dimensional ratio is inefficient (replaced by a pooled-direction
+  projection). Still open: the cost run (waiting for an idle GPU; both GPUs busy with other users) and the power
+  table. M1 code is ready. State: `results/cia_v2/measurement/STATE.md`.
 
 **CIA research programme (2026-10-10): approved for autonomous execution by agents under
 `research/cia_review_2026-10/agent_roadmap.md` (work packages WP0-WP6, gates, file ownership; agents never merge into
@@ -206,7 +214,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Nothing running (consensus-KL follow-up rows below finished 2026-10-16).
+CIA v2 M0 cost run waiting for an idle GPU (Agent A); consensus-KL follow-up rows below finished 2026-10-16.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -217,6 +225,7 @@ section.
 | --- | --- | --- |
 | `signature_suppression.runner --configs consensus-kl-0.3 --seeds 43 44 45` (compute server, GPU 1) | Consensus-KL follow-up step 1, 18 trajectories | done 2026-10-16 |
 | `consensus_kl.runner_dp --execute` (compute server, GPU 1) | Consensus-KL follow-up step 3, 36 trajectories | done 2026-10-16 |
+| `randomized_inclusion.runner --config cost-gdp-r1x ... --replicate-subset 0` (compute server, first idle GPU) | CIA v2 M0 cost run, 1 randomized-inclusion run | waiting for an idle GPU |
 
 ## What's established on `master`
 

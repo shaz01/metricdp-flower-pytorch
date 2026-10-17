@@ -73,7 +73,9 @@ def runs(tmp_path_factory):
 
 
 def _corr(runs, name):
-    return float(np.corrcoef(_blocks(runs["reference"][0]), _blocks(runs[name][0]))[0, 1])
+    value = float(np.corrcoef(_blocks(runs["reference"][0]), _blocks(runs[name][0]))[0, 1])
+    print(f"realized-noise-energy correlation, reference vs {name}: {value:.4f}")
+    return value
 
 
 def test_runs_log_the_seeds_and_128_block_values(runs):
