@@ -5,7 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterable
 from logging import WARNING
 
-from flwr.app import ArrayRecord, Message, MetricRecord
+import numpy as np
+from flwr.app import Array, ArrayRecord, Message, MetricRecord
 from flwr.common import log
 from flwr.serverapp.strategy import DifferentialPrivacyServerSideFixedClipping, Strategy
 from flwr.supercore.differential_privacy import compute_stdv
@@ -15,10 +16,11 @@ from metricdp_pytorch.dp_diagnostics import (
     clipping_diagnostics,
     signal_to_noise_diagnostics,
 )
+from metricdp_pytorch.seeded_noise import SeededNoiseMixin
 
 
 class LoggedGlobalDPServerSideFixedClipping(
-    DifferentialPrivacyServerSideFixedClipping
+    SeededNoiseMixin, DifferentialPrivacyServerSideFixedClipping
 ):
     """Fixed-clipping global DP which records the values actually applied."""
 
@@ -39,6 +41,7 @@ class LoggedGlobalDPServerSideFixedClipping(
             noise_multiplier, clipping_norm, num_sampled_clients
         )
         self.current_round_diagnostics: dict[str, float | int] = {}
+        self.noise_round_diagnostics: dict[str, float | list[float]] = {}
 
     def aggregate_train(
         self, server_round: int, replies: Iterable[Message]
@@ -87,6 +90,7 @@ class LoggedGlobalDPServerSideFixedClipping(
 
         diagnostics["global-dp-aggregation-collapsed"] = 0.0
         diagnostics.update(self.current_round_diagnostics)
+        diagnostics.update(self.noise_round_diagnostics)
         diagnostics["global-dp-noise-stdv"] = self.current_noise_stdv
         return aggregated_arrays, add_diagnostics(aggregated_metrics, diagnostics)
 
@@ -98,4 +102,8 @@ class LoggedGlobalDPServerSideFixedClipping(
             current_arrays=self.current_arrays,
             noise_stdv=self.current_noise_stdv,
         )
-        return super()._add_noise_to_aggregated_arrays(aggregated_arrays)
+        # Flower's own noise step, with the draw routed through the optional noise generator.
+        released = self._noisy_copy(aggregated_arrays.to_numpy_ndarrays(), self.current_noise_stdv)
+        return ArrayRecord(
+            {key: Array(np.asarray(value)) for key, value in zip(aggregated_arrays.keys(), released, strict=True)}
+        )

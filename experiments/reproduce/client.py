@@ -14,6 +14,7 @@ from experiments.reproduce.paper_training import (
     seed_training,
     train_with_adam,
 )
+from experiments.reproduce.seeds import run_seeds
 from metricdp_pytorch.data_module import load_data_module
 from metricdp_pytorch.model_module import load_model
 from metricdp_pytorch.strategy_factory import UNIT_WEIGHT_KEY
@@ -89,7 +90,7 @@ def _client_data(context: Context):
         batch_size=int(config["batch-size"]),
         partition_mode=str(config["partition-mode"]),
         num_partitions=num_partitions,
-        seed=int(config.get("seed", 42)),
+        seed=run_seeds(config).layout,
         partition_profile=str(config.get("partition-profile", "auto")),
         client_weights=_client_weights(config),
         dirichlet_alpha=float(config.get("dirichlet-alpha", 0.5)),
@@ -104,7 +105,7 @@ def train(msg: Message, context: Context) -> Message:
     partition_id = int(context.node_config["partition-id"])
     train_config = msg.content["config"]
     round_seed = _client_round_seed(
-        int(run_config.get("seed", 42)),
+        run_seeds(run_config).client,
         partition_id,
         int(train_config["server-round"]),
     )

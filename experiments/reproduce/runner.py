@@ -23,6 +23,7 @@ from typing import Any
 # isolated worker and Ray client processes inherit the environment.
 os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
 
+from experiments.reproduce.seeds import SEED_KEYS
 from metricdp_pytorch.utils.runtime import RUN_CONFIG_ENV
 from metricdp_pytorch.strategy_factory import (
     AGGREGATION_METHODS,
@@ -109,6 +110,10 @@ def _parser() -> argparse.ArgumentParser:
         help="none keeps a fixed --learning-rate; cosine decays it per round",
     )
     parser.add_argument("--seed", type=int, required=True)
+    for part, what in (("layout", "data layout"), ("init", "initial model"),
+                       ("client", "client round seeds"), ("noise", "server noise draws")):
+        parser.add_argument(f"--{part}-seed", type=int,
+                            help=f"seed for the {what} (default --seed; CIA roadmap v2)")
     parser.add_argument("--noise-multiplier", type=float, required=True)
     parser.add_argument("--clipping-norm", type=float, required=True)
     parser.add_argument("--influence-fraction", type=float,
@@ -173,6 +178,11 @@ def _parser() -> argparse.ArgumentParser:
         "--log-loo-residuals",
         action="store_true",
         help="log each client's update minus the leave-one-out mean update (norm, before clipping)",
+    )
+    parser.add_argument(
+        "--log-noise-diagnostics",
+        action="store_true",
+        help="log the released-update norm and per-block realized noise energy (DP strategies)",
     )
     parser.add_argument(
         "--checkpoint-rounds",
@@ -367,6 +377,12 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
         config["train-fraction"] = args.train_fraction
     if args.log_loo_residuals:
         config["log-loo-residuals"] = True
+    if args.log_noise_diagnostics:
+        config["log-noise-diagnostics"] = True
+    for key in SEED_KEYS:
+        value = getattr(args, key.replace("-", "_"))
+        if value is not None:
+            config[key] = value
     if args.privacy == RESIDUAL_PRIVACY:
         config["num-slots"] = args.num_slots or args.num_clients
         config["residual-center"] = args.residual_center

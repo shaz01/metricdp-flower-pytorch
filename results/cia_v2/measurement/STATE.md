@@ -1,11 +1,11 @@
 package: M0
-status: planning
+status: running (code; no training yet)
 gate: G-M0 = not evaluated yet
 protocol: results/cia_v2/measurement/PROTOCOL.md (to be written before the cost run; this STATE fixes the design)
 machine: compute server
 cost so far: 0 GPU-h (M0 allows no training beyond the 2-round checks and one cost-measurement run)
-next: seed plumbing and noise generators, then the attack library, the two pipeline checks, the randomized-inclusion runner, the cost run, the power table
-needs from others: none (Agent B: see "Ownership exception" below)
+next: randomized-inclusion runner, then the cost run (compute server), the power table, G-M0
+needs from others: none (Agent B: see "Ownership exception" below; owner approved the three design choices 2026-10-17)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, M0 (Agent A, branch `feature/cia-v2-measurement`, worktree
 `metricdp-pytorch-feature-cia-v2-measurement`). M1 follows on the same branch, in `results/cia_v2/measurement/m1/`, with
@@ -88,12 +88,15 @@ protocols copy the matching row. If `R = 8` cannot detect 0.05, screens use `R =
 All attackers score `(candidate, replicate)` trials and are fitted with leave-one-replicate-out references.
 
 - **Calibrated loss attacker (primary).** A Gaussian likelihood ratio on the candidate's 11-point shadow-loss
-  trajectory, in the style of LiRA with difficulty calibration.
-  - **Model:** IN and OUT means are per candidate. The per-checkpoint variances are pooled over candidates (the
-    fixed-variance LiRA variant), because `R/2 - 1` references per world cannot support per-candidate variances. The
-    covariance is diagonal.
-  - **References:** for trial `(c, j)`, the other replicates of candidate `c`.
-  - **Sensitivity check:** a final-round-only version is reported alongside.
+  trajectory, in the style of LiRA with difficulty calibration (`experiments/cia/audit_attacks.py:calibrated_scores`).
+  Revised during M0, before any run (see the Log):
+  - **References:** for trial `(c, j)`, the other replicates of candidate `c`, with equal IN and OUT counts
+    (`balanced_references`: `R/2 - 1` each).
+  - **Model:** IN and OUT means are per candidate. One full covariance is pooled over candidates and both worlds, with
+    Ledoit-Wolf shrinkage. The direction `w = S^-1 dbar` is pooled over candidates, and each candidate then gets a
+    one-dimensional Gaussian likelihood ratio on the projection `x . w`.
+  - **Sensitivity checks:** a final-round-only version, and the unprojected 11-dimensional ratio (`project=False`),
+    are reported alongside.
 - **Uncalibrated loss threshold (weak baseline).** The final-round shadow loss with one global threshold.
 - **Noise-level attacker.** For mechanisms with a data-dependent noise level only (metric privacy). It makes a blind
   per-round std estimate from the released-update norm and fits a likelihood ratio on it with the same references.
@@ -153,8 +156,41 @@ On pass: push `feature/cia-v2-measurement` and set this file's status to `ready`
 Nothing else in that file changes. Agent B branches from this branch after G-M0, so there is no conflict. If the owner
 objects, the fallback is to pass `client_seed` through the run config's `seed` key and keep `client.py` unchanged.
 
+## Findings from the synthetic checks (no training; `experiments/cia/tests/test_audit_attacks.py`, scratch simulations)
+
+Synthetic setup: 16 candidates, AR(1) noise over 11 checkpoints (rho 0.8), a shift growing over training, and
+per-candidate difficulty offsets. 100-200 simulated audits per cell.
+
+1. **Leave-one-replicate-out alone is biased.** Leaving out only the trial leaves `R/2 - 1` references in its own world
+   and `R/2` in the other. That imbalance gives a mean null AUC of **0.416** at `R = 8` (200 draws, sd 0.073). The
+   midpoint between the two reference means leans towards the noisier one. Equal counts (`balanced_references`)
+   remove the bias: mean null AUC 0.49-0.50, tested.
+2. **A per-candidate 11-dimensional ratio is inefficient at the design sizes.**
+
+   | True `mu` (optimal AUC) | `R` | Per candidate, 11-dim | Projected (primary) | Final round only |
+   |---|---|---|---|---|
+   | 0 (0.500) | 8 | 0.494 | 0.491 | 0.487 |
+   | 0 (0.500) | 16 | 0.492 | 0.496 | 0.492 |
+   | 1 (0.760) | 8 | 0.594 | 0.677 | 0.655 |
+   | 1 (0.760) | 16 | 0.629 | 0.714 | 0.698 |
+   | 2 (0.921) | 8 | 0.788 | 0.873 | 0.852 |
+   | 2 (0.921) | 16 | 0.847 | 0.899 | 0.876 |
+
+   Even the projected attacker stays below the optimal trade-off at `R = 8-16`, because its per-candidate means come
+   from 3-7 references. Measured AUCs are therefore lower bounds on what a better-referenced attacker achieves, and the
+   power table accounts for this.
+3. **The two-way bootstrap is conservative.** For the unprojected attacker, the 95% intervals cover the attacker's
+   expected AUC in 96-99% of 200 draws per cell at `R = 8` and 16. The mean width is 0.34 at `R = 8` and 0.16-0.26 at
+   `R = 16`, about 1.3 times what the replicate-to-replicate sd implies.
+4. **The analysis code recovers the trade-off.** With the true likelihood-ratio direction (an oracle), the bootstrap
+   covered the true AUC in 30 of 30 draws at `R = 300`. The roadmap's test (`test_calibration_recovers_the_gaussian_tradeoff`:
+   `R = 1000`, `mu` = 1 and 2, AUC and TPR at 5% and 10% FPR, all inside the bootstrap interval) passes with the
+   projected attacker.
+
 ## Log
 
 | When | What |
 |---|---|
 | 2026-10-17 | Branch `feature/cia-v2-measurement` from master 7fda7242; sparse worktree opened. Read HANDOFF, REVIEW, ROADMAP, SYNTHESIS and the code paths for seeds and noise (`seed_training`, `_client_round_seed`, `DirichletEuroSAT.partition_seed`, Flower's global-RNG `add_gaussian_noise_inplace`, `default_rng(seed)` in the private-median and residual-clipping strategies). This STATE written before any code change. |
+| 2026-10-17 | Owner: "go" on the design, including the three choices: 8 candidates per replicate, the `client.py` exception, and 64-block noise statistic. Seed plumbing done: `experiments/reproduce/seeds.py`; `server.py` (`make_run_strategy`), `runner.py` (`--{layout,init,client,noise}-seed`, `--log-noise-diagnostics`) and `client.py` (two reads). Noise generators: new `metricdp_pytorch/seeded_noise.py` (`set_noise_seed`, `SeededNoiseMixin`, `noise_diagnostics`), used by the global-DP, metric-privacy and private-median strategies; residual clipping gets the seed through its `rng`. Without `noise-seed` the draws are unchanged (global NumPy state). Tests: `tests/test_noise_seed.py`, `tests/test_run_seeds.py`. The Flower noise-independence test passes (`results/cia_v2/measurement/tests/test_noise_independence.py`, CPU, about 90 s); its client-seed check failed first, as expected, until `client.py` read `client-seed`. Full suite at this point: 663 passed, 2 skipped (baseline 631 + 32 new). |
+| 2026-10-17 | Attack library: `experiments/cia/audit_attacks.py` (calibrated, threshold, AUC, TPR at FPR, two-way bootstrap) and `experiments/cia/inclusion.py` (balanced design: fixed count by complementary pairs, or variable count). Design revisions before any run (findings 1-2 above): balanced references and the projected likelihood ratio. 21 tests pass, including the calibration test. |
