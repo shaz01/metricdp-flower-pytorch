@@ -68,3 +68,10 @@ def test_gate_needs_two_cells():
         "verdict"] == "strong claim"
     assert analyze.g_a2({"a": cell_result(0.85, 0.55), "b": cell_result(0.79, 0.55)})["verdict"] == "channel size recorded"
     assert analyze.g_a2({"a": cell_result(0.85, 0.61), "b": cell_result(0.9, 0.62)})["verdict"] == "channel size recorded"
+
+
+@pytest.mark.parametrize("auc,multiple,expected", [
+    (0.60, 1, ("qualifies", 1)), (0.61, 1, ("next", 4)), (0.7, 16, ("next", 64)), (0.65, 64, ("no qualifying noise", None)),
+])
+def test_pilot_decision(auc, multiple, expected):
+    assert analyze.pilot_decision(auc, multiple) == expected

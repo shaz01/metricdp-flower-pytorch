@@ -93,6 +93,14 @@ def cell_summary(data):
     }
 
 
+def pilot_decision(loss_auc, multiple, multiples=(1, 4, 16, 64)):
+    """Pilot rule (PROTOCOL.md Section 2): the lowest multiple whose global-DP loss AUC (point) is 0.6 or below."""
+    if loss_auc <= LOSS_LIMIT:
+        return "qualifies", multiple
+    later = [m for m in multiples if m > multiple]
+    return ("next", later[0]) if later else ("no qualifying noise", None)
+
+
 def g_a2(cells):
     """``cells``: {cell: {mechanism: cell_summary}}. Strong claim: >= 2 cells with both conditions."""
     qualifying = [name for name, result in cells.items()
@@ -107,7 +115,20 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("root", type=Path, nargs="?", default=HERE / "results" / "main")
     parser.add_argument("--out", type=Path)
+    parser.add_argument("--pilot", action="store_true", help="root is a pilot stage: print the pilot decision per cell")
     args = parser.parse_args()
+    if args.pilot:
+        for directory in sorted(p for p in args.root.glob("*/clients-*/global-dp-x*") if p.is_dir()):
+            if len(list(directory.glob("*/complete.json"))) < 2 * 4:
+                print(f"{directory}: incomplete")
+                continue
+            summary = cell_summary(load_cell(directory))
+            multiple = int(directory.name.rsplit("-x", 1)[1])
+            print(json.dumps({"cell": str(directory.relative_to(args.root)), "loss_auc": summary["loss"]["auc"],
+                              "noise_level_auc": summary["noise_level"]["auc"],
+                              "accuracy_in": summary["accuracy_in"],
+                              "decision": pilot_decision(summary["loss"]["auc"]["estimate"], multiple)}))
+        return
     cells = {}
     for directory in sorted(p for p in args.root.glob("*/clients-*/*-x*") if p.is_dir()):
         dataset, clients, mechanism_level = directory.relative_to(args.root).parts
