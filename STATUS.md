@@ -38,7 +38,7 @@ mechanisms (B1-B5, C1).
   differences of about 0.2. Agent A packages now use 32 candidates per run, R = 32 for gated comparisons, a calibrated
   leave-one-pair-out jackknife interval conditional on the candidate panel (two-way bootstrap reported alongside),
   G-M2 on all candidates plus the top-decile point estimate, and an M2 cap of 64 GPU-h (was 30). M1 and the M0 cost
-  run wait for an idle GPU. State: `results/cia_v2/measurement/STATE.md`.
+  run are running (GPU 1, shared by owner approval). State: `results/cia_v2/measurement/STATE.md`.
 
 **CIA research programme (2026-10-10): approved for autonomous execution by agents under
 `research/cia_review_2026-10/agent_roadmap.md` (work packages WP0-WP6, gates, file ownership; agents never merge into
@@ -219,7 +219,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-CIA v2 M0 cost run waiting for an idle GPU (Agent A); consensus-KL follow-up rows below finished 2026-10-16.
+CIA v2 M0 cost run and M1 running on the compute server (Agent A); consensus-KL follow-up rows below finished 2026-10-16.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -230,7 +230,8 @@ section.
 | --- | --- | --- |
 | `signature_suppression.runner --configs consensus-kl-0.3 --seeds 43 44 45` (compute server, GPU 1) | Consensus-KL follow-up step 1, 18 trajectories | done 2026-10-16 |
 | `consensus_kl.runner_dp --execute` (compute server, GPU 1) | Consensus-KL follow-up step 3, 36 trajectories | done 2026-10-16 |
-| `randomized_inclusion.runner --config cost-gdp-r1x ... --replicate-subset 0` (compute server, first idle GPU) | CIA v2 M0 cost run, 1 randomized-inclusion run | waiting for an idle GPU |
+| `randomized_inclusion.runner --config cost-gdp-r1x ... --replicate-subset 0` (compute server, GPU 1, shared by owner approval) | CIA v2 M0 cost run, 1 randomized-inclusion run | running (started 2026-10-17 18:39) |
+| `cia_v2.measurement.m1.runner --execute` (compute server, GPU 1, two workers) | CIA v2 M1, 12 trajectories | running (started 2026-10-17 18:39) |
 
 ## What's established on `master`
 
