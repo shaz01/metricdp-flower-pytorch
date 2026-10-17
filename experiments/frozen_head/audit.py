@@ -12,6 +12,10 @@ Randomized inclusion as in M0's resolved design (``results/cia_v2/measurement/ES
   records in loader order, ``seed = layout_seed``, as M0's ``ShadowDataModule``), at least 2 records;
 * the shadow loss is scored after every round ``1..T`` (round 0 is the public initial head, identical in all runs).
 
+Amendment 2, part D (``--public-size 20``): the same design for the ``mu_total <= 2`` settings and the no-noise
+references with the public set reduced to Part A's evaluation subset 0 of that size (standardizer, initial head and
+clip base from that size, hyperparameters from Part A's tuning at that size).
+
 Attackers and intervals are Agent A's (``experiments/cia/audit_attacks.py``, imported unchanged): the calibrated loss
 attacker (primary), the uncalibrated threshold, the pair jackknife at ``GATE_LEVEL`` and the two-way bootstrap.
 """
@@ -38,6 +42,7 @@ AUDIT_REPLICATES = 32
 CANDIDATE_COUNT = 32
 SHADOW_FRACTION = 0.10
 MIN_SHADOW = 2
+PUBLIC_SUBSET = 0  # Amendment 2: the evaluation subset used when the public set is reduced
 
 
 @dataclass(frozen=True)
@@ -46,15 +51,21 @@ class AuditJob:
     rounds: int
     mu_total: float
     replicate: int
+    public_size: int = 0  # 0 = the full public set (Part C)
 
     @property
     def name(self) -> str:
         mu = "nonoise" if self.mu_total == runner.NO_NOISE else f"mu{self.mu_total:g}"
-        return f"n{self.clients}_T{self.rounds}_{mu}_r{self.replicate:02d}"
+        public = f"_pub{self.public_size}" if self.public_size else ""
+        return f"n{self.clients}_T{self.rounds}_{mu}{public}_r{self.replicate:02d}"
 
     @property
     def path(self) -> Path:
-        return AUDIT_DIR / f"{self.name}.json"
+        return audit_dir(self.public_size) / f"{self.name}.json"
+
+
+def audit_dir(public_size: int = 0) -> Path:
+    return AUDIT_DIR if not public_size else runner.RESULTS / f"audit_public{public_size}"
 
 
 def replicate_seeds(replicate: int) -> tuple[int, int]:
@@ -107,8 +118,10 @@ def panel(clients: int) -> dict:
     return {"candidates": tuple(int(c) for c in candidates), "top": tuple(int(c) for c in top), "shadows": shadows}
 
 
-def audit_jobs() -> list[AuditJob]:
-    return [AuditJob(n, t, mu, r) for n, t, mu in runner.settings() for r in range(AUDIT_REPLICATES)]
+def audit_jobs(public_size: int = 0) -> list[AuditJob]:
+    """Part C: every setting. Part D (``public_size``): the ``mu_total <= 2`` settings and the no-noise references."""
+    settings = [s for s in runner.settings() if not public_size or s[2] <= 2]
+    return [AuditJob(n, t, mu, r, public_size) for n, t, mu in settings for r in range(AUDIT_REPLICATES)]
 
 
 def execute(job: AuditJob) -> str:
@@ -119,13 +132,15 @@ def execute(job: AuditJob) -> str:
     if job.path.exists():
         return f"skip {job.name}"
     started = time.time()
-    chosen = _chosen()[(job.clients, job.rounds, job.mu_total)]
-    fed = runner.federation(job.clients, runner.EVALUATION_LAYOUT)
+    chosen = _chosen(job.public_size)[(job.clients, job.rounds, job.mu_total)]
+    fed = runner.federation(job.clients, runner.EVALUATION_LAYOUT, job.public_size,
+                            PUBLIC_SUBSET if job.public_size else 0)
     info = panel(job.clients)
     member = design()[:, job.replicate]
     included = {c for c, m in zip(info["candidates"], member) if m}
     active = [t for t in range(job.clients) if t not in info["candidates"] or t in included]
-    clip = chosen["clip_multiplier"] * runner.base_clip(job.clients, chosen["local_epochs"], chosen["local_lr"])
+    clip = chosen["clip_multiplier"] * runner.base_clip(job.clients, chosen["local_epochs"], chosen["local_lr"],
+                                                        job.public_size)
     z = 0.0 if job.mu_total == runner.NO_NOISE else accounting.noise_multiplier_for_mu(job.mu_total, rounds=job.rounds)
     config = HeadConfig(rounds=job.rounds, local_epochs=chosen["local_epochs"], local_lr=chosen["local_lr"],
                         batch_size=runner.BATCH_SIZE, clip=clip, server_lr=chosen["server_lr"], noise_multiplier=z,
@@ -134,11 +149,11 @@ def execute(job: AuditJob) -> str:
     out = run(fed["head"], fed["public"].theta, fed["train"], config, client_seed=client_seed, noise_seed=noise_seed,
               active=active, evaluate={"server_test": fed["server_test"]}, record_thetas=True)
     train_x, train_y = load_split_features("train")
-    scale = _scale(job.clients)
+    scale = _scale(job.clients, job.public_size)
     losses = [[fed["head"].loss_and_grad(theta, scale(train_x[shadow]), train_y[shadow])[0] for theta in out["thetas"]]
               for shadow in info["shadows"]]
     record = {"job": asdict(job), "name": job.name, "design_seed": DESIGN_SEED, "candidates": list(info["candidates"]),
-              "top5": list(info["top"]),
+              "top5": list(info["top"]), "public_size": len(fed["public_indices"]),
               "membership": member.astype(int).tolist(), "active_count": len(active), "config": config.as_dict(),
               "selected": chosen, "client_seed": client_seed, "noise_seed": noise_seed,
               "shadow_losses": losses, "final_server_test": out["accuracy"]["server_test"][-1],
@@ -147,18 +162,21 @@ def execute(job: AuditJob) -> str:
     return f"done {job.name} {record['seconds']}s"
 
 
-@lru_cache(maxsize=1)
-def _chosen() -> dict:
-    return runner.select(runner._load("tune"))
-
-
 @lru_cache(maxsize=2)
-def _scale(clients: int):
+def _chosen(public_size: int = 0) -> dict:
+    if not public_size:
+        return runner.select(runner._load("tune"))
+    return runner.select_by_public_size(runner._load("tune_public"))[public_size]
+
+
+@lru_cache(maxsize=4)
+def _scale(clients: int, public_size: int = 0):
     from experiments.frozen_head.features import load_split_features
     from experiments.frozen_head.public_only import Standardizer
 
     test_x, _ = load_split_features("test")
-    return Standardizer.fit(test_x[runner.federation(clients, runner.EVALUATION_LAYOUT)["layout"].public])
+    fed = runner.federation(clients, runner.EVALUATION_LAYOUT, public_size, PUBLIC_SUBSET if public_size else 0)
+    return Standardizer.fit(test_x[fed["public_indices"]])
 
 
 def gdp_bounds(mu: float) -> dict:
@@ -187,6 +205,7 @@ def analyze(records: list[dict]) -> dict:
         top = np.isin(group[0]["candidates"], group[0]["top5"])
         scores = {"calibrated": calibrated_scores(losses, membership), "threshold": threshold_scores(losses)}
         row = {"clients": key[0], "rounds": key[1], "mu_total": key[2],
+               "public_size": group[0]["job"].get("public_size", 0),
                "bounds": gdp_bounds(key[2]) if key[2] != runner.NO_NOISE else None,
                "server_test_acc_mean": float(np.mean([r["final_server_test"] for r in group]))}
         for attacker, score in scores.items():
@@ -211,16 +230,18 @@ def main() -> None:
     parser.add_argument("stage", choices=("run", "analyze"))
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--workers", type=int, default=4)
+    parser.add_argument("--public-size", type=int, default=0, help="Amendment 2, part D (0 = full public set)")
     args = parser.parse_args()
     if args.stage == "analyze":
-        records = [json.loads(p.read_text()) for p in sorted(AUDIT_DIR.glob("*.json"))]
+        records = [json.loads(p.read_text()) for p in sorted(audit_dir(args.public_size).glob("*.json"))]
         result = analyze(records)
-        runner._atomic_json(runner.RESULTS.parent / "analysis_audit.json", result)
+        name = f"analysis_audit_public{args.public_size}.json" if args.public_size else "analysis_audit.json"
+        runner._atomic_json(runner.RESULTS.parent / name, result)
         for row in result["settings"]:
             print(row["clients"], row["rounds"], row["mu_total"], "AUC", round(row["calibrated_all_auc"]["estimate"], 3),
                   "bound", None if row["bounds"] is None else round(row["bounds"]["auc"], 3))
         return
-    jobs = audit_jobs()
+    jobs = audit_jobs(args.public_size)
     pending = [job for job in jobs if not job.path.exists()]
     print(f"audit: {len(jobs)} jobs, {len(pending)} pending")
     if not args.execute:

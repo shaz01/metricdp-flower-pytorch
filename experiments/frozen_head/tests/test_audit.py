@@ -50,3 +50,13 @@ def test_analysis_recovers_no_leakage_and_strong_leakage():
     assert strong["calibrated_all_auc"]["estimate"] > 0.9
     assert strong["bound_violated"]  # a mu = 3 signal exceeds the mu = 1 bound
     assert not none["bound_violated"]
+
+
+def test_public_size_audit_plan_is_the_mu_at_most_2_settings_in_its_own_directory():
+    jobs = audit.audit_jobs(20)
+    assert len(jobs) == 12 * audit.AUDIT_REPLICATES
+    assert {job.mu_total for job in jobs} == {0.0, 1.0, 2.0}
+    assert all(job.path.parent.name == "audit_public20" and job.name.endswith(f"_pub20_r{job.replicate:02d}")
+               for job in jobs)
+    assert audit.AuditJob(48, 10, 1.0, 3).name == "n48_T10_mu1_r03"  # Part C names unchanged
+    assert len(audit.audit_jobs()) == 640
