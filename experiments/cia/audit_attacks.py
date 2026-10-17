@@ -131,6 +131,19 @@ class Interval:
     high: float
 
 
+def _resampled_indices(candidates: int, replicates: int, resamples: int, seed: int):
+    """Two-way bootstrap index sets: candidates and replicates drawn independently, with replacement."""
+    rng = np.random.default_rng(seed)
+    for _ in range(resamples):
+        yield np.ix_(rng.integers(candidates, size=candidates), rng.integers(replicates, size=replicates))
+
+
+def _interval(estimate: float, values: np.ndarray, level: float) -> Interval:
+    tail = 100 * (1 - level) / 2
+    low, high = np.nanpercentile(values, [tail, 100 - tail])
+    return Interval(float(estimate), float(low), float(high))
+
+
 def two_way_bootstrap(
     scores: np.ndarray,
     membership: np.ndarray,
@@ -146,13 +159,34 @@ def two_way_bootstrap(
     multiplicity) and recomputes ``metric`` on them.
     """
     scores, member = np.asarray(scores), np.asarray(membership, dtype=bool)
-    candidates, replicates = scores.shape
-    rng = np.random.default_rng(seed)
-    values = np.empty(resamples)
-    for b in range(resamples):
-        rows, columns = rng.integers(candidates, size=candidates), rng.integers(replicates, size=replicates)
-        index = np.ix_(rows, columns)
-        values[b] = metric(scores[index].ravel(), member[index].ravel())
-    tail = 100 * (1 - level) / 2
-    low, high = np.nanpercentile(values, [tail, 100 - tail])
-    return Interval(float(metric(scores.ravel(), member.ravel())), float(low), float(high))
+    values = np.array([metric(scores[index].ravel(), member[index].ravel())
+                       for index in _resampled_indices(*scores.shape, resamples, seed)])
+    return _interval(metric(scores.ravel(), member.ravel()), values, level)
+
+
+def difference_bootstrap(
+    scores_a: np.ndarray,
+    membership_a: np.ndarray,
+    scores_b: np.ndarray,
+    membership_b: np.ndarray,
+    metric: Callable[[np.ndarray, np.ndarray], float],
+    *,
+    resamples: int = 2000,
+    seed: int = 0,
+    level: float = 0.95,
+) -> Interval:
+    """Interval for ``metric(a) - metric(b)`` over two configurations of one inclusion design.
+
+    Both configurations are resampled with the same candidate and replicate draws: their runs
+    share the design (and, by default, the replicate seeds), so replicate ``j`` of ``a`` and of
+    ``b`` form a pair.
+    """
+    a, b = np.asarray(scores_a), np.asarray(scores_b)
+    member_a, member_b = np.asarray(membership_a, dtype=bool), np.asarray(membership_b, dtype=bool)
+    if a.shape != b.shape or member_a.shape != a.shape or member_b.shape != b.shape:
+        raise ValueError("both configurations need scores and membership of one design shape")
+    values = np.array([metric(a[index].ravel(), member_a[index].ravel())
+                       - metric(b[index].ravel(), member_b[index].ravel())
+                       for index in _resampled_indices(*a.shape, resamples, seed)])
+    estimate = metric(a.ravel(), member_a.ravel()) - metric(b.ravel(), member_b.ravel())
+    return _interval(estimate, values, level)

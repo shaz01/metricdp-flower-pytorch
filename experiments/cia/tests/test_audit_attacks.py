@@ -15,7 +15,9 @@ from sklearn.metrics import roc_auc_score
 
 from experiments.cia.audit_attacks import (
     balanced_references,
+    Interval,
     calibrated_scores,
+    difference_bootstrap,
     roc_auc,
     threshold_scores,
     tpr_at_fpr,
@@ -174,3 +176,26 @@ def test_variable_count_design_balances_rows_only():
 def test_balanced_design_needs_an_even_replicate_count():
     with pytest.raises(ValueError):
         balanced_design(CANDIDATES, 7, seed=0)
+
+
+def test_difference_of_identical_configurations_is_exactly_zero():
+    losses, membership = synthetic(1.0, 8, seed=6)
+    scores = calibrated_scores(losses, membership)
+    result = difference_bootstrap(scores, membership, scores, membership, roc_auc, resamples=200, seed=0)
+    assert result == Interval(0.0, 0.0, 0.0)
+
+
+def test_difference_detects_a_large_leakage_gap():
+    strong, member = synthetic(3.0, 16, seed=8)
+    weak, _ = synthetic(0.0, 16, seed=8)
+    result = difference_bootstrap(calibrated_scores(strong, member), member, calibrated_scores(weak, member), member,
+                                  roc_auc, resamples=300, seed=0)
+    assert result.low > 0
+    assert result.estimate == pytest.approx(roc_auc(calibrated_scores(strong, member), member)
+                                            - roc_auc(calibrated_scores(weak, member), member))
+
+
+def test_difference_needs_one_design():
+    _, member = synthetic(0.0, 8, seed=1)
+    with pytest.raises(ValueError):
+        difference_bootstrap(np.zeros((16, 8)), member, np.zeros((16, 6)), member[:, :6], roc_auc)

@@ -1,7 +1,7 @@
 package: M0
 status: running (code; no training yet)
 gate: G-M0 = not evaluated yet
-protocol: results/cia_v2/measurement/PROTOCOL.md (to be written before the cost run; this STATE fixes the design)
+protocol: results/cia_v2/measurement/PROTOCOL.md (written before the cost run)
 machine: compute server
 cost so far: 0 GPU-h (M0 allows no training beyond the 2-round checks and one cost-measurement run)
 next: randomized-inclusion runner, then the cost run (compute server), the power table, G-M0
@@ -53,8 +53,9 @@ unless `--execute`):
   - I add one refinement: each replicate includes exactly 8 candidates, so every run has exactly 40 active clients.
     The denominator is then a public constant (40), and the update norm cannot reveal how many candidates are in.
   - The noise std is fixed at `r C` per coordinate, as in v1's frontier convention.
-  - If the owner prefers a variable count with a 48-slot denominator (`sum / 48`), the runner supports it as an option.
-    It is not the default.
+  - The variable-count design (rows balanced only) exists in `experiments/cia/inclusion.py` (`fixed_count=False`)
+    and the attacker handles it. The runner does not offer it yet, because it would need a global-DP strategy with a
+    48-slot denominator. It will be added if the owner asks.
 - **Worlds.** A replicate is one run. Candidate `c`'s IN world is the replicates that include it, and its OUT world is
   the replicates that do not.
   - Every replicate has its own `client_seed` and `noise_seed`, derived from `(design_seed, replicate)`.
@@ -63,8 +64,11 @@ unless `--execute`):
 - **What is shared.** Public randomness only: `init_seed`, `layout_seed`, the server evaluation set and the shadow samples.
   Across configurations (for example two noise levels), replicate `j` may reuse the same `(client_seed, noise_seed,
   inclusion column)` to reduce the variance of differences. It never does so within one configuration.
-- **Shadow samples.** The v1 convention: 10% of the candidate's records, stratified, drawn by `layout_seed` (clean view;
-  the noisy view is kept for comparability). Each candidate's shadow sample is scored at rounds 0, 5, ..., 50
+- **Shadow samples.** The v1 convention: 10% of the candidate's training records, stratified, drawn by `layout_seed`.
+  Two changes from v1:
+  - They are scored **without the training augmentation**. v1 read them through the augmented training transform, so
+    every loss carried random crops and flips.
+  - The v1 noisy view is dropped, because no v2 attacker uses it. Each candidate's shadow sample is scored at rounds 0, 5, ..., 50
   (11 checkpoints) in every run.
 - **Surrogate sets** (optional, for B5): public test images resampled to each candidate's label histogram, scored at
   the same checkpoints.
@@ -193,4 +197,6 @@ per-candidate difficulty offsets. 100-200 simulated audits per cell.
 |---|---|
 | 2026-10-17 | Branch `feature/cia-v2-measurement` from master 7fda7242; sparse worktree opened. Read HANDOFF, REVIEW, ROADMAP, SYNTHESIS and the code paths for seeds and noise (`seed_training`, `_client_round_seed`, `DirichletEuroSAT.partition_seed`, Flower's global-RNG `add_gaussian_noise_inplace`, `default_rng(seed)` in the private-median and residual-clipping strategies). This STATE written before any code change. |
 | 2026-10-17 | Owner: "go" on the design, including the three choices: 8 candidates per replicate, the `client.py` exception, and 64-block noise statistic. Seed plumbing done: `experiments/reproduce/seeds.py`; `server.py` (`make_run_strategy`), `runner.py` (`--{layout,init,client,noise}-seed`, `--log-noise-diagnostics`) and `client.py` (two reads). Noise generators: new `metricdp_pytorch/seeded_noise.py` (`set_noise_seed`, `SeededNoiseMixin`, `noise_diagnostics`), used by the global-DP, metric-privacy and private-median strategies; residual clipping gets the seed through its `rng`. Without `noise-seed` the draws are unchanged (global NumPy state). Tests: `tests/test_noise_seed.py`, `tests/test_run_seeds.py`. The Flower noise-independence test passes (`results/cia_v2/measurement/tests/test_noise_independence.py`, CPU, about 90 s); its client-seed check failed first, as expected, until `client.py` read `client-seed`. Full suite at this point: 663 passed, 2 skipped (baseline 631 + 32 new). |
+| 2026-10-17 | Randomized-inclusion runner: `results/cia_v2/randomized_inclusion/` (`runner.py`, `data.py`, `surrogate.py`, `analysis.py`, 16 tests). Candidates are fixed from the seed-42 layout (top decile 23, 7, 40, 18, 33, matching the roadmap; then 1, 22, 16, 31, 47, 28, 27, 8, 29, 25, 43). Checkpoints are every 5 rounds plus the last. `PROTOCOL.md` written. Paired `difference_bootstrap` added for comparing configurations of one design. Power script `power.py` (WP2 vanilla seeds 42-45; round 0 left out because v2 shares the initial model). On real WP2 covariances the primary attacker's null mean AUC is 0.496 +- 0.003 (R = 8) and 0.493 +- 0.003 (R = 16) over 300 simulations, and its expected AUC at the vanilla effect is 0.754 (all) and 0.766 (top decile) at R = 8. |
+| 2026-10-17 | GPUs: both busy with another user's jobs (89-93% utilization, running 16 h), so off-limits under the server conventions. Smoke run (1 round, replicate 0, global DP at the frontier noise, surrogates) runs on the CPU instead, into scratch output. The cost run waits for an idle, unclaimed GPU (`~/cia-server/m0-cost-wait.sh`, outside the repo). |
 | 2026-10-17 | Attack library: `experiments/cia/audit_attacks.py` (calibrated, threshold, AUC, TPR at FPR, two-way bootstrap) and `experiments/cia/inclusion.py` (balanced design: fixed count by complementary pairs, or variable count). Design revisions before any run (findings 1-2 above): balanced references and the projected likelihood ratio. 21 tests pass, including the calibration test. |

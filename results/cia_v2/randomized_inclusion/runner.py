@@ -77,6 +77,7 @@ def replicate_seeds(design_seed, replicate):
 class InclusionRun(Combo):
     config: str
     replicate: int
+    replicates: int
     design_seed: int
     included: tuple[int, ...]
     active: tuple[int, ...]
@@ -116,7 +117,7 @@ def build_runs(*, config, privacy, noise_ratio, replicates, design_seed, replica
             # Noise std r C, independent of the active count (compute_stdv divides by it).
             noise_multiplier=noise_ratio * len(active), hyperparams=replace(HYPERPARAMS, rounds=rounds),
             data_module=DATA_MODULE, model_module=MODEL_MODULE, aggregation_weighting="equal",
-            config=config, replicate=j, design_seed=design_seed, included=included, active=active,
+            config=config, replicate=j, replicates=replicates, design_seed=design_seed, included=included, active=active,
             client_seed=client_seed, noise_seed=noise_seed, noise_ratio=noise_ratio,
         ))
     return runs
@@ -150,7 +151,7 @@ def checkpoint_rounds(rounds):
 def manifest(run, surrogates):
     return {"schema": SCHEMA, "run_name": run.run_name(), "config": run.config, "privacy": run.privacy,
             "noise_ratio": run.noise_ratio, "noise_multiplier": run.noise_multiplier, "replicate": run.replicate,
-            "design_seed": run.design_seed, "candidates": list(CANDIDATES), "top_decile": list(TOP_DECILE),
+            "replicates": run.replicates, "design_seed": run.design_seed, "candidates": list(CANDIDATES), "top_decile": list(TOP_DECILE),
             "included": list(run.included), "active": list(run.active), "slots": SLOTS,
             "layout_seed": LAYOUT_SEED, "init_seed": LAYOUT_SEED, "client_seed": run.client_seed,
             "noise_seed": run.noise_seed, "checkpoint_rounds": checkpoint_rounds(run.hyperparams.rounds),
