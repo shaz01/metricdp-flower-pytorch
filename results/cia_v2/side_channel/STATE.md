@@ -59,13 +59,30 @@ the noise std can be estimated from one release to about `1/sqrt(2D)` relative p
   It uses balanced references: the trial's own world minus the trial, and the other world minus its nearest replicate.
   Trials are the 16 trajectories of a cell.
 - **Noise-level attacker** (blind). Per round, `sigma_hat_t = ||Delta_t|| / sqrt(D)` from the released-update norm
-  (`--log-noise-diagnostics`). The 50-round vector goes into the same calibrated likelihood ratio. Also reported: the
-  oracle with the strategy's logged true noise std, and the update-norm channel under global DP.
+  (`--log-noise-diagnostics`).
+  - **Primary feature:** the mean of `sigma_hat_t` over the 50 rounds, a scalar fed to the calibrated likelihood
+    ratio. With one target, a cell has only 6 references per world, so a 50-dimensional ratio is not estimable.
+  - **Sensitivity check:** the 50-round vector.
+  - Also reported: the oracle with the strategy's logged true noise std, and the update-norm channel under global DP.
 - **Metrics.** AUC and TPR at 5% FPR per cell, mechanism and attacker; final accuracy.
-- **Interval.** The pair jackknife (`pair_jackknife`) at `GATE_LEVEL` is calibrated for 32 candidates and `R = 32`,
-  not for one target and 8 pairs. Before the protocol is fixed, a null and effect simulation at the A2 size decides
-  between that interval, a wider level and an exact permutation bound for the AUC. The chosen method must give at
-  most 5% false positives for the claim "lower end at least 0.8".
+- **Interval: the pair jackknife at `GATE_LEVEL` (97.5%),** decided by simulation at the A2 size (one target, 8
+  pairs, scalar Gaussian feature, calibrated attacker; 400-800 simulated cells per point).
+
+  P(lower end >= 0.8) by expected attacker AUC:
+
+  | Expected AUC | Pair jackknife 97.5% | Pair jackknife 99% | Pair bootstrap | Hanley-McNeil |
+  |---|---|---|---|---|
+  | 0.657 | 0.013 | | 0.018 | 0.018 |
+  | 0.749 | 0.037 | | 0.060 | 0.052 |
+  | 0.787 | 0.079 | 0.068 | | |
+  | 0.810 | 0.090 | 0.062 | | |
+  | 0.879 | 0.223 | | 0.300 | 0.307 |
+  | 0.966-0.968 | 0.73-0.76 | 0.68 | 0.785 | 0.805 |
+
+  With 16 trials the AUC is too discrete for any per-cell interval to stay at 5% just below 0.8. G-A2 needs the claim
+  in at least two of four cells, though. At the worst per-cell rate (0.079) that gives a gate-level false-claim
+  probability of 1 - (0.921^4 + 4 x 0.079 x 0.921^3) = 3.4%. The jackknife at 97.5% is therefore kept, and per-cell
+  statements carry their ~8% boundary error in FINDINGS.
 
 ## Gate (copied verbatim from ROADMAP.md Section 3, A2)
 
@@ -90,3 +107,4 @@ It is reported with its interval.
 | When | What |
 |---|---|
 | 2026-10-17 | Branch and sparse worktree opened. Targets fixed from the seed-42 layouts. STATE written before any A2 code. |
+| 2026-10-17 | Runner (`runner.py`, 8 tests): WP1 combos with layout seed 42, target-only OUT, per-trajectory seeds, pilot/main stages. A2-size interval simulation: pair jackknife at 97.5% chosen (table above); the noise-level attacker's primary feature is the scalar mean of `sigma_hat`. |
