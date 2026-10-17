@@ -4,7 +4,7 @@ gate: G-A1 = not evaluated yet (report, no kill)
 protocol: to be fixed in results/cia_v2/frontier/a1/PROTOCOL.md after M2's stage 1, before any A1 run
 machine: compute server
 cost so far: 0 GPU-h; proposed cap 48 GPU-h (192 runs at the measured 0.20 GPU-h, plus one replacement level), stop at 60
-next: private-median hook in the randomized-inclusion runner (Agent A's file; no change to strategy_factory.py), with tests
+next: merge 4119845e (private-median mode) into this branch between M2 stages; matched-accuracy analysis and power simulation; protocol after M2 stage 1
 needs from others: none (M2's runs serve as the global-DP curve)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, A1 (Agent A, branch `feature/cia-v2-frontier`). The design
@@ -78,6 +78,8 @@ includes 0 is described as "no detectable difference at this power", not as equi
 |---|---|
 | `results/cia_v2/randomized_inclusion/runner.py` | A `private-median` privacy mode, built in the worker (no change to `strategy_factory.py`). Made on `feature/cia-v2-measurement`, the runner's home, and merged into this branch only between M2 stages, so running M2 workers never see a changed runner. |
 | `results/cia_v2/randomized_inclusion/tests/` | Tests of the new mode |
+| `experiments/reproduce/runner.py`, `server.py` | `--privacy private-median` with `--num-slots` and `--median-*` flags, built in `server.private_median_strategy` like WP6's residual clipping (Agent A's server and runner wiring; `strategy_factory.py` unchanged) |
+| `tests/test_private_median_run.py` | Runner and strategy tests of the mode |
 | `results/cia_v2/frontier/a1/analyze.py` | Matched-accuracy interpolation, intervals, G-A1 |
 | `results/cia_v2/frontier/a1/tests/` | Synthetic tests of the analysis |
 | `results/cia_v2/frontier/a1/{PROTOCOL,STATE,FINDINGS}.md`, `analysis.json`, `results/` | This package |
@@ -87,3 +89,4 @@ includes 0 is described as "no detectable difference at this power", not as equi
 | When | What |
 |---|---|
 | 2026-10-17 | STATE written before any A1 code, while M2's stage 1 runs. |
+| 2026-10-17 | Private-median mode on `feature/cia-v2-measurement` (4119845e): runner flags, `server.private_median_strategy`, the randomized-inclusion runner's settings `q_0 = 0.3` in `[0.03, 1.0]` with the 32 active clients as public slots (v1's EuroSAT pairwise client distances: median 0.39-0.53). 10 new tests; full suite 734 passed. A 2-round CPU Flower smoke run worked end to end: the quantile tracked the true median distance (0.25, then 0.23). M2 manifests are byte-identical under the new code. |
