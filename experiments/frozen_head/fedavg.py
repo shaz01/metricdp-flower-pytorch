@@ -93,13 +93,14 @@ def clip_update(update: np.ndarray, clip: float) -> np.ndarray:
 def run(head: Head, init: np.ndarray, clients: Sequence[tuple[np.ndarray, np.ndarray]], config: HeadConfig, *,
         client_seed: int, noise_seed: int, active: Sequence[int] | None = None,
         evaluate: dict[str, tuple[np.ndarray, np.ndarray]] | None = None,
-        keep_updates: bool = False) -> dict:
+        keep_updates: bool = False, record_thetas: bool = False) -> dict:
     """Run ``config.rounds`` rounds; ``clients[i] = (features, labels)`` of client ``i``'s train set.
 
     ``active`` lists the participating clients (default all); the denominator stays ``num_slots``.
     ``evaluate`` maps names to ``(features, labels)`` scored after every round. ``keep_updates``
     stores each round's clipped updates (``(rounds, len(active), size)``) and round-start heads
-    (``(rounds, size)``) for the crowd bound.
+    (``(rounds, size)``) for the crowd bound. ``record_thetas`` stores the released head after every
+    round (``(rounds, size)``) for attack scoring.
     """
     if config.num_slots < 1 or config.clip <= 0 or config.noise_multiplier < 0:
         raise ValueError("Require num_slots >= 1, clip > 0 and noise_multiplier >= 0.")
@@ -110,7 +111,7 @@ def run(head: Head, init: np.ndarray, clients: Sequence[tuple[np.ndarray, np.nda
     noise_std = config.noise_multiplier * config.clip / config.num_slots
     theta = np.asarray(init, dtype=float).copy()
     history: dict[str, list] = {name: [] for name in (evaluate or {})}
-    norms, clipped_fraction, updates, starts = [], [], [], []
+    norms, clipped_fraction, updates, starts, released = [], [], [], [], []
     for round_index in range(config.rounds):
         theta_start = theta.copy()
         total = np.zeros(head.size)
@@ -126,6 +127,8 @@ def run(head: Head, init: np.ndarray, clients: Sequence[tuple[np.ndarray, np.nda
                 round_updates.append(clipped)
         noise = noise_rng.normal(0.0, noise_std, head.size) if noise_std > 0 else np.zeros(head.size)
         theta = theta + config.server_lr * (total / config.num_slots + noise)
+        if record_thetas:
+            released.append(theta.copy())
         norms.append(float(np.median(round_norms)))
         clipped_fraction.append(float(np.mean(np.asarray(round_norms) > config.clip)))
         if keep_updates:
@@ -135,6 +138,8 @@ def run(head: Head, init: np.ndarray, clients: Sequence[tuple[np.ndarray, np.nda
             history[name].append(head.accuracy(theta, features, labels))
     out = {"theta": theta, "accuracy": history, "median_update_norm": norms, "clipped_fraction": clipped_fraction,
            "noise_std": noise_std}
+    if record_thetas:
+        out["thetas"] = np.stack(released)
     if keep_updates:
         out["updates"] = np.stack(updates)
         out["round_start_theta"] = np.stack(starts)

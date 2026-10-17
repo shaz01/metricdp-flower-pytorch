@@ -43,8 +43,14 @@ class PublicOnly:
 
 
 def fit_public_only(head: Head, features: np.ndarray, labels: np.ndarray) -> PublicOnly:
-    """Cross-validate the L2 strength on the public set, then refit on all of it."""
-    folds = StratifiedKFold(n_splits=CV_FOLDS, shuffle=True, random_state=CV_SEED)
+    """Cross-validate the L2 strength on the public set, then refit on all of it.
+
+    Folds: ``CV_FOLDS``, or the smallest class count if that is lower (small public sets).
+    """
+    smallest = int(np.bincount(labels).min())
+    if smallest < 2:
+        raise ValueError("Every class needs at least two public examples for cross-validation.")
+    folds = StratifiedKFold(n_splits=min(CV_FOLDS, smallest), shuffle=True, random_state=CV_SEED)
     scores = {c: float(np.mean(cross_val_score(_model(c), features, labels, cv=folds))) for c in C_GRID}
     best = max(C_GRID, key=lambda c: (scores[c], -c))  # ties: stronger regularization
     model = _model(best).fit(features, labels)
