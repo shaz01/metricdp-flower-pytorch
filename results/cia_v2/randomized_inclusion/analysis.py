@@ -21,6 +21,7 @@ class Audit:
     released_norms: np.ndarray | None  # (replicates, rounds) released-update norm (DP runs only)
     surrogate_losses: np.ndarray | None  # like ``losses``, label-matched public surrogates
     run_names: tuple[str, ...]
+    min_client_accuracy: np.ndarray | None = None  # (replicates,) lowest per-client accuracy at the final round
 
 
 def load_audit(root: Path, *, config: str) -> Audit:
@@ -47,6 +48,7 @@ def load_audit(root: Path, *, config: str) -> Audit:
     surrogates = None
     membership = np.zeros((len(CANDIDATES), replicates), dtype=bool)
     accuracy, norms, names = np.empty(replicates), [], []
+    client_minimum = np.full(replicates, np.nan)
     for j in range(replicates):
         folder, manifest = by_replicate[j]
         names.append(manifest["run_name"])
@@ -62,12 +64,17 @@ def load_audit(root: Path, *, config: str) -> Audit:
                         surrogates = np.full_like(losses, np.nan)
                     surrogates[c, j, k] = row["surrogate_loss"]
         accuracy[j] = index[(rounds[-1], CANDIDATES[0])]["test_accuracy"]
-        training = json.loads((folder / f"{manifest['run_name']}.json").read_text())["train_metrics"]
+        result = json.loads((folder / f"{manifest['run_name']}.json").read_text())
+        training = result["train_metrics"]
         norms.append([training[str(t)].get("dp-released-update-norm", np.nan)
                       for t in sorted(map(int, training))])
+        clients = result.get("client_evaluate_metrics", {}).get(str(rounds[-1]), {})
+        if "per-client-eval_acc" in clients:
+            client_minimum[j] = min(map(float, clients["per-client-eval_acc"]))
     if not np.array_equal(membership, expected):
         raise ValueError(f"{config!r}: recorded inclusion differs from design seed {design_seed}")
     released = np.array(norms, dtype=float)
     return Audit(config=config, rounds=tuple(rounds), losses=losses, membership=membership,
                  final_accuracy=accuracy, released_norms=None if np.isnan(released).all() else released,
-                 surrogate_losses=surrogates, run_names=tuple(names))
+                 surrogate_losses=surrogates, run_names=tuple(names),
+                 min_client_accuracy=None if np.isnan(client_minimum).all() else client_minimum)
