@@ -4,8 +4,8 @@ gate: G-M0 = pass (720 tests passed, 2 skipped (MPS-only); calibration test reco
 protocol: results/cia_v2/measurement/PROTOCOL.md (written before the cost run)
 machine: compute server
 cost so far: 0 GPU-h (a 1-round smoke on the CPU; the cost run waits for an idle GPU)
-next: cost run (waiting for an idle, unclaimed GPU; ~/cia-server/m0-cost-wait.sh in tmux m0-wait), power table (simulation running), then M1
-needs from others: none (Agent B: see "Ownership exception" below; owner approved the three design choices 2026-10-17)
+next: owner decision on ESCALATION.md (power); cost run when a GPU is idle (~/cia-server/m0-cost-wait.sh in tmux m0-wait)
+needs from others: owner decision on ESCALATION.md (replicates, candidates, interval method, budget) before M2/A1/A2/B protocols fix them
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, M0 (Agent A, branch `feature/cia-v2-measurement`, worktree
 `metricdp-pytorch-feature-cia-v2-measurement`). M1 follows on the same branch, in `results/cia_v2/measurement/m1/`, with
@@ -191,6 +191,17 @@ per-candidate difficulty offsets. 100-200 simulated audits per cell.
    `R = 1000`, `mu` = 1 and 2, AUC and TPR at 5% and 10% FPR, all inside the bootstrap interval) passes with the
    projected attacker.
 
+5. **Power (M0 item 6; `power.py`, `power_options.py`, `tables/`).** The specified design cannot resolve 0.05. The
+   minimum detectable difference at 80% power (all candidates, vanilla-sized baseline) is not reached at `R = 8`,
+   0.24 at `R = 12` and 0.21 at `R = 16`; it is never reached for the top decile or at half the baseline effect.
+   - **Cause 1:** the paired two-way bootstrap is 2.4-3.7 SD wide, against a nominal 1.96 (false-positive rate
+     0-0.7%).
+   - **Cause 2:** even an exact interval would need `R` of about 32 or more.
+   - **What the levers buy:** about 32 candidates, `R = 32` and a calibrated replicate-only interval reach power
+     0.78 at a 0.053 difference.
+
+   Escalated: see `ESCALATION.md`.
+
 ## Log
 
 | When | What |
@@ -201,4 +212,5 @@ per-candidate difficulty offsets. 100-200 simulated audits per cell.
 | 2026-10-17 | Randomized-inclusion runner: `results/cia_v2/randomized_inclusion/` (`runner.py`, `data.py`, `surrogate.py`, `analysis.py`, 16 tests). Candidates are fixed from the seed-42 layout (top decile 23, 7, 40, 18, 33, matching the roadmap; then 1, 22, 16, 31, 47, 28, 27, 8, 29, 25, 43). Checkpoints are every 5 rounds plus the last. `PROTOCOL.md` written. Paired `difference_bootstrap` added for comparing configurations of one design. Power script `power.py` (WP2 vanilla seeds 42-45; round 0 left out because v2 shares the initial model). On real WP2 covariances the primary attacker's null mean AUC is 0.496 +- 0.003 (R = 8) and 0.493 +- 0.003 (R = 16) over 300 simulations, and its expected AUC at the vanilla effect is 0.754 (all) and 0.766 (top decile) at R = 8. |
 | 2026-10-17 | CPU smoke run (1 round, replicate 0 of design seed 0, global DP at the frontier noise, surrogates; scratch output) complete: 546 s training, 162 s scoring. 32 rows (16 candidates x rounds 0 and 1); the 8 included candidates match the design; 40 active clients; noise std 0.00773 = 0.001546 x 5; released-update norm 4.23 against signal 0.82 and expected noise 4.16; all four seeds recorded in the run metadata; checkpoints deleted after scoring. Round-1 accuracy 0.117, matching v1's WP2 round 1 (0.117; FedAvg starts from a seeded random model). |
 | 2026-10-17 | **G-M0 passed.** `uv run pytest`: 720 passed, 2 skipped (MPS-only tests that were already skipped). Calibration test: pass. Noise-independence test: correlations 1.0000 (equal seeds), 1.0000 (equal noise seed, different client seed: the v1 coupling) and -0.107 (different seeds). The client-seed check confirms that the trained models differ. Branch pushed; status set to `ready` (Agent B may branch from here). M1 code written (`m1/STATE.md`); its analysis reproduces v1's step 3 exactly on the coupled trajectories (0.788 / 0.808 / 0.792; noise-energy correlations 0.925-0.997). |
+| 2026-10-17 | Power table finished (200 simulations per point). The design cannot resolve the roadmap's 0.05 thresholds; diagnosis and options simulated (`power_options.py`). **`ESCALATION.md` raised.** M1 and the cost run continue; protocols that compare configurations wait for the owner. |
 | 2026-10-17 | GPUs: both busy with another user's jobs (89-93% utilization, running 16 h), so off-limits under the server conventions. Smoke run (1 round, replicate 0, global DP at the frontier noise, surrogates) runs on the CPU instead, into scratch output. The cost run waits for an idle, unclaimed GPU (`~/cia-server/m0-cost-wait.sh`, outside the repo). |

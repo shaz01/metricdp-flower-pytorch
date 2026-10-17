@@ -33,7 +33,10 @@ mechanisms (B1-B5, C1).
   were found on synthetic data before any run: leaving out only the trial biases the null AUC to 0.42 (fixed with
   balanced references), and a per-candidate 11-dimensional ratio is inefficient (replaced by a pooled-direction
   projection). Still open: the cost run (waiting for an idle GPU; both GPUs busy with other users) and the power
-  table. M1 code is ready. State: `results/cia_v2/measurement/STATE.md`.
+  table. M1 code is ready. **Escalated (`results/cia_v2/measurement/ESCALATION.md`):** the specified audit
+  design (16 candidates, R = 8-16, two-way bootstrap) can only detect AUC differences of about 0.2, not the roadmap's
+  0.05; an owner decision on replicates, candidates, interval method and budget is needed before M2/A1/A2/B
+  protocols. M1 and the M0 cost run wait for an idle GPU. State: `results/cia_v2/measurement/STATE.md`.
 
 **CIA research programme (2026-10-10): approved for autonomous execution by agents under
 `research/cia_review_2026-10/agent_roadmap.md` (work packages WP0-WP6, gates, file ownership; agents never merge into
