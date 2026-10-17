@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-17, CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
+**Last updated:** 2026-10-17, CIA v2 B4 (formal regime) and the client-level accountant merged into `master` (Agent C, closed by the owner; report `reports/cia_v2_formal_regime.md`); Agent A's M0 (G-M0 passed) came along as a dependency of B4's audit. CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
 (`research/cia_review_2026-10/SYNTHESIS.md`) merged into `master`; the owner is choosing new directions from the
 synthesis. 2026-10-15: WP0-WP2 merged, D1 stopped. 2026-10-10: CIA literature review and agent roadmap added
 (`HANDOFF.md`, `research/cia_review_2026-10/`)
@@ -40,31 +40,9 @@ mechanisms (B1-B5, C1).
   G-M2 on all candidates plus the top-decile point estimate, and an M2 cap of 64 GPU-h (was 30). M1 and the M0 cost
   run are running (GPU 1, shared by owner approval). State: `results/cia_v2/measurement/STATE.md`.
 
-- **Agent C, B4 formal regime + accountant (`feature/cia-v2-formal-regime`, 2026-10-17): accountant ready; G-B4
-  closed by the owner 2026-10-17 (fail accepted; scarce-public positive recorded as exploration); branch awaiting the owner's merge.** `metricdp_pytorch/accounting.py` (client-level DP-FedAvg
-  with Poisson client sampling, PLD via `dp-accounting` 0.6.0, now a pinned project dependency; reproduces TF Privacy and
-  Abadi et al. published epsilons; amplified mu defined with a delta floor) is ready for Agent B's B1/C1. B4 (linear
-  head on frozen ResNet-18 ImageNet features, EuroSAT, 48 and 480 clients, 10-20 rounds, mu 1-8): best DP gain over the
-  1,350-image public-only head 3.49 [2.37, 4.64] pp, so G-B4 fails; an extended grid does not change it (3.81 pp).
-  Follow-up: with 20-100 public images the gain at mu <= 2 is 5-26 pp and survives a stronger baseline check (at 500
-  it fails); the randomized-inclusion audit never exceeds the GDP bound (mu = 1: AUC 0.52-0.61 vs 0.760; no noise
-  0.84-0.98). n = 480 is a pseudo-client split (10 mu per real client). `results/cia_v2/formal_regime/FINDINGS.md`
-  ("Owner decisions"). Not merged. Parked: a confirmatory scarce-public run (about 1 CPU-h).
+- **Agent C, B4 formal regime + accountant: closed and merged into `master` 2026-10-17** (branch deleted; see
+  "What's established" below). Agent B's wait on Agent C (owner decision) is over; its wait on Agent A is not.
 
-**CIA research programme (2026-10-10): approved for autonomous execution by agents under
-`research/cia_review_2026-10/agent_roadmap.md` (work packages WP0-WP6, gates, file ownership; agents never merge into
-`master`). WP0-WP3 and WP6 finished and merged (2026-10-15/16); WP4 and WP5 do not start (G2 did not pass, D1
-stopped); D5 and D6 stay on hold until the owner assigns them. Programme closed 2026-10-16 with the synthesis
-`research/cia_review_2026-10/SYNTHESIS.md` (merged): metric privacy's noise level leaks in small federations and its
-formal repair cannot beat global DP at a matched guarantee; local training (D1) and residual clipping (D4.2) did not
-reduce leakage through the proposed mechanisms. Its Section 5 lists unvetted candidate directions (P1-P6) for the
-owner's next round; also open: WP6 plain-clipping control, D5/D6, a `reports/` write-up. Nothing running.**
-New directory `research/cia_review_2026-10/` (literature review with 97 verified references, project evidence summary,
-ranked directions D1-D6 with kill criteria and staged experiments, analyses of committed logs only) and root `HANDOFF.md`
-(entry point, first experiment step by step). Recommended: defense-aware CIA audit (D2) and signature-suppressing local
-training under a fixed, public client-level DP noise law (D1). New log findings: the metric-privacy noise-level side
-channel is weak at 48 clients but the noise reveals the participant count in the 3-vs-2-client runs for both mechanisms;
-per-target CIA exposure rises with client weight.
 - **WP0 shared infrastructure (Agent A, `feature/cia-infra`, 2026-10-11): G0 passed; merged into `master` 2026-10-15
   (with WP1).** Default-off fixed noise
   std for the plan suite (`--fixed-noise-stdv`), server-side leave-one-out residual norms (`--log-loo-residuals`), and
@@ -248,6 +226,16 @@ section.
 | `cia_v2.measurement.m1.runner --execute` (compute server, GPU 1, two workers) | CIA v2 M1, 12 trajectories | running (started 2026-10-17 18:39) |
 
 ## What's established on `master`
+
+- **CIA v2 B4: formal client-level regime with frozen features and a small head, plus the accountant (2026-10-17)**
+  (`reports/cia_v2_formal_regime.md`; data `results/cia_v2/formal_regime/`). G-B4 fails (owner accepted): a linear head
+  on frozen ResNet-18 ImageNet features of EuroSAT gains at most 3.49 [2.37, 4.64] pp over the 1,350-image public-only
+  head at `mu_total <= 8` (extended grid 3.81). At 480 (pseudo-)clients, `mu = 1` still gains 2.1-2.4 pp. Recorded as
+  exploration: with 20-100 public images, `mu <= 2` gains 5-26 pp, robust to a stronger baseline (fails at 500). The
+  randomized-inclusion audit never exceeds the GDP bound (`mu = 1`: AUC 0.52-0.61 vs 0.760; no noise 0.84-0.98). The
+  accountant `metricdp_pytorch/accounting.py` (Poisson client sampling, PLD/RDP via `dp-accounting==0.6.0`, now a
+  project dependency) reproduces TF Privacy and Abadi et al. epsilons; notes in
+  `research/cia_roadmap_v2/theory/accounting.md`.
 
 - **CIA programme WP1 and WP2 (2026-10-15)** (`results/cia_frontier/side_channel_audit/FINDINGS.md`,
   `results/cia_frontier/signature_suppression/FINDINGS.md`): with a fixed noise std in 3-8 client federations, metric
