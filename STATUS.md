@@ -41,7 +41,7 @@ mechanisms (B1-B5, C1).
   run are running (GPU 1, shared by owner approval). State: `results/cia_v2/measurement/STATE.md`.
 
 - **Agent C, B4 formal regime + accountant (`feature/cia-v2-formal-regime`, 2026-10-17): accountant ready; G-B4
-  fail accepted by the owner; scarce-public positive recorded as exploration.** `metricdp_pytorch/accounting.py` (client-level DP-FedAvg
+  closed by the owner 2026-10-17 (fail accepted; scarce-public positive recorded as exploration); branch awaiting the owner's merge.** `metricdp_pytorch/accounting.py` (client-level DP-FedAvg
   with Poisson client sampling, PLD via `dp-accounting` 0.6.0, now a pinned project dependency; reproduces TF Privacy and
   Abadi et al. published epsilons; amplified mu defined with a delta floor) is ready for Agent B's B1/C1. B4 (linear
   head on frozen ResNet-18 ImageNet features, EuroSAT, 48 and 480 clients, 10-20 rounds, mu 1-8): best DP gain over the
@@ -49,7 +49,7 @@ mechanisms (B1-B5, C1).
   Follow-up: with 20-100 public images the gain at mu <= 2 is 5-26 pp and survives a stronger baseline check (at 500
   it fails); the randomized-inclusion audit never exceeds the GDP bound (mu = 1: AUC 0.52-0.61 vs 0.760; no noise
   0.84-0.98). n = 480 is a pseudo-client split (10 mu per real client). `results/cia_v2/formal_regime/FINDINGS.md`
-  ("Owner decisions"). Not merged; a confirmatory scarce-public run is available on the owner's go.
+  ("Owner decisions"). Not merged. Parked: a confirmatory scarce-public run (about 1 CPU-h).
 
 **CIA research programme (2026-10-10): approved for autonomous execution by agents under
 `research/cia_review_2026-10/agent_roadmap.md` (work packages WP0-WP6, gates, file ownership; agents never merge into
