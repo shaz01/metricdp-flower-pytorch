@@ -41,13 +41,15 @@ mechanisms (B1-B5, C1).
   run are running (GPU 1, shared by owner approval). State: `results/cia_v2/measurement/STATE.md`.
 
 - **Agent C, B4 formal regime + accountant (`feature/cia-v2-formal-regime`, 2026-10-17): accountant ready; G-B4
-  fails.** `metricdp_pytorch/accounting.py` (client-level DP-FedAvg with Poisson client sampling, PLD via
-  `dp-accounting` 0.6.0 used through `uv run --with`; reproduces TF Privacy and Abadi et al. published epsilons; amplified
-  mu defined with a delta floor) is ready for Agent B's B1/C1. B4 (linear head on frozen ResNet-18 ImageNet features,
-  EuroSAT, 48 and 480 clients, 10-20 rounds, mu 1-8): best DP gain over the public-only head 3.49 [2.37, 4.64] pp, so
-  "no non-vacuous client-level regime at this scale"; headroom is at most 5.04 pp because the 1,350-image public head is
-  strong. Nuance: at 480 clients mu = 1 still gains 2.1-2.4 pp. Crowd bound gives no material help where mu <= 2.
-  `results/cia_v2/formal_regime/FINDINGS.md`; owner options listed there.
+  fails; owner follow-up (Amendments 1-2) done, awaiting owner.** `metricdp_pytorch/accounting.py` (client-level DP-FedAvg
+  with Poisson client sampling, PLD via `dp-accounting` 0.6.0 used through `uv run --with`; reproduces TF Privacy and
+  Abadi et al. published epsilons; amplified mu defined with a delta floor) is ready for Agent B's B1/C1. B4 (linear
+  head on frozen ResNet-18 ImageNet features, EuroSAT, 48 and 480 clients, 10-20 rounds, mu 1-8): best DP gain over the
+  1,350-image public-only head 3.49 [2.37, 4.64] pp, so G-B4 fails; an extended grid does not change it (3.81 pp).
+  Follow-up: with 20-100 public images the gain at mu <= 2 is 5-26 pp and survives a stronger baseline check (at 500
+  it fails); the randomized-inclusion audit never exceeds the GDP bound (mu = 1: AUC 0.52-0.61 vs 0.760; no noise
+  0.84-0.98). n = 480 is a pseudo-client split (10 mu per real client). `results/cia_v2/formal_regime/FINDINGS.md`;
+  owner options listed there.
 
 **CIA research programme (2026-10-10): approved for autonomous execution by agents under
 `research/cia_review_2026-10/agent_roadmap.md` (work packages WP0-WP6, gates, file ownership; agents never merge into
@@ -238,7 +240,8 @@ section.
 | Command | What | Status |
 | --- | --- | --- |
 | `frozen_head.runner tune/evaluate --execute --workers 8` (compute server, CPU only) | B4 tuning (1,440) and evaluation (160) head-only runs | done 2026-10-17 |
-| `frozen_head` Amendment 1 chain: audit, extended grid, public sweep (compute server, CPU only, 8 workers) | B4 owner follow-up, about 14,500 head-only runs | running |
+| `frozen_head` Amendment 1 chain: audit, extended grid, public sweep (compute server, CPU only, 8 workers) | B4 owner follow-up, about 14,500 head-only runs | done 2026-10-17 |
+| `frozen_head` Amendment 2 chain: baseline check, audit at 20 public images (compute server, CPU only, 8 workers) | B4 owner follow-up, 384 head-only runs | done 2026-10-17 |
 | `signature_suppression.runner --configs consensus-kl-0.3 --seeds 43 44 45` (compute server, GPU 1) | Consensus-KL follow-up step 1, 18 trajectories | done 2026-10-16 |
 | `consensus_kl.runner_dp --execute` (compute server, GPU 1) | Consensus-KL follow-up step 3, 36 trajectories | done 2026-10-16 |
 | `randomized_inclusion.runner --config cost-gdp-r1x ... --replicate-subset 0` (compute server, GPU 1, shared by owner approval) | CIA v2 M0 cost run, 1 randomized-inclusion run | done 2026-10-17 18:51 (0.20 GPU-h) |
