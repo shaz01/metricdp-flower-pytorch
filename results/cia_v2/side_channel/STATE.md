@@ -1,10 +1,10 @@
 package: A2
-status: planning (G-M0 passed; protocol and code being prepared; no run yet)
+status: running (pilot, 1x)
 gate: G-A2 = not evaluated yet
 protocol: results/cia_v2/side_channel/PROTOCOL.md (fixed before any run)
 machine: compute server (the owner PC is allowed for the Alzheimer cells; this agent runs on the compute server)
 cost so far: 0 GPU-h of the 35 GPU-h cap
-next: GDP pilot at 1x for all four cells (needs GPU time: a free GPU or the owner's approval to share)
+next: 1x pilot running (GPU 1, tmux a2-p1); then pilot AUCs per cell and the next multiple where needed
 needs from others: none (GPU time shared with M1/M2 on this machine)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, A2 (Agent A, branch `feature/cia-v2-side-channel`, from
@@ -110,3 +110,4 @@ It is reported with its interval.
 | 2026-10-17 | Runner (`runner.py`, 8 tests): WP1 combos with layout seed 42, target-only OUT, per-trajectory seeds, pilot/main stages. A2-size interval simulation: pair jackknife at 97.5% chosen (table above); the noise-level attacker's primary feature is the scalar mean of `sigma_hat`. |
 | 2026-10-17 | Analysis (`analyze.py`, 3 tests on fake trajectory folders): paired loading, loss, noise-level and oracle attackers, G-A2 across cells. |
 | 2026-10-17 | PROTOCOL.md fixed (pilot order, cost and stop rule, gate). |
+| 2026-10-17 19:00 | Owner approved A2 sharing GPU 1 (with two M1 workers and another user's idle process). Pilot at 1x started for all four cells (global DP, 4 replicates per world: 32 trajectories). |
