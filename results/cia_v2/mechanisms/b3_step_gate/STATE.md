@@ -4,7 +4,7 @@ gate: G-B3 = not evaluated
 protocol: results/cia_v2/mechanisms/b3_step_gate/PROTOCOL.md (not written yet; fixed and committed before any run)
 machine: compute server
 cost so far: 0 GPU-h of the 10 GPU-h cap
-next: write the gate strategy (default off) and its synthetic tests; draft PROTOCOL.md; wait for G-M0 to launch anything
+next: on hold by owner instruction (2026-10-17): no code until Agents A and C deliver; then gate strategy, tests and PROTOCOL.md
 needs from others: Agent A, G-M0 (feature/cia-v2-measurement STATE.md = ready): seed plumbing and the randomized-inclusion runner. Agent A, M2: the operating points `r_0.6` and the next-lower noise, plus each M2 replicate's `noise_seed`, `client_seed` and inclusion pattern so that the gated runs reuse them. Agent A: a default-off hook in `experiments/reproduce/server.py` `main` that hands the server's public validation loader to an optional strategy wrapper, and a passthrough for extra run-config keys in the randomized-inclusion runner (both are Agent A's files; the request is written here rather than edited)
 
 Agent B (roadmap v2 Section 6) runs B3, B1, B5, then B2 if M2 opens it, then C1 if at least one B gate passes. This
