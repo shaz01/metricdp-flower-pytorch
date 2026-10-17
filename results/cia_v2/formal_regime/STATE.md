@@ -1,10 +1,10 @@
 package: B4 (plus the subsampled-Gaussian accountant for B1 and C1)
-status: planning
+status: running
 gate: G-B4 = not evaluated yet
-protocol: results/cia_v2/formal_regime/PROTOCOL.md (to be written before the first head-only run; this STATE fixes the design)
+protocol: results/cia_v2/formal_regime/PROTOCOL.md @ 44fe21f9
 machine: compute server (CPU only; no GPU claimed)
 cost so far: 0 GPU-h of 10
-next: B4 calculations (predicted accuracy loss, crowd bound) on the cached features, then PROTOCOL.md and the tuning runs
+next: tuning runs (1,440, CPU), then selection and evaluation (160 runs), then analysis and FINDINGS; crowd-bound calculation running
 needs from others: none. Agent B: read the accountant line below before using it.
 
 accountant: ready (`metricdp_pytorch/accounting.py`, tests `tests/test_accounting.py`, note `research/cia_roadmap_v2/theory/accounting.md`); commit hash in the Log below. Agent B may merge `feature/cia-v2-formal-regime` into its own branch or copy the two files. Run with `uv run --with dp-accounting==0.6.0` (not a project dependency; owner's call). Use `dominating_mu(...).mu` (delta floor 1e-10) as the amplified formal mu for G-B1, and read the note's Section 1 on when amplification applies.
@@ -204,3 +204,5 @@ if it is reused unchanged.
 | 2026-10-17 | Features cached (ResNet-18, train fingerprint `30ee5d8828e2339c`, test `cdd8f364245a012b`). Layout check: n = 48 seed 42 top decile is 23, 7, 40, 18, 33 as declared; public 1,350, server test 1,350. n = 480 Dirichlet infeasible, so the pseudo-client split above. |
 | 2026-10-17 | Calculation: `tables/formal_regime_nsr.csv` (theory dir). NSR at d = 5,130 is 0.06-6.7 against 9.9-79 for the full network. Attack bounds implied by mu-GDP: AUC <= 0.760 / 0.921 / 0.998 / 1.000 at mu = 1 / 2 / 4 / 8, TPR at 5% FPR <= 0.26 / 0.64 / 0.99 / 1.00; so the gate's mu <= 8 includes settings whose guarantee constrains no attacker. The gate is unchanged; results will be reported per mu. |
 | 2026-10-17 | Headroom check (exploratory, before the protocol; no DP): public-only head (CV-selected inverse L2 0.1) 0.9044 on the server test set; centralized non-private probe on all 48 clients' training data 0.9548 at best over three L2 values chosen on the test set (an optimistic ceiling). Headroom at most 5.04 pp, so G-B4 can pass only if DP-FedAvg on the non-IID clients loses almost nothing against that ceiling. These numbers get recomputed by the calc script for FINDINGS. |
+| 2026-10-17 | Tuning metric amended before any run: the public set cannot select (the initial head is fit on it, 0.98 there) and the test split overlaps across layouts, so selection uses the tuning layout's pooled client local-test splits (PROTOCOL Section 5). Prediction table written: best predicted gain 1.6 pp (PROTOCOL Section 8). PROTOCOL.md committed at 44fe21f9 before any tuning or evaluation run. |
+| 2026-10-17 | Tuning launched on the compute server (CPU, 8 single-thread workers, nohup; log `~/cia-server/logs/b4-tune.log`). |
