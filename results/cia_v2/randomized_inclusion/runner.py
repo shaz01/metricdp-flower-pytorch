@@ -1,9 +1,10 @@
 """Randomized-inclusion CIA audit runs (CIA roadmap v2, Section 2 item 3). Plans unless --execute.
 
 EuroSAT, label-Dirichlet alpha 0.3, the seed-42 layout, 48 canonical clients, 50 rounds, FedAvg
-with equal weights. Sixteen candidates (fixed below) are IN in half of the replicates; the other
-32 clients always take part. In the fixed-count design (default) every replicate includes
-exactly 8 candidates, so every run has 40 active clients and a public denominator.
+with equal weights. Thirty-two candidates (fixed below) are IN in half of the replicates; the other
+16 clients always take part. In the fixed-count design (default) every replicate includes
+exactly 16 candidates, so every run has 32 active clients and a public denominator. (Owner
+delegation 2026-10-17, ESCALATION.md: 32 candidates instead of the roadmap's 16, for power.)
 
 Randomness: the layout, the initial model, the server test split and the shadow samples are
 public and shared (``layout-seed`` = ``init-seed`` = 42). Each replicate draws its own
@@ -43,27 +44,28 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 SCHEMA = 1
 
 
-def select_candidates(sizes):
-    """The top decile by record count (5 of 48), then 11 of the other 43 by size quantile.
+def select_candidates(sizes, others=27):
+    """The top decile by record count (5 of 48), then ``others`` of the other 43 by size quantile.
 
-    The others are sorted by ascending size and picked at ranks ``round((k + 0.5) * 43 / 11)``,
-    k = 0..10 (Python rounding, half to even); ties break by client ID.
+    The others are sorted by ascending size and picked at ranks ``round((k + 0.5) * 43 / others)``,
+    k = 0..others-1 (Python rounding, half to even); ties break by client ID.
     """
     by_size = sorted(sizes, key=lambda t: (-sizes[t], t))
     top = tuple(by_size[:5])
     rest = sorted(by_size[5:], key=lambda t: (sizes[t], t))
-    return top, tuple(rest[round((k + 0.5) * len(rest) / 11)] for k in range(11))
+    return top, tuple(rest[round((k + 0.5) * len(rest) / others)] for k in range(others))
 
 
-# Fixed before any run from the seed-42 layout (partition_summary(0.3, 48, 42)):
-# top decile 23 (1,150 records), 7 (1,089), 40 (917), 18 (873), 33 (864); by size quantile
-# 1 (149), 22 (185), 16 (222), 31 (272), 47 (302), 28 (339), 27 (421), 8 (512), 29 (540), 25 (684), 43 (793).
+# Fixed before any run from the seed-42 layout (partition_summary(0.3, 48, 42)): top decile 23 (1,150 records),
+# 7 (1,089), 40 (917), 18 (873), 33 (864); then 27 by size quantile, 100 to 809 records. The 16-candidate panel of
+# the roadmap's specification (top decile plus 1, 22, 16, 31, 47, 28, 27, 8, 29, 25, 43) is a subset.
 TOP_DECILE = (23, 7, 40, 18, 33)
-CANDIDATES = TOP_DECILE + (1, 22, 16, 31, 47, 28, 27, 8, 29, 25, 43)
+CANDIDATES = TOP_DECILE + (17, 1, 44, 22, 46, 39, 16, 6, 31, 20, 5, 47, 14, 28, 36, 27, 24, 2, 8, 34, 29, 35, 9, 25,
+                           13, 43, 37)
 
 
 def design_matrix(replicates, *, design_seed, fixed_count=True):
-    """``(16, replicates)`` inclusion matrix, rows in ``CANDIDATES`` order."""
+    """``(len(CANDIDATES), replicates)`` inclusion matrix, rows in ``CANDIDATES`` order."""
     return balanced_design(len(CANDIDATES), replicates, seed=design_seed, fixed_count=fixed_count)
 
 

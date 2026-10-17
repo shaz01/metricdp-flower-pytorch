@@ -190,3 +190,62 @@ def difference_bootstrap(
                        for index in _resampled_indices(*a.shape, resamples, seed)])
     estimate = metric(a.ravel(), member_a.ravel()) - metric(b.ravel(), member_b.ravel())
     return _interval(estimate, values, level)
+
+
+def _complementary_pairs(membership: np.ndarray) -> list[np.ndarray]:
+    member = np.asarray(membership, dtype=bool)
+    replicates = member.shape[1]
+    if replicates % 2 or any((member[:, 2 * p] == member[:, 2 * p + 1]).any() for p in range(replicates // 2)):
+        raise ValueError("the pair jackknife needs the fixed-count design's complementary replicate pairs")
+    return [np.array([2 * p, 2 * p + 1]) for p in range(replicates // 2)]
+
+
+def _jackknife_interval(estimate: float, values: np.ndarray, level: float) -> Interval:
+    from scipy.stats import t as student
+
+    n = len(values)
+    se = float(np.sqrt((n - 1) / n * np.sum((values - values.mean()) ** 2)))
+    q = float(student.ppf(0.5 + level / 2, n - 1))
+    return Interval(float(estimate), float(estimate - q * se), float(estimate + q * se))
+
+
+def pair_jackknife(
+    scores: np.ndarray,
+    membership: np.ndarray,
+    metric: Callable[[np.ndarray, np.ndarray], float],
+    *,
+    level: float = 0.95,
+) -> Interval:
+    """Gate interval for one configuration: leave-one-pair-out jackknife with t quantiles (P - 1 df).
+
+    The unit is a complementary replicate pair of the fixed-count design. The candidates are a fixed panel (the
+    interval does not generalise beyond them; ``two_way_bootstrap`` does, conservatively). Calibrated by simulation
+    at 32 candidates and R = 32 (``results/cia_v2/measurement/power_options.py``); liberal at R = 16.
+    """
+    scores, member = np.asarray(scores), np.asarray(membership, dtype=bool)
+    pairs = _complementary_pairs(member)
+    keep = [np.setdiff1d(np.arange(scores.shape[1]), pair) for pair in pairs]
+    values = np.array([metric(scores[:, k].ravel(), member[:, k].ravel()) for k in keep])
+    return _jackknife_interval(metric(scores.ravel(), member.ravel()), values, level)
+
+
+def pair_jackknife_difference(
+    scores_a: np.ndarray,
+    membership_a: np.ndarray,
+    scores_b: np.ndarray,
+    membership_b: np.ndarray,
+    metric: Callable[[np.ndarray, np.ndarray], float],
+    *,
+    level: float = 0.95,
+) -> Interval:
+    """Gate interval for ``metric(a) - metric(b)``, two configurations of one design (same pairs left out)."""
+    a, b = np.asarray(scores_a), np.asarray(scores_b)
+    member_a, member_b = np.asarray(membership_a, dtype=bool), np.asarray(membership_b, dtype=bool)
+    if a.shape != b.shape or member_a.shape != a.shape or member_b.shape != b.shape:
+        raise ValueError("both configurations need scores and membership of one design shape")
+    pairs = _complementary_pairs(member_a)
+    keep = [np.setdiff1d(np.arange(a.shape[1]), pair) for pair in pairs]
+    values = np.array([metric(a[:, k].ravel(), member_a[:, k].ravel()) - metric(b[:, k].ravel(), member_b[:, k].ravel())
+                       for k in keep])
+    estimate = metric(a.ravel(), member_a.ravel()) - metric(b.ravel(), member_b.ravel())
+    return _jackknife_interval(estimate, values, level)

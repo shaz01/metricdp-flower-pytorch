@@ -1,7 +1,8 @@
 # Escalation (Agent A, M0, 2026-10-17): the v2 design cannot resolve the roadmap's 0.05 AUC thresholds
 
-Status: **open, waiting for an owner decision.** Raised under ROADMAP.md Section 6 (v1 escalation rules). G-M0 itself
-passed and is not affected.
+Status: **resolved 2026-10-17.** The owner delegated the decisions to Agent A ("pick what comes logical to you"); the
+resolution is in the last section, and the owner may override any part of it. Raised under ROADMAP.md Section 6 (v1
+escalation rules). G-M0 itself passed and is not affected.
 
 ## What stops, what continues
 
@@ -94,3 +95,39 @@ quantiles.
 - `results/cia_v2/measurement/tables/power_table.csv`, `power_grid.csv`, `power_model.json`, `power_diagnosis.csv` and
   `power_options.csv`.
 - STATE.md, findings 1-3 (synthetic checks of the attacker and the bootstrap).
+
+## Resolution (2026-10-17, decided by Agent A under the owner's delegation)
+
+The owner replied "pick what comes logical to you for the questions you asked to me". The choices below replace the
+corresponding parts of the measurement standard (ROADMAP.md Section 2, items 3, 5 and 8) for Agent A's packages, and are
+offered to Agent B for theirs. Everything else in Section 2 stands.
+
+1. **Design: option D.**
+   - 32 candidates per run, fixed by the same rule as before: the top decile (23, 7, 40, 18, 33), then 27 clients by
+     size quantile. The other 16 clients always take part. The original 16-candidate panel is a subset.
+   - Each replicate includes 16 candidates, so every run has 32 active clients of the 48 slots.
+   - `R = 32` for every comparison with a gate. M2's grid starts with vanilla, 1x, 4x and 16x; 2x and 8x are added
+     only if the accuracy curve needs them.
+2. **Gate interval: conditional on the fixed candidate panel.**
+   - Leave-one-pair-out jackknife over the complementary replicate pairs, with `t` quantiles on `P - 1` degrees of
+     freedom (`pair_jackknife`, `pair_jackknife_difference`).
+   - Simulation (32 candidates, 200 simulations): at `R = 32`, 4.5% false positives and power 0.745 at a 0.053
+     difference. At `R = 16` it is liberal (9%), so **no gate is applied at `R = 16`**.
+   - The two-way bootstrap is reported alongside every gate interval as the conservative interval that generalises
+     beyond the panel.
+3. **Two stages instead of `R = 16` screens.** A package may run replicates 0-15 first (8 complementary pairs, a
+   balanced design on its own) to inspect accuracy, for example to choose M2's fill-in noise levels. It then always
+   completes replicates 16-31 before any gate statistic is computed. The second stage does not depend on the first
+   stage's leakage, so this is not optional stopping.
+4. **G-M2, as applied by Agent A.** The useful empirical regime holds at a noise level when two conditions are met:
+   - The all-candidate AUC's upper gate-interval end is 0.6 or below, and the top-decile point estimate is 0.6 or
+     below. The top-decile interval is reported but not gated: 5 clients cannot narrow it.
+   - The lower interval end of mean accuracy is 0.70 or higher.
+5. **Budget.** M2's cap rises from 30 to 64 GPU-h: 4 configurations x 32 runs at the estimated 0.5 GPU-h, to be
+   re-estimated from the cost run before M2's protocol is fixed. Caps for A1, A2 and the B packages are set when their
+   protocols are written, from the measured cost. The roadmap total will rise accordingly; each new cap is recorded in
+   that package's STATE.md and in STATUS.md, so the owner can stop any of them.
+
+**Open for later protocols, not decided here.** At `R = 32` the gate interval's half-width is about 0.05. G-A1's
+"equivalent: within +-0.03" outcome is therefore close to unreachable. A1's protocol will state this and report the
+interval rather than widen the band silently.

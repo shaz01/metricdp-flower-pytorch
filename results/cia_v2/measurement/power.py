@@ -7,15 +7,17 @@ OUT mean shadow-loss trajectories at rounds 5, 10, ..., 50 and one replicate-to-
 covariance pooled over targets and worlds (Ledoit-Wolf). Round 0 is left out: v2 shares the
 initial model between replicates, so its round-0 loss is constant and carries no signal.
 
-Simulation of one v2 audit: 16 candidates in ``runner.CANDIDATES`` order; the five top-decile
-candidates take the shifts of WP2's two top-decile targets (23, 7 alternating), the others those
-of targets 1, 0, 3 in turn. Loss = OUT mean + inclusion x scale x (IN mean - OUT mean) + Gaussian
-noise with the pooled covariance. Two configurations of one design (baseline scale ``a``, weaker
-scale ``b``) are scored with the primary attacker (``calibrated_scores``) and compared with the
-paired two-way bootstrap (``difference_bootstrap``); a difference counts as detected when its
-95% interval excludes 0. The noise of the two configurations is drawn independently
-(conservative: real configurations share replicate seeds). The minimum detectable difference is
-the expected AUC difference at which the detection rate reaches 80%, interpolated over scales.
+Simulation of one v2 audit: the candidates in ``runner.CANDIDATES`` order (32 since the 2026-10-17
+escalation); the five top-decile candidates take the shifts of WP2's two top-decile targets (23, 7
+alternating), the others those of targets 1, 0, 3 in turn. Loss = OUT mean + inclusion x scale x
+(IN mean - OUT mean) + Gaussian noise with the pooled covariance. Two configurations of one design
+(baseline scale ``a``, weaker scale ``b``) are scored with the primary attacker
+(``calibrated_scores``) and compared with the gate interval, the leave-one-pair-out jackknife
+(``pair_jackknife_difference``), and with the paired two-way bootstrap for reference; a difference
+counts as detected when its 95% interval excludes 0. Relative scale 1 gives the false-positive rate.
+The noise of the two configurations is drawn independently (conservative: real configurations share
+replicate seeds). The minimum detectable difference is the expected AUC difference at which the gate
+interval's detection rate reaches 80%, interpolated over scales.
 
 Run from the repository root:
     uv run python -m results.cia_v2.measurement.power
@@ -23,6 +25,7 @@ Run from the repository root:
 from __future__ import annotations
 
 import argparse
+from itertools import cycle
 import json
 import re
 from pathlib import Path
@@ -31,7 +34,7 @@ import numpy as np
 import pandas as pd
 from sklearn.covariance import ledoit_wolf_shrinkage
 
-from experiments.cia.audit_attacks import calibrated_scores, difference_bootstrap, roc_auc
+from experiments.cia.audit_attacks import calibrated_scores, difference_bootstrap, pair_jackknife_difference, roc_auc
 from experiments.cia.inclusion import balanced_design
 from results.cia_v2.randomized_inclusion.runner import CANDIDATES, TOP_DECILE
 
@@ -75,7 +78,7 @@ def empirical_model(trajectories, targets=WP2_TARGETS, seeds=WP2_SEEDS):
 
 def sources():
     """WP2 target whose shift each v2 candidate takes."""
-    top, other = iter(TOP_SOURCES * 3), iter(OTHER_SOURCES * 4)
+    top, other = cycle(TOP_SOURCES), cycle(OTHER_SOURCES)
     return [next(top) if c in TOP_DECILE else next(other) for c in CANDIDATES]
 
 
@@ -87,7 +90,7 @@ def simulate(model, scale, membership, rng):
 
 
 def detection(model, replicates, scale_a, scale_b, simulations, resamples, seed):
-    """Per subset: mean AUC of each configuration and the detection rate of their difference."""
+    """Per subset: mean AUC of each configuration and the detection rates of their difference."""
     rng = np.random.default_rng(seed)
     top = np.isin(CANDIDATES, TOP_DECILE)
     records = {"all": [], "top-decile": []}
@@ -96,12 +99,14 @@ def detection(model, replicates, scale_a, scale_b, simulations, resamples, seed)
         a = calibrated_scores(simulate(model, scale_a, membership, rng), membership)
         b = calibrated_scores(simulate(model, scale_b, membership, rng), membership)
         for subset, rows in (("all", slice(None)), ("top-decile", top)):
-            result = difference_bootstrap(a[rows], membership[rows], b[rows], membership[rows], roc_auc,
-                                          resamples=resamples, seed=s)
+            gate = pair_jackknife_difference(a[rows], membership[rows], b[rows], membership[rows], roc_auc)
+            two_way = difference_bootstrap(a[rows], membership[rows], b[rows], membership[rows], roc_auc,
+                                           resamples=resamples, seed=s)
             records[subset].append((roc_auc(a[rows], membership[rows]), roc_auc(b[rows], membership[rows]),
-                                    result.low > 0 or result.high < 0))
+                                    gate.low > 0 or gate.high < 0, two_way.low > 0 or two_way.high < 0))
     return {subset: dict(auc_a=float(np.mean([r[0] for r in rows])), auc_b=float(np.mean([r[1] for r in rows])),
-                         detected=float(np.mean([r[2] for r in rows])))
+                         detected=float(np.mean([r[2] for r in rows])),
+                         detected_two_way=float(np.mean([r[3] for r in rows])))
             for subset, rows in records.items()}
 
 
@@ -120,7 +125,7 @@ def minimum_detectable(grid):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--replicates", type=int, nargs="+", default=[8, 12, 16])
+    parser.add_argument("--replicates", type=int, nargs="+", default=[16, 32])
     parser.add_argument("--baselines", type=float, nargs="+", default=[1.0, 0.5])
     parser.add_argument("--relative-scales", type=float, nargs="+", default=[1.0, 0.8, 0.6, 0.4, 0.2, 0.0])
     parser.add_argument("--simulations", type=int, default=200)
@@ -141,12 +146,13 @@ def main():
     OUT.mkdir(exist_ok=True)
     grid.to_csv(OUT / "power_grid.csv", index=False)
     summary = (grid.groupby(["replicates", "baseline_scale", "subset"])
-               .apply(lambda g: pd.Series({"baseline_auc": g.auc_a.mean(), "mde_auc": minimum_detectable(g)}),
+               .apply(lambda g: pd.Series({"baseline_auc": g.auc_a.mean(), "mde_auc": minimum_detectable(g),
+                                           "false_positive_rate": g[g.relative_scale == 1.0].detected.mean()}),
                       include_groups=False)
                .reset_index())
     summary.to_csv(OUT / "power_table.csv", index=False)
     (OUT / "power_model.json").write_text(json.dumps({
-        "source": str(WP2.relative_to(ROOT)), "targets": WP2_TARGETS, "seeds": WP2_SEEDS, "rounds": ROUNDS,
+        "source": str(WP2.relative_to(ROOT)), "candidates": len(CANDIDATES), "gate_interval": "pair jackknife, t", "targets": WP2_TARGETS, "seeds": WP2_SEEDS, "rounds": ROUNDS,
         "shrinkage": model["shrinkage"], "simulations": args.simulations, "resamples": args.resamples,
         "shift_norms": {str(t): float(np.linalg.norm(model["means"][("in", t)] - model["means"][("out", t)]))
                         for t in WP2_TARGETS},

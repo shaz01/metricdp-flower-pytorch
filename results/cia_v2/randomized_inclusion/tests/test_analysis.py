@@ -36,7 +36,7 @@ def audit(tmp_path):
 def test_load_audit_orders_candidates_and_replicates(audit):
     root, runs = audit
     data = analysis.load_audit(root, config="gdp")
-    assert data.losses.shape == (16, 4, 3)
+    assert data.losses.shape == (len(runner.CANDIDATES), 4, 3)
     assert data.rounds == (0, 5, 10)
     c, j = 3, 2
     assert data.losses[c, j, 1] == pytest.approx(100 * j + 5 + runner.CANDIDATES[c] / 100)

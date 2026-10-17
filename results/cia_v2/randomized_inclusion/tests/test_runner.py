@@ -21,7 +21,9 @@ def plan(**kwargs):
 
 def test_candidates_are_fixed_before_any_run():
     assert runner.CANDIDATES[:5] == (23, 7, 40, 18, 33)
-    assert len(runner.CANDIDATES) == len(set(runner.CANDIDATES)) == 16
+    assert len(runner.CANDIDATES) == len(set(runner.CANDIDATES)) == 32
+    # The original 16-candidate panel (before the 2026-10-17 escalation) is contained in the 32.
+    assert set(runner.CANDIDATES) >= {23, 7, 40, 18, 33, 1, 22, 16, 31, 47, 28, 27, 8, 29, 25, 43}
     assert runner.TOP_DECILE == (23, 7, 40, 18, 33)
 
 
@@ -30,17 +32,18 @@ def test_candidate_rule_reproduces_the_fixed_list():
     top, others = runner.select_candidates(sizes)
     assert top == (0, 1, 2, 3, 4)
     ascending = sorted(range(5, 48), key=lambda t: sizes[t])
-    assert others == tuple(ascending[round((k + 0.5) * 43 / 11)] for k in range(11))
+    assert others == tuple(ascending[round((k + 0.5) * 43 / 27)] for k in range(27))
 
 
-def test_every_run_has_forty_active_clients_and_follows_the_design():
+def test_every_run_has_thirty_two_active_clients_and_follows_the_design():
     runs = plan()
     design = runner.design_matrix(8, design_seed=0)
     for j, run in enumerate(runs):
-        assert len(run.active) == 40
+        assert len(run.active) == 32
+        assert len(run.included) == 16
         assert set(runner.CANDIDATES) - set(run.included) <= set(range(48)) - set(run.active)
         assert run.included == tuple(sorted(c for c, row in zip(runner.CANDIDATES, design) if row[j]))
-        assert run.num_clients == 40
+        assert run.num_clients == 32
 
 
 def test_replicates_draw_independent_private_seeds():
@@ -83,8 +86,8 @@ def test_runner_args_pin_seeds_layout_and_weights():
 
 
 def test_run_names_are_unique():
-    runs = plan(replicates=16)
-    assert len({run.run_name() for run in runs}) == 16
+    runs = plan(replicates=32)
+    assert len({run.run_name() for run in runs}) == 32
 
 
 def test_replicate_selection_for_sharding():
@@ -125,3 +128,13 @@ def test_checkpoints_are_every_five_rounds_plus_the_last():
     assert runner.checkpoint_rounds(50) == list(runner.CHECKPOINT_ROUNDS)
     assert runner.checkpoint_rounds(2) == [0, 2]
     assert runner.checkpoint_rounds(12) == [0, 5, 10, 12]
+
+
+def test_fixed_candidates_follow_the_rule_on_the_seed_42_layout():
+    try:
+        from results.cia_frontier.eurosat_frontier.data import partition_summary
+        summary = partition_summary(runner.ALPHA, runner.SLOTS, runner.LAYOUT_SEED)
+    except Exception:
+        pytest.skip("EuroSAT is not available locally")
+    top, others = runner.select_candidates({c["target"]: c["records"] for c in summary["clients"]})
+    assert top + others == runner.CANDIDATES

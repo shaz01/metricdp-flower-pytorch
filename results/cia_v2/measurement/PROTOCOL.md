@@ -23,21 +23,22 @@ loss evaluation).
 
 ## 2. Cost run
 
-One randomized-inclusion run, as M2 will run them:
+One randomized-inclusion run, as M2 will run them. The design follows the ESCALATION.md resolution of 2026-10-17
+(32 candidates); this section was amended before the cost run started:
 
-- EuroSAT, alpha 0.3, seed-42 layout, 48 slots, 40 active clients (the 32 non-candidates plus the 8 candidates of
+- EuroSAT, alpha 0.3, seed-42 layout, 48 slots, 32 active clients (the 16 non-candidates plus the 16 candidates of
   replicate 0), FedAvg with equal weights, WP2 hyperparameters (5 local epochs, batch 32, learning rate 0.001, 20
   initialization epochs, clipping norm 5), 50 rounds.
-- Global DP at the frontier noise: std `r C` with `r = 0.001546`, noise multiplier `r x 40`.
-- Design: `R = 8`, `design_seed = 0`, replicate 0. Seeds: layout and init 42; client and noise seeds from
+- Global DP at the frontier noise: std `r C` with `r = 0.001546`, noise multiplier `r x 32`.
+- Design: `R = 32`, `design_seed = 0`, replicate 0. Seeds: layout and init 42; client and noise seeds from
   `SeedSequence([0, 0])`.
-- Scoring: the 16 candidates' shadow samples and label-matched surrogates at rounds 0, 5, ..., 50; test loss and
+- Scoring: the 32 candidates' shadow samples and label-matched surrogates at rounds 0, 5, ..., 50; test loss and
   accuracy at every checkpoint.
 - Command (compute server, one idle GPU from the claims file):
 
   ```bash
   python -m results.cia_v2.randomized_inclusion.runner --config cost-gdp-r1x --privacy global-dp \
-      --noise-ratio 0.001546 --replicates 8 --design-seed 0 --replicate-subset 0 --surrogates --execute \
+      --noise-ratio 0.001546 --replicates 32 --design-seed 0 --replicate-subset 0 --surrogates --execute \
       --max-parallel-clients 8 --output results/cia_v2/measurement/cost_run
   ```
 
@@ -48,10 +49,13 @@ gives no references).
 ## 3. Power table
 
 `python -m results.cia_v2.measurement.power`: the model and the simulation are described in the module docstring.
-Inputs: WP2's fixed-layout vanilla runs at seeds 42-45 (no DP); M1's runs are added once available. Output: the
-minimum detectable AUC difference at 80% power between two configurations of one design, for `R` = 8, 12, 16, at a
-vanilla-sized baseline effect and at half of it, for all candidates and for the top decile. Later protocols copy the
-matching row. If `R = 8` cannot detect 0.05 (all candidates), screens use `R = 12` (ROADMAP.md Section 3, M0 item 6).
+Inputs: WP2's fixed-layout vanilla runs at seeds 42-45 (no DP). Output: the minimum detectable AUC difference at 80%
+power between two configurations of one design, at a vanilla-sized baseline effect and at half of it, for all
+candidates and for the top decile. Later protocols copy the matching row.
+
+The specified design (16 candidates, `R` = 8, 12, 16, two-way bootstrap; tables in `tables/spec16/`) could not resolve
+0.05. That was escalated (ESCALATION.md) and resolved: 32 candidates, `R` = 16 and 32, and the pair-jackknife gate
+interval (`tables/power_table.csv`, `power_grid.csv`).
 
 ## 4. Gate
 

@@ -18,6 +18,8 @@ from experiments.cia.audit_attacks import (
     Interval,
     calibrated_scores,
     difference_bootstrap,
+    pair_jackknife,
+    pair_jackknife_difference,
     roc_auc,
     threshold_scores,
     tpr_at_fpr,
@@ -199,3 +201,35 @@ def test_difference_needs_one_design():
     _, member = synthetic(0.0, 8, seed=1)
     with pytest.raises(ValueError):
         difference_bootstrap(np.zeros((16, 8)), member, np.zeros((16, 6)), member[:, :6], roc_auc)
+
+
+def _jackknife_by_hand(values, estimate, level=0.95):
+    from scipy.stats import t as student
+
+    n = len(values)
+    se = np.sqrt((n - 1) / n * np.sum((values - values.mean()) ** 2))
+    q = student.ppf(0.5 + level / 2, n - 1)
+    return estimate - q * se, estimate + q * se
+
+
+def test_pair_jackknife_matches_a_hand_computation():
+    losses, membership = synthetic(1.0, 8, seed=12)
+    scores = calibrated_scores(losses, membership)
+    keep = [np.setdiff1d(np.arange(8), [2 * p, 2 * p + 1]) for p in range(4)]
+    values = np.array([roc_auc(scores[:, k], membership[:, k]) for k in keep])
+    low, high = _jackknife_by_hand(values, roc_auc(scores, membership))
+    result = pair_jackknife(scores, membership, roc_auc)
+    assert (result.low, result.high) == pytest.approx((low, high))
+    assert result.estimate == pytest.approx(roc_auc(scores, membership))
+
+
+def test_pair_jackknife_difference_of_identical_configurations_is_zero():
+    losses, membership = synthetic(1.0, 8, seed=13)
+    scores = calibrated_scores(losses, membership)
+    assert pair_jackknife_difference(scores, membership, scores, membership, roc_auc) == Interval(0.0, 0.0, 0.0)
+
+
+def test_pair_jackknife_needs_complementary_pairs():
+    membership = balanced_design(CANDIDATES, 8, seed=0, fixed_count=False)
+    with pytest.raises(ValueError, match="complementary"):
+        pair_jackknife(np.zeros((CANDIDATES, 8)), membership, roc_auc)

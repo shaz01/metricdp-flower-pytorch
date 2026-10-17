@@ -1,11 +1,11 @@
 package: M0
-status: ready (G-M0 passed 2026-10-17; cost run and power table still to be recorded)
+status: ready (G-M0 passed 2026-10-17; cost run still to be recorded)
 gate: G-M0 = pass (720 tests passed, 2 skipped (MPS-only); calibration test recovers the Gaussian trade-off; noise-independence correlations 1.0000 equal seeds, 1.0000 equal noise seed with different client seed, -0.107 different seeds)
 protocol: results/cia_v2/measurement/PROTOCOL.md (written before the cost run)
 machine: compute server
 cost so far: 0 GPU-h (a 1-round smoke on the CPU; the cost run waits for an idle GPU)
-next: owner decision on ESCALATION.md (power); cost run when a GPU is idle (~/cia-server/m0-cost-wait.sh in tmux m0-wait)
-needs from others: owner decision on ESCALATION.md (replicates, candidates, interval method, budget) before M2/A1/A2/B protocols fix them
+next: power table for the resolved design (running); cost run when a GPU is idle (~/cia-server/m0-cost-wait.sh in tmux m0-wait)
+needs from others: none (ESCALATION.md resolved 2026-10-17 under the owner's delegation; Agent B: see its Resolution section)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, M0 (Agent A, branch `feature/cia-v2-measurement`, worktree
 `metricdp-pytorch-feature-cia-v2-measurement`). M1 follows on the same branch, in `results/cia_v2/measurement/m1/`, with
@@ -40,7 +40,9 @@ A secondary, measured quantity: the cost of one randomized-inclusion run, which 
   `noise-seed` is set.
 
 **Randomized-inclusion design** (Section 2, item 3; runner `results/cia_v2/randomized_inclusion/runner.py`, plans
-unless `--execute`):
+unless `--execute`). **Amended 2026-10-17 by the ESCALATION.md resolution:** 32 candidates (top decile plus 27 by size
+quantile; the 16 below are a subset), 16 included per replicate, 32 active clients, `R = 32` for gated comparisons,
+and the pair-jackknife gate interval. The bullets below describe the original 16-candidate specification.
 
 - EuroSAT, alpha 0.3, seed-42 layout, 48 slots, 50 rounds, FedAvg with equal weights, WP2 hyperparameters.
 - Sixteen candidates, fixed before any run:
@@ -213,4 +215,5 @@ per-candidate difficulty offsets. 100-200 simulated audits per cell.
 | 2026-10-17 | CPU smoke run (1 round, replicate 0 of design seed 0, global DP at the frontier noise, surrogates; scratch output) complete: 546 s training, 162 s scoring. 32 rows (16 candidates x rounds 0 and 1); the 8 included candidates match the design; 40 active clients; noise std 0.00773 = 0.001546 x 5; released-update norm 4.23 against signal 0.82 and expected noise 4.16; all four seeds recorded in the run metadata; checkpoints deleted after scoring. Round-1 accuracy 0.117, matching v1's WP2 round 1 (0.117; FedAvg starts from a seeded random model). |
 | 2026-10-17 | **G-M0 passed.** `uv run pytest`: 720 passed, 2 skipped (MPS-only tests that were already skipped). Calibration test: pass. Noise-independence test: correlations 1.0000 (equal seeds), 1.0000 (equal noise seed, different client seed: the v1 coupling) and -0.107 (different seeds). The client-seed check confirms that the trained models differ. Branch pushed; status set to `ready` (Agent B may branch from here). M1 code written (`m1/STATE.md`); its analysis reproduces v1's step 3 exactly on the coupled trajectories (0.788 / 0.808 / 0.792; noise-energy correlations 0.925-0.997). |
 | 2026-10-17 | Power table finished (200 simulations per point). The design cannot resolve the roadmap's 0.05 thresholds; diagnosis and options simulated (`power_options.py`). **`ESCALATION.md` raised.** M1 and the cost run continue; protocols that compare configurations wait for the owner. |
+| 2026-10-17 | Owner delegated the escalation questions ("pick what comes logical to you"). Resolution recorded in ESCALATION.md: option D (32 candidates, `R = 32` for gates, smaller M2 grid), pair-jackknife gate interval (calibrated at `R = 32`: 4.5% false positives; liberal at `R = 16`), G-M2 on all candidates plus the top-decile point estimate, M2 cap 64 GPU-h. Runner moved to 32 candidates (the rule reproduces the list from the real layout, tested). The cost-run launcher was stopped while the runner changed and restarted afterwards with the amended command. Specified-design power tables moved to `tables/spec16/`. |
 | 2026-10-17 | GPUs: both busy with another user's jobs (89-93% utilization, running 16 h), so off-limits under the server conventions. Smoke run (1 round, replicate 0, global DP at the frontier noise, surrogates) runs on the CPU instead, into scratch output. The cost run waits for an idle, unclaimed GPU (`~/cia-server/m0-cost-wait.sh`, outside the repo). |
