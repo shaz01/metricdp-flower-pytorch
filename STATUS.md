@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-16, CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
+**Last updated:** 2026-10-17, CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
 (`research/cia_review_2026-10/SYNTHESIS.md`) merged into `master`; the owner is choosing new directions from the
 synthesis. 2026-10-15: WP0-WP2 merged, D1 stopped. 2026-10-10: CIA literature review and agent roadmap added
 (`HANDOFF.md`, `research/cia_review_2026-10/`)
@@ -17,6 +17,15 @@ section (including the Currently running table) updates more often, at "worth a 
 granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
+
+**CIA roadmap v2: approved by the owner 2026-10-17 (ROADMAP.md Section 1 defaults accepted); agents A, B, C about to
+start (A: M0 first; nothing running yet).** `research/cia_roadmap_v2/`
+(`REVIEW.md`, `ROADMAP.md`, audit script, tables, figure; built from committed results only). Main finding of the
+review: the IN and OUT trajectories of a seed draw identical DP noise (realized-noise-energy correlation 0.93-1.00 at
+48 clients, about 0 across seeds). The programme's paired leakage scores under DP therefore largely cancel the noise,
+which probably explains "leakage barely responds to noise". The roadmap rebuilds the measurement first (M0-M2, with
+independent randomness between worlds and randomized inclusion), then the audit of metric privacy (A1-A2), then
+mechanisms (B1-B5, C1).
 
 **CIA research programme (2026-10-10): approved for autonomous execution by agents under
 `research/cia_review_2026-10/agent_roadmap.md` (work packages WP0-WP6, gates, file ownership; agents never merge into
