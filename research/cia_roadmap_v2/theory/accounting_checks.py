@@ -80,7 +80,7 @@ def _calibration_cell(cell: tuple[float, int, float]) -> dict:
             "epsilon_pld_1e-5": round(acc.epsilon(mechanism, 1e-5), 4)}
 
 
-def calibration(workers: int = 8) -> list[dict]:
+def calibration(workers: int = 6) -> list[dict]:
     from concurrent.futures import ProcessPoolExecutor
 
     cells = [(q, rounds, mu) for q, rounds in CALIBRATION for mu in TARGET_MUS]

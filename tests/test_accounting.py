@@ -221,3 +221,11 @@ def test_report_has_every_quantity():
     assert out["epsilon_pld"] <= out["epsilon_rdp"]
     assert out["mu_dominating_lower"] <= out["mu_dominating"]
     assert set(out) >= {"mu_clt", "mu_dominating_delta_floor", "delta", "rounds"}
+
+
+def test_noise_for_a_weak_target_searches_down_from_one():
+    # mu = 8 is met at z = 1; the search must halve from there, not build a PLD at z = 0.01.
+    _requires_dp_accounting()
+    z = acc.noise_multiplier_for_mu(8.0, sampling_rate=0.5, rounds=10, rtol=5e-2)
+    assert 0.05 < z < 1.0
+    assert acc.dominating_mu(SubsampledGaussian(z, 0.5, 10)).mu <= 8.0

@@ -121,8 +121,29 @@ multiplier needed for `mu` = 1, 2, 4 and 8 at `q` in {1, 0.5, 0.25} and `T` in {
 
 ## 4. Calibration table
 
-Pending: `accounting_checks.py` writes `tables/accounting_calibration.csv` (one bisection per cell, slow under
-sampling); this section is filled from it in the next commit.
+Noise multiplier `z` (noise std `z C` on the sum of clipped updates) whose `mu_dominating` (floor 1e-10) meets the
+target, from bisection to 1% (`rtol = 0.01`). The last column is the noise std on the averaged update, `z / (q N)`,
+relative to full participation at the same `mu` and `T`, as the range over `mu` = 1 to 8 (it grows with `mu`).
+
+| `q` | `T` | `mu` = 1 | 2 | 4 | 8 | Noise on the average vs full participation (`mu` = 1 to 8) |
+|---|---|---|---|---|---|---|
+| 1 | 10 | 3.1623 | 1.5811 | 0.7906 | 0.3953 | 1.00-1.00x |
+| 1 | 20 | 4.4721 | 2.2361 | 1.1180 | 0.5590 | 1.00-1.00x |
+| 1 | 50 | 7.0711 | 3.5355 | 1.7678 | 0.8839 | 1.00-1.00x |
+| 1 | 100 | 10.0000 | 5.0000 | 2.5000 | 1.2500 | 1.00-1.00x |
+| 0.5 | 10 | 1.9678 | 1.1084 | 0.6243 | 0.3460 | 1.24-1.75x |
+| 0.5 | 20 | 2.5519 | 1.3990 | 0.7880 | 0.4414 | 1.14-1.58x |
+| 0.5 | 50 | 3.7687 | 1.9892 | 1.0846 | 0.6043 | 1.07-1.37x |
+| 0.5 | 100 | 5.1874 | 2.6649 | 1.4142 | 0.7795 | 1.04-1.25x |
+| 0.25 | 10 | 1.3397 | 0.8318 | 0.5109 | 0.3022 | 1.69-3.06x |
+| 0.25 | 20 | 1.5931 | 0.9733 | 0.5978 | 0.3633 | 1.42-2.60x |
+| 0.25 | 50 | 2.1228 | 1.2352 | 0.7465 | 0.4585 | 1.20-2.07x |
+| 0.25 | 100 | 2.7678 | 1.5339 | 0.9022 | 0.5512 | 1.11-1.76x |
+
+Reading for B1: at a matched formal `mu`, Poisson sampling with denominator `q N` puts 1.04-3.06 times *more*
+noise on each released average than full participation (most at few rounds, small `q` and weak guarantees).
+Amplification does not buy less noise per release here; any CIA gain from B1 has to come from the target being
+absent from most rounds and from the different per-round signal, which is what B1 measures.
 
 ## 5. Use
 
@@ -138,4 +159,6 @@ PYTHONPATH="$PWD" UV_PROJECT_ENVIRONMENT=<main>/.venv uv run --no-sync --with dp
   `pyproject.toml` is the owner's call.
 - The RDP accountant logs absl warnings when its series for a fractional order does not converge. It then excludes
   that order, and the result is still a valid bound.
-- Runtime: `dominating_mu` takes 1-10 s, and `noise_multiplier_for_mu` with sampling about 30 s at `rtol = 1e-2`.
+- Runtime: `dominating_mu` takes 1-10 s at moderate noise and longer at small `z` (the PLD support grows like `1/z^2`);
+  `noise_multiplier_for_mu` with sampling takes 0.5-3 min at `rtol = 1e-2`. The search brackets from `z = 1` and
+  refuses targets that would need `z < 0.05`.

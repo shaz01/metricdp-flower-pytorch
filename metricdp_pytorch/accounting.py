@@ -33,6 +33,7 @@ from scipy.stats import norm
 
 DP_ACCOUNTING_VERSION = "0.6.0"
 DEFAULT_DISCRETIZATION = 1e-4
+MIN_NOISE_MULTIPLIER = 0.05
 # Orders of TensorFlow Privacy's ``compute_dp_sgd_privacy`` (the published DP-SGD examples).
 RDP_ORDERS = tuple([1 + x / 10.0 for x in range(1, 100)] + list(range(12, 64)))
 
@@ -271,12 +272,20 @@ def noise_multiplier_for_epsilon(target_epsilon: float, delta_value: float, *, s
 
 
 def _bisect_noise(privacy_of: Any, target: float, rtol: float) -> float:
-    """Geometric bisection on ``z`` for a privacy measure that decreases in ``z``."""
-    low, high = 1e-2, 1.0
-    while privacy_of(high) > target:
-        low, high = high, high * 2
-    while privacy_of(low) <= target and low > 1e-6:
-        high, low = low, low / 2
+    """Geometric bisection on ``z`` for a privacy measure that decreases in ``z``.
+
+    The bracket is found by doubling or halving from ``z = 1``, so the PLD is never built at a noise
+    level far below the answer (its support grows like ``1 / z^2``).
+    """
+    low = high = 1.0
+    if privacy_of(high) > target:
+        while privacy_of(high) > target:
+            low, high = high, high * 2
+    else:
+        while privacy_of(low) <= target:
+            if low < MIN_NOISE_MULTIPLIER:
+                raise ValueError(f"Target met at every noise multiplier down to {MIN_NOISE_MULTIPLIER}.")
+            high, low = low, low / 2
     while high / low > 1 + rtol:
         middle = math.sqrt(low * high)
         if privacy_of(middle) > target:
