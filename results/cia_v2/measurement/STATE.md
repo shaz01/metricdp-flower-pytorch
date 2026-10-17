@@ -202,7 +202,12 @@ per-candidate difficulty offsets. 100-200 simulated audits per cell.
    - **What the levers buy:** about 32 candidates, `R = 32` and a calibrated replicate-only interval reach power
      0.78 at a 0.053 difference.
 
-   Escalated: see `ESCALATION.md`.
+   Escalated: see `ESCALATION.md`. **Resolved** under the owner's delegation:
+   - 32 candidates, `R = 32`, and the pair-jackknife interval at 97.5%.
+   - The detectable difference becomes 0.087-0.088 (all candidates; false positives 3.5-5.0%).
+   - A true 0.05 difference is detected 27-67% of the time, depending on the baseline effect.
+   - Tables: `tables/power_table.csv`, `power_grid.csv`, `interval_calibration.csv`. The specified design's tables are
+     in `tables/spec16/`.
 
 ## Log
 
@@ -216,4 +221,5 @@ per-candidate difficulty offsets. 100-200 simulated audits per cell.
 | 2026-10-17 | **G-M0 passed.** `uv run pytest`: 720 passed, 2 skipped (MPS-only tests that were already skipped). Calibration test: pass. Noise-independence test: correlations 1.0000 (equal seeds), 1.0000 (equal noise seed, different client seed: the v1 coupling) and -0.107 (different seeds). The client-seed check confirms that the trained models differ. Branch pushed; status set to `ready` (Agent B may branch from here). M1 code written (`m1/STATE.md`); its analysis reproduces v1's step 3 exactly on the coupled trajectories (0.788 / 0.808 / 0.792; noise-energy correlations 0.925-0.997). |
 | 2026-10-17 | Power table finished (200 simulations per point). The design cannot resolve the roadmap's 0.05 thresholds; diagnosis and options simulated (`power_options.py`). **`ESCALATION.md` raised.** M1 and the cost run continue; protocols that compare configurations wait for the owner. |
 | 2026-10-17 | Owner delegated the escalation questions ("pick what comes logical to you"). Resolution recorded in ESCALATION.md: option D (32 candidates, `R = 32` for gates, smaller M2 grid), pair-jackknife gate interval (calibrated at `R = 32`: 4.5% false positives; liberal at `R = 16`), G-M2 on all candidates plus the top-decile point estimate, M2 cap 64 GPU-h. Runner moved to 32 candidates (the rule reproduces the list from the real layout, tested). The cost-run launcher was stopped while the runner changed and restarted afterwards with the amended command. Specified-design power tables moved to `tables/spec16/`. |
+| 2026-10-17 | Power tables for the resolved design (200 simulations per point): the 95% jackknife interval was liberal (6-9% false positives for all candidates, up to 12% for the top decile), so the gate level was calibrated by simulation (`interval_calibration.py`, 400 pairs per cell) and set to 97.5% (2.2-3.0% false positives). Final power table at that level: detectable difference 0.087 / 0.088 (vanilla-sized / half baseline). `GATE_LEVEL` is now the default of the gate functions. |
 | 2026-10-17 | GPUs: both busy with another user's jobs (89-93% utilization, running 16 h), so off-limits under the server conventions. Smoke run (1 round, replicate 0, global DP at the frontier noise, surrogates) runs on the CPU instead, into scratch output. The cost run waits for an idle, unclaimed GPU (`~/cia-server/m0-cost-wait.sh`, outside the repo). |

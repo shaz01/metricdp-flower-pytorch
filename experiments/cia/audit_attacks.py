@@ -192,6 +192,12 @@ def difference_bootstrap(
     return _interval(estimate, values, level)
 
 
+# Confidence level of the gate interval. The leave-one-pair-out jackknife standard error runs slightly low at 32
+# candidates and R = 32 (nominal 95%: 6-7% false positives), so gates use the t interval at 97.5%, which keeps the
+# false-positive rate at 2-3% for all candidates (results/cia_v2/measurement/tables/interval_calibration.csv).
+GATE_LEVEL = 0.975
+
+
 def _complementary_pairs(membership: np.ndarray) -> list[np.ndarray]:
     member = np.asarray(membership, dtype=bool)
     replicates = member.shape[1]
@@ -214,13 +220,14 @@ def pair_jackknife(
     membership: np.ndarray,
     metric: Callable[[np.ndarray, np.ndarray], float],
     *,
-    level: float = 0.95,
+    level: float = GATE_LEVEL,
 ) -> Interval:
     """Gate interval for one configuration: leave-one-pair-out jackknife with t quantiles (P - 1 df).
 
     The unit is a complementary replicate pair of the fixed-count design. The candidates are a fixed panel (the
     interval does not generalise beyond them; ``two_way_bootstrap`` does, conservatively). Calibrated by simulation
-    at 32 candidates and R = 32 (``results/cia_v2/measurement/power_options.py``); liberal at R = 16.
+    at 32 candidates and R = 32 (``results/cia_v2/measurement/interval_calibration.py``), hence ``GATE_LEVEL``;
+    liberal at R = 16, where no gate is applied.
     """
     scores, member = np.asarray(scores), np.asarray(membership, dtype=bool)
     pairs = _complementary_pairs(member)
@@ -236,7 +243,7 @@ def pair_jackknife_difference(
     membership_b: np.ndarray,
     metric: Callable[[np.ndarray, np.ndarray], float],
     *,
-    level: float = 0.95,
+    level: float = GATE_LEVEL,
 ) -> Interval:
     """Gate interval for ``metric(a) - metric(b)``, two configurations of one design (same pairs left out)."""
     a, b = np.asarray(scores_a), np.asarray(scores_b)

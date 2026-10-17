@@ -15,6 +15,7 @@ from sklearn.metrics import roc_auc_score
 
 from experiments.cia.audit_attacks import (
     balanced_references,
+    GATE_LEVEL,
     Interval,
     calibrated_scores,
     difference_bootstrap,
@@ -217,7 +218,7 @@ def test_pair_jackknife_matches_a_hand_computation():
     scores = calibrated_scores(losses, membership)
     keep = [np.setdiff1d(np.arange(8), [2 * p, 2 * p + 1]) for p in range(4)]
     values = np.array([roc_auc(scores[:, k], membership[:, k]) for k in keep])
-    low, high = _jackknife_by_hand(values, roc_auc(scores, membership))
+    low, high = _jackknife_by_hand(values, roc_auc(scores, membership), level=GATE_LEVEL)
     result = pair_jackknife(scores, membership, roc_auc)
     assert (result.low, result.high) == pytest.approx((low, high))
     assert result.estimate == pytest.approx(roc_auc(scores, membership))

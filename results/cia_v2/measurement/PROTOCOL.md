@@ -54,8 +54,10 @@ power between two configurations of one design, at a vanilla-sized baseline effe
 candidates and for the top decile. Later protocols copy the matching row.
 
 The specified design (16 candidates, `R` = 8, 12, 16, two-way bootstrap; tables in `tables/spec16/`) could not resolve
-0.05. That was escalated (ESCALATION.md) and resolved: 32 candidates, `R` = 16 and 32, and the pair-jackknife gate
-interval (`tables/power_table.csv`, `power_grid.csv`).
+0.05. That was escalated (ESCALATION.md) and resolved: 32 candidates, `R = 32`, and the pair-jackknife gate interval
+at the 97.5% level, calibrated by `interval_calibration.py` (`tables/power_table.csv`, `power_grid.csv`,
+`interval_calibration.csv`). Later protocols copy the `R = 32` row: a detectable difference of 0.087-0.088 for all
+candidates and 0.196 for the top decile at a vanilla-sized baseline.
 
 ## 4. Gate
 

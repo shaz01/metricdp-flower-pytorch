@@ -110,9 +110,19 @@ offered to Agent B for theirs. Everything else in Section 2 stands.
      only if the accuracy curve needs them.
 2. **Gate interval: conditional on the fixed candidate panel.**
    - Leave-one-pair-out jackknife over the complementary replicate pairs, with `t` quantiles on `P - 1` degrees of
-     freedom (`pair_jackknife`, `pair_jackknife_difference`).
-   - Simulation (32 candidates, 200 simulations): at `R = 32`, 4.5% false positives and power 0.745 at a 0.053
-     difference. At `R = 16` it is liberal (9%), so **no gate is applied at `R = 16`**.
+     freedom (`pair_jackknife`, `pair_jackknife_difference`), **at the 97.5% level** (`GATE_LEVEL`).
+   - Why 97.5%: the jackknife standard error runs slightly low (0.018 against a true 0.019, and 0.023 against 0.027).
+     At the nominal 95% level the false-positive rate is 6-7% for all candidates. At 97.5% it is 2.2-3.0%
+     (`interval_calibration.py`, `tables/interval_calibration.csv`; 400 simulated pairs per cell, 32 candidates,
+     `R = 32`).
+   - At `R = 16` every interval tried was liberal (9-15%), so **no gate is applied at `R = 16`**.
+   - **Resulting power** (`tables/power_table.csv`, 200 simulations per point, all candidates): the difference
+     detectable at 80% power is 0.087 at a vanilla-sized baseline (AUC 0.82; false positives 3.5%) and 0.088 at half
+     of it (AUC 0.66; 5.0%). For the top decile it is 0.196 at the vanilla-sized baseline and not reached at half.
+   - **Consequence:** a true difference of 0.05 is detected only part of the time, 67% at the vanilla-sized baseline
+     and 27% at half of it (interval calibration table). Gates keep their thresholds (Section 1, decision 5 is the
+     owner's). Every package reports its power row, and a non-significant 0.05 result is labelled "underpowered",
+     not "no effect".
    - The two-way bootstrap is reported alongside every gate interval as the conservative interval that generalises
      beyond the panel.
 3. **Two stages instead of `R = 16` screens.** A package may run replicates 0-15 first (8 complementary pairs, a
