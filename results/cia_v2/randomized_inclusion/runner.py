@@ -39,7 +39,10 @@ SHADOW_FRACTION = 0.10
 FRONTIER_RATIO = 0.001546  # noise std / clipping norm at the v1 EuroSAT frontier (WP2, WP6)
 DATA_MODULE = "results.cia_v2.randomized_inclusion.data:create_data_module"
 MODEL_MODULE = "experiments.reproduce.eurosat_cnn:create_model"
-PRIVACY_MODES = ("vanilla", "global-dp", "metric-privacy")
+PRIVACY_MODES = ("vanilla", "global-dp", "metric-privacy", "private-median")
+# WP3's private median (A1): initial median client distance and its public bounds. v1's EuroSAT metric-privacy runs at
+# 48 clients logged pairwise client distances with median 0.39-0.53, so client-to-global distances near 0.3.
+MEDIAN_QUANTILE, MEDIAN_QUANTILE_MIN, MEDIAN_QUANTILE_MAX = 0.3, 0.03, 1.0
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 SCHEMA = 1
 
@@ -93,6 +96,10 @@ class InclusionRun(Combo):
                 "--partition-profile", json.dumps(profile, sort_keys=True),
                 "--layout-seed", str(LAYOUT_SEED), "--init-seed", str(LAYOUT_SEED),
                 "--client-seed", str(self.client_seed), "--noise-seed", str(self.noise_seed))
+        if self.privacy == "private-median":
+            # The fixed active count is public, so it is the mechanism's slot denominator.
+            args = (*args, "--num-slots", str(self.num_clients), "--median-quantile", str(MEDIAN_QUANTILE),
+                    "--median-quantile-min", str(MEDIAN_QUANTILE_MIN), "--median-quantile-max", str(MEDIAN_QUANTILE_MAX))
         return (*args, "--log-noise-diagnostics") if self.privacy != "vanilla" else args
 
 
@@ -151,6 +158,14 @@ def checkpoint_rounds(rounds):
 
 
 def manifest(run, surrogates):
+    pinned = _manifest(run, surrogates)
+    if run.privacy == "private-median":
+        pinned["median_quantile"] = {"initial": MEDIAN_QUANTILE, "minimum": MEDIAN_QUANTILE_MIN,
+                                     "maximum": MEDIAN_QUANTILE_MAX, "num_slots": run.num_clients}
+    return pinned
+
+
+def _manifest(run, surrogates):
     return {"schema": SCHEMA, "run_name": run.run_name(), "config": run.config, "privacy": run.privacy,
             "noise_ratio": run.noise_ratio, "noise_multiplier": run.noise_multiplier, "replicate": run.replicate,
             "replicates": run.replicates, "design_seed": run.design_seed, "candidates": list(CANDIDATES), "top_decile": list(TOP_DECILE),

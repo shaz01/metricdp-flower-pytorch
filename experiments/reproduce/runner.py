@@ -43,6 +43,8 @@ _GPU_SHARE_SAFETY = 0.99
 
 # WP6 residual clipping (metricdp_pytorch.residual_clipping_strategy), built by experiments.reproduce.server.
 RESIDUAL_PRIVACY = "residual-clipping"
+# WP3 private-median metric privacy (metricdp_pytorch.private_metric_strategy), built by experiments.reproduce.server.
+PRIVATE_MEDIAN_PRIVACY = "private-median"
 
 def _auto_client_gpus(*, num_clients: int, max_parallel_clients: int) -> float:
     """Split one CUDA device across the concurrently-running client actors.
@@ -68,7 +70,8 @@ def _parser() -> argparse.ArgumentParser:
         help="partition mode interpreted by the selected data module",
     )
     parser.add_argument(
-        "--privacy", choices=PRIVACY_MODES + EXPERIMENTAL_PRIVACY_MODES + (RESIDUAL_PRIVACY,), default="vanilla"
+        "--privacy", choices=PRIVACY_MODES + EXPERIMENTAL_PRIVACY_MODES + (RESIDUAL_PRIVACY, PRIVATE_MEDIAN_PRIVACY),
+        default="vanilla",
     )
     parser.add_argument(
         "--aggregation", choices=AGGREGATION_METHODS, default="fedavg"
@@ -94,6 +97,11 @@ def _parser() -> argparse.ArgumentParser:
     residual.add_argument("--residual-rho-min", type=float)
     residual.add_argument("--residual-rho-max", type=float)
     residual.add_argument("--residual-bit-noise-std", type=float)
+    median = parser.add_argument_group("private-median metric privacy (--privacy private-median, WP3; also --num-slots)")
+    median.add_argument("--median-quantile", type=float, help="initial private median distance q_0")
+    median.add_argument("--median-quantile-min", type=float)
+    median.add_argument("--median-quantile-max", type=float)
+    median.add_argument("--median-bit-noise-std", type=float, help="default: 10%% of the round's GDP budget")
     parser.add_argument("--proximal-mu", type=float,
                         help="FedProx mu (fedprox only; default 0.5, the paper value)")
     parser.add_argument("--proximal-normalization", choices=("mean", "sum"),
@@ -221,8 +229,27 @@ def _project_defaults() -> dict[str, Any]:
     return dict(project["tool"]["flwr"]["app"]["config"])
 
 
+def _validate_private_median(args: argparse.Namespace) -> None:
+    bounds = (args.median_quantile, args.median_quantile_min, args.median_quantile_max)
+    if args.privacy != PRIVATE_MEDIAN_PRIVACY:
+        if any(value is not None for value in (*bounds, args.median_bit_noise_std)):
+            raise ValueError("--median-* flags apply only to --privacy private-median.")
+        return
+    if args.aggregation_weighting != "equal":
+        raise ValueError("private-median requires --aggregation-weighting equal.")
+    if None in bounds:
+        raise ValueError("private-median needs --median-quantile, --median-quantile-min and --median-quantile-max.")
+    if not 0 < args.median_quantile_min <= args.median_quantile <= args.median_quantile_max:
+        raise ValueError("Require 0 < --median-quantile-min <= --median-quantile <= --median-quantile-max.")
+    if args.num_slots is not None and args.num_slots < args.num_clients:
+        raise ValueError("num-slots must be at least num-clients.")
+    if args.noise_multiplier <= 0:
+        raise ValueError("private-median needs a positive noise multiplier.")
+
+
 def _validate_residual(args: argparse.Namespace) -> None:
-    options = (args.num_slots, args.residual_rho, args.residual_quantile, args.residual_rho_min,
+    slots = None if args.privacy == PRIVATE_MEDIAN_PRIVACY else args.num_slots
+    options = (slots, args.residual_rho, args.residual_quantile, args.residual_rho_min,
                args.residual_rho_max, args.residual_bit_noise_std)
     if args.privacy != RESIDUAL_PRIVACY:
         if any(value is not None for value in options) or args.residual_center != "previous":
@@ -244,6 +271,7 @@ def _validate_residual(args: argparse.Namespace) -> None:
 
 def _validate(args: argparse.Namespace) -> None:
     _validate_residual(args)
+    _validate_private_median(args)
     if args.num_clients < 2:
         raise ValueError("num-clients must be at least two.")
     if not 0.0 < args.fraction_evaluate <= 1.0:
@@ -390,6 +418,12 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
             value = getattr(args, "residual_" + key.replace("-", "_"))
             if value is not None:
                 config["residual-" + key] = value
+    if args.privacy == PRIVATE_MEDIAN_PRIVACY:
+        config["num-slots"] = args.num_slots or args.num_clients
+        for key in ("quantile", "quantile-min", "quantile-max", "bit-noise-std"):
+            value = getattr(args, "median_" + key.replace("-", "_"))
+            if value is not None:
+                config["median-" + key] = value
     if args.proximal_mu is not None:
         config["proximal-mu"] = args.proximal_mu
     if args.proximal_normalization is not None:

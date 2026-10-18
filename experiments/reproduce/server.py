@@ -184,6 +184,23 @@ def residual_clipping_strategy(config):
     )
 
 
+def private_median_strategy(config):
+    """WP3: metric privacy with a privately tracked median client distance (``--privacy private-median``)."""
+    from metricdp_pytorch.private_metric_strategy import PrivateMedianMetricPrivacyServerSideFixedClipping
+    from metricdp_pytorch.strategy_factory import make_base_strategy
+
+    base = make_base_strategy(str(config["aggregation"]), num_clients=int(config["num-clients"]),
+                              fraction_evaluate=float(config.get("fraction-evaluate", 1.0)),
+                              weighting=str(config.get("aggregation-weighting", "num-examples")))
+    bit_noise = config.get("median-bit-noise-std")
+    return PrivateMedianMetricPrivacyServerSideFixedClipping(
+        base, noise_multiplier=float(config["noise-multiplier"]), clipping_norm=float(config["clipping-norm"]),
+        num_slots=int(config["num-slots"]), initial_quantile=float(config["median-quantile"]),
+        minimum_quantile=float(config["median-quantile-min"]), maximum_quantile=float(config["median-quantile-max"]),
+        bit_noise_std=None if bit_noise is None else float(bit_noise), seed=int(config.get("seed", 42)),
+    )
+
+
 def make_run_strategy(config: Mapping[str, Any]):
     """Build the configured strategy, with its server noise seeded and logged as configured."""
     influence = {}
@@ -197,6 +214,8 @@ def make_run_strategy(config: Mapping[str, Any]):
         influence["proximal_mu"] = float(config["proximal-mu"])
     if str(config["privacy"]) == "residual-clipping":
         strategy = residual_clipping_strategy(config)
+    elif str(config["privacy"]) == "private-median":
+        strategy = private_median_strategy(config)
     else:
         strategy = create_paper_strategy(
             **influence,
