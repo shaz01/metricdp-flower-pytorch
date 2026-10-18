@@ -1,10 +1,10 @@
 package: A2
-status: running (4x pilot on GPU 1, 4 workers; owner resolution of ESCALATION.md)
+status: running (16x pilot for Alzheimer 8 and EuroSAT 3, then main runs at 4x for Alzheimer 3 and 5; GPU 1, 4 workers)
 gate: G-A2 = not evaluated yet
 protocol: results/cia_v2/side_channel/PROTOCOL.md (fixed before any run)
 machine: compute server (the owner PC is allowed for the Alzheimer cells; this agent runs on the compute server)
-cost so far: about 13.7 GPU-h (1x pilot, 32 trajectories, one worker) of the 35 GPU-h cap
-next: finish the 4x pilot (tmux a2-q0..a2-q3); then re-measure the cost and apply the stop rule again
+cost so far: about 17.5 GPU-h (1x pilot 13.7 with one worker; 4x pilot 3.8 with 4 workers) of the 35 GPU-h cap; projected 34-36 GPU-h, under the 43.75 stop threshold
+next: tmux a2-m0..a2-m3 (16x pilot, then main x4 for Alzheimer 3 and 5); after the 16x pilot, the next level or main runs for Alzheimer 8 and EuroSAT 3
 needs from others: none (GPU time shared with M1/M2 on this machine)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, A2 (Agent A, branch `feature/cia-v2-side-channel`, from
@@ -114,3 +114,5 @@ It is reported with its interval.
 | 2026-10-18 08:44 | 1x pilot complete (32 trajectories). Loss AUC (point) 1.000 / 1.000 / 0.813 / 1.000 (Alzheimer 3, 5, 8; EuroSAT 3): no cell qualifies, every cell's next level is 4x. Measured 0.40-0.45 h per trajectory with one worker on a CPU-overloaded machine, against the planned 0.07 (Alzheimer). Projected total at least about 83 GPU-h, above the 43.75 GPU-h stop threshold: **stop rule triggered**, ESCALATION.md written. Large per-run artifacts kept local. |
 | 2026-10-18 13:00 | Owner chose option 1 of ESCALATION.md: 4 workers per GPU, cost re-measured on the 4x pilot. Launcher `a2-wait` waits for a GPU with no process and no claim (GPU 0 carries M2, GPU 1 another user's active job). |
 | 2026-10-18 15:39 | GPU 1 became idle and unclaimed (the other user's job ended); `a2-wait` started 4 workers on it (`a2-q0`..`a2-q3`). |
+| 2026-10-18 19:29 | 4x pilot complete (32 trajectories, 4 workers on GPU 1, 15:39-19:29). Loss AUC (point) 0.375 / 0.563 / 0.625 / 1.000 (Alzheimer 3, 5, 8; EuroSAT 3): **Alzheimer 3 and 5 qualify at 4x**; Alzheimer 8 and EuroSAT 3 go to 16x. Mean IN accuracy at 4x: 0.496 / 0.460 / 0.495 (Alzheimer, near the majority-class rate) and 0.892 (EuroSAT). Cost re-measured: 3.84 GPU-h of occupancy for 32 trajectories, about 0.12 GPU-h each (about 0.10 Alzheimer, 0.16 EuroSAT). Projection: 2.1 GPU-h per further pilot level for the two remaining cells and 14.7 for the main runs if every cell qualifies, so 34.3 GPU-h if both qualify at 16x and 36.4 in the worst case (64x). Under the 43.75 GPU-h stop threshold: **A2 continues** (ESCALATION.md resolution). |
+| 2026-10-18 21:15 | GPU 1 idle and unclaimed. Four workers (`a2-m0`..`a2-m3`): 16x pilot for Alzheimer 8 and EuroSAT 3 (16 trajectories), then main runs at 4x for Alzheimer 3 and 5 (global DP and metric privacy, 64 trajectories). |

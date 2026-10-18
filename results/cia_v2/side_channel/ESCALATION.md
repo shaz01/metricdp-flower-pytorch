@@ -54,3 +54,19 @@ Option 1: several trajectories per GPU. The 4x pilot (32 trajectories, global DP
 4 workers on one GPU. It starts on the first GPU with no process and no claim (`~/cia-server/a2-wait.sh`, tmux
 `a2-wait`). The cost per trajectory is then re-measured as GPU occupancy divided by the trajectories completed. A2
 continues only if the projected total falls under the 43.75 GPU-h stop threshold; otherwise it escalates again.
+
+## Re-measurement on the 4x pilot (2026-10-18)
+
+The 4x pilot ran with 4 workers on GPU 1 from 15:39 to 19:29: 3.84 GPU-h of occupancy for 32 trajectories, about
+0.12 GPU-h per trajectory (about 0.10 for Alzheimer, 0.16 for EuroSAT), against 0.40-0.45 with one worker.
+
+| Item | GPU-h |
+|---|---|
+| Spent (1x pilot 13.7, 4x pilot 3.8) | 17.5 |
+| 16x pilot, Alzheimer 8 and EuroSAT 3 | 2.1 |
+| Main runs, all four cells (128 trajectories) | 14.7 |
+| Projected total if both remaining cells qualify at 16x | 34.3 |
+| Worst case, with a 64x pilot | 36.4 |
+
+The projection is under the 43.75 GPU-h stop threshold, so A2 continues under the fixed protocol. The worst case is
+slightly above the 35 GPU-h cap but within the 25% margin.
