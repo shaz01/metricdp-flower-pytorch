@@ -1,10 +1,10 @@
 package: A2
-status: running (pilot, 1x)
+status: stopped (stop rule after the 1x pilot; ESCALATION.md awaits the owner)
 gate: G-A2 = not evaluated yet
 protocol: results/cia_v2/side_channel/PROTOCOL.md (fixed before any run)
 machine: compute server (the owner PC is allowed for the Alzheimer cells; this agent runs on the compute server)
-cost so far: 0 GPU-h of the 35 GPU-h cap
-next: 1x pilot running (GPU 1, tmux a2-p1); then pilot AUCs per cell and the next multiple where needed
+cost so far: about 13.7 GPU-h (1x pilot, 32 trajectories, one worker) of the 35 GPU-h cap
+next: owner decision on ESCALATION.md (recommended: 4 workers per GPU, re-measured on the 4x pilot)
 needs from others: none (GPU time shared with M1/M2 on this machine)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, A2 (Agent A, branch `feature/cia-v2-side-channel`, from
@@ -111,3 +111,4 @@ It is reported with its interval.
 | 2026-10-17 | Analysis (`analyze.py`, 3 tests on fake trajectory folders): paired loading, loss, noise-level and oracle attackers, G-A2 across cells. |
 | 2026-10-17 | PROTOCOL.md fixed (pilot order, cost and stop rule, gate). |
 | 2026-10-17 19:00 | Owner approved A2 sharing GPU 1 (with two M1 workers and another user's idle process). Pilot at 1x started for all four cells (global DP, 4 replicates per world: 32 trajectories). |
+| 2026-10-18 08:44 | 1x pilot complete (32 trajectories). Loss AUC (point) 1.000 / 1.000 / 0.813 / 1.000 (Alzheimer 3, 5, 8; EuroSAT 3): no cell qualifies, every cell's next level is 4x. Measured 0.40-0.45 h per trajectory with one worker on a CPU-overloaded machine, against the planned 0.07 (Alzheimer). Projected total at least about 83 GPU-h, above the 43.75 GPU-h stop threshold: **stop rule triggered**, ESCALATION.md written. Large per-run artifacts kept local. |
