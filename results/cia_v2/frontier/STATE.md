@@ -1,10 +1,10 @@
 package: M2
-status: ready to launch stage 1 (G-M1 confirmed); waiting for a GPU
+status: running (stage 2 and fill-in levels 2x, 8x; compute server, GPU 0)
 gate: G-M2 = not evaluated yet
 protocol: results/cia_v2/frontier/PROTOCOL.md (fixed before any M2 run)
 machine: compute server
-cost so far: 0 GPU-h of the 64 GPU-h cap (raised from 30 by the ESCALATION.md resolution of 2026-10-17)
-next: stage 1 (replicates 0-15 of vanilla, 1x, 4x, 16x; `~/cia-server/m2-worker.sh`), then the fill-in rule and stage 2
+cost so far: about 6.9 GPU-h (stage 1: 64 runs, two workers on GPU 1, 0.11 GPU-h per run) of the 64 GPU-h cap
+next: 128 runs (stage 2 of vanilla, 1x, 4x, 16x; both stages of 2x and 8x; `~/cia-server/m2-chain.sh`), about 14 GPU-h; then analysis and G-M2
 needs from others: none (M1: G-M1 confirmed, 4x decoupled paired score 0.516; M0 cost run: 0.20 GPU-h per run)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, M2 (Agent A, branch `feature/cia-v2-frontier`, branched from
@@ -95,3 +95,5 @@ The top-decile interval is reported but not gated.
 |---|---|
 | 2026-10-17 | Branch `feature/cia-v2-frontier` from `feature/cia-v2-measurement` at 158b2380; sparse worktree opened. STATE written before any M2 code. M1 and the M0 cost run are still waiting for an idle GPU. |
 | 2026-10-17 21:00 | G-M1 confirmed on `feature/cia-v2-measurement` (172a587a): M2 unblocked. Stage-1 worker script ready; runs go flat into `results/cia_v2/frontier/results/<run name>` (run names begin `ri-<config>-d2-`), the layout of PROTOCOL.md's commands and of `load_audit`. |
+| 2026-10-18 03:52 | Stage 1 complete (64 runs, 12-13 min each). Mean final accuracy (accuracy only, the fill-in rule's input): vanilla 0.803, 1x 0.788, 4x 0.653, 16x 0.182. Fill-in rule: 1x - 4x = 0.136 > 0.05, so 2x is added; 4x - 16x = 0.470 > 0.05, so 8x is added. No leakage statistic computed. |
+| 2026-10-18 12:46 | Merged `feature/cia-v2-measurement` (M1 results, private-median mode); the 64 stage-1 manifests are unchanged under the merged code. GPU 1 now carries another user's active job, so stage 2 runs on GPU 0 (idle and unclaimed), two workers. |
