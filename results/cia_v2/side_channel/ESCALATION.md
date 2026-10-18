@@ -47,3 +47,10 @@ leave the GPU almost idle (1-2% utilization), so they are bound by CPU, not GPU.
    chance of a strong claim.
 4. **Stop A2** and record the channel at 1x only. With global DP's loss attacker still at AUC 0.81-1.00, no strong
    claim is possible there.
+
+## Resolution (2026-10-18, owner)
+
+Option 1: several trajectories per GPU. The 4x pilot (32 trajectories, global DP, unchanged protocol) runs with
+4 workers on one GPU. It starts on the first GPU with no process and no claim (`~/cia-server/a2-wait.sh`, tmux
+`a2-wait`). The cost per trajectory is then re-measured as GPU occupancy divided by the trajectories completed. A2
+continues only if the projected total falls under the 43.75 GPU-h stop threshold; otherwise it escalates again.
