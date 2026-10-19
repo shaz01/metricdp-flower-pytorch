@@ -1,11 +1,11 @@
 package: A1
-status: planning (blocked by M2: noise levels need M2's operating points)
+status: planning (accuracy calibration, then PROTOCOL.md)
 gate: G-A1 = not evaluated yet (report, no kill)
-protocol: to be fixed in results/cia_v2/frontier/a1/PROTOCOL.md after M2's stage 1, before any A1 run
+protocol: to be fixed in results/cia_v2/frontier/a1/PROTOCOL.md after the accuracy calibration, before any A1 leakage run
 machine: compute server
 cost so far: 0 GPU-h; proposed cap 48 GPU-h (192 runs at the measured 0.20 GPU-h, plus one replacement level), stop at 60
-next: merge 4119845e (private-median mode) into this branch between M2 stages; matched-accuracy analysis and power simulation; protocol after M2 stage 1
-needs from others: none (M2's runs serve as the global-DP curve)
+next: accuracy calibration (16 runs, design seed 3); then levels, power simulation, analyze.py with tests, PROTOCOL.md
+needs from others: none (M2's runs serve as the global-DP curve; M2 found no useful regime, so the targets are M2's two levels around 0.70 accuracy: 2x, 0.740, and 4x, 0.660)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, A1 (Agent A, branch `feature/cia-v2-frontier`). The design
 follows the measurement standard as amended by `results/cia_v2/measurement/ESCALATION.md` (resolution, 2026-10-17).
@@ -31,8 +31,15 @@ formal guarantee, sits between the two.
     The runner builds it inside the worker, the way WP3's smoke run did, so `strategy_factory.py` stays unchanged.
 - **Noise levels.** Three per mechanism, chosen to bracket the mean accuracies of M2's operating points (`r_0.6` and
   the next-lower noise, or the two noise levels around 0.70 accuracy if M2 finds no useful regime).
-  - **Initial levels:** from v1's accuracy curves for the paper's mechanism (accuracy does not depend on the noise
-    coupling) and from a two-replicate accuracy check for private median. They are fixed in the protocol.
+  - **Initial levels:** from an accuracy calibration for both mechanisms, since v1 has the paper's mechanism at one
+    noise level only (100 rounds, 48 clients, not this regime). Both add noise `r C / d` with `d` a client distance;
+    in v1 on EuroSAT that was 1.8-2.6 times global DP's noise at the same `r`, so the accuracy at a given `r` is
+    not known in advance.
+  - **Calibration (accuracy only).** Both mechanisms at `r` = 0.25, 0.5, 1 and 2 times 0.001546, 2 replicates each
+    (one complementary pair, `design_seed = 3`, distinct from the main design), 16 runs, about 2 GPU-h. Output in
+    `a1/calibration/`. Only final accuracy is read; no leakage statistic is computed and these runs are never
+    part of the analysis. The three levels per mechanism are then chosen so that both targets lie inside their
+    accuracy range, and fixed in the protocol.
   - **Replacement rule** (accuracy only): if after stage 1 the three levels do not bracket both target accuracies,
     the outermost level on the wrong side is replaced once, and the replacement runs both stages.
 - **Two stages**, as M2: replicates 0-15, then 16-31, always run. No leakage statistic before both stages are complete.
@@ -90,3 +97,4 @@ includes 0 is described as "no detectable difference at this power", not as equi
 |---|---|
 | 2026-10-17 | STATE written before any A1 code, while M2's stage 1 runs. |
 | 2026-10-17 | Private-median mode on `feature/cia-v2-measurement` (4119845e): runner flags, `server.private_median_strategy`, the randomized-inclusion runner's settings `q_0 = 0.3` in `[0.03, 1.0]` with the 32 active clients as public slots (v1's EuroSAT pairwise client distances: median 0.39-0.53). 10 new tests; full suite 734 passed. A 2-round CPU Flower smoke run worked end to end: the quantile tracked the true median distance (0.25, then 0.23). M2 manifests are byte-identical under the new code. |
+| 2026-10-19 20:35 | M2 done: no useful regime. A1 targets: GDP 2x (accuracy 0.740) and 4x (0.660). v1 has metric privacy at one noise level only, so the initial levels come from an accuracy calibration for both mechanisms (16 runs, design seed 3), written here before it runs. |
