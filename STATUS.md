@@ -221,7 +221,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Nothing of Agent A running on the compute server (2026-10-19). M2 done, G-M2: no useful regime, escalated (`results/cia_v2/frontier/ESCALATION.md`); A2 analyzed after the owner's amendment (collapsed rounds; no further runs), G-A2: channel size recorded (`results/cia_v2/side_channel/FINDINGS.md`); A1 next, at 2x and 4x; consensus-KL follow-up rows below finished 2026-10-16.
+CIA v2 A1 main runs on the compute server (Agent A, both GPUs, started 2026-10-19 21:34). M2 done, G-M2: no useful regime, escalated (`results/cia_v2/frontier/ESCALATION.md`); A2 analyzed after the owner's amendment (collapsed rounds; no further runs), G-A2: channel size recorded (`results/cia_v2/side_channel/FINDINGS.md`); A1 running (PROTOCOL.md fixed: metric privacy at 1x, 2x, 4x; private median at 0.5x, 1x, 2x, 4x; targets M2's accuracies at 2x and 4x); consensus-KL follow-up rows below finished 2026-10-16.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -239,6 +239,8 @@ section.
 | 4 x `a2-worker.sh` (compute server, GPU 1, idle and unclaimed at launch; branch `feature/cia-v2-side-channel`) | CIA v2 A2 16x pilot (Alzheimer 8, EuroSAT 3; 16 trajectories), then main runs at 4x (Alzheimer 3 and 5; 64 trajectories) | done 2026-10-19 04:42 (about 7.5 GPU-h); collapsed rounds escalated |
 | `randomized_inclusion.runner --config {vanilla,gdp-r1x,gdp-r4x,gdp-r16x} --design-seed 2` replicates 0-15 (compute server, GPU 1, two workers, shared by owner approval; branch `feature/cia-v2-frontier`) | CIA v2 M2 stage 1, 64 runs | done 2026-10-18 03:52 (fill-in rule adds 2x and 8x) |
 | `m2-chain.sh` (compute server, GPU 0, two workers; branch `feature/cia-v2-frontier`) | CIA v2 M2 stage 2 plus 2x and 8x, 128 runs | done 2026-10-19 00:51 (192 runs, about 19 GPU-h); G-M2 no useful regime |
+| `a1-cal-worker.sh` (compute server, both GPUs, idle and unclaimed at launch; branch `feature/cia-v2-frontier`) | CIA v2 A1 accuracy calibration, 20 runs (design seed 3, accuracy only) | done 2026-10-19 21:32 (about 2.3 GPU-h); levels fixed in `a1/PROTOCOL.md` |
+| `a1-chain.sh` (compute server, GPUs 0 and 1, two workers each, idle and unclaimed at launch; branch `feature/cia-v2-frontier`) | CIA v2 A1 main runs, 7 configurations x 32 = 224 runs | running (started 2026-10-19 21:34; about 12 h) |
 
 ## What's established on `master`
 
