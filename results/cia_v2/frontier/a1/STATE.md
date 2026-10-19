@@ -63,8 +63,19 @@ formal guarantee, sits between the two.
   - Global DP: `mu_total = sqrt(50) / (32 r)`.
   - Private median: its accountant (`PrivateMedianMetricPrivacyServerSideFixedClipping.account`).
   - The paper's mechanism has none.
-- **Power.** The M0 power table gives an MDE of 0.087 for a difference of two configurations at `R = 32`.
-  Interpolation adds variance, so the matched-accuracy MDE is at least that. It will be simulated for the protocol.
+- **Power** (`a1/power.py`, from M2's runs). Two disjoint global-DP curves with A1's structure (vanilla, 2x, 8x
+  against 1x, 4x, 16x) give the matched-accuracy difference's jackknife SE. Detectable difference at 80% power for
+  the 97.5% gate interval:
+
+  | Subset | `a* = 0.740` | `a* = 0.660` |
+  |---|---|---|
+  | All candidates | 0.027 (SE 0.008) | 0.037 (SE 0.011) |
+  | Top decile | 0.091 (SE 0.027) | 0.096 (SE 0.029) |
+
+  Pairing across configurations (equal replicate seeds) makes the difference much more precise than one
+  configuration (SE about 0.023). Metric privacy uses the same noise generator, so its runs should pair as well.
+  Private median also draws its bit noise from that generator, which shifts the model-noise stream after round 1,
+  so its pairing with global DP is weaker and its detectable difference larger.
 
 ## Gate (copied verbatim from ROADMAP.md Section 3, A1)
 
@@ -74,10 +85,10 @@ formal guarantee, sits between the two.
 - Equivalent: the interval lies within ±0.03 AUC.
 - Worse, or inconclusive.
 
-**Reachability.** At `R = 32` a single configuration's gate interval has a half-width of about 0.05, and a
-matched-accuracy difference's is larger. "Equivalent" within ±0.03 is therefore close to unreachable
-(ESCALATION.md, open item). The protocol keeps the band and reports the interval. An interval inside ±0.10 that
-includes 0 is described as "no detectable difference at this power", not as equivalence.
+**Reachability.** The power estimate above revises the earlier expectation (ESCALATION.md, open item) that ±0.03
+was close to unreachable: for all candidates the paired difference's gate half-width is about 0.02-0.03, so
+"equivalent" is reachable when the true difference is near 0. For the top decile it is not. An interval inside
+±0.10 that includes 0 is described as "no detectable difference at this power", not as equivalence.
 
 ## Files
 
@@ -88,6 +99,7 @@ includes 0 is described as "no detectable difference at this power", not as equi
 | `experiments/reproduce/runner.py`, `server.py` | `--privacy private-median` with `--num-slots` and `--median-*` flags, built in `server.private_median_strategy` like WP6's residual clipping (Agent A's server and runner wiring; `strategy_factory.py` unchanged) |
 | `tests/test_private_median_run.py` | Runner and strategy tests of the mode |
 | `results/cia_v2/frontier/a1/analyze.py` | Matched-accuracy interpolation, intervals, G-A1 |
+| `results/cia_v2/frontier/a1/power.py` | Detectable difference from M2's runs |
 | `results/cia_v2/frontier/a1/tests/` | Synthetic tests of the analysis |
 | `results/cia_v2/frontier/a1/{PROTOCOL,STATE,FINDINGS}.md`, `analysis.json`, `results/` | This package |
 
@@ -98,3 +110,4 @@ includes 0 is described as "no detectable difference at this power", not as equi
 | 2026-10-17 | STATE written before any A1 code, while M2's stage 1 runs. |
 | 2026-10-17 | Private-median mode on `feature/cia-v2-measurement` (4119845e): runner flags, `server.private_median_strategy`, the randomized-inclusion runner's settings `q_0 = 0.3` in `[0.03, 1.0]` with the 32 active clients as public slots (v1's EuroSAT pairwise client distances: median 0.39-0.53). 10 new tests; full suite 734 passed. A 2-round CPU Flower smoke run worked end to end: the quantile tracked the true median distance (0.25, then 0.23). M2 manifests are byte-identical under the new code. |
 | 2026-10-19 20:35 | M2 done: no useful regime. A1 targets: GDP 2x (accuracy 0.740) and 4x (0.660). v1 has metric privacy at one noise level only, so the initial levels come from an accuracy calibration for both mechanisms (16 runs, design seed 3), written here before it runs. |
+| 2026-10-19 20:40 | Calibration running (4 workers, both GPUs idle and unclaimed at launch). `a1/analyze.py` written with 12 synthetic tests (matched-accuracy difference, jackknife and two-way bootstrap, G-A1 outcomes, no extrapolation). `a1/power.py`: detectable difference 0.027 / 0.037 (all candidates) and 0.091 / 0.096 (top decile) at the two targets. |
