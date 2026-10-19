@@ -1,10 +1,10 @@
 package: A1
-status: planning (accuracy calibration, then PROTOCOL.md)
+status: running (stage 1, then stage 2; both GPUs, two workers each)
 gate: G-A1 = not evaluated yet (report, no kill)
-protocol: to be fixed in results/cia_v2/frontier/a1/PROTOCOL.md after the accuracy calibration, before any A1 leakage run
+protocol: results/cia_v2/frontier/a1/PROTOCOL.md (fixed 2026-10-19, before any A1 leakage run)
 machine: compute server
-cost so far: 0 GPU-h; proposed cap 48 GPU-h (192 runs at the measured 0.20 GPU-h, plus one replacement level), stop at 60
-next: accuracy calibration (16 runs, design seed 3); then levels, power simulation, analyze.py with tests, PROTOCOL.md
+cost so far: about 2.3 GPU-h (accuracy calibration, 20 runs) of ROADMAP.md's 30 GPU-h cap (stop at 37.5); main runs about 25 GPU-h
+next: stage 1 (112 runs), replacement rule on accuracy, stage 2; then analysis
 needs from others: none (M2's runs serve as the global-DP curve; M2 found no useful regime, so the targets are M2's two levels around 0.70 accuracy: 2x, 0.740, and 4x, 0.660)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, A1 (Agent A, branch `feature/cia-v2-frontier`). The design
@@ -43,8 +43,9 @@ formal guarantee, sits between the two.
   - **Replacement rule** (accuracy only): if after stage 1 the three levels do not bracket both target accuracies,
     the outermost level on the wrong side is replaced once, and the replacement runs both stages.
 - **Two stages**, as M2: replicates 0-15, then 16-31, always run. No leakage statistic before both stages are complete.
-- **Cost.** 6 configurations x 32 runs = 192 runs, about 38 GPU-h at the M0 cost run's 0.20 GPU-h per run;
-  re-measured after the first runs (private median computes per-client distances each round).
+- **Cost.** 7 configurations x 32 runs = 224 runs (private median has four levels, PROTOCOL.md Section 2), about
+  25 GPU-h at M2's measured 0.11 GPU-h per run, within ROADMAP.md's 30 GPU-h cap. The earlier proposal of a 48 GPU-h
+  cap is withdrawn.
 
 ## Attacker and metrics
 
@@ -112,3 +113,4 @@ was close to unreachable: for all candidates the paired difference's gate half-w
 | 2026-10-19 20:35 | M2 done: no useful regime. A1 targets: GDP 2x (accuracy 0.740) and 4x (0.660). v1 has metric privacy at one noise level only, so the initial levels come from an accuracy calibration for both mechanisms (16 runs, design seed 3), written here before it runs. |
 | 2026-10-19 20:40 | Calibration running (4 workers, both GPUs idle and unclaimed at launch). `a1/analyze.py` written with 12 synthetic tests (matched-accuracy difference, jackknife and two-way bootstrap, G-A1 outcomes, no extrapolation). `a1/power.py`: detectable difference 0.027 / 0.037 (all candidates) and 0.091 / 0.096 (top decile) at the two targets. |
 | 2026-10-19 21:19 | Calibration (16 runs, accuracy only): metric privacy 0.802 / 0.797 / 0.769 / 0.711 and private median 0.803 / 0.768 / 0.708 / 0.680 at 0.25x / 0.5x / 1x / 2x. Both bracket 0.740; neither reaches 0.660, so 4x is added to the calibration (4 runs, same design seed 3), accuracy only, before the protocol. |
+| 2026-10-19 21:40 | 4x calibration: metric privacy 0.636, private median 0.506. Levels fixed in PROTOCOL.md: metric privacy 1x, 2x, 4x; private median 0.5x, 1x, 2x, 4x (four, because its calibration runs differ by up to 0.07 at one level). A1's replicates have M2's seeds and inclusion (checked for replicates 0 and 17). Calibration runs committed (accuracy only, never analyzed). Main runs started on both GPUs (idle and unclaimed). |
