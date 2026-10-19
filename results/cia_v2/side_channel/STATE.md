@@ -1,10 +1,10 @@
 package: A2
-status: paused, escalated (collapsed rounds; ESCALATION.md, second escalation)
-gate: G-A2 = not evaluated yet
+status: analyzed (no further runs, owner decision 2026-10-19); FINDINGS.md written; the owner decides whether A2 is finished
+gate: G-A2 = channel size recorded (1 of 2 required cells; that cell's global-DP pass is an attacker artifact, FINDINGS.md)
 protocol: results/cia_v2/side_channel/PROTOCOL.md (fixed before any run)
 machine: compute server (the owner PC is allowed for the Alzheimer cells; this agent runs on the compute server)
 cost so far: about 25 GPU-h (pilots 1x 13.7, 4x 3.8, 16x 1.9; main at 4x 5.6) of the 35 GPU-h cap
-next: owner decision on the proposed amendment (collapsed rounds count as released norm 0; collapsed levels do not qualify); then analysis or further runs
+next: none until the owner decides (report or further work)
 needs from others: none (GPU time shared with M1/M2 on this machine)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, A2 (Agent A, branch `feature/cia-v2-side-channel`, from
@@ -118,3 +118,4 @@ It is reported with its interval.
 | 2026-10-18 21:15 | GPU 1 idle and unclaimed. Four workers (`a2-m0`..`a2-m3`): 16x pilot for Alzheimer 8 and EuroSAT 3 (16 trajectories), then main runs at 4x for Alzheimer 3 and 5 (global DP and metric privacy, 64 trajectories). |
 | 2026-10-19 04:42 | 16x pilot (Alzheimer 8, EuroSAT 3) and main runs at 4x (Alzheimer 3 and 5, 64 trajectories) complete; workers removed their claims. |
 | 2026-10-19 20:15 | `analyze.py --pilot` stops with a `KeyError` on collapsed rounds (no released norm). Collapse: all 8 Alzheimer 8 trajectories at 16x (370 of 400 rounds, accuracy 0.25) and 13 of 32 metric-privacy main trajectories. Second escalation written in ESCALATION.md with a proposed amendment; A2 paused. A null simulation at A2's sizes gives a mean calibrated AUC of 0.45-0.47 (leave-pair-out references), so point AUCs well below 0.5 occur without signal. |
+| 2026-10-19 20:40 | Owner chose the proposed amendment (PROTOCOL.md Section 6): collapsed rounds count as released norm 0; a level with collapse does not qualify; no further runs. `analyze.py` amended (3 new tests, 20 A2 tests pass). Pilot: Alzheimer 8 has no qualifying level, EuroSAT 3 none in the run grid. Main analysis (`analysis.json`): metric privacy's noise-level AUC 1.000 / 0.875 (lower 1.000 / 0.520); global DP's calibrated loss AUC 0.047 / 0.672. **G-A2: channel size recorded** (Alzheimer 3 only). The 0.047 comes from one diverged IN trajectory (final loss 63.9) that reverses the calibrated attacker; the final-round loss threshold gives 0.797 / 0.969. FINDINGS.md written. |

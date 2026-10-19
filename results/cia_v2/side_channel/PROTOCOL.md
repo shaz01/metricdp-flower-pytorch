@@ -54,3 +54,17 @@ noise-level AUC (blind, 50-round, oracle), loss AUC and update-norm channel, wha
 ## 5. Machine
 
 Compute server. Runs use a GPU only when one is idle and unclaimed, or with the owner's approval to share.
+
+## 6. Amendment: collapsed rounds (owner decision, 2026-10-19)
+
+Made after the 16x pilot and the main runs at 4x, before any main-run statistic was computed (ESCALATION.md, second
+escalation). A round is collapsed when the strategy logs `*-aggregation-collapsed = 1`: every client update had zero
+norm, aggregation was skipped and nothing was released.
+
+1. **Features.** A collapsed round's released update norm and true noise std are 0, since an observer of the released
+   models sees the model unchanged. The loss feature is unaffected.
+2. **Pilot.** A level with any collapsed global-DP trajectory does not qualify, and the cell gets no main runs
+   ("no qualifying noise"), since more noise only collapses sooner.
+3. **No further runs.** EuroSAT 3's 64x pilot is not run (its 16x level still leaks fully at accuracy 0.438), so
+   EuroSAT 3 is reported as "no qualifying noise in the run grid". A2 is analyzed on the cells with main runs,
+   Alzheimer 3 and 5, with Section 2's command and the gate unchanged.

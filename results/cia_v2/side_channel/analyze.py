@@ -7,6 +7,10 @@ Trials are the cell's 2R trajectories, in pair order (IN_j, OUT_j). Features:
   released-update norm and parameter count; the 50-round vector as sensitivity;
 - oracle: the strategy's logged true noise std (mean over rounds), threshold AUC only.
 
+Collapsed rounds (amendment, owner decision 2026-10-19; PROTOCOL.md Section 6): when every client update has zero
+norm the strategy skips aggregation and releases nothing, so the round's released norm and true noise std are 0.
+A pilot level with any collapsed global-DP trajectory does not qualify.
+
 Intervals: ``pair_jackknife`` at ``GATE_LEVEL`` (STATE.md, Attacker and metrics, for its calibration at this size).
 
     uv run --no-sync python -m results.cia_v2.side_channel.analyze [root] --out results/cia_v2/side_channel/analysis.json
@@ -24,6 +28,7 @@ from experiments.cia.audit_attacks import GATE_LEVEL, calibrated_scores, pair_ja
 HERE = Path(__file__).resolve().parent
 CHECKPOINTS = tuple(range(0, 51, 5))
 NOISE_KEYS = ("metric-dp-noise-stdv", "global-dp-noise-stdv")
+COLLAPSE_KEYS = ("metric-dp-aggregation-collapsed", "global-dp-aggregation-collapsed")
 NOISE_LIMIT, LOSS_LIMIT, CELLS_NEEDED = 0.8, 0.6, 2
 
 
@@ -47,7 +52,7 @@ def load_cell(root):
     replicates = sorted({j for j, _ in runs})
     if replicates != list(range(len(replicates))) or len(runs) != 2 * len(replicates):
         raise ValueError(f"{root}: every replicate needs one IN and one OUT trajectory")
-    losses, sigma_hat, sigma_rounds, oracle, accuracy, membership = [], [], [], [], [], []
+    losses, sigma_hat, sigma_rounds, oracle, accuracy, membership, collapsed = [], [], [], [], [], [], []
     for j in replicates:
         for out in (False, True):
             folder, manifest = runs[(j, out)]
@@ -57,17 +62,26 @@ def load_cell(root):
             losses.append([rows[1]["clean_loss_before"] if c == 0 else rows[c]["clean_loss"] for c in CHECKPOINTS])
             result = _training(folder, manifest)
             metrics = [result["train_metrics"][str(t)] for t in sorted(map(int, result["train_metrics"]))]
-            per_round = np.array([m["dp-released-update-norm"] / np.sqrt(m["dp-parameter-count"]) for m in metrics])
+            released = [m for m in metrics if not _collapsed(m)]
+            parameters = released[0]["dp-parameter-count"]
+            key = next(k for k in NOISE_KEYS if k in released[0])
+            per_round = np.array([0.0 if _collapsed(m) else m["dp-released-update-norm"] / np.sqrt(parameters)
+                                  for m in metrics])
             sigma_rounds.append(per_round)
             sigma_hat.append([per_round.mean()])
-            key = next(k for k in NOISE_KEYS if k in metrics[0])
-            oracle.append(float(np.mean([m[key] for m in metrics])))
+            oracle.append(float(np.mean([0.0 if _collapsed(m) else m[key] for m in metrics])))
+            collapsed.append(len(metrics) - len(released))
             final = str(max(map(int, result["server_evaluate_metrics"])))
             accuracy.append(result["server_evaluate_metrics"][final]["accuracy"])
             membership.append(not out)
     return {"losses": np.array(losses)[None], "sigma_hat": np.array(sigma_hat)[None],
             "sigma_rounds": np.array(sigma_rounds)[None], "oracle_sigma": np.array(oracle)[None],
-            "membership": np.array(membership)[None], "accuracy": np.array(accuracy)}
+            "membership": np.array(membership)[None], "accuracy": np.array(accuracy),
+            "collapsed_rounds": np.array(collapsed)}
+
+
+def _collapsed(metrics):
+    return any(metrics.get(key) == 1.0 for key in COLLAPSE_KEYS)
 
 
 def _attack(features, membership):
@@ -90,11 +104,17 @@ def cell_summary(data):
         "oracle_noise_level_auc": max(oracle, 1 - oracle),
         "accuracy_in": float(data["accuracy"][member[0]].mean()),
         "accuracy_out": float(data["accuracy"][~member[0]].mean()),
+        "collapsed_trajectories": int((data["collapsed_rounds"] > 0).sum()),
+        "collapsed_rounds": int(data["collapsed_rounds"].sum()),
     }
 
 
-def pilot_decision(loss_auc, multiple, multiples=(1, 4, 16, 64)):
-    """Pilot rule (PROTOCOL.md Section 2): the lowest multiple whose global-DP loss AUC (point) is 0.6 or below."""
+def pilot_decision(loss_auc, multiple, multiples=(1, 4, 16, 64), *, collapsed_trajectories=0):
+    """Pilot rule (PROTOCOL.md Section 2): the lowest multiple whose global-DP loss AUC (point) is 0.6 or below.
+
+    A level with a collapsed trajectory does not qualify, and more noise only collapses sooner (Section 6)."""
+    if collapsed_trajectories:
+        return "no qualifying noise", None
     if loss_auc <= LOSS_LIMIT:
         return "qualifies", multiple
     later = [m for m in multiples if m > multiple]
@@ -127,7 +147,9 @@ def main():
             print(json.dumps({"cell": str(directory.relative_to(args.root)), "loss_auc": summary["loss"]["auc"],
                               "noise_level_auc": summary["noise_level"]["auc"],
                               "accuracy_in": summary["accuracy_in"],
-                              "decision": pilot_decision(summary["loss"]["auc"]["estimate"], multiple)}))
+                              "collapsed_trajectories": summary["collapsed_trajectories"],
+                              "decision": pilot_decision(summary["loss"]["auc"]["estimate"], multiple,
+                                                         collapsed_trajectories=summary["collapsed_trajectories"])}))
         return
     cells = {}
     for directory in sorted(p for p in args.root.glob("*/clients-*/*-x*") if p.is_dir()):
