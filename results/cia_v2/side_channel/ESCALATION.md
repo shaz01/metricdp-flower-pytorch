@@ -70,3 +70,56 @@ The 4x pilot ran with 4 workers on GPU 1 from 15:39 to 19:29: 3.84 GPU-h of occu
 
 The projection is under the 43.75 GPU-h stop threshold, so A2 continues under the fixed protocol. The worst case is
 slightly above the 35 GPU-h cap but within the 25% margin.
+
+# Second escalation: collapsed rounds (2026-10-19)
+
+Raised 2026-10-19 by Agent A. The 16x pilot (Alzheimer 8, EuroSAT 3) and the main runs at 4x (Alzheimer 3 and 5,
+global DP and metric privacy, 64 trajectories) finished at 04:42. No further A2 run starts until the owner decides.
+
+## What happened
+
+Some runs contain **collapsed rounds**: every client's update has zero norm (total divergence), the strategy skips
+aggregation, keeps the previous model and logs `*-aggregation-collapsed = 1` without a released-update norm
+(`metricdp_pytorch/globaldp_strategy.py`, `metricdp_strategy.py`). `analyze.py` reads that norm in every round, so
+it stops with a `KeyError`. PROTOCOL.md has no rule for such rounds.
+
+| Cell and level | Trajectories with collapsed rounds | Collapsed rounds | Mean accuracy IN / OUT |
+|---|---|---|---|
+| Alzheimer 8, global DP 16x (pilot) | 8 of 8, from round 3-5 on | 370 of 400 | 0.247 / 0.250 |
+| Alzheimer 3, metric privacy 4x (main) | 5 of 16, late rounds | 16 of 800 | 0.755 / 0.461 |
+| Alzheimer 5, metric privacy 4x (main) | 8 of 16, from round 24 on | 141 of 800 | 0.665 / 0.331 |
+| All other A2 levels | none | 0 | |
+
+A diagnostic outside the committed code (collapsed rounds counted as a released norm of 0) gives these pilot
+decisions:
+
+| Cell | Loss AUC (point) | Mean IN accuracy | Literal pilot decision |
+|---|---|---|---|
+| Alzheimer 8, 16x | 0.375 | 0.247 (chance, 4 classes) | qualifies at 16x |
+| EuroSAT 3, 16x | 1.000 | 0.438 | next level, 64x |
+
+## Why it needs the owner
+
+1. **Alzheimer 8 "qualifies" only because its federation is dead.** From round 3-5 on nothing is released, and the
+   loss attacker sees no signal because no model is trained. Main runs there would compare two dead federations.
+2. **EuroSAT 3 still leaks fully at 16x** with accuracy 0.438. 64x would almost surely end like Alzheimer 8 at 16x.
+3. **The analysis needs a rule for collapsed rounds** in any case, because the metric-privacy main runs contain them.
+   The rule changes the noise-level attacker's feature, which PROTOCOL.md fixed.
+4. The two cells with main runs compare the mechanisms at the same noise multiple, not at matched accuracy: global DP
+   at 4x has accuracy 0.43-0.48 (IN), metric privacy at 4x 0.67-0.76 (IN). That is the design, but FINDINGS will
+   need to say so.
+
+## Proposed amendment
+
+- **Collapsed rounds:** the released update norm is 0, since an observer of the released models sees the model
+  unchanged. The noise-level attacker then treats collapse as part of the observable channel, which it is for metric
+  privacy (its collapse follows its distance-calibrated noise).
+- **Degenerate levels do not qualify:** a pilot level qualifies only if no global-DP trajectory collapses. Then
+  Alzheimer 8 has no qualifying level in the grid, EuroSAT 3's 64x pilot is not run, and A2 is analyzed on the two
+  cells with main runs (Alzheimer 3 and 5). G-A2 needs two cells, so the strong claim stays reachable.
+
+## Cost
+
+About 25 GPU-h spent of the 35 GPU-h cap: 1x pilot 13.7, 4x pilot 3.8, 16x pilot about 1.9 (21:15-23:07), main runs
+at 4x about 5.6 (23:07-04:42). Continuing by the literal protocol (Alzheimer 8 main at 16x, EuroSAT 64x pilot and
+possibly its main runs) would add about 4.5-10 GPU-h.
