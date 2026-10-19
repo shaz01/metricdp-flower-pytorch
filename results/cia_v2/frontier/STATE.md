@@ -1,10 +1,10 @@
 package: M2
-status: running (stage 2 and fill-in levels 2x, 8x; compute server, GPU 0)
-gate: G-M2 = not evaluated yet
+status: done, escalated (G-M2: no useful regime; ESCALATION.md waits for the owner)
+gate: G-M2 = no useful regime (FINDINGS.md)
 protocol: results/cia_v2/frontier/PROTOCOL.md (fixed before any M2 run)
 machine: compute server
-cost so far: about 6.9 GPU-h (stage 1: 64 runs, two workers on GPU 1, 0.11 GPU-h per run) of the 64 GPU-h cap
-next: 128 runs (stage 2 of vanilla, 1x, 4x, 16x; both stages of 2x and 8x; `~/cia-server/m2-chain.sh`), about 14 GPU-h; then analysis and G-M2
+cost so far: about 19.0 GPU-h (192 runs) of the 64 GPU-h cap
+next: owner decision on ESCALATION.md; A1 continues at 2x and 4x (a1/STATE.md)
 needs from others: none (M1: G-M1 confirmed, 4x decoupled paired score 0.516; M0 cost run: 0.20 GPU-h per run)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, M2 (Agent A, branch `feature/cia-v2-frontier`, branched from
@@ -97,3 +97,5 @@ The top-decile interval is reported but not gated.
 | 2026-10-17 21:00 | G-M1 confirmed on `feature/cia-v2-measurement` (172a587a): M2 unblocked. Stage-1 worker script ready; runs go flat into `results/cia_v2/frontier/results/<run name>` (run names begin `ri-<config>-d2-`), the layout of PROTOCOL.md's commands and of `load_audit`. |
 | 2026-10-18 03:52 | Stage 1 complete (64 runs, 12-13 min each). Mean final accuracy (accuracy only, the fill-in rule's input): vanilla 0.803, 1x 0.788, 4x 0.653, 16x 0.182. Fill-in rule: 1x - 4x = 0.136 > 0.05, so 2x is added; 4x - 16x = 0.470 > 0.05, so 8x is added. No leakage statistic computed. |
 | 2026-10-18 12:46 | Merged `feature/cia-v2-measurement` (M1 results, private-median mode); the 64 stage-1 manifests are unchanged under the merged code. GPU 1 now carries another user's active job, so stage 2 runs on GPU 0 (idle and unclaimed), two workers. |
+| 2026-10-19 00:51 | Stage 2 and the 2x and 8x fill-ins complete (128 runs on GPU 0, 12.1 GPU-h). 192 runs in total, about 19.0 GPU-h. |
+| 2026-10-19 20:10 | Analysis run (`analysis.json`). **G-M2: no useful regime.** All-candidate AUC 0.723 (vanilla), 0.720 (1x), 0.702 (2x), 0.666 (4x), 0.671 (8x), 0.593 (16x); upper gate ends all above 0.6. Accuracy 0.803 to 0.199. FINDINGS.md and ESCALATION.md written: the roadmap's consequence ("B4 leads") needs the owner, since B4 closed with a G-B4 fail. A1's levels: 2x and 4x, the two around 0.70 accuracy. |
