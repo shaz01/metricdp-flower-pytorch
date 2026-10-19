@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-17, CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
+**Last updated:** 2026-10-19, CIA v2 M2 done (G-M2: no useful regime, escalated) and A2 paused on a second escalation. 2026-10-17, CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
 (`research/cia_review_2026-10/SYNTHESIS.md`) merged into `master`; the owner is choosing new directions from the
 synthesis. 2026-10-15: WP0-WP2 merged, D1 stopped. 2026-10-10: CIA literature review and agent roadmap added
 (`HANDOFF.md`, `research/cia_review_2026-10/`)
@@ -221,7 +221,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-CIA v2 M2 stage 2 running on the compute server (Agent A; M0 cost run, M1 and the A2 1x pilot done; A2 4x pilot done, 16x pilot and main runs running on GPU 1); consensus-KL follow-up rows below finished 2026-10-16.
+Nothing of Agent A running on the compute server (2026-10-19). M2 done, G-M2: no useful regime, escalated (`results/cia_v2/frontier/ESCALATION.md`); A2 paused on a second escalation (collapsed rounds, `results/cia_v2/side_channel/ESCALATION.md`); A1 next, at 2x and 4x; consensus-KL follow-up rows below finished 2026-10-16.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -236,9 +236,9 @@ section.
 | `cia_v2.measurement.m1.runner --execute` (compute server, GPU 1, two workers) | CIA v2 M1, 12 trajectories | done 2026-10-17 20:51 (about 2.2 GPU-h; G-M1 confirmed) |
 | `cia_v2.side_channel.runner --stage pilot --multiple 1 ...` (compute server, GPU 1, shared by owner approval; branch `feature/cia-v2-side-channel`) | CIA v2 A2 pilot at 1x, 32 trajectories | done 2026-10-18 08:44; cost stop rule triggered, owner chose 4 workers per GPU (`results/cia_v2/side_channel/ESCALATION.md`) |
 | `a2-wait.sh` then 4 x `a2-worker.sh` (compute server, first idle unclaimed GPU; branch `feature/cia-v2-side-channel`) | CIA v2 A2 pilot at 4x, 32 trajectories | done 2026-10-18 19:29; Alzheimer 3 and 5 qualify at 4x, cost 0.12 GPU-h per trajectory, projection 34-36 GPU-h (under the stop threshold) |
-| 4 x `a2-worker.sh` (compute server, GPU 1, idle and unclaimed at launch; branch `feature/cia-v2-side-channel`) | CIA v2 A2 16x pilot (Alzheimer 8, EuroSAT 3; 16 trajectories), then main runs at 4x (Alzheimer 3 and 5; 64 trajectories) | running (started 2026-10-18 21:15) |
+| 4 x `a2-worker.sh` (compute server, GPU 1, idle and unclaimed at launch; branch `feature/cia-v2-side-channel`) | CIA v2 A2 16x pilot (Alzheimer 8, EuroSAT 3; 16 trajectories), then main runs at 4x (Alzheimer 3 and 5; 64 trajectories) | done 2026-10-19 04:42 (about 7.5 GPU-h); collapsed rounds escalated |
 | `randomized_inclusion.runner --config {vanilla,gdp-r1x,gdp-r4x,gdp-r16x} --design-seed 2` replicates 0-15 (compute server, GPU 1, two workers, shared by owner approval; branch `feature/cia-v2-frontier`) | CIA v2 M2 stage 1, 64 runs | done 2026-10-18 03:52 (fill-in rule adds 2x and 8x) |
-| `m2-chain.sh` (compute server, GPU 0, two workers; branch `feature/cia-v2-frontier`) | CIA v2 M2 stage 2 plus 2x and 8x, 128 runs | running (started 2026-10-18 12:46) |
+| `m2-chain.sh` (compute server, GPU 0, two workers; branch `feature/cia-v2-frontier`) | CIA v2 M2 stage 2 plus 2x and 8x, 128 runs | done 2026-10-19 00:51 (192 runs, about 19 GPU-h); G-M2 no useful regime |
 
 ## What's established on `master`
 
