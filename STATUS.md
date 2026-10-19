@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-19, CIA v2 M2 done (G-M2: no useful regime, escalated) and A2 paused on a second escalation. 2026-10-17, CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
+**Last updated:** 2026-10-19, CIA v2 M2 done (G-M2: no useful regime, escalated) and A2 analyzed (G-A2: channel size recorded). 2026-10-17, CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
 (`research/cia_review_2026-10/SYNTHESIS.md`) merged into `master`; the owner is choosing new directions from the
 synthesis. 2026-10-15: WP0-WP2 merged, D1 stopped. 2026-10-10: CIA literature review and agent roadmap added
 (`HANDOFF.md`, `research/cia_review_2026-10/`)
@@ -221,7 +221,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Nothing of Agent A running on the compute server (2026-10-19). M2 done, G-M2: no useful regime, escalated (`results/cia_v2/frontier/ESCALATION.md`); A2 paused on a second escalation (collapsed rounds, `results/cia_v2/side_channel/ESCALATION.md`); A1 next, at 2x and 4x; consensus-KL follow-up rows below finished 2026-10-16.
+Nothing of Agent A running on the compute server (2026-10-19). M2 done, G-M2: no useful regime, escalated (`results/cia_v2/frontier/ESCALATION.md`); A2 analyzed after the owner's amendment (collapsed rounds; no further runs), G-A2: channel size recorded (`results/cia_v2/side_channel/FINDINGS.md`); A1 next, at 2x and 4x; consensus-KL follow-up rows below finished 2026-10-16.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
