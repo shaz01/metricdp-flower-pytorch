@@ -197,7 +197,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Owner decisions 7-11 in progress (2026-10-20, all by the agent that ran Agent A's packages): AZ Alzheimer calibration running on GPU 1 (`feature/cia-v2-alzheimer`); B5 stage A running on GPU 1, shared by owner approval (`feature/cia-v2-mechanisms`); B4 confirmatory run done, confirmed at 20 and 50 public images (`feature/cia-v2-formal-confirm`, `results/cia_v2/formal_regime/confirm/FINDINGS.md`).
+Owner decisions 7-11 in progress (2026-10-20, all by the agent that ran Agent A's packages): AZ Alzheimer replication paused and escalated (vanilla reaches only 0.55 accuracy at 48 slots, alpha 0.3; `results/cia_v2/alzheimer/ESCALATION.md` on `feature/cia-v2-alzheimer`); B5 stage A running on GPU 1, shared by owner approval (`feature/cia-v2-mechanisms`); B4 confirmatory run done, confirmed at 20 and 50 public images (`feature/cia-v2-formal-confirm`, `results/cia_v2/formal_regime/confirm/FINDINGS.md`).
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -207,7 +207,7 @@ section.
 | Command | What | Status |
 | --- | --- | --- |
 | `frozen_head.runner confirm_public --execute --workers 8` (compute server, CPU only; branch `feature/cia-v2-formal-confirm`) | B4 confirmatory run, 480 head-only runs (layout 44, 20 and 50 public images) | done 2026-10-20 10:25 (0.68 CPU-h); confirmed |
-| `az-wait.sh` then `az-cal-worker.sh` (compute server, GPU 1 idle and unclaimed at launch; branch `feature/cia-v2-alzheimer`) | AZ Alzheimer accuracy calibration batch 1, 18 runs (design seed 3, accuracy only) | running (started 2026-10-20 10:38); the launcher also waits for GPU 0 |
+| `az-wait.sh` then `az-cal-worker.sh` (compute server, GPU 1 idle and unclaimed at launch; branch `feature/cia-v2-alzheimer`) | AZ Alzheimer accuracy calibration batch 1, 18 runs (design seed 3, accuracy only) | stopped 2026-10-20 11:35 after 8 runs (vanilla 0.55 accuracy; escalated) |
 | `b5-wait.sh` then 2 x `b5-worker.sh` (compute server, first idle unclaimed GPU; branch `feature/cia-v2-mechanisms`) | B5 stage A at 2x: cap 326, cap 182, logit adjustment, 96 runs | running on GPU 1, shared by owner approval (started 2026-10-20 10:55) |
 | `randomized_inclusion.runner --config cost-gdp-r1x ... --replicate-subset 0` (compute server, GPU 1, shared by owner approval) | CIA v2 M0 cost run, 1 randomized-inclusion run | done 2026-10-17 18:51 (0.20 GPU-h) |
 | `cia_v2.measurement.m1.runner --execute` (compute server, GPU 1, two workers) | CIA v2 M1, 12 trajectories | done 2026-10-17 20:51 (about 2.2 GPU-h; G-M1 confirmed) |
