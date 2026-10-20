@@ -138,3 +138,31 @@ def test_fixed_candidates_follow_the_rule_on_the_seed_42_layout():
         pytest.skip("EuroSAT is not available locally")
     top, others = runner.select_candidates({c["target"]: c["records"] for c in summary["clients"]})
     assert top + others == runner.CANDIDATES
+
+
+def test_private_median_runs_pin_the_mechanism_settings():
+    from experiments.reproduce import runner as reproduce_runner
+
+    run = plan(config="pm", privacy="private-median")[0]
+    args = run.runner_args(output_dir=Path("out"), max_parallel_clients=4, client_cpus=1.0,
+                           checkpoint_rounds=runner.CHECKPOINT_ROUNDS)
+    flags = dict(zip(args[::1], args[1::1]))
+    assert flags["--privacy"] == "private-median"
+    assert flags["--num-slots"] == str(run.num_clients) == "32"  # the public active count
+    assert (flags["--median-quantile"], flags["--median-quantile-min"], flags["--median-quantile-max"]) == (
+        "0.3", "0.03", "1.0")
+    assert "--log-noise-diagnostics" in args
+    config = reproduce_runner.build_run_config(reproduce_runner._parser().parse_args(list(args)))
+    assert config["median-quantile-max"] == 1.0 and config["num-slots"] == 32
+
+
+def test_median_settings_are_absent_for_other_mechanisms():
+    args = plan()[0].runner_args(output_dir=Path("out"), max_parallel_clients=4, client_cpus=1.0,
+                                 checkpoint_rounds=runner.CHECKPOINT_ROUNDS)
+    assert not any(str(a).startswith("--median-") for a in args) and "--num-slots" not in args
+
+
+def test_manifest_records_median_settings_only_for_private_median():
+    median = runner.manifest(plan(config="pm", privacy="private-median")[0], surrogates=True)
+    assert median["median_quantile"] == {"initial": 0.3, "minimum": 0.03, "maximum": 1.0, "num_slots": 32}
+    assert "median_quantile" not in runner.manifest(plan()[0], surrogates=True)  # M2 manifests stay unchanged

@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-17, CIA v2 B4 (formal regime) and the client-level accountant merged into `master` (Agent C, closed by the owner; report `reports/cia_v2_formal_regime.md`); Agent A's M0 (G-M0 passed) came along as a dependency of B4's audit. CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
+**Last updated:** 2026-10-20, CIA v2 Agent A packages M0, M1, M2, A1 and A2 merged into `master` (closed by the owner; reports `reports/cia_v2_m0_measurement.md`, `cia_v2_m1_shared_noise.md`, `cia_v2_m2_frontier.md`, `cia_v2_a1_matched_accuracy.md`, `cia_v2_a2_side_channel.md`). 2026-10-17, CIA v2 B4 (formal regime) and the client-level accountant merged into `master` (Agent C, closed by the owner; report `reports/cia_v2_formal_regime.md`); Agent A's M0 (G-M0 passed) came along as a dependency of B4's audit. CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
 (`research/cia_review_2026-10/SYNTHESIS.md`) merged into `master`; the owner is choosing new directions from the
 synthesis. 2026-10-15: WP0-WP2 merged, D1 stopped. 2026-10-10: CIA literature review and agent roadmap added
 (`HANDOFF.md`, `research/cia_review_2026-10/`)
@@ -32,13 +32,15 @@ mechanisms (B1-B5, C1).
   1.000 with equal noise seeds). The v2 attack library and randomized-inclusion runner are in place. Two design fixes
   were found on synthetic data before any run: leaving out only the trial biases the null AUC to 0.42 (fixed with
   balanced references), and a per-candidate 11-dimensional ratio is inefficient (replaced by a pooled-direction
-  projection). Still open: the cost run (waiting for an idle GPU; both GPUs busy with other users) and the power
-  table. M1 code is ready. **Escalation (`results/cia_v2/measurement/ESCALATION.md`), resolved 2026-10-17 under the
-  owner's delegation:** the specified audit design (16 candidates, R = 8-16, two-way bootstrap) could detect only AUC
-  differences of about 0.2. Agent A packages now use 32 candidates per run, R = 32 for gated comparisons, a calibrated
-  leave-one-pair-out jackknife interval conditional on the candidate panel (two-way bootstrap reported alongside),
-  G-M2 on all candidates plus the top-decile point estimate, and an M2 cap of 64 GPU-h (was 30). M1 and the M0 cost
-  run are running (GPU 1, shared by owner approval). State: `results/cia_v2/measurement/STATE.md`.
+  projection). Cost run done: 0.20 GPU-h per randomized-inclusion run. **Escalation
+  (`results/cia_v2/measurement/ESCALATION.md`), resolved 2026-10-17 under the owner's delegation:** the specified audit
+  design (16 candidates, R = 8-16, two-way bootstrap) could detect only AUC differences of about 0.2. Agent A packages
+  now use 32 candidates per run, R = 32 for gated comparisons, a calibrated leave-one-pair-out jackknife interval
+  conditional on the candidate panel (two-way bootstrap reported alongside), G-M2 on all candidates plus the
+  top-decile point estimate, and an M2 cap of 64 GPU-h (was 30). **M1 done, G-M1 confirmed:** with independent
+  noise and client seeds per world, v1's step-3 paired score at 4x noise falls from 0.792 (coupled) to 0.516
+  (95% interval 0.468-0.548); at 1x it stays 0.788. v1's flat noise response was a shared-noise artifact; v1 DP
+  leakage numbers are now labelled "paired, shared noise". M2 proceeds. State: `results/cia_v2/measurement/STATE.md`.
 
 - **Agent C, B4 formal regime + accountant: closed and merged into `master` 2026-10-17** (branch deleted; see
   "What's established" below). Agent B's wait on Agent C (owner decision) is over; its wait on Agent A is not.
@@ -208,7 +210,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-CIA v2 M0 cost run and M1 running on the compute server (Agent A); consensus-KL follow-up rows below finished 2026-10-16.
+Nothing of Agent A running on the compute server (2026-10-20). M2 done, G-M2: no useful regime, escalated (`results/cia_v2/frontier/ESCALATION.md`); A2 analyzed after the owner's amendment (collapsed rounds; no further runs), G-A2: channel size recorded (`results/cia_v2/side_channel/FINDINGS.md`); A1 done, G-A1: at matched accuracy neither metric privacy mechanism leaks detectably less than global DP (paper's mechanism equivalent at 0.740; `results/cia_v2/frontier/a1/FINDINGS.md`); all Agent A packages analyzed, owner decisions pending; consensus-KL follow-up rows below finished 2026-10-16.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -223,7 +225,14 @@ section.
 | `signature_suppression.runner --configs consensus-kl-0.3 --seeds 43 44 45` (compute server, GPU 1) | Consensus-KL follow-up step 1, 18 trajectories | done 2026-10-16 |
 | `consensus_kl.runner_dp --execute` (compute server, GPU 1) | Consensus-KL follow-up step 3, 36 trajectories | done 2026-10-16 |
 | `randomized_inclusion.runner --config cost-gdp-r1x ... --replicate-subset 0` (compute server, GPU 1, shared by owner approval) | CIA v2 M0 cost run, 1 randomized-inclusion run | done 2026-10-17 18:51 (0.20 GPU-h) |
-| `cia_v2.measurement.m1.runner --execute` (compute server, GPU 1, two workers) | CIA v2 M1, 12 trajectories | running (started 2026-10-17 18:39) |
+| `cia_v2.measurement.m1.runner --execute` (compute server, GPU 1, two workers) | CIA v2 M1, 12 trajectories | done 2026-10-17 20:51 (about 2.2 GPU-h; G-M1 confirmed) |
+| `cia_v2.side_channel.runner --stage pilot --multiple 1 ...` (compute server, GPU 1, shared by owner approval; branch `feature/cia-v2-side-channel`) | CIA v2 A2 pilot at 1x, 32 trajectories | done 2026-10-18 08:44; cost stop rule triggered, owner chose 4 workers per GPU (`results/cia_v2/side_channel/ESCALATION.md`) |
+| `a2-wait.sh` then 4 x `a2-worker.sh` (compute server, first idle unclaimed GPU; branch `feature/cia-v2-side-channel`) | CIA v2 A2 pilot at 4x, 32 trajectories | done 2026-10-18 19:29; Alzheimer 3 and 5 qualify at 4x, cost 0.12 GPU-h per trajectory, projection 34-36 GPU-h (under the stop threshold) |
+| 4 x `a2-worker.sh` (compute server, GPU 1, idle and unclaimed at launch; branch `feature/cia-v2-side-channel`) | CIA v2 A2 16x pilot (Alzheimer 8, EuroSAT 3; 16 trajectories), then main runs at 4x (Alzheimer 3 and 5; 64 trajectories) | done 2026-10-19 04:42 (about 7.5 GPU-h); collapsed rounds escalated |
+| `randomized_inclusion.runner --config {vanilla,gdp-r1x,gdp-r4x,gdp-r16x} --design-seed 2` replicates 0-15 (compute server, GPU 1, two workers, shared by owner approval; branch `feature/cia-v2-frontier`) | CIA v2 M2 stage 1, 64 runs | done 2026-10-18 03:52 (fill-in rule adds 2x and 8x) |
+| `m2-chain.sh` (compute server, GPU 0, two workers; branch `feature/cia-v2-frontier`) | CIA v2 M2 stage 2 plus 2x and 8x, 128 runs | done 2026-10-19 00:51 (192 runs, about 19 GPU-h); G-M2 no useful regime |
+| `a1-cal-worker.sh` (compute server, both GPUs, idle and unclaimed at launch; branch `feature/cia-v2-frontier`) | CIA v2 A1 accuracy calibration, 20 runs (design seed 3, accuracy only) | done 2026-10-19 21:32 (about 2.3 GPU-h); levels fixed in `a1/PROTOCOL.md` |
+| `a1-chain.sh` (compute server, GPUs 0 and 1, two workers each, idle and unclaimed at launch; branch `feature/cia-v2-frontier`) | CIA v2 A1 main runs, 7 configurations x 32 = 224 runs | done 2026-10-20 08:26 (about 21.7 GPU-h); G-A1 recorded |
 
 ## What's established on `master`
 

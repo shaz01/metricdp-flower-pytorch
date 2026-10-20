@@ -1,10 +1,10 @@
 package: M1
-status: running (compute server, GPU 1)
-gate: G-M1 = not evaluated yet
+status: closed by the owner (2026-10-20); report reports/cia_v2_m1_shared_noise.md
+gate: G-M1 = confirmed (4x decoupled paired score 0.516, 95% interval 0.468-0.548)
 protocol: this file (Design section); M1 repeats v1's consensus-KL step 3 global-DP arm with one change
 machine: compute server
-cost so far: 0 GPU-h of the 6 GPU-h cap
-next: 12 trajectories running (tmux m1-w0; m1-w1 joins when the M0 cost run ends); then analyze.py and the G-M1 verdict
+cost so far: about 2.2 GPU-h of the 6 GPU-h cap (4.08 worker-hours, two workers sharing GPU 1)
+next: none; M2 proceeds (feature/cia-v2-frontier). Findings in FINDINGS.md
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, M1 (Agent A, branch `feature/cia-v2-measurement`).
@@ -79,3 +79,4 @@ The verdict uses the point estimate of the 4x pooled score, as the table states.
 | 2026-10-17 | STATE written before any M1 code; M1 waits for G-M0. |
 | 2026-10-17 | Code: `runner.py` (v1's `build_dp_combos("gdp", ...)` with per-world seeds; 7 tests check that only the private seeds and the run names differ from v1) and `analyze.py` (v1's `load` and `cell_statistics`). On v1's coupled step-3 trajectories it reproduces 0.788 (1x), 0.808 (2x) and 0.792 (4x), with noise-energy correlations IN vs OUT of 0.925-0.997 (regression test). G-M0 passed. Both GPUs are busy with another user's jobs, so a launcher waits for an idle, unclaimed GPU. |
 | 2026-10-17 18:39 | Owner approved sharing GPU 1 (another user's process at 0% utilization). Worker w0 started; w1 starts after the M0 cost run. |
+| 2026-10-17 20:51 | All 12 trajectories complete. G-M1 **confirmed**: 4x decoupled paired score 0.516 (0.468-0.548) vs 0.792 coupled; 1x 0.788 (0.632-0.928), unchanged. Noise-energy correlations IN vs OUT -0.24 to 0.08. FINDINGS.md written; `*.evaluation.json` (16 MB each) and predictions kept local. |
