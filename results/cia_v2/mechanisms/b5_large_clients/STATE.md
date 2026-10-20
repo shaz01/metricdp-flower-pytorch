@@ -1,10 +1,10 @@
 package: B5, exposure of large clients (owner decision 10: B5 first, then B1)
-status: planning (STATE before code)
+status: protocol fixed; smoke run, then stage A when a GPU is idle and unclaimed
 gate: G-B5 (amended by owner decision 9) = not evaluated yet
-protocol: results/cia_v2/mechanisms/b5_large_clients/PROTOCOL.md, fixed before any run
+protocol: results/cia_v2/mechanisms/b5_large_clients/PROTOCOL.md (fixed 2026-10-20, before any B5 run)
 machine: compute server
 cost so far: 0 GPU-h of the 15 GPU-h cap (stop and escalate at 18.75)
-next: client options (contribution cap, logit adjustment) and run-config passthrough with tests; PROTOCOL.md; runs
+next: stage A at 2x (cap 326, cap 182, logit adjustment; 96 runs)
 needs from others: none (M2's runs are the global-DP baseline; no other agent session is running)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, B5, as amended by Section 10 (decisions 9 and 10, 2026-10-20).
@@ -91,3 +91,4 @@ noise. Global DP at M2's operating points (decision 10): 2x (`r = 0.003092`, acc
 | When | What |
 |---|---|
 | 2026-10-20 | Master merged into the branch (1298b5c1). Item 1 diagnostic from M2's committed analysis: surrogate within 0.009-0.025 of the true AUC (all candidates). Cap values computed from the layout. STATE written before any code. |
+| 2026-10-20 11:20 | Code: default-off contribution cap and logit-adjusted loss (client, training loop, runner flags, randomized-inclusion options; manifests record them only when set, and M2's 437 manifests regenerate unchanged); 7 tests. `analyze.py` (paired differences to M2, G-B5) with 3 tests. 517 related tests pass. PROTOCOL.md fixed. |
