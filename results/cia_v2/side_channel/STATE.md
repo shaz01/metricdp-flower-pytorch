@@ -1,5 +1,5 @@
 package: A2
-status: analyzed (no further runs, owner decision 2026-10-19); FINDINGS.md written; the owner decides whether A2 is finished
+status: closed by the owner (2026-10-20); report reports/cia_v2_a2_side_channel.md
 gate: G-A2 = channel size recorded (1 of 2 required cells; that cell's global-DP pass is an attacker artifact, FINDINGS.md)
 protocol: results/cia_v2/side_channel/PROTOCOL.md (fixed before any run)
 machine: compute server (the owner PC is allowed for the Alzheimer cells; this agent runs on the compute server)
