@@ -1,5 +1,5 @@
 package: M0
-status: ready (G-M0 passed 2026-10-17; all M0 deliverables complete)
+status: closed by the owner (2026-10-20); report reports/cia_v2_m0_measurement.md
 gate: G-M0 = pass (720 tests passed, 2 skipped (MPS-only); calibration test recovers the Gaussian trade-off; noise-independence correlations 1.0000 equal seeds, 1.0000 equal noise seed with different client seed, -0.107 different seeds)
 protocol: results/cia_v2/measurement/PROTOCOL.md (written before the cost run)
 machine: compute server

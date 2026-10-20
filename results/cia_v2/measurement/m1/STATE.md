@@ -1,5 +1,5 @@
 package: M1
-status: done (G-M1 confirmed)
+status: closed by the owner (2026-10-20); report reports/cia_v2_m1_shared_noise.md
 gate: G-M1 = confirmed (4x decoupled paired score 0.516, 95% interval 0.468-0.548)
 protocol: this file (Design section); M1 repeats v1's consensus-KL step 3 global-DP arm with one change
 machine: compute server
