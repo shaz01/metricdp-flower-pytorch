@@ -43,9 +43,12 @@ PUBLIC_SIZES = (20, 50, 100, 200, 500)  # public images (stratified, size / 10 p
 PUBLIC_SUBSETS = 5  # evaluation subsets per size, drawn from the evaluation layout's public half
 TUNING_SUBSET = 100  # the one subset per size used for tuning (tuning layout)
 PUBLIC_REPLICATES = 4
+# Owner decision 11 (2026-10-20): confirmatory run of the scarce-public positive (confirm/PROTOCOL.md).
+CONFIRM_LAYOUT, CONFIRM_SIZES = 44, (20, 50)
+CONFIRM_CLIENT_SEED_BASE, CONFIRM_NOISE_SEED_BASE = 30_000, 40_000
 STAGE_DIRS = {"tune": "tune", "evaluate": "evaluate", "tune_extended": "extended_grid/tune",
               "evaluate_extended": "extended_grid/evaluate", "tune_public": "public_sweep/tune",
-              "evaluate_public": "public_sweep/evaluate"}
+              "evaluate_public": "public_sweep/evaluate", "confirm_public": "confirm_public"}
 CLIENT_SEED_BASE, NOISE_SEED_BASE = 10_000, 20_000
 BOOTSTRAP_RESAMPLES, BOOTSTRAP_SEED = 2000, 20261017
 GATE_PP = 5.0
@@ -82,6 +85,8 @@ class Job:
 
     @property
     def layout_seed(self) -> int:
+        if self.stage == "confirm_public":
+            return CONFIRM_LAYOUT
         return TUNING_LAYOUT if self.tuning else EVALUATION_LAYOUT
 
     @property
@@ -89,6 +94,8 @@ class Job:
         """(client_seed, noise_seed): independent per replicate, shared across settings."""
         if self.tuning:
             return 1_000 + self.replicate, 2_000 + self.replicate
+        if self.stage == "confirm_public":
+            return CONFIRM_CLIENT_SEED_BASE + self.replicate, CONFIRM_NOISE_SEED_BASE + self.replicate
         return CLIENT_SEED_BASE + self.replicate, NOISE_SEED_BASE + self.replicate
 
 
@@ -273,6 +280,14 @@ def public_evaluation_jobs(chosen_by_size: dict[int, dict]) -> list[Job]:
             for subset in range(PUBLIC_SUBSETS) for r in range(PUBLIC_REPLICATES)]
 
 
+def confirm_jobs(chosen_by_size: dict[int, dict]) -> list[Job]:
+    """Settings with ``mu_total <= 2`` and the no-noise references, at the confirmatory sizes, on layout 44."""
+    return [Job("confirm_public", n, t, mu, c["local_epochs"], c["local_lr"], c["server_lr"], c["clip_multiplier"],
+                r, size, subset)
+            for size in CONFIRM_SIZES for (n, t, mu), c in sorted(chosen_by_size[size].items()) if mu <= 2
+            for subset in range(PUBLIC_SUBSETS) for r in range(PUBLIC_REPLICATES)]
+
+
 def paired_bootstrap(correct: np.ndarray, baseline: np.ndarray, rng: np.random.Generator) -> np.ndarray:
     """Two-way bootstrap of mean_r (acc_r - acc_public): replicates and test images resampled independently."""
     replicates, images = correct.shape
@@ -386,6 +401,8 @@ def _jobs(stage: str) -> list[Job]:
         return public_tuning_jobs()
     if stage == "evaluate_public":
         return public_evaluation_jobs(select_by_public_size(_load("tune_public")))
+    if stage == "confirm_public":
+        return confirm_jobs(select_by_public_size(_load("tune_public")))
     raise ValueError(stage)
 
 

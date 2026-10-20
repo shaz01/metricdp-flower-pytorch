@@ -58,14 +58,15 @@ def fit_alternatives(public_x: np.ndarray, public_y: np.ndarray, test_x: np.ndar
             for name, (c, pred) in out.items()}
 
 
-def fits() -> dict[tuple[int, int], dict]:
+def fits(layout_seed: int = runner.EVALUATION_LAYOUT, sizes: tuple[int, ...] = runner.PUBLIC_SIZES
+         ) -> dict[tuple[int, int], dict]:
     from experiments.frozen_head.features import load_split_features
 
     test_x, test_y = load_split_features("test")
     result = {}
-    for size in runner.PUBLIC_SIZES:
+    for size in sizes:
         for subset in range(runner.PUBLIC_SUBSETS):
-            fed = runner.federation(48, runner.EVALUATION_LAYOUT, size, subset)
+            fed = runner.federation(48, layout_seed, size, subset)
             public, server = fed["public_indices"], fed["layout"].server_test
             result[(size, subset)] = fit_alternatives(test_x[public], test_y[public], test_x[server], test_y[server])
     return result
