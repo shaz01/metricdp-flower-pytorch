@@ -1,5 +1,5 @@
 package: M2
-status: done, escalated (G-M2: no useful regime; ESCALATION.md waits for the owner)
+status: closed by the owner (2026-10-20); escalation (ESCALATION.md) open for the owner; report reports/cia_v2_m2_frontier.md
 gate: G-M2 = no useful regime (FINDINGS.md)
 protocol: results/cia_v2/frontier/PROTOCOL.md (fixed before any M2 run)
 machine: compute server

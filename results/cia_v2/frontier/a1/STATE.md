@@ -1,5 +1,5 @@
 package: A1
-status: analyzed; FINDINGS.md written; the owner decides whether A1 is finished
+status: closed by the owner (2026-10-20); report reports/cia_v2_a1_matched_accuracy.md
 gate: G-A1 = metric privacy equivalent at 0.740 (gate interval), no detectable difference at 0.660; private median no detectable difference at both (FINDINGS.md)
 protocol: results/cia_v2/frontier/a1/PROTOCOL.md (fixed 2026-10-19, before any A1 leakage run)
 machine: compute server
