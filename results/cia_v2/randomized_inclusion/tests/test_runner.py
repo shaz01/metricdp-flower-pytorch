@@ -216,3 +216,13 @@ def test_data_module_follows_the_profile_dataset():
     assert isinstance(module, DirichletAlzheimer) and module.min_records == 10
     with pytest.raises(ValueError):
         data.base_module(runner.ALPHA, dataset="cifar")
+
+
+def test_alpha_override_reaches_the_partition_profile_and_manifest():
+    run = plan(dataset="alzheimer", alpha=1.0)[0]
+    args = run.runner_args(output_dir=Path("out"), max_parallel_clients=4, client_cpus=1.0,
+                           checkpoint_rounds=runner.CHECKPOINT_ROUNDS)
+    flags = dict(zip(args[::1], args[1::1]))
+    assert json.loads(flags["--partition-profile"])["alpha"] == 1.0
+    assert runner.manifest(run, surrogates=False)["alpha"] == 1.0
+    assert "alpha" not in runner.manifest(plan(dataset="alzheimer")[0], surrogates=False)

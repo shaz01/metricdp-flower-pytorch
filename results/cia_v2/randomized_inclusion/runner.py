@@ -128,13 +128,14 @@ class InclusionRun(Combo):
     noise_seed: int
     noise_ratio: float
     dataset: str = "eurosat"
+    alpha: float = ALPHA  # AZ diagnosis only (ESCALATION.md); every gated design uses 0.3
 
     @property
     def profile(self):
         return PROFILES[self.dataset]
 
     def runner_args(self, **kwargs):
-        profile = {"alpha": ALPHA, "clients": SLOTS, "partition_seed": LAYOUT_SEED, "active": list(self.active)}
+        profile = {"alpha": self.alpha, "clients": SLOTS, "partition_seed": LAYOUT_SEED, "active": list(self.active)}
         if self.dataset != "eurosat":
             profile["dataset"] = self.dataset
         args = (*super().runner_args(**kwargs),
@@ -150,7 +151,7 @@ class InclusionRun(Combo):
 
 
 def build_runs(*, config, privacy, noise_ratio, replicates, design_seed, replicate_subset=None, rounds=ROUNDS,
-               dataset="eurosat"):
+               dataset="eurosat", alpha=ALPHA):
     if privacy not in PRIVACY_MODES:
         raise ValueError(f"privacy must be one of {PRIVACY_MODES}")
     if privacy == "vanilla" and noise_ratio:
@@ -175,7 +176,7 @@ def build_runs(*, config, privacy, noise_ratio, replicates, design_seed, replica
             noise_multiplier=noise_ratio * len(active), hyperparams=replace(profile.hyperparams, rounds=rounds),
             data_module=profile.data_module, model_module=profile.model_module, aggregation_weighting="equal",
             config=config, replicate=j, replicates=replicates, design_seed=design_seed, included=included, active=active,
-            client_seed=client_seed, noise_seed=noise_seed, noise_ratio=noise_ratio, dataset=dataset,
+            client_seed=client_seed, noise_seed=noise_seed, noise_ratio=noise_ratio, dataset=dataset, alpha=alpha,
         ))
     return runs
 
@@ -213,6 +214,8 @@ def manifest(run, surrogates):
                                      "num_slots": run.num_clients}
     if run.dataset != "eurosat":
         pinned["dataset"] = run.dataset
+    if run.alpha != ALPHA:
+        pinned["alpha"] = run.alpha
     return pinned
 
 
@@ -344,6 +347,8 @@ def main():
     parser.add_argument("--config", required=True, help="configuration name (part of run names)")
     parser.add_argument("--privacy", choices=PRIVACY_MODES, required=True)
     parser.add_argument("--dataset", choices=tuple(PROFILES), default="eurosat")
+    parser.add_argument("--alpha", type=float, default=ALPHA, help="label-Dirichlet alpha (AZ diagnosis only)")
+    parser.add_argument("--rounds", type=int, default=ROUNDS, help="training rounds (AZ diagnosis only)")
     parser.add_argument("--noise-ratio", type=float, default=0.0, help="noise std / clipping norm (DP only)")
     parser.add_argument("--replicates", type=int, required=True)
     parser.add_argument("--design-seed", type=int, required=True)
@@ -355,7 +360,7 @@ def main():
     parser.add_argument("--stall-minutes", type=float, default=30.0)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    rounds = ROUNDS
+    rounds = args.rounds
     if args.smoke_rounds is not None:
         if not 1 <= args.smoke_rounds <= 5:
             parser.error("--smoke-rounds must be between 1 and 5")
@@ -364,7 +369,7 @@ def main():
         rounds = args.smoke_rounds
     runs = build_runs(config=args.config, privacy=args.privacy, noise_ratio=args.noise_ratio,
                       replicates=args.replicates, design_seed=args.design_seed,
-                      replicate_subset=args.replicate_subset, rounds=rounds, dataset=args.dataset)
+                      replicate_subset=args.replicate_subset, rounds=rounds, dataset=args.dataset, alpha=args.alpha)
     print(json.dumps({"runs": len(runs), "execute": args.execute, "rounds": rounds,
                       "complete": sum((args.output / r.run_name() / "complete.json").exists() for r in runs),
                       "plan": [{"run_name": r.run_name(), "included": r.included, "client_seed": r.client_seed,

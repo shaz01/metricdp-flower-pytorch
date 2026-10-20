@@ -4,7 +4,7 @@ gate: G-M2 and G-A1 as applied on EuroSAT = not evaluated yet
 protocol: results/cia_v2/alzheimer/PROTOCOL.md, fixed after the accuracy calibration and before any leakage run
 machine: compute server
 cost so far: about 1 GPU-h (8 calibration runs, shared GPU 1) of the 40 GPU-h cap
-next: owner decision on ESCALATION.md
+next: diagnosis runs (6), then the owner picks the setup
 needs from others: none
 
 Owner decision 8 (`research/cia_roadmap_v2/ROADMAP.md` Section 10, 2026-10-20): M2 and A1 repeated on Alzheimer MRI,
@@ -93,3 +93,4 @@ generalised to read the candidate panel from the run manifests):
 | 2026-10-20 10:40 | 1-round CPU smoke run (metric privacy, r = 0.00125, scratch output): 32 active clients, accuracy 0.011 at round 0 and 0.359 after round 1, noise std = r C / max pairwise distance (0.00453 = 0.00625 / 1.378), median pairwise client distance 0.89 (EuroSAT about 0.4-0.5). 119 s training and 17 s scoring on the CPU. |
 | 2026-10-20 10:45 | Calibration batch 1 fixed (accuracy only, design seed 3, 2 runs per level, output `calibration/`): vanilla; global DP and metric privacy at r = 0.000625, 0.00125, 0.0025 and 0.005 (around v1's cliff). Batch 2 (private median, 4 levels) follows once batch 1's metric-privacy distances fix its quantile settings. Both GPUs are busy with another user's jobs, so a launcher waits for an idle, unclaimed GPU. |
 | 2026-10-20 11:35 | Calibration batch 1 stopped after 8 of 18 runs: vanilla 0.554, global DP 0.569 (r = 0.000625) and 0.623 (r = 0.00125); majority class 0.501. The model predicts the majority class for about 25 rounds. G-M2's 0.70 accuracy floor is out of reach even without noise, so ESCALATION.md was written and the workers were stopped to free the shared GPU for B5. Completed calibration runs committed (accuracy only). |
+| 2026-10-20 11:50 | Owner chose ESCALATION.md option 1: diagnose first. Six accuracy-only vanilla runs (design seed 3, 2 each) into `diagnosis/`: alpha 1.0 (50 rounds), alpha 100 as a near-IID split (50 rounds), alpha 0.3 with 100 rounds, on GPU 1 shared by the owner's choice. Runner: `--alpha` and `--rounds` overrides, recorded in the manifest only when they differ (EuroSAT's 437 manifests unchanged). |
