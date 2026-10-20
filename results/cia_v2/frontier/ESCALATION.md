@@ -24,3 +24,9 @@ Section 1, item 6) is the owner's.
   2x and 4x are the nearest candidates if the owner wants operating points for them.
 - **B2** opens only if "M2 shows leakage falls with noise". It falls by 0.13 AUC from vanilla to 16x, but each step
   between 1x and 8x is below the detectable difference (0.087). Whether that counts is the owner's call.
+
+## Resolution (2026-10-20, owner)
+
+The owner accepted the four recommendations, recorded as decisions 7-11 in ROADMAP.md Section 10: the audit form is
+the paper's main line; M2 and A1 are replicated on Alzheimer; B5 then B1 run at 2x and 4x with decision 5 amended to an
+all-candidate gate at `R = 32`; B2 is deprioritized; the B4 scarce-public positive gets a confirmatory run.

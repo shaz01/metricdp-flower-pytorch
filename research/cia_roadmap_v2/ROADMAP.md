@@ -401,3 +401,20 @@ Verified via OpenAlex on 2026-10-16:
 
 Already in the v1 corpus: Steinke et al. 2023 (one-run auditing), Andrew et al. 2023 (one-shot FL auditing), Carlini et
 al. 2022 (LiRA), Balle et al. 2018 (subsampling amplification), McMahan et al. 2018 (client-level DP-FedAvg).
+
+## 10. Owner decisions after Agent A's packages (2026-10-20, binding)
+
+Taken after M0-M2, A1 and A2 were closed and merged (reports `reports/cia_v2_m0_measurement.md` to
+`cia_v2_a2_side_channel.md`), resolving M2's escalation (`results/cia_v2/frontier/ESCALATION.md`). They amend Sections
+1, 3 and 4 where they conflict.
+
+| # | Decision |
+|---|---|
+| 7 | **Paper.** The audit form (REVIEW.md Section 8, form 1) is the main line: metric privacy's apparent advantage is a measurement artifact; at matched accuracy it leaks like global DP (A1), it has a participation side channel in small federations (A2), and its formal guarantee is absent or weaker. The empirical form is a secondary line. |
+| 8 | **Alzheimer replication.** M2 and A1 are repeated on Alzheimer MRI (48 slots, alpha 0.3, randomized inclusion as in M0), Agent A, branch `feature/cia-v2-alzheimer`, cap 40 GPU-h. The gates are G-M2 and G-A1 as applied on EuroSAT. |
+| 9 | **Decision 5 amended.** "Beats" is gated on the all-candidate AUC: at least 0.05 lower, with the 97.5% pair-jackknife interval of the paired difference excluding 0, at `R = 32` per configuration on M2's design. The top decile is reported with its interval but not gated (its detectable difference is about 0.09 at `R = 32`). |
+| 10 | **Agent B, selectively.** B5 first, then B1, at M2's operating points 2x and 4x (M2 found no `r_0.6`), `R = 32`, gated as in decision 9. B2 is deprioritized (leakage barely moves with noise in M2) and does not run unless the owner reopens it; B3 and C1 wait. B5's item 1 diagnostic uses M2's surrogate scores. |
+| 11 | **B4 confirmatory run.** The scarce-public positive (20-100 public images, `mu <= 2`) is re-run on a fresh layout under a new protocol fixed before the run (CPU only, about 1 CPU-hour), branch `feature/cia-v2-formal-confirm`. |
+
+No other agent session is running; the owner assigned all of the above to the agent that ran Agent A's packages,
+which works in each package's own branch and worktree and keeps each package's STATE, PROTOCOL and FINDINGS files.

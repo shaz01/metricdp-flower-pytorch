@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-20, CIA v2 Agent A packages M0, M1, M2, A1 and A2 merged into `master` (closed by the owner; reports `reports/cia_v2_m0_measurement.md`, `cia_v2_m1_shared_noise.md`, `cia_v2_m2_frontier.md`, `cia_v2_a1_matched_accuracy.md`, `cia_v2_a2_side_channel.md`). 2026-10-17, CIA v2 B4 (formal regime) and the client-level accountant merged into `master` (Agent C, closed by the owner; report `reports/cia_v2_formal_regime.md`); Agent A's M0 (G-M0 passed) came along as a dependency of B4's audit. CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
+**Last updated:** 2026-10-20, owner decisions 7-11 (ROADMAP.md Section 10). CIA v2 Agent A packages M0, M1, M2, A1 and A2 merged into `master` (closed by the owner; reports `reports/cia_v2_m0_measurement.md`, `cia_v2_m1_shared_noise.md`, `cia_v2_m2_frontier.md`, `cia_v2_a1_matched_accuracy.md`, `cia_v2_a2_side_channel.md`). 2026-10-17, CIA v2 B4 (formal regime) and the client-level accountant merged into `master` (Agent C, closed by the owner; report `reports/cia_v2_formal_regime.md`); Agent A's M0 (G-M0 passed) came along as a dependency of B4's audit. CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
 (`research/cia_review_2026-10/SYNTHESIS.md`) merged into `master`; the owner is choosing new directions from the
 synthesis. 2026-10-15: WP0-WP2 merged, D1 stopped. 2026-10-10: CIA literature review and agent roadmap added
 (`HANDOFF.md`, `research/cia_review_2026-10/`)
@@ -19,7 +19,7 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 ## Active work
 
 **CIA roadmap v2: approved by the owner 2026-10-17 (ROADMAP.md Section 1 defaults accepted). Agents A and C have
-finished; Agent B (B1-B3, B5, C1) has not started. Open for the owner: M2's escalation and the paper's direction.** `research/cia_roadmap_v2/`
+finished; Agent B (B1-B3, B5, C1) has not started. M2's escalation resolved by the owner 2026-10-20 (ROADMAP.md Section 10): audit form is the paper's main line; Alzheimer replication of M2 and A1; B5 then B1 at 2x and 4x with an all-candidate gate at R = 32; B2 deprioritized; B4 confirmatory run.** `research/cia_roadmap_v2/`
 (`REVIEW.md`, `ROADMAP.md`, audit script, tables, figure; built from committed results only). Main finding of the
 review: the IN and OUT trajectories of a seed draw identical DP noise (realized-noise-energy correlation 0.93-1.00 at
 48 clients, about 0 across seeds). The programme's paired leakage scores under DP therefore largely cancel the noise,
@@ -27,9 +27,7 @@ which probably explains "leakage barely responds to noise". The roadmap rebuilds
 independent randomness between worlds and randomized inclusion), then the audit of metric privacy (A1-A2), then
 mechanisms (B1-B5, C1).
 - **Agent A, M0, M1, M2, A1 and A2: closed by the owner and merged into `master` 2026-10-20** (branches deleted; see
-  "What's established" below). **Open: M2's escalation** (`results/cia_v2/frontier/ESCALATION.md`): G-M2 found no
-  useful regime, and the roadmap's consequence ("B4 leads") points to a package that has failed. Agent B's B1, B3 and B5
-  were to use M2's `r_0.6`, which does not exist; B2 depends on how "leakage falls with noise" is read.
+  "What's established" below). M2's escalation was resolved by the owner on 2026-10-20 (`research/cia_roadmap_v2/ROADMAP.md` Section 10).
 
 - **Agent C, B4 formal regime + accountant: closed and merged into `master` 2026-10-17** (branch deleted; see
   "What's established" below). Agent B's wait on Agent C (owner decision) is over; its wait on Agent A is not.
