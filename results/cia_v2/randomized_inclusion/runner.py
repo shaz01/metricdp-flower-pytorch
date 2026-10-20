@@ -89,6 +89,8 @@ class InclusionRun(Combo):
     client_seed: int
     noise_seed: int
     noise_ratio: float
+    contribution_cap: int = 0  # CIA v2 B5: records per client per round (0 = off)
+    logit_tau: float = 0.0  # CIA v2 B5: logit-adjusted local loss (0 = off)
 
     def runner_args(self, **kwargs):
         profile = {"alpha": ALPHA, "clients": SLOTS, "partition_seed": LAYOUT_SEED, "active": list(self.active)}
@@ -100,10 +102,15 @@ class InclusionRun(Combo):
             # The fixed active count is public, so it is the mechanism's slot denominator.
             args = (*args, "--num-slots", str(self.num_clients), "--median-quantile", str(MEDIAN_QUANTILE),
                     "--median-quantile-min", str(MEDIAN_QUANTILE_MIN), "--median-quantile-max", str(MEDIAN_QUANTILE_MAX))
+        if self.contribution_cap:
+            args = (*args, "--contribution-cap", str(self.contribution_cap))
+        if self.logit_tau:
+            args = (*args, "--logit-adjustment-tau", repr(self.logit_tau))
         return (*args, "--log-noise-diagnostics") if self.privacy != "vanilla" else args
 
 
-def build_runs(*, config, privacy, noise_ratio, replicates, design_seed, replicate_subset=None, rounds=ROUNDS):
+def build_runs(*, config, privacy, noise_ratio, replicates, design_seed, replicate_subset=None, rounds=ROUNDS,
+               contribution_cap=0, logit_tau=0.0):
     if privacy not in PRIVACY_MODES:
         raise ValueError(f"privacy must be one of {PRIVACY_MODES}")
     if privacy == "vanilla" and noise_ratio:
@@ -128,6 +135,7 @@ def build_runs(*, config, privacy, noise_ratio, replicates, design_seed, replica
             data_module=DATA_MODULE, model_module=MODEL_MODULE, aggregation_weighting="equal",
             config=config, replicate=j, replicates=replicates, design_seed=design_seed, included=included, active=active,
             client_seed=client_seed, noise_seed=noise_seed, noise_ratio=noise_ratio,
+            contribution_cap=contribution_cap, logit_tau=logit_tau,
         ))
     return runs
 
@@ -162,6 +170,10 @@ def manifest(run, surrogates):
     if run.privacy == "private-median":
         pinned["median_quantile"] = {"initial": MEDIAN_QUANTILE, "minimum": MEDIAN_QUANTILE_MIN,
                                      "maximum": MEDIAN_QUANTILE_MAX, "num_slots": run.num_clients}
+    local = {key: value for key, value in (("contribution_cap", run.contribution_cap), ("logit_tau", run.logit_tau))
+             if value}
+    if local:  # B5 only, so earlier manifests stay unchanged
+        pinned["local_training"] = local
     return pinned
 
 
@@ -295,6 +307,8 @@ def main():
     parser.add_argument("--design-seed", type=int, required=True)
     parser.add_argument("--replicate-subset", type=int, nargs="+", help="train only these replicates (sharding)")
     parser.add_argument("--surrogates", action="store_true", help="also score label-matched public surrogates")
+    parser.add_argument("--contribution-cap", type=int, default=0, help="B5: records per client per round (0 = off)")
+    parser.add_argument("--logit-adjustment-tau", type=float, default=0.0, help="B5: logit-adjusted local loss")
     parser.add_argument("--smoke-rounds", type=int, help="1-5 rounds into an --output outside results/")
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--max-parallel-clients", type=int, default=8)
@@ -310,7 +324,8 @@ def main():
         rounds = args.smoke_rounds
     runs = build_runs(config=args.config, privacy=args.privacy, noise_ratio=args.noise_ratio,
                       replicates=args.replicates, design_seed=args.design_seed,
-                      replicate_subset=args.replicate_subset, rounds=rounds)
+                      replicate_subset=args.replicate_subset, rounds=rounds,
+                      contribution_cap=args.contribution_cap, logit_tau=args.logit_adjustment_tau)
     print(json.dumps({"runs": len(runs), "execute": args.execute, "rounds": rounds,
                       "complete": sum((args.output / r.run_name() / "complete.json").exists() for r in runs),
                       "plan": [{"run_name": r.run_name(), "included": r.included, "client_seed": r.client_seed,

@@ -111,6 +111,10 @@ def _parser() -> argparse.ArgumentParser:
                         help="weight of KL(p_global || p_local) on local data (0 = off)")
     parser.add_argument("--local-steps", type=int, default=0,
                         help="fixed optimizer steps per round instead of --local-epochs (0 = off)")
+    parser.add_argument("--contribution-cap", type=int, default=0,
+                        help="CIA v2 B5: at most this many training records per client per round (0 = off)")
+    parser.add_argument("--logit-adjustment-tau", type=float, default=0.0,
+                        help="CIA v2 B5: logit-adjusted local loss with the client's label prior (0 = off)")
     parser.add_argument(
         "--lr-schedule",
         choices=("none", "cosine"),
@@ -432,6 +436,10 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
         config["consensus-kl-beta"] = args.consensus_kl_beta
     if args.local_steps:
         config["local-steps"] = args.local_steps
+    if args.contribution_cap:
+        config["contribution-cap"] = args.contribution_cap
+    if args.logit_adjustment_tau:
+        config["logit-adjustment-tau"] = args.logit_adjustment_tau
     return config
 
 

@@ -7,6 +7,7 @@ from typing import Any
 
 from flwr.app import ArrayRecord, Context, Message, MetricRecord, RecordDict
 from flwr.clientapp import ClientApp
+import torch
 
 from experiments.reproduce.paper_loss import evaluate_model
 from experiments.reproduce.paper_training import (
@@ -18,6 +19,7 @@ from experiments.reproduce.seeds import run_seeds
 from metricdp_pytorch.data_module import load_data_module
 from metricdp_pytorch.model_module import load_model
 from metricdp_pytorch.strategy_factory import UNIT_WEIGHT_KEY
+from metricdp_pytorch.utils.data import make_indexed_loader
 from metricdp_pytorch.utils.device import release_device_cache, resolve_device
 from metricdp_pytorch.utils.runtime import runtime_config
 
@@ -41,6 +43,27 @@ def _local_training_options(run_config: Mapping[str, Any]) -> dict[str, Any]:
     if "local-steps" in run_config:
         options["local_steps"] = int(run_config["local-steps"])
     return options
+
+
+def _capped_loader(loader, cap: int, seed: int):
+    """CIA v2 B5 contribution cap: at most ``cap`` training records this round, drawn without replacement."""
+    if cap <= 0 or len(loader.dataset) <= cap:
+        return loader
+    chosen = torch.randperm(len(loader.dataset), generator=torch.Generator().manual_seed(seed))[:cap]
+    return make_indexed_loader(loader.dataset, sorted(chosen.tolist()), batch_size=loader.batch_size, shuffle=True,
+                               seed=seed)
+
+
+def _num_classes(model) -> int:
+    return [module for module in model.modules() if isinstance(module, torch.nn.Linear)][-1].out_features
+
+
+def _log_label_prior(dataset, num_classes: int) -> torch.Tensor:
+    """CIA v2 B5 logit adjustment: the client's own label prior, add-one smoothed."""
+    from experiments.cia.datasets.shadow import _labels_from_dataset
+
+    counts = torch.bincount(torch.tensor(_labels_from_dataset(dataset)), minlength=num_classes).float()
+    return ((counts + 1) / (counts.sum() + num_classes)).log()
 
 
 def _client_round_seed(base_seed: int, client_id: int, server_round: int) -> int:
@@ -115,6 +138,11 @@ def train(msg: Message, context: Context) -> Message:
     model.load_state_dict(msg.content["arrays"].to_torch_state_dict())
     trainloader, _ = _client_data(context)
     _reseed_loader(trainloader, round_seed)
+    options = _local_training_options(run_config)
+    logit_tau = float(run_config.get("logit-adjustment-tau", 0.0))
+    if logit_tau > 0:
+        options |= {"logit_tau": logit_tau, "log_prior": _log_label_prior(trainloader.dataset, _num_classes(model))}
+    trainloader = _capped_loader(trainloader, int(run_config.get("contribution-cap", 0)), round_seed)
     device = resolve_device()
     base_learning_rate = float(train_config["lr"])
     lr_schedule = str(run_config.get("lr-schedule", "none"))
@@ -137,7 +165,7 @@ def train(msg: Message, context: Context) -> Message:
         weight_decay=float(run_config.get("weight-decay", 0.0)),
         device=device,
         proximal_mu=float(train_config.get("proximal-mu", 0.0)),
-        **_local_training_options(run_config),
+        **options,
     )
     model.cpu()
     release_device_cache(device)
