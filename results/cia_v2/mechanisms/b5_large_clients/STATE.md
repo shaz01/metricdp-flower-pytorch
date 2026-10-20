@@ -1,5 +1,5 @@
 package: B5, exposure of large clients (owner decision 10: B5 first, then B1)
-status: protocol fixed; smoke run, then stage A when a GPU is idle and unclaimed
+status: running (stage A at 2x, two workers on GPU 1, shared by owner approval)
 gate: G-B5 (amended by owner decision 9) = not evaluated yet
 protocol: results/cia_v2/mechanisms/b5_large_clients/PROTOCOL.md (fixed 2026-10-20, before any B5 run)
 machine: compute server
@@ -92,3 +92,5 @@ noise. Global DP at M2's operating points (decision 10): 2x (`r = 0.003092`, acc
 |---|---|
 | 2026-10-20 | Master merged into the branch (1298b5c1). Item 1 diagnostic from M2's committed analysis: surrogate within 0.009-0.025 of the true AUC (all candidates). Cap values computed from the layout. STATE written before any code. |
 | 2026-10-20 11:20 | Code: default-off contribution cap and logit-adjusted loss (client, training loop, runner flags, randomized-inclusion options; manifests record them only when set, and M2's 437 manifests regenerate unchanged); 7 tests. `analyze.py` (paired differences to M2, G-B5) with 3 tests. 517 related tests pass. PROTOCOL.md fixed. |
+| 2026-10-20 10:50 | 1-round CPU smoke run with both options (scratch output): per-client examples capped at 326, logit-adjusted loss ran, manifest records `local_training`. |
+| 2026-10-20 10:55 | Both GPUs carried another user's jobs; the owner approved sharing GPU 1 (with our AZ calibration and that user's process) for B5 stage A only. Two workers started (tmux b5-w0, b5-w1). |
