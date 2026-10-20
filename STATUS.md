@@ -18,29 +18,18 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
 ## Active work
 
-**CIA roadmap v2: approved by the owner 2026-10-17 (ROADMAP.md Section 1 defaults accepted); agents A, B, C about to
-start (A: M0 first; nothing running yet).** `research/cia_roadmap_v2/`
+**CIA roadmap v2: approved by the owner 2026-10-17 (ROADMAP.md Section 1 defaults accepted). Agents A and C have
+finished; Agent B (B1-B3, B5, C1) has not started. Open for the owner: M2's escalation and the paper's direction.** `research/cia_roadmap_v2/`
 (`REVIEW.md`, `ROADMAP.md`, audit script, tables, figure; built from committed results only). Main finding of the
 review: the IN and OUT trajectories of a seed draw identical DP noise (realized-noise-energy correlation 0.93-1.00 at
 48 clients, about 0 across seeds). The programme's paired leakage scores under DP therefore largely cancel the noise,
 which probably explains "leakage barely responds to noise". The roadmap rebuilds the measurement first (M0-M2, with
 independent randomness between worlds and randomized inclusion), then the audit of metric privacy (A1-A2), then
 mechanisms (B1-B5, C1).
-- **Agent A, M0 measurement infrastructure (`feature/cia-v2-measurement`, 2026-10-17): G-M0 passed; status ready
-  (Agent B may branch from it).** Separate layout, init, client and noise seeds, and server noise from a dedicated
-  generator: IN and OUT no longer share noise once seeds differ (realized-noise-energy correlation -0.107, against
-  1.000 with equal noise seeds). The v2 attack library and randomized-inclusion runner are in place. Two design fixes
-  were found on synthetic data before any run: leaving out only the trial biases the null AUC to 0.42 (fixed with
-  balanced references), and a per-candidate 11-dimensional ratio is inefficient (replaced by a pooled-direction
-  projection). Cost run done: 0.20 GPU-h per randomized-inclusion run. **Escalation
-  (`results/cia_v2/measurement/ESCALATION.md`), resolved 2026-10-17 under the owner's delegation:** the specified audit
-  design (16 candidates, R = 8-16, two-way bootstrap) could detect only AUC differences of about 0.2. Agent A packages
-  now use 32 candidates per run, R = 32 for gated comparisons, a calibrated leave-one-pair-out jackknife interval
-  conditional on the candidate panel (two-way bootstrap reported alongside), G-M2 on all candidates plus the
-  top-decile point estimate, and an M2 cap of 64 GPU-h (was 30). **M1 done, G-M1 confirmed:** with independent
-  noise and client seeds per world, v1's step-3 paired score at 4x noise falls from 0.792 (coupled) to 0.516
-  (95% interval 0.468-0.548); at 1x it stays 0.788. v1's flat noise response was a shared-noise artifact; v1 DP
-  leakage numbers are now labelled "paired, shared noise". M2 proceeds. State: `results/cia_v2/measurement/STATE.md`.
+- **Agent A, M0, M1, M2, A1 and A2: closed by the owner and merged into `master` 2026-10-20** (branches deleted; see
+  "What's established" below). **Open: M2's escalation** (`results/cia_v2/frontier/ESCALATION.md`): G-M2 found no
+  useful regime, and the roadmap's consequence ("B4 leads") points to a package that has failed. Agent B's B1, B3 and B5
+  were to use M2's `r_0.6`, which does not exist; B2 depends on how "leakage falls with noise" is read.
 
 - **Agent C, B4 formal regime + accountant: closed and merged into `master` 2026-10-17** (branch deleted; see
   "What's established" below). Agent B's wait on Agent C (owner decision) is over; its wait on Agent A is not.
@@ -210,7 +199,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Nothing of Agent A running on the compute server (2026-10-20). M2 done, G-M2: no useful regime, escalated (`results/cia_v2/frontier/ESCALATION.md`); A2 analyzed after the owner's amendment (collapsed rounds; no further runs), G-A2: channel size recorded (`results/cia_v2/side_channel/FINDINGS.md`); A1 done, G-A1: at matched accuracy neither metric privacy mechanism leaks detectably less than global DP (paper's mechanism equivalent at 0.740; `results/cia_v2/frontier/a1/FINDINGS.md`); all Agent A packages analyzed, owner decisions pending; consensus-KL follow-up rows below finished 2026-10-16.
+Nothing running (2026-10-20).
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -219,11 +208,6 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `frozen_head.runner tune/evaluate --execute --workers 8` (compute server, CPU only) | B4 tuning (1,440) and evaluation (160) head-only runs | done 2026-10-17 |
-| `frozen_head` Amendment 1 chain: audit, extended grid, public sweep (compute server, CPU only, 8 workers) | B4 owner follow-up, about 14,500 head-only runs | done 2026-10-17 |
-| `frozen_head` Amendment 2 chain: baseline check, audit at 20 public images (compute server, CPU only, 8 workers) | B4 owner follow-up, 384 head-only runs | done 2026-10-17 |
-| `signature_suppression.runner --configs consensus-kl-0.3 --seeds 43 44 45` (compute server, GPU 1) | Consensus-KL follow-up step 1, 18 trajectories | done 2026-10-16 |
-| `consensus_kl.runner_dp --execute` (compute server, GPU 1) | Consensus-KL follow-up step 3, 36 trajectories | done 2026-10-16 |
 | `randomized_inclusion.runner --config cost-gdp-r1x ... --replicate-subset 0` (compute server, GPU 1, shared by owner approval) | CIA v2 M0 cost run, 1 randomized-inclusion run | done 2026-10-17 18:51 (0.20 GPU-h) |
 | `cia_v2.measurement.m1.runner --execute` (compute server, GPU 1, two workers) | CIA v2 M1, 12 trajectories | done 2026-10-17 20:51 (about 2.2 GPU-h; G-M1 confirmed) |
 | `cia_v2.side_channel.runner --stage pilot --multiple 1 ...` (compute server, GPU 1, shared by owner approval; branch `feature/cia-v2-side-channel`) | CIA v2 A2 pilot at 1x, 32 trajectories | done 2026-10-18 08:44; cost stop rule triggered, owner chose 4 workers per GPU (`results/cia_v2/side_channel/ESCALATION.md`) |
@@ -235,6 +219,21 @@ section.
 | `a1-chain.sh` (compute server, GPUs 0 and 1, two workers each, idle and unclaimed at launch; branch `feature/cia-v2-frontier`) | CIA v2 A1 main runs, 7 configurations x 32 = 224 runs | done 2026-10-20 08:26 (about 21.7 GPU-h); G-A1 recorded |
 
 ## What's established on `master`
+
+- **CIA v2 Agent A: measurement rebuilt, global DP's real frontier, and the audit of metric privacy (2026-10-20)**
+  (reports `reports/cia_v2_m0_measurement.md`, `cia_v2_m1_shared_noise.md`, `cia_v2_m2_frontier.md`,
+  `cia_v2_a1_matched_accuracy.md`, `cia_v2_a2_side_channel.md`; data `results/cia_v2/{measurement,frontier,side_channel}/`).
+  - **M0 (G-M0 pass):** separate layout, init, client and noise seeds; randomized inclusion with 32 candidates and
+    `R = 32`; a calibrated LiRA-style loss attacker; the 97.5% pair-jackknife gate interval.
+  - **M1 (G-M1 confirmed):** with independent seeds per world, v1's 4x paired score falls from 0.792 to 0.516; v1's flat
+    noise response was a shared-noise artifact.
+  - **M2 (G-M2: no useful regime, escalated):** global DP keeps the attacker at AUC 0.70-0.72 wherever accuracy is
+    0.70 or above (vanilla 0.723, 2x 0.702 at accuracy 0.740); 0.593 only at 16x, accuracy 0.199.
+  - **A1 (G-A1):** at matched accuracy neither the paper's metric privacy nor private-median metric privacy leaks
+    detectably less than global DP; the paper's mechanism is equivalent at 0.740 (difference -0.000 [-0.019, 0.018]).
+  - **A2 (G-A2: channel size recorded):** metric privacy's noise level is visible to a blind observer in small Alzheimer
+    federations (AUC 1.000 and 0.875), but at the same noise it also leaks fully through the loss; the strong claim
+    fails (one cell, through an attacker artifact).
 
 - **CIA v2 B4: formal client-level regime with frozen features and a small head, plus the accountant (2026-10-17)**
   (`reports/cia_v2_formal_regime.md`; data `results/cia_v2/formal_regime/`). G-B4 fails (owner accepted): a linear head
