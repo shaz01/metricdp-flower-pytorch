@@ -32,9 +32,10 @@ import numpy as np
 from flwr.app import Array, ArrayRecord, Message, MetricRecord
 from flwr.common import log
 from flwr.serverapp.strategy import DifferentialPrivacyServerSideFixedClipping, Strategy
-from flwr.supercore.differential_privacy import add_gaussian_noise_inplace, compute_stdv
+from flwr.supercore.differential_privacy import compute_stdv
 
 from metricdp_pytorch.dp_diagnostics import add_diagnostics, clipping_diagnostics
+from metricdp_pytorch.seeded_noise import SeededNoiseMixin
 from metricdp_pytorch.strategy_factory import UNIT_WEIGHT_KEY
 
 # Andrew et al. (2021), "Differentially private learning with adaptive clipping": eta = 0.2.
@@ -127,7 +128,7 @@ def privacy_account(*, noise_multiplier: float, maximum: float, bit_noise_std: f
     return PrivacyAccount(maximum / noise_multiplier, 1.0 / bit_noise_std, rounds)
 
 
-class PrivateMedianMetricPrivacyServerSideFixedClipping(DifferentialPrivacyServerSideFixedClipping):
+class PrivateMedianMetricPrivacyServerSideFixedClipping(SeededNoiseMixin, DifferentialPrivacyServerSideFixedClipping):
     """Metric-aware server-side DP whose noise follows a privately tracked median client distance.
 
     ``noise_multiplier`` plays the paper's ``z``: the noise std on the average is
@@ -177,6 +178,7 @@ class PrivateMedianMetricPrivacyServerSideFixedClipping(DifferentialPrivacyServe
         self._active_clients = 0
         self._round_quantile = initial_quantile
         self._noise_stdv: float | None = None
+        self.noise_round_diagnostics: dict[str, float | list[float]] = {}
 
     def __repr__(self) -> str:
         return "Private-median metric-aware DP Strategy (Server-Side Fixed Clipping)"
@@ -239,6 +241,7 @@ class PrivateMedianMetricPrivacyServerSideFixedClipping(DifferentialPrivacyServe
         })
         if self._noise_stdv is not None:
             diagnostics["private-median-noise-stdv"] = self._noise_stdv
+        diagnostics.update(self.noise_round_diagnostics)
         return aggregated_arrays, add_diagnostics(aggregated_metrics, diagnostics)
 
     def _add_noise_to_aggregated_arrays(self, aggregated_arrays: ArrayRecord) -> ArrayRecord:
@@ -247,7 +250,7 @@ class PrivateMedianMetricPrivacyServerSideFixedClipping(DifferentialPrivacyServe
         scale = self._active_clients / self.num_slots
         aggregated = [c + scale * (a - c) for a, c in zip(aggregated_arrays.to_numpy_ndarrays(), current, strict=True)]
         stdv = compute_stdv(self.noise_multiplier / self._round_quantile, self.clipping_norm, self.num_slots)
-        add_gaussian_noise_inplace(aggregated, stdv)
+        aggregated = self._noisy_copy(aggregated, stdv)
         self._noise_stdv = stdv
         log(INFO, "aggregate_train: private-median noise with %.6f stdev added (q=%.6f)", stdv, self._round_quantile)
         return ArrayRecord({key: Array(np.asarray(value))

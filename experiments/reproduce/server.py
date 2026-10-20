@@ -29,9 +29,11 @@ from experiments.reproduce.paper_strategies import create_paper_strategy
 # leave the run config, the strategy and the result metadata unchanged).
 LOCAL_TRAINING_KEYS = ("proximal-mu", "proximal-normalization", "consensus-kl-beta", "local-steps")
 from experiments.reproduce.paper_training import create_initial_model, seed_training
+from experiments.reproduce.seeds import SEED_KEYS, run_seeds
 from metricdp_pytorch.data_module import load_data_module
 from metricdp_pytorch.dp_diagnostics import LeaveOneOutResidualLogging
 from metricdp_pytorch.model_module import load_model
+from metricdp_pytorch.seeded_noise import set_noise_seed
 from metricdp_pytorch.utils.device import resolve_device
 from metricdp_pytorch.utils.runtime import runtime_config
 
@@ -182,6 +184,59 @@ def residual_clipping_strategy(config):
     )
 
 
+def private_median_strategy(config):
+    """WP3: metric privacy with a privately tracked median client distance (``--privacy private-median``)."""
+    from metricdp_pytorch.private_metric_strategy import PrivateMedianMetricPrivacyServerSideFixedClipping
+    from metricdp_pytorch.strategy_factory import make_base_strategy
+
+    base = make_base_strategy(str(config["aggregation"]), num_clients=int(config["num-clients"]),
+                              fraction_evaluate=float(config.get("fraction-evaluate", 1.0)),
+                              weighting=str(config.get("aggregation-weighting", "num-examples")))
+    bit_noise = config.get("median-bit-noise-std")
+    return PrivateMedianMetricPrivacyServerSideFixedClipping(
+        base, noise_multiplier=float(config["noise-multiplier"]), clipping_norm=float(config["clipping-norm"]),
+        num_slots=int(config["num-slots"]), initial_quantile=float(config["median-quantile"]),
+        minimum_quantile=float(config["median-quantile-min"]), maximum_quantile=float(config["median-quantile-max"]),
+        bit_noise_std=None if bit_noise is None else float(bit_noise), seed=int(config.get("seed", 42)),
+    )
+
+
+def make_run_strategy(config: Mapping[str, Any]):
+    """Build the configured strategy, with its server noise seeded and logged as configured."""
+    influence = {}
+    if str(config["privacy"]) == "influence-noise":
+        influence = {
+            "influence_fraction": float(config["influence-fraction"]),
+            "influence_cap": float(config["influence-cap"]),
+            "seed": int(config.get("seed", 42)),
+        }
+    if "proximal-mu" in config:
+        influence["proximal_mu"] = float(config["proximal-mu"])
+    if str(config["privacy"]) == "residual-clipping":
+        strategy = residual_clipping_strategy(config)
+    elif str(config["privacy"]) == "private-median":
+        strategy = private_median_strategy(config)
+    else:
+        strategy = create_paper_strategy(
+            **influence,
+            aggregation=str(config["aggregation"]),
+            privacy=str(config["privacy"]),
+            num_clients=int(config["num-clients"]),
+            fraction_evaluate=float(config.get("fraction-evaluate", 1.0)),
+            noise_multiplier=float(config.get("noise-multiplier", 0.01)),
+            clipping_norm=float(config.get("clipping-norm", 5.0)),
+            weighting=str(config.get("aggregation-weighting", "num-examples")),
+        )
+    seeds = run_seeds(config)
+    if seeds.noise_explicit:
+        set_noise_seed(strategy, seeds.noise)
+    if bool(config.get("log-noise-diagnostics", False)):
+        strategy.log_noise_diagnostics = True
+    if bool(config.get("log-loo-residuals", False)):
+        strategy = LeaveOneOutResidualLogging(strategy)
+    return strategy
+
+
 def run(
         grid: Grid,
         config: Mapping[str, Any],
@@ -196,35 +251,12 @@ def run(
     this function falls back to a randomly initialized configured model.
     """
     if initial_arrays is None:
-        seed_training(int(config.get("seed", 42)))
+        seed_training(run_seeds(config).init)
         initial_arrays = ArrayRecord(
             load_model(str(config["model-module"])).state_dict()
         )
 
-    influence = {}
-    if str(config["privacy"]) == "influence-noise":
-        influence = {
-            "influence_fraction": float(config["influence-fraction"]),
-            "influence_cap": float(config["influence-cap"]),
-            "seed": int(config.get("seed", 42)),
-        }
-    if "proximal-mu" in config:
-        influence["proximal_mu"] = float(config["proximal-mu"])
-    if str(config["privacy"]) == "residual-clipping":
-        strategy = residual_clipping_strategy(config)
-    else:
-        strategy = create_paper_strategy(
-            **influence,
-            aggregation=str(config["aggregation"]),
-            privacy=str(config["privacy"]),
-            num_clients=int(config["num-clients"]),
-            fraction_evaluate=float(config.get("fraction-evaluate", 1.0)),
-            noise_multiplier=float(config.get("noise-multiplier", 0.01)),
-            clipping_norm=float(config.get("clipping-norm", 5.0)),
-            weighting=str(config.get("aggregation-weighting", "num-examples")),
-        )
-    if bool(config.get("log-loo-residuals", False)):
-        strategy = LeaveOneOutResidualLogging(strategy)
+    strategy = make_run_strategy(config)
     return strategy.start(
         grid=grid,
         initial_arrays=initial_arrays,
@@ -242,18 +274,18 @@ def run(
 def main(grid: Grid, context: Context) -> None:
     """Run one reproduction server experiment without CIA evaluation."""
     config = runtime_config(context)
-    seed = int(config.get("seed", 42))
+    seeds = run_seeds(config)
     data_module = load_data_module(str(config["data-module"]), config)
     validation_loader, final_testloader = data_module.server_loaders(
         batch_size=int(config.get("initialization-batch-size", 32)),
-        seed=seed,
+        seed=seeds.layout,
         max_samples=int(config.get("max-test-samples", 0)),
     )
     model_factory = lambda: load_model(str(config["model-module"]))
     initial_model, initialization_losses = create_initial_model(
         str(config["aggregation"]),
         validation_loader,
-        seed=seed,
+        seed=seeds.init,
         epochs=int(config.get("initialization-epochs", 20)),
         learning_rate=float(config.get("initialization-learning-rate", 1e-3)),
         model_factory=model_factory,
@@ -320,6 +352,9 @@ def main(grid: Grid, context: Context) -> None:
                if str(config["privacy"]) == "influence-noise" else {}),
             **({"log_loo_residuals": True}
                if bool(config.get("log-loo-residuals", False)) else {}),
+            **({"log_noise_diagnostics": True}
+               if bool(config.get("log-noise-diagnostics", False)) else {}),
+            **{key.replace("-", "_"): int(config[key]) for key in SEED_KEYS if key in config},
             **{key.replace("-", "_"): config[key] for key in RESIDUAL_KEYS if key in config},
             **{key.replace("-", "_"): config[key] for key in LOCAL_TRAINING_KEYS if key in config},
             "initialization_pretrained": bool(initialization_losses),
