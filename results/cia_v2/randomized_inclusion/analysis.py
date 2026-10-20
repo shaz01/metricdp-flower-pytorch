@@ -8,20 +8,22 @@ from pathlib import Path
 
 import numpy as np
 
-from results.cia_v2.randomized_inclusion.runner import CANDIDATES, design_matrix
+from results.cia_v2.randomized_inclusion.runner import CANDIDATES, TOP_DECILE, design_matrix
 
 
 @dataclass(frozen=True)
 class Audit:
     config: str
     rounds: tuple[int, ...]
-    losses: np.ndarray  # (candidates, replicates, checkpoints) shadow loss, CANDIDATES order
+    losses: np.ndarray  # (candidates, replicates, checkpoints) shadow loss, in ``candidates`` order
     membership: np.ndarray  # (candidates, replicates) True where the candidate took part
     final_accuracy: np.ndarray  # (replicates,) server test accuracy at the last checkpoint
     released_norms: np.ndarray | None  # (replicates, rounds) released-update norm (DP runs only)
     surrogate_losses: np.ndarray | None  # like ``losses``, label-matched public surrogates
     run_names: tuple[str, ...]
     min_client_accuracy: np.ndarray | None = None  # (replicates,) lowest per-client accuracy at the final round
+    candidates: tuple[int, ...] = CANDIDATES  # the run manifests' panel (EuroSAT's by default)
+    top_decile: tuple[int, ...] = TOP_DECILE
 
 
 def load_audit(root: Path, *, config: str) -> Audit:
@@ -33,10 +35,11 @@ def load_audit(root: Path, *, config: str) -> Audit:
             found.append((path.parent, manifest))
     if not found:
         raise ValueError(f"no runs of {config!r} under {root}")
-    designs = {(m["design_seed"], m["replicates"], tuple(m["checkpoint_rounds"])) for _, m in found}
+    designs = {(m["design_seed"], m["replicates"], tuple(m["checkpoint_rounds"]), tuple(m["candidates"]),
+                tuple(m["top_decile"])) for _, m in found}
     if len(designs) != 1:
         raise ValueError(f"{config!r} mixes design settings: {sorted(designs)}")
-    ((design_seed, replicates, rounds),) = designs
+    ((design_seed, replicates, rounds, candidates, top_decile),) = designs
     by_replicate = {m["replicate"]: (folder, m) for folder, m in found}
     missing = [j for j in range(replicates)
                if j not in by_replicate or not (by_replicate[j][0] / "complete.json").exists()]
@@ -44,9 +47,9 @@ def load_audit(root: Path, *, config: str) -> Audit:
         raise ValueError(f"{config!r} is incomplete or duplicated: replicates {missing} missing")
     expected = design_matrix(replicates, design_seed=design_seed)
 
-    losses = np.empty((len(CANDIDATES), replicates, len(rounds)))
+    losses = np.empty((len(candidates), replicates, len(rounds)))
     surrogates = None
-    membership = np.zeros((len(CANDIDATES), replicates), dtype=bool)
+    membership = np.zeros((len(candidates), replicates), dtype=bool)
     accuracy, norms, names = np.empty(replicates), [], []
     client_minimum = np.full(replicates, np.nan)
     for j in range(replicates):
@@ -54,7 +57,7 @@ def load_audit(root: Path, *, config: str) -> Audit:
         names.append(manifest["run_name"])
         rows = json.loads((folder / "measurements.json").read_text())
         index = {(r["round"], r["candidate"]): r for r in rows}
-        for c, candidate in enumerate(CANDIDATES):
+        for c, candidate in enumerate(candidates):
             membership[c, j] = candidate in manifest["included"]
             for k, round_number in enumerate(rounds):
                 row = index[(round_number, candidate)]
@@ -63,7 +66,7 @@ def load_audit(root: Path, *, config: str) -> Audit:
                     if surrogates is None:
                         surrogates = np.full_like(losses, np.nan)
                     surrogates[c, j, k] = row["surrogate_loss"]
-        accuracy[j] = index[(rounds[-1], CANDIDATES[0])]["test_accuracy"]
+        accuracy[j] = index[(rounds[-1], candidates[0])]["test_accuracy"]
         result = json.loads((folder / f"{manifest['run_name']}.json").read_text())
         training = result["train_metrics"]
         norms.append([training[str(t)].get("dp-released-update-norm", np.nan)
@@ -77,4 +80,5 @@ def load_audit(root: Path, *, config: str) -> Audit:
     return Audit(config=config, rounds=tuple(rounds), losses=losses, membership=membership,
                  final_accuracy=accuracy, released_norms=None if np.isnan(released).all() else released,
                  surrogate_losses=surrogates, run_names=tuple(names),
-                 min_client_accuracy=None if np.isnan(client_minimum).all() else client_minimum)
+                 min_client_accuracy=None if np.isnan(client_minimum).all() else client_minimum,
+                 candidates=candidates, top_decile=top_decile)

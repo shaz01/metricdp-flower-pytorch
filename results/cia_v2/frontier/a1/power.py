@@ -14,7 +14,7 @@ import numpy as np
 from scipy.stats import norm, t as student
 
 from experiments.cia.audit_attacks import GATE_LEVEL, _complementary_pairs
-from results.cia_v2.frontier.a1.analyze import SUBSETS, TARGETS, _Curve
+from results.cia_v2.frontier.a1.analyze import TARGETS, _Curve, subsets
 from results.cia_v2.frontier.a1.analyze import HERE as A1
 from results.cia_v2.randomized_inclusion.analysis import load_audit
 
@@ -24,7 +24,7 @@ POWER = 0.8
 
 def main():
     audits = [[load_audit(A1.parent / "results", config=name) for name in names] for names in CURVES]
-    for subset_name, subset in SUBSETS.items():
+    for subset_name, subset in subsets(audits[0][0]).items():
         first, second = _Curve(audits[0], subset), _Curve(audits[1], subset)
         candidates, replicates = first.scores[0].shape
         pairs = _complementary_pairs(first.membership[0])

@@ -21,7 +21,7 @@ from experiments.cia.audit_attacks import (
     GATE_LEVEL, calibrated_scores, pair_jackknife, roc_auc, threshold_scores, tpr_at_fpr, two_way_bootstrap,
 )
 from results.cia_v2.randomized_inclusion.analysis import load_audit
-from results.cia_v2.randomized_inclusion.runner import CANDIDATES, FRONTIER_RATIO, TOP_DECILE
+from results.cia_v2.randomized_inclusion.runner import FRONTIER_RATIO
 
 HERE = Path(__file__).resolve().parent
 ACTIVE, ROUNDS = 32, 50
@@ -65,7 +65,7 @@ def _subset_metrics(losses, membership, resamples, surrogates=None):
 
 
 def config_summary(audit, *, noise_ratio, resamples=RESAMPLES):
-    top = np.isin(CANDIDATES, TOP_DECILE)
+    top = np.isin(audit.candidates, audit.top_decile)
     rng = np.random.default_rng(BOOTSTRAP_SEED)
     accuracy = audit.final_accuracy
     draws = [accuracy[rng.integers(len(accuracy), size=len(accuracy))].mean() for _ in range(resamples)]
