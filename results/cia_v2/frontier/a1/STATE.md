@@ -1,10 +1,10 @@
 package: A1
-status: running (stage 1, then stage 2; both GPUs, two workers each)
-gate: G-A1 = not evaluated yet (report, no kill)
+status: analyzed; FINDINGS.md written; the owner decides whether A1 is finished
+gate: G-A1 = metric privacy equivalent at 0.740 (gate interval), no detectable difference at 0.660; private median no detectable difference at both (FINDINGS.md)
 protocol: results/cia_v2/frontier/a1/PROTOCOL.md (fixed 2026-10-19, before any A1 leakage run)
 machine: compute server
-cost so far: about 2.3 GPU-h (accuracy calibration, 20 runs) of ROADMAP.md's 30 GPU-h cap (stop at 37.5); main runs about 25 GPU-h
-next: stage 1 (112 runs), replacement rule on accuracy, stage 2; then analysis
+cost so far: about 23.7 GPU-h (calibration 2.0, main runs 21.7) of ROADMAP.md's 30 GPU-h cap
+next: none until the owner decides (report, or the paper's claim form)
 needs from others: none (M2's runs serve as the global-DP curve; M2 found no useful regime, so the targets are M2's two levels around 0.70 accuracy: 2x, 0.740, and 4x, 0.660)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, A1 (Agent A, branch `feature/cia-v2-frontier`). The design
@@ -114,3 +114,5 @@ was close to unreachable: for all candidates the paired difference's gate half-w
 | 2026-10-19 20:40 | Calibration running (4 workers, both GPUs idle and unclaimed at launch). `a1/analyze.py` written with 12 synthetic tests (matched-accuracy difference, jackknife and two-way bootstrap, G-A1 outcomes, no extrapolation). `a1/power.py`: detectable difference 0.027 / 0.037 (all candidates) and 0.091 / 0.096 (top decile) at the two targets. |
 | 2026-10-19 21:19 | Calibration (16 runs, accuracy only): metric privacy 0.802 / 0.797 / 0.769 / 0.711 and private median 0.803 / 0.768 / 0.708 / 0.680 at 0.25x / 0.5x / 1x / 2x. Both bracket 0.740; neither reaches 0.660, so 4x is added to the calibration (4 runs, same design seed 3), accuracy only, before the protocol. |
 | 2026-10-19 21:40 | 4x calibration: metric privacy 0.636, private median 0.506. Levels fixed in PROTOCOL.md: metric privacy 1x, 2x, 4x; private median 0.5x, 1x, 2x, 4x (four, because its calibration runs differ by up to 0.07 at one level). A1's replicates have M2's seeds and inclusion (checked for replicates 0 and 17). Calibration runs committed (accuracy only, never analyzed). Main runs started on both GPUs (idle and unclaimed). |
+| 2026-10-20 08:26 | All 224 main runs complete (both GPUs; `a1-help` moved GPU 1 onto GPU 0's remaining configurations at 06:41). |
+| 2026-10-20 09:50 | Replacement rule applied on stage-1 accuracy (the chain had already run stage 2; no leakage computed): metric privacy 0.753 / 0.666 / 0.597, private median 0.748 / 0.680 / 0.616 / 0.466; both targets bracketed, no replacement. Analysis (`analysis.json`): **G-A1** metric privacy -0.000 [-0.019, 0.018] at 0.740 (equivalent; bootstrap [-0.028, 0.031]) and +0.015 [-0.016, 0.045] at 0.660; private median -0.006 [-0.042, 0.031] and -0.011 [-0.051, 0.029] (no detectable difference). FINDINGS.md written. |
