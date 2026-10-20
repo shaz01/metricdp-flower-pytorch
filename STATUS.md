@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-19, CIA v2 M2 done (G-M2: no useful regime, escalated) and A2 analyzed (G-A2: channel size recorded). 2026-10-17, CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
+**Last updated:** 2026-10-20, CIA v2 A1 done (G-A1: no mechanism better than global DP at matched accuracy). 2026-10-19, CIA v2 M2 done (G-M2: no useful regime, escalated) and A2 analyzed (G-A2: channel size recorded). 2026-10-17, CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
 (`research/cia_review_2026-10/SYNTHESIS.md`) merged into `master`; the owner is choosing new directions from the
 synthesis. 2026-10-15: WP0-WP2 merged, D1 stopped. 2026-10-10: CIA literature review and agent roadmap added
 (`HANDOFF.md`, `research/cia_review_2026-10/`)
@@ -221,7 +221,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-CIA v2 A1 main runs on the compute server (Agent A, both GPUs, started 2026-10-19 21:34). M2 done, G-M2: no useful regime, escalated (`results/cia_v2/frontier/ESCALATION.md`); A2 analyzed after the owner's amendment (collapsed rounds; no further runs), G-A2: channel size recorded (`results/cia_v2/side_channel/FINDINGS.md`); A1 running (PROTOCOL.md fixed: metric privacy at 1x, 2x, 4x; private median at 0.5x, 1x, 2x, 4x; targets M2's accuracies at 2x and 4x); consensus-KL follow-up rows below finished 2026-10-16.
+Nothing of Agent A running on the compute server (2026-10-20). M2 done, G-M2: no useful regime, escalated (`results/cia_v2/frontier/ESCALATION.md`); A2 analyzed after the owner's amendment (collapsed rounds; no further runs), G-A2: channel size recorded (`results/cia_v2/side_channel/FINDINGS.md`); A1 done, G-A1: at matched accuracy neither metric privacy mechanism leaks detectably less than global DP (paper's mechanism equivalent at 0.740; `results/cia_v2/frontier/a1/FINDINGS.md`); all Agent A packages analyzed, owner decisions pending; consensus-KL follow-up rows below finished 2026-10-16.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -240,7 +240,7 @@ section.
 | `randomized_inclusion.runner --config {vanilla,gdp-r1x,gdp-r4x,gdp-r16x} --design-seed 2` replicates 0-15 (compute server, GPU 1, two workers, shared by owner approval; branch `feature/cia-v2-frontier`) | CIA v2 M2 stage 1, 64 runs | done 2026-10-18 03:52 (fill-in rule adds 2x and 8x) |
 | `m2-chain.sh` (compute server, GPU 0, two workers; branch `feature/cia-v2-frontier`) | CIA v2 M2 stage 2 plus 2x and 8x, 128 runs | done 2026-10-19 00:51 (192 runs, about 19 GPU-h); G-M2 no useful regime |
 | `a1-cal-worker.sh` (compute server, both GPUs, idle and unclaimed at launch; branch `feature/cia-v2-frontier`) | CIA v2 A1 accuracy calibration, 20 runs (design seed 3, accuracy only) | done 2026-10-19 21:32 (about 2.3 GPU-h); levels fixed in `a1/PROTOCOL.md` |
-| `a1-chain.sh` (compute server, GPUs 0 and 1, two workers each, idle and unclaimed at launch; branch `feature/cia-v2-frontier`) | CIA v2 A1 main runs, 7 configurations x 32 = 224 runs | running (started 2026-10-19 21:34; about 12 h) |
+| `a1-chain.sh` (compute server, GPUs 0 and 1, two workers each, idle and unclaimed at launch; branch `feature/cia-v2-frontier`) | CIA v2 A1 main runs, 7 configurations x 32 = 224 runs | done 2026-10-20 08:26 (about 21.7 GPU-h); G-A1 recorded |
 
 ## What's established on `master`
 
