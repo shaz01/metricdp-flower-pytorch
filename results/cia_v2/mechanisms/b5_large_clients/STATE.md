@@ -1,10 +1,10 @@
 package: B5, exposure of large clients (owner decision 10: B5 first, then B1)
-status: stage B running (logit adjustment at 4x, two workers on GPU 1, shared by owner approval)
-gate: G-B5 at 2x: logit adjustment PASS (AUC -0.100 [-0.152, -0.049], accuracy +1.1 pp); caps 326 and 182 fail
+status: analyzed; FINDINGS.md written; the owner decides whether B5 is finished
+gate: G-B5: logit adjustment passes at 2x (AUC -0.100 [-0.152, -0.049], accuracy +1.1 pp), fails at 4x (-0.036 [-0.074, 0.002]); caps fail
 protocol: results/cia_v2/mechanisms/b5_large_clients/PROTOCOL.md (fixed 2026-10-20, before any B5 run)
 machine: compute server
-cost so far: about 8.8 GPU-h of occupancy (stage A, 96 runs, two workers on shared GPU 1, 10:55-19:44) of the 15 GPU-h cap
-next: stage B: logit adjustment at 4x (32 runs, about 3 GPU-h), the only stage-A intervention meeting the stage-B rule; then FINDINGS
+cost so far: about 12.5 GPU-h (stage A 8.8, stage B 3.7) of the 15 GPU-h cap
+next: B1 (client subsampling), per decision 10
 needs from others: none (M2's runs are the global-DP baseline; no other agent session is running)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, B5, as amended by Section 10 (decisions 9 and 10, 2026-10-20).
@@ -97,3 +97,5 @@ noise. Global DP at M2's operating points (decision 10): 2x (`r = 0.003092`, acc
 | 2026-10-20 19:44 | Stage A complete (96 runs). |
 | 2026-10-21 16:50 | Analysis (`analysis.json`), paired with M2's gdp-r2x: cap 326: AUC 0.698 vs 0.702, difference -0.004 [-0.041, 0.033], accuracy -3.6 pp; cap 182: -0.006 [-0.042, 0.031], accuracy -8.3 pp; **logit adjustment: AUC 0.601, difference -0.100 [-0.152, -0.049] (two-way [-0.172, -0.035]), accuracy 0.751 vs 0.740 (+1.1 pp [+0.4, +1.7]): G-B5 passes at 2x.** Top decile: -0.036 [-0.119, 0.047] (not gated). Checks: the final-round attacker also drops (0.611 to 0.563), the threshold attacker slightly (0.568 to 0.555); no diverged runs (largest final shadow loss 2.27 vs 2.34); mean IN-OUT final-loss gap 0.058 vs 0.075. Stage-B rule (reduction at least 0.03, accuracy loss at most 1 pp): logit adjustment only. |
 | 2026-10-21 16:47 | Owner approved sharing GPU 1 (with another user's process) for stage B and the AZ calibration. Stage B started: `b5-la-r4x`, 32 runs (tmux b5-w2, b5-w3). |
+| 2026-10-21 20:29 | Stage B complete (32 runs). |
+| 2026-10-21 23:10 | Analysis: logit adjustment at 4x: AUC 0.630 vs 0.666, difference -0.036 [-0.074, 0.002], accuracy +1.3 pp: fails G-B5. TPR at 5% FPR 0.115 vs 0.186. FINDINGS.md written. |
