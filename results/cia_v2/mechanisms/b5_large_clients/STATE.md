@@ -1,5 +1,5 @@
 package: B5, exposure of large clients (owner decision 10: B5 first, then B1)
-status: stage A complete and analyzed; stage B (logit adjustment at 4x) waits for a GPU
+status: stage B running (logit adjustment at 4x, two workers on GPU 1, shared by owner approval)
 gate: G-B5 at 2x: logit adjustment PASS (AUC -0.100 [-0.152, -0.049], accuracy +1.1 pp); caps 326 and 182 fail
 protocol: results/cia_v2/mechanisms/b5_large_clients/PROTOCOL.md (fixed 2026-10-20, before any B5 run)
 machine: compute server
@@ -96,3 +96,4 @@ noise. Global DP at M2's operating points (decision 10): 2x (`r = 0.003092`, acc
 | 2026-10-20 10:55 | Both GPUs carried another user's jobs; the owner approved sharing GPU 1 (with our AZ calibration and that user's process) for B5 stage A only. Two workers started (tmux b5-w0, b5-w1). |
 | 2026-10-20 19:44 | Stage A complete (96 runs). |
 | 2026-10-21 16:50 | Analysis (`analysis.json`), paired with M2's gdp-r2x: cap 326: AUC 0.698 vs 0.702, difference -0.004 [-0.041, 0.033], accuracy -3.6 pp; cap 182: -0.006 [-0.042, 0.031], accuracy -8.3 pp; **logit adjustment: AUC 0.601, difference -0.100 [-0.152, -0.049] (two-way [-0.172, -0.035]), accuracy 0.751 vs 0.740 (+1.1 pp [+0.4, +1.7]): G-B5 passes at 2x.** Top decile: -0.036 [-0.119, 0.047] (not gated). Checks: the final-round attacker also drops (0.611 to 0.563), the threshold attacker slightly (0.568 to 0.555); no diverged runs (largest final shadow loss 2.27 vs 2.34); mean IN-OUT final-loss gap 0.058 vs 0.075. Stage-B rule (reduction at least 0.03, accuracy loss at most 1 pp): logit adjustment only. |
+| 2026-10-21 16:47 | Owner approved sharing GPU 1 (with another user's process) for stage B and the AZ calibration. Stage B started: `b5-la-r4x`, 32 runs (tmux b5-w2, b5-w3). |
