@@ -1,10 +1,10 @@
 package: B5, exposure of large clients (owner decision 10: B5 first, then B1)
-status: running (stage A at 2x, two workers on GPU 1, shared by owner approval)
-gate: G-B5 (amended by owner decision 9) = not evaluated yet
+status: stage A complete and analyzed; stage B (logit adjustment at 4x) waits for a GPU
+gate: G-B5 at 2x: logit adjustment PASS (AUC -0.100 [-0.152, -0.049], accuracy +1.1 pp); caps 326 and 182 fail
 protocol: results/cia_v2/mechanisms/b5_large_clients/PROTOCOL.md (fixed 2026-10-20, before any B5 run)
 machine: compute server
-cost so far: 0 GPU-h of the 15 GPU-h cap (stop and escalate at 18.75)
-next: stage A at 2x (cap 326, cap 182, logit adjustment; 96 runs)
+cost so far: about 8.8 GPU-h of occupancy (stage A, 96 runs, two workers on shared GPU 1, 10:55-19:44) of the 15 GPU-h cap
+next: stage B: logit adjustment at 4x (32 runs, about 3 GPU-h), the only stage-A intervention meeting the stage-B rule; then FINDINGS
 needs from others: none (M2's runs are the global-DP baseline; no other agent session is running)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, B5, as amended by Section 10 (decisions 9 and 10, 2026-10-20).
@@ -94,3 +94,5 @@ noise. Global DP at M2's operating points (decision 10): 2x (`r = 0.003092`, acc
 | 2026-10-20 11:20 | Code: default-off contribution cap and logit-adjusted loss (client, training loop, runner flags, randomized-inclusion options; manifests record them only when set, and M2's 437 manifests regenerate unchanged); 7 tests. `analyze.py` (paired differences to M2, G-B5) with 3 tests. 517 related tests pass. PROTOCOL.md fixed. |
 | 2026-10-20 10:50 | 1-round CPU smoke run with both options (scratch output): per-client examples capped at 326, logit-adjusted loss ran, manifest records `local_training`. |
 | 2026-10-20 10:55 | Both GPUs carried another user's jobs; the owner approved sharing GPU 1 (with our AZ calibration and that user's process) for B5 stage A only. Two workers started (tmux b5-w0, b5-w1). |
+| 2026-10-20 19:44 | Stage A complete (96 runs). |
+| 2026-10-21 16:50 | Analysis (`analysis.json`), paired with M2's gdp-r2x: cap 326: AUC 0.698 vs 0.702, difference -0.004 [-0.041, 0.033], accuracy -3.6 pp; cap 182: -0.006 [-0.042, 0.031], accuracy -8.3 pp; **logit adjustment: AUC 0.601, difference -0.100 [-0.152, -0.049] (two-way [-0.172, -0.035]), accuracy 0.751 vs 0.740 (+1.1 pp [+0.4, +1.7]): G-B5 passes at 2x.** Top decile: -0.036 [-0.119, 0.047] (not gated). Checks: the final-round attacker also drops (0.611 to 0.563), the threshold attacker slightly (0.568 to 0.555); no diverged runs (largest final shadow loss 2.27 vs 2.34); mean IN-OUT final-loss gap 0.058 vs 0.075. Stage-B rule (reduction at least 0.03, accuracy loss at most 1 pp): logit adjustment only. |
