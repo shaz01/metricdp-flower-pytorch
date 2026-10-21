@@ -229,3 +229,13 @@ def test_alpha_override_reaches_the_partition_profile_and_manifest():
     assert json.loads(flags["--partition-profile"])["alpha"] == 100.0
     assert runner.manifest(run, surrogates=False)["alpha"] == 100.0
     assert "alpha" not in runner.manifest(plan()[0], surrogates=False)  # EuroSAT's 0.3 is not recorded
+
+
+def test_alzheimer_private_median_uses_its_own_quantile_settings():
+    run = plan(dataset="alzheimer", config="pm", privacy="private-median")[0]
+    args = run.runner_args(output_dir=Path("out"), max_parallel_clients=4, client_cpus=1.0,
+                           checkpoint_rounds=runner.CHECKPOINT_ROUNDS)
+    flags = dict(zip(args[::1], args[1::1]))
+    assert (flags["--median-quantile"], flags["--median-quantile-min"], flags["--median-quantile-max"]) == (
+        "0.4", "0.04", "1.3")
+    assert runner.manifest(run, surrogates=False)["median_quantile"]["maximum"] == 1.3

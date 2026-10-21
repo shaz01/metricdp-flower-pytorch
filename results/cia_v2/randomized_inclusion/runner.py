@@ -101,11 +101,11 @@ class DatasetProfile:
 PROFILES = {
     "eurosat": DatasetProfile("eurosat", DATA_MODULE, MODEL_MODULE, HYPERPARAMS, TOP_DECILE, CANDIDATES,
                               SHADOW_FRACTION, (MEDIAN_QUANTILE, MEDIAN_QUANTILE_MIN, MEDIAN_QUANTILE_MAX)),
-    # Shadow fraction 25%: at 10% the smallest candidates get 1 image (median 8); at 25%, 3 (median 20). The private-
-    # median quantile is set from the accuracy calibration's metric-privacy distances (results/cia_v2/alzheimer/).
+    # Shadow fraction 25%: at 10% the smallest candidates get 1 image (median 8); at 25%, 3 (median 20). Private
+    # median: the calibration's metric-privacy runs logged median pairwise client distances of 0.50-0.65 (EuroSAT
+    # about 0.46), so EuroSAT's 0.3 in [0.03, 1.0] scales to 0.4 in [0.04, 1.3] (results/cia_v2/alzheimer/STATE.md).
     "alzheimer": DatasetProfile("alzheimer", DATA_MODULE, "experiments.reproduce.paper_cnn:create_model",
-                                ALZHEIMER_HYPERPARAMS, ALZHEIMER_TOP_DECILE, ALZHEIMER_CANDIDATES, 0.25,
-                                (MEDIAN_QUANTILE, MEDIAN_QUANTILE_MIN, MEDIAN_QUANTILE_MAX),
+                                ALZHEIMER_HYPERPARAMS, ALZHEIMER_TOP_DECILE, ALZHEIMER_CANDIDATES, 0.25, (0.4, 0.04, 1.3),
                                 alpha=1.0, rounds=100, checkpoint_every=10),
 }
 
