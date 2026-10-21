@@ -197,7 +197,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Owner decisions 7-11 in progress (2026-10-20, all by the agent that ran Agent A's packages): AZ Alzheimer replication paused and escalated (vanilla reaches only 0.55 accuracy at 48 slots, alpha 0.3; `results/cia_v2/alzheimer/ESCALATION.md` on `feature/cia-v2-alzheimer`); B5 stage A done: logit adjustment passes G-B5 at 2x (AUC 0.601 vs 0.702, accuracy +1.1 pp), caps fail; stage B waits for a GPU (`feature/cia-v2-mechanisms`); AZ diagnosis done (alpha 1.0: 0.740, near-IID: 0.780), setup is the owner's pick; B4 confirmatory run done, confirmed at 20 and 50 public images (`feature/cia-v2-formal-confirm`, `results/cia_v2/formal_regime/confirm/FINDINGS.md`).
+Owner decisions 7-11 in progress (2026-10-20, all by the agent that ran Agent A's packages): AZ Alzheimer replication paused and escalated (vanilla reaches only 0.55 accuracy at 48 slots, alpha 0.3; `results/cia_v2/alzheimer/ESCALATION.md` on `feature/cia-v2-alzheimer`); B5 stage A done: logit adjustment passes G-B5 at 2x (AUC 0.601 vs 0.702, accuracy +1.1 pp), caps fail; stage B (logit adjustment at 4x) running on GPU 1 (`feature/cia-v2-mechanisms`); AZ: owner chose alpha 1.0 with 100 rounds, calibration running on GPU 1 (GPU 1 shared by owner approval 2026-10-21); B4 confirmatory run done, confirmed at 20 and 50 public images (`feature/cia-v2-formal-confirm`, `results/cia_v2/formal_regime/confirm/FINDINGS.md`).
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -206,6 +206,8 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| 2 x `b5-worker.sh` (compute server, GPU 1 shared by owner approval; branch `feature/cia-v2-mechanisms`) | B5 stage B: logit adjustment at 4x, 32 runs | running (started 2026-10-21 16:47) |
+| 2 x `az1-cal-worker.sh` (compute server, GPU 1 shared by owner approval; branch `feature/cia-v2-alzheimer`) | AZ calibration, alpha 1.0, 100 rounds, 18 runs (accuracy only) | running (started 2026-10-21 16:51) |
 | `frozen_head.runner confirm_public --execute --workers 8` (compute server, CPU only; branch `feature/cia-v2-formal-confirm`) | B4 confirmatory run, 480 head-only runs (layout 44, 20 and 50 public images) | done 2026-10-20 10:25 (0.68 CPU-h); confirmed |
 | `az-wait.sh` then `az-cal-worker.sh` (compute server, GPU 1 idle and unclaimed at launch; branch `feature/cia-v2-alzheimer`) | AZ Alzheimer accuracy calibration batch 1, 18 runs (design seed 3, accuracy only) | stopped 2026-10-20 11:35 after 8 runs (vanilla 0.55 accuracy; escalated) |
 | `b5-wait.sh` then 2 x `b5-worker.sh` (compute server, first idle unclaimed GPU; branch `feature/cia-v2-mechanisms`) | B5 stage A at 2x: cap 326, cap 182, logit adjustment, 96 runs | done 2026-10-20 19:44 (about 8.8 GPU-h); logit adjustment passes G-B5 |
