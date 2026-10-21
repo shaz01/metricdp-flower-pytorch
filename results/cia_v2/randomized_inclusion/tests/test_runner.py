@@ -178,7 +178,9 @@ def test_alzheimer_runs_use_its_panel_model_and_layout():
     assert all(len(run.active) == 32 and set(run.included) <= set(profile.candidates) for run in runs)
     assert all(set(range(48)) - set(profile.candidates) <= set(run.active) for run in runs)
     assert {run.model_module for run in runs} == {"experiments.reproduce.paper_cnn:create_model"}
-    assert runs[0].hyperparams.learning_rate == 0.001 and runs[0].hyperparams.rounds == runner.ROUNDS
+    assert runs[0].hyperparams.learning_rate == 0.001 and runs[0].hyperparams.rounds == 100
+    pinned = runner.manifest(runs[0], surrogates=False)
+    assert pinned["checkpoint_rounds"] == list(range(0, 101, 10)) and pinned["alpha"] == 1.0
     eurosat = plan(replicates=32)
     assert [run.client_seed for run in runs] == [run.client_seed for run in eurosat]  # same design and seeds
 
@@ -200,7 +202,8 @@ def test_alzheimer_candidates_follow_the_rule_on_the_seed_42_layout():
     try:
         from results.cia_frontier.side_channel_audit.data import partition_summary
         from results.cia_v2.randomized_inclusion.data import ALZHEIMER_MIN_RECORDS
-        summary = partition_summary(runner.ALPHA, runner.SLOTS, runner.LAYOUT_SEED, min_records=ALZHEIMER_MIN_RECORDS)
+        summary = partition_summary(runner.PROFILES["alzheimer"].alpha, runner.SLOTS, runner.LAYOUT_SEED,
+                                    min_records=ALZHEIMER_MIN_RECORDS)
     except Exception:
         pytest.skip("Alzheimer MRI is not available locally")
     top, others = runner.select_candidates({c["target"]: c["records"] for c in summary["clients"]})
@@ -219,10 +222,10 @@ def test_data_module_follows_the_profile_dataset():
 
 
 def test_alpha_override_reaches_the_partition_profile_and_manifest():
-    run = plan(dataset="alzheimer", alpha=1.0)[0]
+    run = plan(dataset="alzheimer", alpha=100.0)[0]
     args = run.runner_args(output_dir=Path("out"), max_parallel_clients=4, client_cpus=1.0,
                            checkpoint_rounds=runner.CHECKPOINT_ROUNDS)
     flags = dict(zip(args[::1], args[1::1]))
-    assert json.loads(flags["--partition-profile"])["alpha"] == 1.0
-    assert runner.manifest(run, surrogates=False)["alpha"] == 1.0
-    assert "alpha" not in runner.manifest(plan(dataset="alzheimer")[0], surrogates=False)
+    assert json.loads(flags["--partition-profile"])["alpha"] == 100.0
+    assert runner.manifest(run, surrogates=False)["alpha"] == 100.0
+    assert "alpha" not in runner.manifest(plan()[0], surrogates=False)  # EuroSAT's 0.3 is not recorded

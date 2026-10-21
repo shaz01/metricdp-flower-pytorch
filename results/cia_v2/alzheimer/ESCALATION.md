@@ -44,3 +44,13 @@ The replication cannot test what it was decided for:
 4. **Drop the replication** and state the single-dataset scope in the paper.
 
 Cost so far: 8 runs, about 1 GPU-h of shared occupancy.
+
+## Diagnosis and resolution (owner, 2026-10-21)
+
+Option 1 ran (vanilla, 2 runs each, final accuracy): alpha 1.0 with 50 rounds 0.738 and 0.742 (still rising: 0.666 at
+round 40); alpha 100 (near-IID) with 50 rounds 0.787 and 0.772; alpha 0.3 with 100 rounds 0.595 and 0.652.
+
+The owner chose **alpha 1.0 with 100 rounds**: it keeps label skew (the channel that carries most of the leakage on
+EuroSAT) and should leave room above G-M2's 0.70 floor, which the calibration checks. STATE.md records the amended
+design.
+

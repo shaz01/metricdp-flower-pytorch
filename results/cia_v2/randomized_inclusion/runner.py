@@ -72,12 +72,13 @@ CANDIDATES = TOP_DECILE + (17, 1, 44, 22, 46, 39, 16, 6, 31, 20, 5, 47, 14, 28, 
                            13, 43, 37)
 
 
-# Alzheimer MRI (owner decision 8): fixed before any run from the seed-42 layout with at least 10 records per client
-# (partition_summary(0.3, 48, 42, min_records=10)) by the same rule: top decile 33 (372 records), 37 (334), 22 (311),
-# 43 (276), 28 (219); then 27 by size quantile, 15 to 197 records.
-ALZHEIMER_TOP_DECILE = (33, 37, 22, 43, 28)
-ALZHEIMER_CANDIDATES = ALZHEIMER_TOP_DECILE + (21, 26, 8, 10, 29, 31, 9, 46, 41, 13, 1, 0, 4, 5, 44, 7, 14, 16, 2, 36, 25,
-                                               18, 15, 11, 24, 47, 45)
+# Alzheimer MRI (owner decision 8, setup chosen 2026-10-21 after results/cia_v2/alzheimer/ESCALATION.md: alpha 1.0,
+# 100 rounds). Fixed before any gated run from the seed-42 layout with at least 10 records per client
+# (partition_summary(1.0, 48, 42, min_records=10)) by the same rule: top decile 4 (311 records), 29 (255), 31 (236),
+# 22 (223), 15 (208); then 27 by size quantile, 19 to 203 records.
+ALZHEIMER_TOP_DECILE = (4, 29, 31, 22, 15)
+ALZHEIMER_CANDIDATES = ALZHEIMER_TOP_DECILE + (11, 21, 2, 38, 12, 37, 10, 13, 6, 35, 42, 47, 24, 9, 20, 27, 5, 39, 23, 45,
+                                               32, 18, 43, 41, 30, 26, 0)
 
 
 @dataclass(frozen=True)
@@ -92,16 +93,20 @@ class DatasetProfile:
     candidates: tuple[int, ...]
     shadow_fraction: float
     median_quantile: tuple[float, float, float]  # private median: initial, minimum, maximum
+    alpha: float = ALPHA
+    rounds: int = ROUNDS
+    checkpoint_every: int = 5  # Alzheimer: every 10 of 100 rounds, so the attacker sees 11 checkpoints as on EuroSAT
 
 
 PROFILES = {
     "eurosat": DatasetProfile("eurosat", DATA_MODULE, MODEL_MODULE, HYPERPARAMS, TOP_DECILE, CANDIDATES,
                               SHADOW_FRACTION, (MEDIAN_QUANTILE, MEDIAN_QUANTILE_MIN, MEDIAN_QUANTILE_MAX)),
-    # Shadow fraction 25%: at 10% the smallest candidates get 1 image (median 8); at 25%, 3 (median 21). The private-
+    # Shadow fraction 25%: at 10% the smallest candidates get 1 image (median 8); at 25%, 3 (median 20). The private-
     # median quantile is set from the accuracy calibration's metric-privacy distances (results/cia_v2/alzheimer/).
     "alzheimer": DatasetProfile("alzheimer", DATA_MODULE, "experiments.reproduce.paper_cnn:create_model",
                                 ALZHEIMER_HYPERPARAMS, ALZHEIMER_TOP_DECILE, ALZHEIMER_CANDIDATES, 0.25,
-                                (MEDIAN_QUANTILE, MEDIAN_QUANTILE_MIN, MEDIAN_QUANTILE_MAX)),
+                                (MEDIAN_QUANTILE, MEDIAN_QUANTILE_MIN, MEDIAN_QUANTILE_MAX),
+                                alpha=1.0, rounds=100, checkpoint_every=10),
 }
 
 
@@ -128,7 +133,7 @@ class InclusionRun(Combo):
     noise_seed: int
     noise_ratio: float
     dataset: str = "eurosat"
-    alpha: float = ALPHA  # AZ diagnosis only (ESCALATION.md); every gated design uses 0.3
+    alpha: float = ALPHA  # the profile's (EuroSAT 0.3, Alzheimer 1.0); other values for the AZ diagnosis only
 
     @property
     def profile(self):
@@ -150,8 +155,8 @@ class InclusionRun(Combo):
         return (*args, "--log-noise-diagnostics") if self.privacy != "vanilla" else args
 
 
-def build_runs(*, config, privacy, noise_ratio, replicates, design_seed, replicate_subset=None, rounds=ROUNDS,
-               dataset="eurosat", alpha=ALPHA):
+def build_runs(*, config, privacy, noise_ratio, replicates, design_seed, replicate_subset=None, rounds=None,
+               dataset="eurosat", alpha=None):
     if privacy not in PRIVACY_MODES:
         raise ValueError(f"privacy must be one of {PRIVACY_MODES}")
     if privacy == "vanilla" and noise_ratio:
@@ -159,6 +164,8 @@ def build_runs(*, config, privacy, noise_ratio, replicates, design_seed, replica
     if privacy != "vanilla" and not noise_ratio > 0:
         raise ValueError("DP runs need a positive noise ratio")
     profile = PROFILES[dataset]
+    rounds = profile.rounds if rounds is None else rounds
+    alpha = profile.alpha if alpha is None else alpha
     design = design_matrix(replicates, design_seed=design_seed)
     selected = range(replicates) if replicate_subset is None else sorted(set(replicate_subset))
     always_in = sorted(set(range(SLOTS)) - set(profile.candidates))
@@ -201,9 +208,9 @@ def atomic_json(path, value):
     temporary.replace(path)
 
 
-def checkpoint_rounds(rounds):
-    """Rounds 0, 5, 10, ... up to ``rounds``, plus the last round."""
-    return sorted({r for r in range(0, rounds + 1, 5)} | {rounds})
+def checkpoint_rounds(rounds, every=5):
+    """Rounds 0, ``every``, 2 ``every``, ... up to ``rounds``, plus the last round."""
+    return sorted({r for r in range(0, rounds + 1, every)} | {rounds})
 
 
 def manifest(run, surrogates):
@@ -226,7 +233,8 @@ def _manifest(run, surrogates):
             "top_decile": list(run.profile.top_decile),
             "included": list(run.included), "active": list(run.active), "slots": SLOTS,
             "layout_seed": LAYOUT_SEED, "init_seed": LAYOUT_SEED, "client_seed": run.client_seed,
-            "noise_seed": run.noise_seed, "checkpoint_rounds": checkpoint_rounds(run.hyperparams.rounds),
+            "noise_seed": run.noise_seed,
+            "checkpoint_rounds": checkpoint_rounds(run.hyperparams.rounds, run.profile.checkpoint_every),
             "shadow_fraction": run.profile.shadow_fraction, "shadow_augmentation": False, "surrogates": surrogates,
             "hyperparams": asdict(run.hyperparams), "score_direction": "lower loss indicates IN"}
 
@@ -347,8 +355,8 @@ def main():
     parser.add_argument("--config", required=True, help="configuration name (part of run names)")
     parser.add_argument("--privacy", choices=PRIVACY_MODES, required=True)
     parser.add_argument("--dataset", choices=tuple(PROFILES), default="eurosat")
-    parser.add_argument("--alpha", type=float, default=ALPHA, help="label-Dirichlet alpha (AZ diagnosis only)")
-    parser.add_argument("--rounds", type=int, default=ROUNDS, help="training rounds (AZ diagnosis only)")
+    parser.add_argument("--alpha", type=float, help="label-Dirichlet alpha (default: the dataset profile's)")
+    parser.add_argument("--rounds", type=int, help="training rounds (default: the dataset profile's)")
     parser.add_argument("--noise-ratio", type=float, default=0.0, help="noise std / clipping norm (DP only)")
     parser.add_argument("--replicates", type=int, required=True)
     parser.add_argument("--design-seed", type=int, required=True)
@@ -370,7 +378,7 @@ def main():
     runs = build_runs(config=args.config, privacy=args.privacy, noise_ratio=args.noise_ratio,
                       replicates=args.replicates, design_seed=args.design_seed,
                       replicate_subset=args.replicate_subset, rounds=rounds, dataset=args.dataset, alpha=args.alpha)
-    print(json.dumps({"runs": len(runs), "execute": args.execute, "rounds": rounds,
+    print(json.dumps({"runs": len(runs), "execute": args.execute, "rounds": runs[0].hyperparams.rounds if runs else rounds,
                       "complete": sum((args.output / r.run_name() / "complete.json").exists() for r in runs),
                       "plan": [{"run_name": r.run_name(), "included": r.included, "client_seed": r.client_seed,
                                 "noise_seed": r.noise_seed, "noise_multiplier": r.noise_multiplier} for r in runs]},

@@ -1,10 +1,10 @@
 package: AZ, Alzheimer replication of M2 and A1 (owner decision 8)
-status: paused, escalated (ESCALATION.md: vanilla reaches only 0.55 accuracy in the decided setup)
+status: calibration for the chosen setup (alpha 1.0, 100 rounds) on GPU 1, shared by owner approval
 gate: G-M2 and G-A1 as applied on EuroSAT = not evaluated yet
 protocol: results/cia_v2/alzheimer/PROTOCOL.md, fixed after the accuracy calibration and before any leakage run
 machine: compute server
 cost so far: about 1 GPU-h (8 calibration runs, shared GPU 1) of the 40 GPU-h cap
-next: owner picks the setup from the diagnosis
+next: calibration batch 1 (18 runs), private-median settings, batch 2; then PROTOCOL.md
 needs from others: none
 
 Owner decision 8 (`research/cia_roadmap_v2/ROADMAP.md` Section 10, 2026-10-20): M2 and A1 repeated on Alzheimer MRI,
@@ -25,6 +25,12 @@ accuracy near 0.91 up to a noise ratio of 0.00125 and then fell off a cliff (0.8
 usable band between "no noise effect" and "collapse" is narrow.
 
 ## Design
+
+**Amended 2026-10-21 (owner, after ESCALATION.md):** label-Dirichlet **alpha 1.0** and **100 rounds**, checkpoints
+every 10 rounds (11, as on EuroSAT). The candidate panel is re-derived by the same rule from the alpha-1.0 layout: top
+decile 4 (311 records), 29 (255), 31 (236), 22 (223), 15 (208), then 27 by size quantile (19-203 records); shadow
+samples at 25% hold 3-62 images (median 20). The alpha-0.3 bullets below are superseded where they differ. The
+stopped alpha-0.3 calibration (`calibration/`) and the diagnosis (`diagnosis/`) are not part of any analysis.
 
 **Federation** (as M2, with Alzheimer's data and model):
 
@@ -95,3 +101,4 @@ generalised to read the candidate panel from the run manifests):
 | 2026-10-20 11:35 | Calibration batch 1 stopped after 8 of 18 runs: vanilla 0.554, global DP 0.569 (r = 0.000625) and 0.623 (r = 0.00125); majority class 0.501. The model predicts the majority class for about 25 rounds. G-M2's 0.70 accuracy floor is out of reach even without noise, so ESCALATION.md was written and the workers were stopped to free the shared GPU for B5. Completed calibration runs committed (accuracy only). |
 | 2026-10-20 11:34 | Owner chose ESCALATION.md option 1: diagnose first. Six accuracy-only vanilla runs (design seed 3, 2 each) into `diagnosis/`: alpha 1.0 (50 rounds), alpha 100 as a near-IID split (50 rounds), alpha 0.3 with 100 rounds, on GPU 1 shared by the owner's choice. Runner: `--alpha` and `--rounds` overrides, recorded in the manifest only when they differ (EuroSAT's 437 manifests unchanged). |
 | 2026-10-20 12:18 | Diagnosis complete (vanilla, 2 runs each): alpha 1.0, 50 rounds: 0.738, 0.742 (mean 0.740, still rising: 0.666 at round 40); alpha 100 (near-IID), 50 rounds: 0.787, 0.772 (0.780); alpha 0.3, 100 rounds: 0.595, 0.652 (0.623). Waiting for the owner's choice of setup. |
+| 2026-10-21 17:00 | Owner chose alpha 1.0 with 100 rounds and approved sharing GPU 1 for the calibration. Runner: alpha, rounds and checkpoint spacing moved into the dataset profile (Alzheimer 1.0, 100, every 10); Alzheimer panel re-derived from the alpha-1.0 layout. EuroSAT's 437 manifests unchanged; 87 cia_v2 tests pass. Calibration batch 1 (accuracy only, design seed 3, 2 runs per level, into `calibration_a1/`): vanilla; global DP and metric privacy at r = 0.000625, 0.00125, 0.0025 and 0.005. |
