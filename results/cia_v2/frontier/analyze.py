@@ -72,7 +72,8 @@ def config_summary(audit, *, noise_ratio, resamples=RESAMPLES):
     low, high = np.percentile(draws, [2.5, 97.5])
     return {
         "config": audit.config, "noise_ratio": noise_ratio, "noise_multiple": noise_ratio / FRONTIER_RATIO,
-        "formal_mu": formal_mu(noise_ratio) if noise_ratio > 0 else None,  # vanilla: no guarantee
+        # vanilla: no guarantee; rounds = the last checkpoint (EuroSAT 50, Alzheimer 100)
+        "formal_mu": formal_mu(noise_ratio, rounds=audit.rounds[-1]) if noise_ratio > 0 else None,
         "replicates": int(audit.membership.shape[1]),
         "gate_level": GATE_LEVEL,
         "all": _subset_metrics(audit.losses, audit.membership, resamples, audit.surrogate_losses),

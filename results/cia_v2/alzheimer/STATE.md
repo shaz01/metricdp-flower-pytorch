@@ -1,10 +1,10 @@
 package: AZ, Alzheimer replication of M2 and A1 (owner decision 8)
-status: calibration batch 2 (20 runs) on GPU 1
+status: M2 on Alzheimer running (PROTOCOL.md part 1); A1 on Alzheimer decided after it (owner, 2026-10-22)
 gate: G-M2 and G-A1 as applied on EuroSAT = not evaluated yet
-protocol: results/cia_v2/alzheimer/PROTOCOL.md, fixed after the accuracy calibration and before any leakage run
+protocol: results/cia_v2/alzheimer/PROTOCOL.md, part 1 (M2) fixed 2026-10-22 before any leakage run
 machine: compute server
-cost so far: about 1 GPU-h (8 calibration runs, shared GPU 1) of the 40 GPU-h cap
-next: calibration batch 2; then levels and PROTOCOL.md
+cost so far: about 10 GPU-h (diagnosis and calibration) of the 40 GPU-h cap; M2 part about 24 GPU-h
+next: M2 stage 1 and 2 (128 runs); analysis and G-M2; then the owner decides on A1 on Alzheimer
 needs from others: none
 
 Owner decision 8 (`research/cia_roadmap_v2/ROADMAP.md` Section 10, 2026-10-20): M2 and A1 repeated on Alzheimer MRI,
@@ -104,3 +104,5 @@ generalised to read the candidate panel from the run manifests):
 | 2026-10-21 17:00 | Owner chose alpha 1.0 with 100 rounds and approved sharing GPU 1 for the calibration. Runner: alpha, rounds and checkpoint spacing moved into the dataset profile (Alzheimer 1.0, 100, every 10); Alzheimer panel re-derived from the alpha-1.0 layout. EuroSAT's 437 manifests unchanged; 87 cia_v2 tests pass. Calibration batch 1 (accuracy only, design seed 3, 2 runs per level, into `calibration_a1/`): vanilla; global DP and metric privacy at r = 0.000625, 0.00125, 0.0025 and 0.005. |
 | 2026-10-21 21:23 | Calibration batch 1 (alpha 1.0, 100 rounds) complete. Mean final accuracy (2 runs): vanilla 0.805; global DP 0.807 / 0.825 / 0.782 / 0.483 and metric privacy 0.823 / 0.834 / 0.774 / 0.251 at r = 0.000625 / 0.00125 / 0.0025 / 0.005. Accuracy is flat up to 0.0025 and collapses by 0.005 (v1's cliff), so the levels around 0.70 lie in between. Metric privacy's median pairwise client distance per round: 0.50 (r = 0.000625), 0.58, 0.65 (median over rounds). |
 | 2026-10-21 22:57 | Private-median settings fixed from those distances: EuroSAT's 0.3 in [0.03, 1.0] (median pairwise distance about 0.46) scales to **0.4 in [0.04, 1.3]**. Calibration batch 2 (accuracy only, 20 runs): global DP and metric privacy at r = 0.003, 0.0035, 0.004; private median at 0.000625, 0.00125, 0.0025, 0.0035. GPU 1 idle and unclaimed at launch. |
+| 2026-10-22 02:53 | Calibration batch 2 complete. Mean final accuracy: global DP 0.731 / 0.688 / 0.627 at r = 0.003 / 0.0035 / 0.004; metric privacy 0.716 / 0.537 / 0.372; private median 0.826 / 0.719 / 0.427 at r = 0.000625 / 0.00125 / 0.0025. One private-median run at r = 0.0035 failed three times: every client update collapsed to zero norm and Flower's clipping divided by zero; `PrivateMedianMetricPrivacyServerSideFixedClipping` lacks the collapse guard the global-DP and metric-privacy strategies have (its other run ended at 0.473). A guard is needed before any private-median main run. |
+| 2026-10-22 11:10 | Cost: about 0.2 GPU-h per run (median 29 minutes of training per worker). The full plan (M2 and A1 on Alzheimer) would need about 66 GPU-h more against the 40 GPU-h cap; the owner chose M2 on Alzheimer first (vanilla and global DP at 0.0025, 0.003, 0.0035; 128 runs, about 24 GPU-h). `frontier/analyze.py`: formal mu uses the audit's last round (EuroSAT's M2 analysis reproduces byte for byte). PROTOCOL.md part 1 fixed. |
