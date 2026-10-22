@@ -326,6 +326,7 @@ def execute_run(run, output, max_parallel_clients, surrogates=False):
         if not success:
             raise RuntimeError(f"Training failed: {run.run_name()}")
         trained = time.monotonic()
+        check_every_client_trained(folder / f"{run.run_name()}.json", len(run.active))
         test_loader, sets = evaluation_sets(run.hyperparams.batch_size, surrogates, run.profile)
         rows = []
         for round_number, checkpoint in zip(rounds, paths, strict=True):
@@ -342,6 +343,15 @@ def execute_run(run, output, max_parallel_clients, surrogates=False):
             checkpoint.unlink()  # only after every candidate at this round is persisted
         atomic_json(folder / "complete.json", {"complete": True, "training_seconds": round(trained - started, 1),
                                                "evaluation_seconds": round(time.monotonic() - trained, 1)})
+
+
+def check_every_client_trained(result_path, active):
+    """Refuse a run in which a round aggregated fewer than ``active`` clients (a client's training failed, e.g. out of
+    GPU memory): Flower aggregates the rest silently, which would change who took part. Found 2026-10-22 on Alzheimer."""
+    metrics = json.loads(Path(result_path).read_text())["train_metrics"]
+    short = {t: len(m.get("client-ids", [])) for t, m in metrics.items() if len(m.get("client-ids", [])) != active}
+    if short:
+        raise RuntimeError(f"{len(short)} rounds aggregated fewer than {active} clients, e.g. {sorted(short.items())[:3]}")
 
 
 def _worker(run, targets, output, max_parallel_clients, surrogates=False):

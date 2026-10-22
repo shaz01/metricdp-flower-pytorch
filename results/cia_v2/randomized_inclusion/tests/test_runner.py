@@ -239,3 +239,14 @@ def test_alzheimer_private_median_uses_its_own_quantile_settings():
     assert (flags["--median-quantile"], flags["--median-quantile-min"], flags["--median-quantile-max"]) == (
         "0.4", "0.04", "1.3")
     assert runner.manifest(run, surrogates=False)["median_quantile"]["maximum"] == 1.3
+
+
+def test_a_run_with_a_failed_client_is_refused(tmp_path):
+    full = {str(t): {"client-ids": list(range(32))} for t in range(1, 4)}
+    path = tmp_path / "run.json"
+    path.write_text(json.dumps({"train_metrics": full}))
+    runner.check_every_client_trained(path, 32)
+    full["2"]["client-ids"] = list(range(31))
+    path.write_text(json.dumps({"train_metrics": full}))
+    with pytest.raises(RuntimeError, match="fewer than 32"):
+        runner.check_every_client_trained(path, 32)
