@@ -250,3 +250,9 @@ def test_a_run_with_a_failed_client_is_refused(tmp_path):
     path.write_text(json.dumps({"train_metrics": full}))
     with pytest.raises(RuntimeError, match="fewer than 32"):
         runner.check_every_client_trained(path, 32)
+
+
+def test_inclusion_runs_require_every_client():
+    args = plan()[0].runner_args(output_dir=Path("out"), max_parallel_clients=4, client_cpus=1.0,
+                                 checkpoint_rounds=runner.CHECKPOINT_ROUNDS)
+    assert "--require-all-clients" in args

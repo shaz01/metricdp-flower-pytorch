@@ -109,6 +109,9 @@ def _parser() -> argparse.ArgumentParser:
                              "FedProx paper's sum of squares")
     parser.add_argument("--consensus-kl-beta", type=float, default=0.0,
                         help="weight of KL(p_global || p_local) on local data (0 = off)")
+    parser.add_argument("--require-all-clients", action="store_true",
+                        help="stop the run if a client fails or does not reply in any round (default: Flower "
+                             "aggregates the remaining clients)")
     parser.add_argument("--local-steps", type=int, default=0,
                         help="fixed optimizer steps per round instead of --local-epochs (0 = off)")
     parser.add_argument(
@@ -432,6 +435,8 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
         config["consensus-kl-beta"] = args.consensus_kl_beta
     if args.local_steps:
         config["local-steps"] = args.local_steps
+    if args.require_all_clients:
+        config["require-all-clients"] = True
     return config
 
 

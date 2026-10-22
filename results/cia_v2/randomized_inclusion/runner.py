@@ -146,7 +146,9 @@ class InclusionRun(Combo):
         args = (*super().runner_args(**kwargs),
                 "--partition-profile", json.dumps(profile, sort_keys=True),
                 "--layout-seed", str(LAYOUT_SEED), "--init-seed", str(LAYOUT_SEED),
-                "--client-seed", str(self.client_seed), "--noise-seed", str(self.noise_seed))
+                "--client-seed", str(self.client_seed), "--noise-seed", str(self.noise_seed),
+                # 2026-10-22: a failed client stops the run (Flower would aggregate the others silently).
+                "--require-all-clients")
         if self.privacy == "private-median":
             # The fixed active count is public, so it is the mechanism's slot denominator.
             initial, minimum, maximum = self.profile.median_quantile
