@@ -1,10 +1,10 @@
 package: B4 confirmatory run (owner decision 11)
-status: done; FINDINGS.md written; the owner decides whether it is finished
+status: closed by the owner (2026-10-23); report reports/cia_v2_formal_confirm.md
 gate: confirmation rule = confirmed at 20 and at 50 public images (13 of 13 settings)
 protocol: results/cia_v2/formal_regime/confirm/PROTOCOL.md (fixed 2026-10-20, before any run)
 machine: compute server (CPU only)
 cost so far: 0.675 CPU-h (480 runs), no GPU
-next: none until the owner decides
+next: none
 needs from others: none (B4's Part A tuning selections and the feature cache are reused unchanged)
 
 Branch `feature/cia-v2-formal-confirm` from master 2bce957e. B4 itself (Agent C) is closed; this sub-package re-runs
