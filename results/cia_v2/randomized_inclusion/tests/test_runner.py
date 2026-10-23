@@ -166,3 +166,93 @@ def test_manifest_records_median_settings_only_for_private_median():
     median = runner.manifest(plan(config="pm", privacy="private-median")[0], surrogates=True)
     assert median["median_quantile"] == {"initial": 0.3, "minimum": 0.03, "maximum": 1.0, "num_slots": 32}
     assert "median_quantile" not in runner.manifest(plan()[0], surrogates=True)  # M2 manifests stay unchanged
+
+
+# --- Alzheimer profile (owner decision 8) ------------------------------------------------------------
+
+
+def test_alzheimer_runs_use_its_panel_model_and_layout():
+    runs = plan(dataset="alzheimer", replicates=32)
+    profile = runner.PROFILES["alzheimer"]
+    assert profile.candidates[:5] == profile.top_decile and len(set(profile.candidates)) == 32
+    assert all(len(run.active) == 32 and set(run.included) <= set(profile.candidates) for run in runs)
+    assert all(set(range(48)) - set(profile.candidates) <= set(run.active) for run in runs)
+    assert {run.model_module for run in runs} == {"experiments.reproduce.paper_cnn:create_model"}
+    assert runs[0].hyperparams.learning_rate == 0.001 and runs[0].hyperparams.rounds == 100
+    pinned = runner.manifest(runs[0], surrogates=False)
+    assert pinned["checkpoint_rounds"] == list(range(0, 101, 10)) and pinned["alpha"] == 1.0
+    eurosat = plan(replicates=32)
+    assert [run.client_seed for run in runs] == [run.client_seed for run in eurosat]  # same design and seeds
+
+
+def test_alzheimer_runner_args_and_manifest_name_the_dataset():
+    run = plan(dataset="alzheimer")[0]
+    args = run.runner_args(output_dir=Path("out"), max_parallel_clients=4, client_cpus=1.0,
+                           checkpoint_rounds=runner.CHECKPOINT_ROUNDS)
+    flags = dict(zip(args[::1], args[1::1]))
+    assert json.loads(flags["--partition-profile"])["dataset"] == "alzheimer"
+    pinned = runner.manifest(run, surrogates=False)
+    assert pinned["dataset"] == "alzheimer" and pinned["shadow_fraction"] == 0.25
+    assert pinned["candidates"] == list(runner.ALZHEIMER_CANDIDATES)
+    assert pinned["top_decile"] == list(runner.ALZHEIMER_TOP_DECILE)
+    assert "dataset" not in runner.manifest(plan()[0], surrogates=False)  # EuroSAT manifests unchanged
+
+
+def test_alzheimer_candidates_follow_the_rule_on_the_seed_42_layout():
+    try:
+        from results.cia_frontier.side_channel_audit.data import partition_summary
+        from results.cia_v2.randomized_inclusion.data import ALZHEIMER_MIN_RECORDS
+        summary = partition_summary(runner.PROFILES["alzheimer"].alpha, runner.SLOTS, runner.LAYOUT_SEED,
+                                    min_records=ALZHEIMER_MIN_RECORDS)
+    except Exception:
+        pytest.skip("Alzheimer MRI is not available locally")
+    top, others = runner.select_candidates({c["target"]: c["records"] for c in summary["clients"]})
+    assert top + others == runner.ALZHEIMER_CANDIDATES
+    assert summary["min_records"] >= ALZHEIMER_MIN_RECORDS
+
+
+def test_data_module_follows_the_profile_dataset():
+    from results.cia_frontier.side_channel_audit.data import DirichletAlzheimer
+    from results.cia_v2.randomized_inclusion import data
+
+    module = data.base_module(runner.ALPHA, partition_seed=42, dataset="alzheimer")
+    assert isinstance(module, DirichletAlzheimer) and module.min_records == 10
+    with pytest.raises(ValueError):
+        data.base_module(runner.ALPHA, dataset="cifar")
+
+
+def test_alpha_override_reaches_the_partition_profile_and_manifest():
+    run = plan(dataset="alzheimer", alpha=100.0)[0]
+    args = run.runner_args(output_dir=Path("out"), max_parallel_clients=4, client_cpus=1.0,
+                           checkpoint_rounds=runner.CHECKPOINT_ROUNDS)
+    flags = dict(zip(args[::1], args[1::1]))
+    assert json.loads(flags["--partition-profile"])["alpha"] == 100.0
+    assert runner.manifest(run, surrogates=False)["alpha"] == 100.0
+    assert "alpha" not in runner.manifest(plan()[0], surrogates=False)  # EuroSAT's 0.3 is not recorded
+
+
+def test_alzheimer_private_median_uses_its_own_quantile_settings():
+    run = plan(dataset="alzheimer", config="pm", privacy="private-median")[0]
+    args = run.runner_args(output_dir=Path("out"), max_parallel_clients=4, client_cpus=1.0,
+                           checkpoint_rounds=runner.CHECKPOINT_ROUNDS)
+    flags = dict(zip(args[::1], args[1::1]))
+    assert (flags["--median-quantile"], flags["--median-quantile-min"], flags["--median-quantile-max"]) == (
+        "0.4", "0.04", "1.3")
+    assert runner.manifest(run, surrogates=False)["median_quantile"]["maximum"] == 1.3
+
+
+def test_a_run_with_a_failed_client_is_refused(tmp_path):
+    full = {str(t): {"client-ids": list(range(32))} for t in range(1, 4)}
+    path = tmp_path / "run.json"
+    path.write_text(json.dumps({"train_metrics": full}))
+    runner.check_every_client_trained(path, 32)
+    full["2"]["client-ids"] = list(range(31))
+    path.write_text(json.dumps({"train_metrics": full}))
+    with pytest.raises(RuntimeError, match="fewer than 32"):
+        runner.check_every_client_trained(path, 32)
+
+
+def test_inclusion_runs_require_every_client():
+    args = plan()[0].runner_args(output_dir=Path("out"), max_parallel_clients=4, client_cpus=1.0,
+                                 checkpoint_rounds=runner.CHECKPOINT_ROUNDS)
+    assert "--require-all-clients" in args

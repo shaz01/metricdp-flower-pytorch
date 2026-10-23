@@ -29,22 +29,25 @@ from experiments.cia.audit_attacks import (
 from metricdp_pytorch.private_metric_strategy import bit_noise_for_share, privacy_account
 from results.cia_v2.frontier import analyze as m2
 from results.cia_v2.randomized_inclusion.analysis import load_audit
-from results.cia_v2.randomized_inclusion.runner import CANDIDATES, MEDIAN_QUANTILE_MAX, TOP_DECILE
+from results.cia_v2.randomized_inclusion.runner import MEDIAN_QUANTILE_MAX, PROFILES
 
 HERE = Path(__file__).resolve().parent
 TARGETS = (0.740, 0.660)  # M2's mean accuracy at 2x and 4x, the two levels around 0.70 (FINDINGS.md)
 EQUIVALENCE, DETECTABLE = 0.03, 0.10
-SUBSETS = {"all": np.ones(len(CANDIDATES), dtype=bool), "top-decile": np.isin(CANDIDATES, TOP_DECILE)}
+def subsets(audit):
+    """Candidate masks: all, and the top decile of the audit's panel."""
+    return {"all": np.ones(len(audit.candidates), dtype=bool), "top-decile": np.isin(audit.candidates, audit.top_decile)}
 
 
-def formal_mu(privacy, ratio, active=m2.ACTIVE, rounds=m2.ROUNDS):
-    """Global DP: ``sqrt(T) / (n r)``. Private median: its accountant at the runner's settings. Metric privacy: none."""
+def formal_mu(privacy, ratio, active=m2.ACTIVE, rounds=m2.ROUNDS, maximum=MEDIAN_QUANTILE_MAX):
+    """Global DP: ``sqrt(T) / (n r)``. Private median: its accountant at the runner's settings (``maximum`` is the
+    quantile's public upper bound). Metric privacy: none."""
     if privacy == "global-dp":
         return m2.formal_mu(ratio, active, rounds)
     if privacy == "private-median":
         z = ratio * active
-        return privacy_account(noise_multiplier=z, maximum=MEDIAN_QUANTILE_MAX,
-                               bit_noise_std=bit_noise_for_share(z, MEDIAN_QUANTILE_MAX), rounds=rounds).mu_total
+        return privacy_account(noise_multiplier=z, maximum=maximum,
+                               bit_noise_std=bit_noise_for_share(z, maximum), rounds=rounds).mu_total
     return None
 
 
@@ -76,7 +79,7 @@ class _Curve:
 
 def matched_difference(mechanism, gdp, *, target, subset=None, resamples=m2.RESAMPLES, seed=m2.BOOTSTRAP_SEED):
     """``AUC_mechanism(target) - AUC_GDP(target)`` with the gate jackknife and the two-way bootstrap."""
-    subset = SUBSETS["all"] if subset is None else subset
+    subset = subsets(mechanism[0])["all"] if subset is None else subset
     mech, ref = _Curve(mechanism, subset), _Curve(gdp, subset)
     candidates, replicates = mech.scores[0].shape
     rows = np.arange(candidates)[:, None]
@@ -125,8 +128,10 @@ def _json(value):
 
 
 def mechanism_report(mechanism, gdp, *, targets=TARGETS, resamples=m2.RESAMPLES):
+    if any(a.candidates != gdp[0].candidates for a in (*mechanism, *gdp)):
+        raise ValueError("all configurations need the same candidate panel")
     report = {}
-    for name, subset in SUBSETS.items():
+    for name, subset in subsets(gdp[0]).items():
         report[name] = {}
         for target in targets:
             result = matched_difference(mechanism, gdp, target=target, subset=subset, resamples=resamples)
@@ -145,11 +150,14 @@ def main():
     parser.add_argument("--gdp", nargs="+", required=True, help="M2 configurations as config=noise_ratio")
     parser.add_argument("--metric-privacy", nargs="+", default=[], help="config=noise_ratio")
     parser.add_argument("--private-median", nargs="+", default=[], help="config=noise_ratio")
+    parser.add_argument("--targets", nargs="+", type=float, default=list(TARGETS), help="target accuracies")
+    parser.add_argument("--dataset", choices=tuple(PROFILES), default="eurosat", help="for private median's bound")
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
+    targets = tuple(args.targets)
     gdp_levels = _parse(args.gdp)
     gdp = [load_audit(args.gdp_root, config=name) for name, _ in gdp_levels]
-    report = {"targets": list(TARGETS), "gdp": [_json(m2.config_summary(a, noise_ratio=r)) for a, (_, r)
+    report = {"targets": list(targets), "gdp": [_json(m2.config_summary(a, noise_ratio=r)) for a, (_, r)
                                                 in zip(gdp, gdp_levels)], "mechanisms": {}}
     for privacy, items in (("metric-privacy", args.metric_privacy), ("private-median", args.private_median)):
         if not items:
@@ -158,8 +166,9 @@ def main():
         audits = [load_audit(args.root, config=name) for name, _ in levels]
         summaries = []
         for audit, (_, ratio) in zip(audits, levels):
-            summaries.append(_json(m2.config_summary(audit, noise_ratio=ratio) | {"formal_mu": formal_mu(privacy, ratio)}))
-        report["mechanisms"][privacy] = {"levels": summaries, "matched": mechanism_report(audits, gdp)}
+            mu = formal_mu(privacy, ratio, rounds=audit.rounds[-1], maximum=PROFILES[args.dataset].median_quantile[2])
+            summaries.append(_json(m2.config_summary(audit, noise_ratio=ratio) | {"formal_mu": mu}))
+        report["mechanisms"][privacy] = {"levels": summaries, "matched": mechanism_report(audits, gdp, targets=targets)}
     text = json.dumps(report, indent=2, allow_nan=False, default=float)
     if args.out:
         args.out.write_text(text + "\n")

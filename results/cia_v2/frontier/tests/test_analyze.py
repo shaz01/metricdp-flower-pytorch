@@ -83,3 +83,11 @@ def test_surrogate_auc_is_reported_when_surrogates_were_scored():
     result = analyze.config_summary(with_surrogates, noise_ratio=0.001546, resamples=50)
     assert result["all"]["auc_surrogate"] == pytest.approx(result["all"]["auc"]["estimate"], abs=0.05)
     assert analyze.config_summary(audit, noise_ratio=0.001546, resamples=50)["all"]["auc_surrogate"] is None
+
+
+def test_formal_mu_uses_the_audit_rounds():
+    from dataclasses import replace
+
+    audit = replace(synthetic_audit(0.5), rounds=tuple(range(0, 101, 10)))
+    result = analyze.config_summary(audit, noise_ratio=0.003, resamples=20)
+    assert result["formal_mu"] == pytest.approx(math.sqrt(100) / (32 * 0.003))

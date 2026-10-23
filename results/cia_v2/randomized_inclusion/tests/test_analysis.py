@@ -18,7 +18,7 @@ def write_run(root, run, rounds=(0, 5, 10), released=(1.0, 2.0, 3.0, 4.0, 5.0)):
     rows = [{"round": r, "candidate": c, "included": c in run.included, "test_loss": 1.0,
              "test_accuracy": 0.5 + 0.01 * run.replicate, "shadow_loss": 100 * run.replicate + r + c / 100,
              "shadow_accuracy": 0.9}
-            for r in rounds for c in runner.CANDIDATES]
+            for r in rounds for c in run.profile.candidates]
     (folder / "measurements.json").write_text(json.dumps(rows))
     metrics = {str(t + 1): {"dp-released-update-norm": value} for t, value in enumerate(released)}
     (folder / f"{run.run_name()}.json").write_text(json.dumps({"train_metrics": metrics}))
@@ -59,3 +59,16 @@ def test_load_audit_refuses_mixed_designs(audit, tmp_path_factory):
     write_run(root, other[0])
     with pytest.raises(ValueError, match="design"):
         analysis.load_audit(root, config="gdp")
+
+
+def test_load_audit_reads_the_panel_from_the_manifests(tmp_path):
+    runs = runner.build_runs(config="az", privacy="global-dp", noise_ratio=0.001, replicates=4, design_seed=0,
+                             dataset="alzheimer")
+    for run in runs:
+        write_run(tmp_path, run)
+    data = analysis.load_audit(tmp_path, config="az")
+    assert data.candidates == runner.ALZHEIMER_CANDIDATES and data.top_decile == runner.ALZHEIMER_TOP_DECILE
+    c, j = 3, 2
+    assert data.losses[c, j, 1] == pytest.approx(100 * j + 5 + runner.ALZHEIMER_CANDIDATES[c] / 100)
+    expected = np.array([[candidate in run.included for run in runs] for candidate in runner.ALZHEIMER_CANDIDATES])
+    np.testing.assert_array_equal(data.membership, expected)

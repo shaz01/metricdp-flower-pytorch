@@ -138,3 +138,15 @@ def test_bits_are_the_only_participant_dependence_of_the_next_quantile():
         noise = float(np.random.default_rng(7).normal(0.0, s.bit_noise_std))
         _, metrics = s.aggregate_train(1, replies([model([d]) for d in (1.0, 2.0, 0.5)][:chosen][::-1]))
         assert metrics["private-median-noisy-fraction"] == pytest.approx((expected_bits + noise) / 3)
+
+
+def test_a_round_whose_updates_all_collapse_keeps_the_model():
+    """Every client returns the current model (zero-norm updates): Flower's clipping would divide by zero."""
+    s = strategy(num_slots=3)
+    current = model([1.0, 2.0])
+    s.current_arrays = current
+    before = s.quantile
+    arrays, metrics = s.aggregate_train(1, replies([model([1.0, 2.0])] * 3))
+    assert arrays is None
+    assert metrics["private-median-aggregation-collapsed"] == 1.0
+    assert s.rounds_released == 1 and s.quantile != before  # the quantile release still happened and is counted
