@@ -44,7 +44,7 @@ SHADOW_FRACTION = 0.10
 FRONTIER_RATIO = 0.001546  # noise std / clipping norm at the v1 EuroSAT frontier (WP2, WP6)
 DATA_MODULE = "results.cia_v2.randomized_inclusion.data:create_data_module"
 MODEL_MODULE = "experiments.reproduce.eurosat_cnn:create_model"
-PRIVACY_MODES = ("vanilla", "global-dp", "metric-privacy", "private-median")
+PRIVACY_MODES = ("vanilla", "global-dp", "metric-privacy", "private-median", "subsampled-global-dp")
 # WP3's private median (A1): initial median client distance and its public bounds. v1's EuroSAT metric-privacy runs at
 # 48 clients logged pairwise client distances with median 0.39-0.53, so client-to-global distances near 0.3.
 MEDIAN_QUANTILE, MEDIAN_QUANTILE_MIN, MEDIAN_QUANTILE_MAX = 0.3, 0.03, 1.0
@@ -132,6 +132,7 @@ class InclusionRun(Combo):
     client_seed: int
     noise_seed: int
     noise_ratio: float
+    sampling_rate: float = 1.0  # CIA v2 B1: Poisson client sampling (subsampled-global-dp only)
     contribution_cap: int = 0  # CIA v2 B5: records per client per round (0 = off)
     logit_tau: float = 0.0  # CIA v2 B5: logit-adjusted local loss (0 = off)
     dataset: str = "eurosat"
@@ -156,6 +157,8 @@ class InclusionRun(Combo):
             initial, minimum, maximum = self.profile.median_quantile
             args = (*args, "--num-slots", str(self.num_clients), "--median-quantile", str(initial),
                     "--median-quantile-min", str(minimum), "--median-quantile-max", str(maximum))
+        if self.privacy == "subsampled-global-dp":
+            args = (*args, "--sampling-rate", repr(self.sampling_rate))
         if self.contribution_cap:
             args = (*args, "--contribution-cap", str(self.contribution_cap))
         if self.logit_tau:
@@ -164,13 +167,15 @@ class InclusionRun(Combo):
 
 
 def build_runs(*, config, privacy, noise_ratio, replicates, design_seed, replicate_subset=None, rounds=None,
-               dataset="eurosat", alpha=None, contribution_cap=0, logit_tau=0.0):
+               dataset="eurosat", alpha=None, contribution_cap=0, logit_tau=0.0, sampling_rate=1.0):
     if privacy not in PRIVACY_MODES:
         raise ValueError(f"privacy must be one of {PRIVACY_MODES}")
     if privacy == "vanilla" and noise_ratio:
         raise ValueError("vanilla takes no noise")
     if privacy != "vanilla" and not noise_ratio > 0:
         raise ValueError("DP runs need a positive noise ratio")
+    if (privacy == "subsampled-global-dp") != (sampling_rate != 1.0) or not 0 < sampling_rate <= 1:
+        raise ValueError("subsampled-global-dp needs a sampling rate in (0, 1), and only it takes one")
     profile = PROFILES[dataset]
     rounds = profile.rounds if rounds is None else rounds
     alpha = profile.alpha if alpha is None else alpha
@@ -187,12 +192,13 @@ def build_runs(*, config, privacy, noise_ratio, replicates, design_seed, replica
         runs.append(InclusionRun(
             name_prefix=f"ri-{config}-d{design_seed}-rep{j:02d}", num_clients=len(active), partition="non-iid",
             privacy=privacy, aggregation="fedavg", seed=LAYOUT_SEED,
-            # Noise std r C, independent of the active count (compute_stdv divides by it).
-            noise_multiplier=noise_ratio * len(active), hyperparams=replace(profile.hyperparams, rounds=rounds),
+            # Noise std r C on the released average, independent of the active count (compute_stdv divides by it;
+            # B1 divides by the expected sample q N, so its multiplier is r q N).
+            noise_multiplier=noise_ratio * len(active) * sampling_rate, hyperparams=replace(profile.hyperparams, rounds=rounds),
             data_module=profile.data_module, model_module=profile.model_module, aggregation_weighting="equal",
             config=config, replicate=j, replicates=replicates, design_seed=design_seed, included=included, active=active,
             client_seed=client_seed, noise_seed=noise_seed, noise_ratio=noise_ratio, dataset=dataset, alpha=alpha,
-            contribution_cap=contribution_cap, logit_tau=logit_tau,
+            contribution_cap=contribution_cap, logit_tau=logit_tau, sampling_rate=sampling_rate,
         ))
     return runs
 
@@ -236,6 +242,8 @@ def manifest(run, surrogates):
              if value}
     if local:  # B5 only, so earlier manifests stay unchanged
         pinned["local_training"] = local
+    if run.privacy == "subsampled-global-dp":  # B1 only
+        pinned["sampling_rate"] = run.sampling_rate
     return pinned
 
 
@@ -362,7 +370,9 @@ def check_every_client_trained(result_path, active):
     """Refuse a run in which a round aggregated fewer than ``active`` clients (a client's training failed, e.g. out of
     GPU memory): Flower aggregates the rest silently, which would change who took part. Found 2026-10-22 on Alzheimer."""
     metrics = json.loads(Path(result_path).read_text())["train_metrics"]
-    short = {t: len(m.get("client-ids", [])) for t, m in metrics.items() if len(m.get("client-ids", [])) != active}
+    # B1 samples a subset per round and logs its size.
+    short = {t: len(m.get("client-ids", [])) for t, m in metrics.items()
+             if len(m.get("client-ids", [])) != m.get("subsampled-dp-sampled-clients", active)}
     if short:
         raise RuntimeError(f"{len(short)} rounds aggregated fewer than {active} clients, e.g. {sorted(short.items())[:3]}")
 
@@ -386,6 +396,7 @@ def main():
     parser.add_argument("--replicate-subset", type=int, nargs="+", help="train only these replicates (sharding)")
     parser.add_argument("--surrogates", action="store_true", help="also score label-matched public surrogates")
     parser.add_argument("--contribution-cap", type=int, default=0, help="B5: records per client per round (0 = off)")
+    parser.add_argument("--sampling-rate", type=float, default=1.0, help="B1: client sampling rate q (subsampled-global-dp)")
     parser.add_argument("--logit-adjustment-tau", type=float, default=0.0, help="B5: logit-adjusted local loss")
     parser.add_argument("--smoke-rounds", type=int, help="1-5 rounds into an --output outside results/")
     parser.add_argument("--execute", action="store_true")
@@ -403,7 +414,8 @@ def main():
     runs = build_runs(config=args.config, privacy=args.privacy, noise_ratio=args.noise_ratio,
                       replicates=args.replicates, design_seed=args.design_seed,
                       replicate_subset=args.replicate_subset, rounds=rounds, dataset=args.dataset, alpha=args.alpha,
-                      contribution_cap=args.contribution_cap, logit_tau=args.logit_adjustment_tau)
+                      contribution_cap=args.contribution_cap, logit_tau=args.logit_adjustment_tau,
+                      sampling_rate=args.sampling_rate)
     print(json.dumps({"runs": len(runs), "execute": args.execute, "rounds": runs[0].hyperparams.rounds if runs else rounds,
                       "complete": sum((args.output / r.run_name() / "complete.json").exists() for r in runs),
                       "plan": [{"run_name": r.run_name(), "included": r.included, "client_seed": r.client_seed,
