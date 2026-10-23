@@ -115,5 +115,6 @@ differ; it cannot show that one protects better.
 ## 4. Cost
 
 192 runs. Part 1's relaunch ran about 3.9 runs per hour with two workers (0.26 GPU-h per run): about 50 GPU-h and
-about 35 hours with three workers on one GPU. The owner decided to run it on 2026-10-23 with the overrun known
-(part 1 alone reached about 44 GPU-h of the 40 GPU-h cap).
+about 35 hours with three workers on one GPU. The owner decided to run it on 2026-10-23 on an estimate of about
+36 GPU-h (at 0.2 GPU-h per run), knowing that part 1 alone had reached about 44 GPU-h of the 40 GPU-h cap; the
+estimate rose to about 50 GPU-h with part 1's measured rate, and is reported to the owner.
