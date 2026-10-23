@@ -1,10 +1,10 @@
 package: B5, exposure of large clients (owner decision 10: B5 first, then B1)
-status: analyzed; FINDINGS.md written; the owner decides whether B5 is finished
+status: closed by the owner (2026-10-23); report reports/cia_v2_b5_large_clients.md; merges with the branch after B1
 gate: G-B5: logit adjustment passes at 2x (AUC -0.100 [-0.152, -0.049], accuracy +1.1 pp), fails at 4x (-0.036 [-0.074, 0.002]); caps fail
 protocol: results/cia_v2/mechanisms/b5_large_clients/PROTOCOL.md (fixed 2026-10-20, before any B5 run)
 machine: compute server
 cost so far: about 12.5 GPU-h (stage A 8.8, stage B 3.7) of the 15 GPU-h cap
-next: B1 (client subsampling), per decision 10
+next: none (C1 waits by owner decision)
 needs from others: none (M2's runs are the global-DP baseline; no other agent session is running)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, B5, as amended by Section 10 (decisions 9 and 10, 2026-10-20).
