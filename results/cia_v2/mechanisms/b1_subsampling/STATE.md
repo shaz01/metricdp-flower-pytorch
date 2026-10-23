@@ -1,10 +1,10 @@
 package: B1, client subsampling with amplification (owner decision 10: B5 first, then B1)
-status: planning (STATE before code)
+status: code done (strategy, wiring, analysis, tests); accuracy pilot waits for a GPU
 gate: G-B1 (amended by owner decision 9) = not evaluated yet
 protocol: results/cia_v2/mechanisms/b1_subsampling/PROTOCOL.md, fixed after the accuracy pilot and before any leakage run
 machine: compute server
 cost so far: 0 GPU-h of the 15 GPU-h cap (stop and escalate at 18.75)
-next: Poisson-sampling global-DP strategy with tests; accuracy pilot when a GPU is free
+next: accuracy pilot (12 runs) when a GPU is available; then levels and PROTOCOL.md (formal-mu condition to settle with the owner first)
 needs from others: none (the accountant `metricdp_pytorch/accounting.py` is Agent C's, delivered with B4)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, B1, as amended by Section 10 (decisions 9 and 10,
@@ -73,3 +73,6 @@ run, so 6 configurations x 32 runs come to about 9 GPU-h, plus about 0.6 for the
 | When | What |
 |---|---|
 | 2026-10-23 | STATE written before any code. B5 analyzed (FINDINGS.md); the owner decides whether B5 is finished. |
+| 2026-10-24 | `feature/cia-v2-alzheimer` merged into this branch (fail-fast on failed clients, the run check, dataset profiles, the private-median collapse guard); all 565 committed manifests (M2, A1, B5) regenerate identically, 230 related tests pass. |
+| 2026-10-24 | Code: `metricdp_pytorch/subsampled_dp_strategy.py` (`PoissonSampledGlobalDP`: Poisson sample from a generator seeded by the noise seed, denominator `q N`, noise `z C / (q N)`, noise-only empty rounds), server and runner wiring (`--privacy subsampled-global-dp --sampling-rate q`; the randomized-inclusion runner sets `z = r q N`, records `sampling_rate` in the manifest; the fail-fast check and the run check count the sampled clients). 8 tests. A 3-round CPU smoke run (q = 0.25, r = 0.001546) trained exactly the sampled clients (6, 9, 15 of 32), noise std 0.00773 = r C. `b1_subsampling/analyze.py` (A1's matched-accuracy statistic per q; amplified mu interpolated in log mu; G-B1) with 5 tests. |
+| 2026-10-24 | **Accountant finding.** At B1's noise multipliers (z = r q N, about 0.006-0.05) `dominating_mu` with the default PLD discretization did not finish in 10 minutes; with discretization 0.1 it returns 42.9 for q = 0.25, r = 0.003092 (global DP at that r: 71.5) and overflows (inf) for q = 0.5, r = 0.003092. Both mechanisms' mu are far above any meaningful level here (mu above about 5 allows AUC near 1), so G-B1's formal condition compares vacuous numbers and is not always computable. analyze.py reports mu where it computes and marks it not computable otherwise; the owner decides how the condition reads before PROTOCOL.md. |
