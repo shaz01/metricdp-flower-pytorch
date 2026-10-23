@@ -1,10 +1,10 @@
 package: AZ, Alzheimer replication of M2 and A1 (owner decision 8)
-status: M2 on Alzheimer running (two workers on GPU 1, shared by owner approval); 7 of 128 runs valid so far
-gate: G-M2 and G-A1 as applied on EuroSAT = not evaluated yet
+status: M2 on Alzheimer analyzed (FINDINGS.md); A1 on Alzheimer is the owner's decision
+gate: G-M2 on Alzheimer = useful empirical regime at r = 0.0025 (vanilla leakage already low: AUC 0.564)
 protocol: results/cia_v2/alzheimer/PROTOCOL.md, part 1 (M2) fixed 2026-10-22 before any leakage run
 machine: compute server
-cost so far: about 10 GPU-h (diagnosis and calibration) of the 40 GPU-h cap; M2 part about 24 GPU-h
-next: M2 stage 1 and 2 (128 runs); analysis and G-M2; then the owner decides on A1 on Alzheimer
+cost so far: about 44 GPU-h of the 40 GPU-h cap (under the 50 GPU-h stop threshold)
+next: owner decision on A1 on Alzheimer
 needs from others: none
 
 Owner decision 8 (`research/cia_roadmap_v2/ROADMAP.md` Section 10, 2026-10-20): M2 and A1 repeated on Alzheimer MRI,
@@ -110,3 +110,4 @@ generalised to read the candidate panel from the run manifests):
 | 2026-10-22 13:45 | **Out-of-memory failures.** The three GPU 1 workers (8 parallel clients each, `paper_cnn`) shared GPU 1 with another user's process, which grew; about 1,000 client trainings per worker failed with CUDA out-of-memory, and Flower aggregated the remaining clients silently. 18 of 25 completed runs had rounds with fewer than 32 clients (vanilla down to 14, global DP some rounds with none). Workers stopped at 13:44. A scan of every earlier v2 run found no such rounds (M2 192, A1 244, M1 12, A2 144, B5 128, the AZ calibration and diagnosis). Fix: `check_every_client_trained` in the runner refuses a run with any short round before scoring, so it is retried instead of completed (test added; all 544 committed EuroSAT runs pass it). The 18 corrupted and 3 unfinished runs moved to quarantine outside the repository; 7 clean runs (vanilla replicates 3-9) kept. Relaunch with 4 parallel clients per worker. |
 | 2026-10-22 13:48 | Owner approved sharing GPU 1 (another user's process holds 9.2 GB) with two workers of 4 parallel clients each; GPU 0 left free. Relaunched (tmux az-m6, az-m7). |
 | 2026-10-22 13:53 | Owner asked that a failed client never be aggregated around. `--require-all-clients` (server: `require_all_clients` wraps the strategy's aggregation and stops the run at the first round with a failed or missing client); the randomized-inclusion runner always sets it, so a broken run fails at once and is retried instead of training on. Tests added (157 related tests pass); a 1-round CPU smoke run with the check completes normally. Runs already in flight keep the earlier after-the-fact check. |
+| 2026-10-23 20:55 | All 128 runs complete; every round of every run had 32 clients. Analysis: **G-M2 useful regime at r = 0.0025** (AUC 0.540, upper end 0.568; top decile 0.586; accuracy 0.784 [0.777, 0.791]). Vanilla AUC 0.564 (0.507-0.620): leakage is near chance without noise. Cost about 44 GPU-h, above the 40 GPU-h cap and under the 50 GPU-h stop threshold. FINDINGS.md written. |
