@@ -1,10 +1,10 @@
 package: AZ, Alzheimer replication of M2 and A1 (owner decision 8)
-status: M2 on Alzheimer analyzed (FINDINGS.md); A1 on Alzheimer is the owner's decision
+status: A1 on Alzheimer running (PROTOCOL.md part 2, owner decision 2026-10-23)
 gate: G-M2 on Alzheimer = useful empirical regime at r = 0.0025 (vanilla leakage already low: AUC 0.564)
-protocol: results/cia_v2/alzheimer/PROTOCOL.md, part 1 (M2) fixed 2026-10-22 before any leakage run
+protocol: results/cia_v2/alzheimer/PROTOCOL.md, part 1 (M2, 2026-10-22) and part 2 (A1, 2026-10-23), each fixed before its runs
 machine: compute server
 cost so far: about 44 GPU-h of the 40 GPU-h cap (under the 50 GPU-h stop threshold)
-next: owner decision on A1 on Alzheimer
+next: A1 stage 1, replacement check, stage 2, analysis
 needs from others: none
 
 Owner decision 8 (`research/cia_roadmap_v2/ROADMAP.md` Section 10, 2026-10-20): M2 and A1 repeated on Alzheimer MRI,
@@ -111,3 +111,4 @@ generalised to read the candidate panel from the run manifests):
 | 2026-10-22 13:48 | Owner approved sharing GPU 1 (another user's process holds 9.2 GB) with two workers of 4 parallel clients each; GPU 0 left free. Relaunched (tmux az-m6, az-m7). |
 | 2026-10-22 13:53 | Owner asked that a failed client never be aggregated around. `--require-all-clients` (server: `require_all_clients` wraps the strategy's aggregation and stops the run at the first round with a failed or missing client); the randomized-inclusion runner always sets it, so a broken run fails at once and is retried instead of training on. Tests added (157 related tests pass); a 1-round CPU smoke run with the check completes normally. Runs already in flight keep the earlier after-the-fact check. |
 | 2026-10-23 20:55 | All 128 runs complete; every round of every run had 32 clients. Analysis: **G-M2 useful regime at r = 0.0025** (AUC 0.540, upper end 0.568; top decile 0.586; accuracy 0.784 [0.777, 0.791]). Vanilla AUC 0.564 (0.507-0.620): leakage is near chance without noise. Cost about 44 GPU-h, above the 40 GPU-h cap and under the 50 GPU-h stop threshold. FINDINGS.md written. |
+| 2026-10-23 21:30 | Owner chose to run A1 on Alzheimer. Private-median collapse guard added (`PrivateMedianMetricPrivacyServerSideFixedClipping` keeps the previous model on zero-norm rounds; test). A1's formal mu uses the audit's rounds (EuroSAT's A1 analysis reproduces byte for byte). PROTOCOL.md part 2 fixed: targets 0.784 and 0.732, global-DP curve vanilla + 0.0025, 0.003, 0.0035; metric privacy 0.00125, 0.0025, 0.003; private median 0.000625, 0.00125, 0.0016. About 50 GPU-h. |

@@ -166,7 +166,7 @@ def main():
         audits = [load_audit(args.root, config=name) for name, _ in levels]
         summaries = []
         for audit, (_, ratio) in zip(audits, levels):
-            mu = formal_mu(privacy, ratio, maximum=PROFILES[args.dataset].median_quantile[2])
+            mu = formal_mu(privacy, ratio, rounds=audit.rounds[-1], maximum=PROFILES[args.dataset].median_quantile[2])
             summaries.append(_json(m2.config_summary(audit, noise_ratio=ratio) | {"formal_mu": mu}))
         report["mechanisms"][privacy] = {"levels": summaries, "matched": mechanism_report(audits, gdp, targets=targets)}
     text = json.dumps(report, indent=2, allow_nan=False, default=float)

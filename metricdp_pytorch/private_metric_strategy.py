@@ -26,7 +26,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 import math
-from logging import INFO
+from logging import INFO, WARNING
 
 import numpy as np
 from flwr.app import Array, ArrayRecord, Message, MetricRecord
@@ -220,7 +220,18 @@ class PrivateMedianMetricPrivacyServerSideFixedClipping(SeededNoiseMixin, Differ
                                            clipping_norm=self.clipping_norm, arrayrecord_key=self.arrayrecord_key)
         self._active_clients = len(reply_list)
         self._noise_stdv = None
-        aggregated_arrays, aggregated_metrics = super().aggregate_train(server_round, reply_list)
+        try:
+            aggregated_arrays, aggregated_metrics = super().aggregate_train(server_round, reply_list)
+            diagnostics["private-median-aggregation-collapsed"] = 0.0
+        except ZeroDivisionError:
+            # Every client update has zero norm (total divergence at high noise), and Flower's clipping divides by
+            # the update norm. As in the global-DP and metric-privacy strategies, keep the previous round's model
+            # (Strategy.start() keeps its arrays when the aggregate is None). The quantile release below still
+            # happens and is accounted.
+            log(WARNING, "aggregate_train: round %d client updates collapsed to zero norm; keeping the previous "
+                "model", server_round)
+            aggregated_arrays, aggregated_metrics = None, None
+            diagnostics["private-median-aggregation-collapsed"] = 1.0
         self.quantile = quantile_update(quantile, noisy_fraction, target=self.target_quantile,
                                         learning_rate=self.learning_rate, minimum=self.minimum_quantile,
                                         maximum=self.maximum_quantile)
