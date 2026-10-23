@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-20, owner decisions 7-11 (ROADMAP.md Section 10). CIA v2 Agent A packages M0, M1, M2, A1 and A2 merged into `master` (closed by the owner; reports `reports/cia_v2_m0_measurement.md`, `cia_v2_m1_shared_noise.md`, `cia_v2_m2_frontier.md`, `cia_v2_a1_matched_accuracy.md`, `cia_v2_a2_side_channel.md`). 2026-10-17, CIA v2 B4 (formal regime) and the client-level accountant merged into `master` (Agent C, closed by the owner; report `reports/cia_v2_formal_regime.md`); Agent A's M0 (G-M0 passed) came along as a dependency of B4's audit. CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
+**Last updated:** 2026-10-23, B4 confirmatory run merged; B5 closed (report on `feature/cia-v2-mechanisms`); C1 waits (decision 12). 2026-10-20, owner decisions 7-11 (ROADMAP.md Section 10). CIA v2 Agent A packages M0, M1, M2, A1 and A2 merged into `master` (closed by the owner; reports `reports/cia_v2_m0_measurement.md`, `cia_v2_m1_shared_noise.md`, `cia_v2_m2_frontier.md`, `cia_v2_a1_matched_accuracy.md`, `cia_v2_a2_side_channel.md`). 2026-10-17, CIA v2 B4 (formal regime) and the client-level accountant merged into `master` (Agent C, closed by the owner; report `reports/cia_v2_formal_regime.md`); Agent A's M0 (G-M0 passed) came along as a dependency of B4's audit. CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
 (`research/cia_review_2026-10/SYNTHESIS.md`) merged into `master`; the owner is choosing new directions from the
 synthesis. 2026-10-15: WP0-WP2 merged, D1 stopped. 2026-10-10: CIA literature review and agent roadmap added
 (`HANDOFF.md`, `research/cia_review_2026-10/`)
@@ -197,7 +197,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Owner decisions 7-11 in progress (2026-10-20, all by the agent that ran Agent A's packages): AZ Alzheimer replication paused and escalated (vanilla reaches only 0.55 accuracy at 48 slots, alpha 0.3; `results/cia_v2/alzheimer/ESCALATION.md` on `feature/cia-v2-alzheimer`); B5 stage A done: logit adjustment passes G-B5 at 2x (AUC 0.601 vs 0.702, accuracy +1.1 pp), caps fail; stage B: logit adjustment fails at 4x (-0.036), B5 analyzed (`results/cia_v2/mechanisms/b5_large_clients/FINDINGS.md`); AZ (alpha 1.0, 100 rounds): M2 on Alzheimer done, G-M2 useful regime at r = 0.0025, but vanilla leakage is already near chance (AUC 0.564; `results/cia_v2/alzheimer/FINDINGS.md`); A1 on Alzheimer running on GPU 1 (owner decision 2026-10-23; 192 runs, about 35 h, PROTOCOL.md part 2); B4 confirmatory run done, confirmed at 20 and 50 public images (`feature/cia-v2-formal-confirm`, `results/cia_v2/formal_regime/confirm/FINDINGS.md`).
+Owner decisions 7-12 (2026-10-20 to 2026-10-23, all by the agent that ran Agent A's packages): **A1 on Alzheimer running** on GPU 1 (`feature/cia-v2-alzheimer`; M2 on Alzheimer done: G-M2 useful regime at r = 0.0025, but vanilla leakage is already near chance, AUC 0.564; `results/cia_v2/alzheimer/FINDINGS.md`). **B5 closed** (logit adjustment passes G-B5 at 2x, -0.100 AUC at +1.1 pp accuracy; caps fail; report on `feature/cia-v2-mechanisms`, merged with B1). **B1 in planning** on the same branch (STATE written; strategy code next; runs wait for a GPU). **B4 confirmatory run closed and merged.** C1 waits (decision 12). GPU 0 is left to other users.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -225,6 +225,8 @@ section.
 | `a1-chain.sh` (compute server, GPUs 0 and 1, two workers each, idle and unclaimed at launch; branch `feature/cia-v2-frontier`) | CIA v2 A1 main runs, 7 configurations x 32 = 224 runs | done 2026-10-20 08:26 (about 21.7 GPU-h); G-A1 recorded |
 
 ## What's established on `master`
+
+- **CIA v2 B4 confirmatory run (2026-10-23)** (`reports/cia_v2_formal_confirm.md`; data `results/cia_v2/formal_regime/confirm/`): on a fresh layout, public subsets and seeds, all 13 scarce-public settings that beat the strongest legitimate baseline in B4's sweep do so again (20 public images: 14-26 pp at `mu_total <= 2`; 50: 10-14 pp). B4's scarce-public positive is confirmed for this setup.
 
 - **CIA v2 Agent A: measurement rebuilt, global DP's real frontier, and the audit of metric privacy (2026-10-20)**
   (reports `reports/cia_v2_m0_measurement.md`, `cia_v2_m1_shared_noise.md`, `cia_v2_m2_frontier.md`,

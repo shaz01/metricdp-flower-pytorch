@@ -415,6 +415,7 @@ Taken after M0-M2, A1 and A2 were closed and merged (reports `reports/cia_v2_m0_
 | 9 | **Decision 5 amended.** "Beats" is gated on the all-candidate AUC: at least 0.05 lower, with the 97.5% pair-jackknife interval of the paired difference excluding 0, at `R = 32` per configuration on M2's design. The top decile is reported with its interval but not gated (its detectable difference is about 0.09 at `R = 32`). |
 | 10 | **Agent B, selectively.** B5 first, then B1, at M2's operating points 2x and 4x (M2 found no `r_0.6`), `R = 32`, gated as in decision 9. B2 is deprioritized (leakage barely moves with noise in M2) and does not run unless the owner reopens it; B3 and C1 wait. B5's item 1 diagnostic uses M2's surrogate scores. |
 | 11 | **B4 confirmatory run.** The scarce-public positive (20-100 public images, `mu <= 2`) is re-run on a fresh layout under a new protocol fixed before the run (CPU only, about 1 CPU-hour), branch `feature/cia-v2-formal-confirm`. |
+| 12 | **2026-10-23:** B5 closed (G-B5 passes for logit adjustment at 2x, fails at 4x; caps fail; report `reports/cia_v2_b5_large_clients.md` on `feature/cia-v2-mechanisms`, merged with B1). The B4 confirmatory run closed and merged (confirmed at 20 and 50 public images; `reports/cia_v2_formal_confirm.md`). **C1 stays waiting** although B5 passed a B gate (Section 4). |
 
 No other agent session is running; the owner assigned all of the above to the agent that ran Agent A's packages,
 which works in each package's own branch and worktree and keeps each package's STATE, PROTOCOL and FINDINGS files.
