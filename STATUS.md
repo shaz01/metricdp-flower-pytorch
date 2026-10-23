@@ -197,7 +197,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Owner decisions 7-11 in progress (2026-10-20, all by the agent that ran Agent A's packages): AZ Alzheimer replication paused and escalated (vanilla reaches only 0.55 accuracy at 48 slots, alpha 0.3; `results/cia_v2/alzheimer/ESCALATION.md` on `feature/cia-v2-alzheimer`); B5 stage A done: logit adjustment passes G-B5 at 2x (AUC 0.601 vs 0.702, accuracy +1.1 pp), caps fail; stage B: logit adjustment fails at 4x (-0.036), B5 analyzed (`results/cia_v2/mechanisms/b5_large_clients/FINDINGS.md`); AZ (alpha 1.0, 100 rounds): M2 on Alzheimer done, G-M2 useful regime at r = 0.0025, but vanilla leakage is already near chance (AUC 0.564; `results/cia_v2/alzheimer/FINDINGS.md`); A1 on Alzheimer is the owner's decision; B4 confirmatory run done, confirmed at 20 and 50 public images (`feature/cia-v2-formal-confirm`, `results/cia_v2/formal_regime/confirm/FINDINGS.md`).
+Owner decisions 7-11 in progress (2026-10-20, all by the agent that ran Agent A's packages): AZ Alzheimer replication paused and escalated (vanilla reaches only 0.55 accuracy at 48 slots, alpha 0.3; `results/cia_v2/alzheimer/ESCALATION.md` on `feature/cia-v2-alzheimer`); B5 stage A done: logit adjustment passes G-B5 at 2x (AUC 0.601 vs 0.702, accuracy +1.1 pp), caps fail; stage B: logit adjustment fails at 4x (-0.036), B5 analyzed (`results/cia_v2/mechanisms/b5_large_clients/FINDINGS.md`); AZ (alpha 1.0, 100 rounds): M2 on Alzheimer done, G-M2 useful regime at r = 0.0025, but vanilla leakage is already near chance (AUC 0.564; `results/cia_v2/alzheimer/FINDINGS.md`); A1 on Alzheimer running on GPU 1 (owner decision 2026-10-23; 192 runs, about 35 h, PROTOCOL.md part 2); B4 confirmatory run done, confirmed at 20 and 50 public images (`feature/cia-v2-formal-confirm`, `results/cia_v2/formal_regime/confirm/FINDINGS.md`).
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -206,6 +206,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| 3 x `az-a1-chain.sh` (compute server, GPU 1 idle and unclaimed at launch; branch `feature/cia-v2-alzheimer`) | A1 on Alzheimer: metric privacy and private median, 3 levels each, 192 runs; automatic accuracy-only replacement check between stages | running (started 2026-10-23 21:16) |
 | 2 x `b5-worker.sh` (compute server, GPU 1 shared by owner approval; branch `feature/cia-v2-mechanisms`) | B5 stage B: logit adjustment at 4x, 32 runs | done 2026-10-21 20:29 (about 3.7 GPU-h); fails G-B5 |
 | 2 x `az1-cal-worker.sh` (compute server, GPU 1 shared by owner approval; branch `feature/cia-v2-alzheimer`) | AZ calibration, alpha 1.0, 100 rounds, 18 runs (accuracy only) | done 2026-10-21 21:23 |
 | 3 x `az1-cal-worker.sh` (compute server, GPU 1 idle and unclaimed at launch; branch `feature/cia-v2-alzheimer`) | AZ calibration batch 2, 20 runs (accuracy only) | done 2026-10-22 02:53 (one private-median run collapsed) |
