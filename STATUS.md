@@ -197,7 +197,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Owner decisions 7-12 (2026-10-20 to 2026-10-23, all by the agent that ran Agent A's packages): **A1 on Alzheimer running** on GPU 1 (`feature/cia-v2-alzheimer`; M2 on Alzheimer done: G-M2 useful regime at r = 0.0025, but vanilla leakage is already near chance, AUC 0.564; `results/cia_v2/alzheimer/FINDINGS.md`). **B5 closed** (logit adjustment passes G-B5 at 2x, -0.100 AUC at +1.1 pp accuracy; caps fail; report on `feature/cia-v2-mechanisms`, merged with B1). **B1 in planning** on the same branch (STATE written; strategy code next; runs wait for a GPU). **B4 confirmatory run closed and merged.** C1 waits (decision 12). GPU 0 is left to other users.
+Owner decisions 7-12 (2026-10-20 to 2026-10-23, all by the agent that ran Agent A's packages): **A1 on Alzheimer running** on GPU 1 (`feature/cia-v2-alzheimer`; M2 on Alzheimer done: G-M2 useful regime at r = 0.0025, but vanilla leakage is already near chance, AUC 0.564; `results/cia_v2/alzheimer/FINDINGS.md`). **B5 closed** (logit adjustment passes G-B5 at 2x, -0.100 AUC at +1.1 pp accuracy; caps fail; report on `feature/cia-v2-mechanisms`, merged with B1). **B1 code done** on the same branch (Poisson-sampled global DP, analysis, tests; G-B1 gated on AUC, decision 13); the accuracy pilot waits for a GPU. **B4 confirmatory run closed and merged.** C1 waits (decision 12). GPU 0 is left to other users.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
