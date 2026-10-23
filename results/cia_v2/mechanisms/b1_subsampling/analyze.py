@@ -51,7 +51,10 @@ def mu_at(points, target):
 
 
 def g_b1(matched_all, mu_b1, mu_gdp):
-    """Pass: AUC at least 0.05 lower with the gate interval below 0, and amplified ``mu`` no larger than global DP's."""
+    """Pass: AUC at least 0.05 lower with the gate interval below 0.
+
+    Owner decision 2026-10-23 (ROADMAP.md Section 10, decision 13): the formal condition ("amplified ``mu`` no larger")
+    is reported, not gated, since both sides are vacuous at these noise levels and the accountant can overflow."""
     difference = matched_all["difference"]
     auc_ok = (difference["estimate"] is not None and difference["high"] is not None
               and difference["estimate"] <= -REDUCTION and difference["high"] < 0)
@@ -59,8 +62,8 @@ def g_b1(matched_all, mu_b1, mu_gdp):
         mu_ok = None
     else:
         mu_ok = mu_b1 <= mu_gdp
-    return {"verdict": "pass" if auc_ok and mu_ok else "fail", "auc_condition": bool(auc_ok),
-            "mu_condition": mu_ok, "mu_b1": None if math.isinf(mu_b1) or math.isnan(mu_b1) else mu_b1,
+    return {"verdict": "pass" if auc_ok else "fail", "auc_condition": bool(auc_ok),
+            "mu_condition_reported": mu_ok, "mu_b1": None if math.isinf(mu_b1) or math.isnan(mu_b1) else mu_b1,
             "mu_b1_computable": math.isfinite(mu_b1), "mu_gdp": None if math.isnan(mu_gdp) else mu_gdp}
 
 

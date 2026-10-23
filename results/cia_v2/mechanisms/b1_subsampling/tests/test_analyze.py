@@ -43,14 +43,15 @@ def test_mu_interpolation_is_log_linear_and_refuses_to_extrapolate():
     assert math.isinf(analyze.mu_at([(0.80, math.inf), (0.70, 10.0)], 0.75))
 
 
-def test_gate_needs_both_conditions():
+def test_gate_is_decided_on_the_auc_and_reports_mu():
     good = {"difference": {"estimate": -0.08, "low": -0.12, "high": -0.03}}
     assert analyze.g_b1(good, 20.0, 50.0)["verdict"] == "pass"
-    assert analyze.g_b1(good, 60.0, 50.0)["verdict"] == "fail"
+    larger = analyze.g_b1(good, 60.0, 50.0)
+    assert larger["verdict"] == "pass" and larger["mu_condition_reported"] is False  # reported, not gated
     small = {"difference": {"estimate": -0.04, "low": -0.07, "high": -0.01}}
     assert analyze.g_b1(small, 20.0, 50.0)["verdict"] == "fail"
     unknown = analyze.g_b1(good, math.inf, 50.0)
-    assert unknown["verdict"] == "fail" and unknown["mu_b1_computable"] is False and unknown["mu_b1"] is None
+    assert unknown["verdict"] == "pass" and unknown["mu_b1_computable"] is False and unknown["mu_b1"] is None
 
 
 def test_rate_report_on_synthetic_curves():
