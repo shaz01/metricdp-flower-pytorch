@@ -1,5 +1,5 @@
 package: AZ, Alzheimer replication of M2 and A1 (owner decision 8)
-status: parts 1 (M2) and 2 (A1) analyzed (FINDINGS.md); the owner decides whether AZ is finished
+status: closed by the owner (2026-10-26); report reports/cia_v2_alzheimer_replication.md
 gate: G-M2 useful regime at r = 0.0025 (vanilla leakage near chance); G-A1: no robust difference (metric privacy nominally better at 0.784 by the gate interval only)
 protocol: results/cia_v2/alzheimer/PROTOCOL.md, part 1 (M2, 2026-10-22) and part 2 (A1, 2026-10-23), each fixed before its runs
 machine: compute server
