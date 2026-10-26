@@ -1,5 +1,5 @@
 package: B1, client subsampling with amplification (owner decision 10: B5 first, then B1)
-status: code done (strategy, wiring, analysis, tests); accuracy pilot waits for a GPU
+status: accuracy pilot running (GPU 1, idle and unclaimed at launch)
 gate: G-B1 (amended by owner decision 9) = not evaluated yet
 protocol: results/cia_v2/mechanisms/b1_subsampling/PROTOCOL.md, fixed after the accuracy pilot and before any leakage run
 machine: compute server
@@ -82,3 +82,4 @@ run, so 6 configurations x 32 runs come to about 9 GPU-h, plus about 0.6 for the
 | 2026-10-23 | Code: `metricdp_pytorch/subsampled_dp_strategy.py` (`PoissonSampledGlobalDP`: Poisson sample from a generator seeded by the noise seed, denominator `q N`, noise `z C / (q N)`, noise-only empty rounds), server and runner wiring (`--privacy subsampled-global-dp --sampling-rate q`; the randomized-inclusion runner sets `z = r q N`, records `sampling_rate` in the manifest; the fail-fast check and the run check count the sampled clients). 8 tests. A 3-round CPU smoke run (q = 0.25, r = 0.001546) trained exactly the sampled clients (6, 9, 15 of 32), noise std 0.00773 = r C. `b1_subsampling/analyze.py` (A1's matched-accuracy statistic per q; amplified mu interpolated in log mu; G-B1) with 5 tests. |
 | 2026-10-23 | **Accountant finding.** At B1's noise multipliers (z = r q N, about 0.006-0.05) `dominating_mu` with the default PLD discretization did not finish in 10 minutes; with discretization 0.1 it returns 42.9 for q = 0.25, r = 0.003092 (global DP at that r: 71.5) and overflows (inf) for q = 0.5, r = 0.003092. Both mechanisms' mu are far above any meaningful level here (mu above about 5 allows AUC near 1), so G-B1's formal condition compares vacuous numbers and is not always computable. analyze.py reports mu where it computes and marks it not computable otherwise; the owner decides how the condition reads before PROTOCOL.md. |
 | 2026-10-23 | Owner decision 13: G-B1's formal condition is reported, not gated. `analyze.py` and its test updated. |
+| 2026-10-26 10:35 | Run-check fix for collapsed rounds merged from `feature/cia-v2-alzheimer` (combined with B1's sampled-client rule; 46 tests pass). GPU 1 idle and unclaimed: accuracy pilot started (12 runs: q = 0.5 and 0.25 at r = 0.000773, 0.001546, 0.003092; design seed 3, 2 runs each; tmux b1-p0, b1-p1). |
