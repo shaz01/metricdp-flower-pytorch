@@ -197,7 +197,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Owner decisions 7-12 (2026-10-20 to 2026-10-23, all by the agent that ran Agent A's packages): **A1 on Alzheimer running** on GPU 1 (`feature/cia-v2-alzheimer`; M2 on Alzheimer done: G-M2 useful regime at r = 0.0025, but vanilla leakage is already near chance, AUC 0.564; `results/cia_v2/alzheimer/FINDINGS.md`). **B5 closed** (logit adjustment passes G-B5 at 2x, -0.100 AUC at +1.1 pp accuracy; caps fail; report on `feature/cia-v2-mechanisms`, merged with B1). **B1 code done** on the same branch (Poisson-sampled global DP, analysis, tests; G-B1 gated on AUC, decision 13); the accuracy pilot waits for a GPU. **B4 confirmatory run closed and merged.** C1 waits (decision 12). GPU 0 is left to other users.
+Owner decisions 7-12 (2026-10-20 to 2026-10-23, all by the agent that ran Agent A's packages): **AZ (Alzheimer replication) analyzed** (`feature/cia-v2-alzheimer`, `results/cia_v2/alzheimer/FINDINGS.md`): M2: G-M2 useful regime at r = 0.0025, but vanilla leakage is already near chance (AUC 0.564); A1: no robust difference between mechanisms (metric privacy nominally better at 0.784 by the gate interval only; bootstrap includes 0). About 84 GPU-h. The owner decides whether AZ is finished. **B5 closed** (logit adjustment passes G-B5 at 2x, -0.100 AUC at +1.1 pp accuracy; caps fail; report on `feature/cia-v2-mechanisms`, merged with B1). **B1 code done** on the same branch (Poisson-sampled global DP, analysis, tests; G-B1 gated on AUC, decision 13); the accuracy pilot waits for a GPU. **B4 confirmatory run closed and merged.** C1 waits (decision 12). GPU 0 is left to other users.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -206,7 +206,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| 3 x `az-a1-chain.sh` (compute server, GPU 1 idle and unclaimed at launch; branch `feature/cia-v2-alzheimer`) | A1 on Alzheimer: metric privacy and private median, 3 levels each, 192 runs; automatic accuracy-only replacement check between stages | running (started 2026-10-23 21:16) |
+| 3 x `az-a1-chain.sh` (compute server, GPU 1; branch `feature/cia-v2-alzheimer`) | A1 on Alzheimer, 192 runs | done 2026-10-25 12:50 (about 40 GPU-h); no robust difference |
 | 2 x `b5-worker.sh` (compute server, GPU 1 shared by owner approval; branch `feature/cia-v2-mechanisms`) | B5 stage B: logit adjustment at 4x, 32 runs | done 2026-10-21 20:29 (about 3.7 GPU-h); fails G-B5 |
 | 2 x `az1-cal-worker.sh` (compute server, GPU 1 shared by owner approval; branch `feature/cia-v2-alzheimer`) | AZ calibration, alpha 1.0, 100 rounds, 18 runs (accuracy only) | done 2026-10-21 21:23 |
 | 3 x `az1-cal-worker.sh` (compute server, GPU 1 idle and unclaimed at launch; branch `feature/cia-v2-alzheimer`) | AZ calibration batch 2, 20 runs (accuracy only) | done 2026-10-22 02:53 (one private-median run collapsed) |
