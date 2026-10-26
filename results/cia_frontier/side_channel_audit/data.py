@@ -27,10 +27,11 @@ MIN_RECORDS = 125
 class DirichletAlzheimer(AlzheimerDataModule):
     """Label-Dirichlet Alzheimer MRI; ``partition_seed`` as in ``DirichletEuroSAT``."""
 
-    def __init__(self, alpha, partition_seed=None, **kwargs):
+    def __init__(self, alpha, partition_seed=None, min_records=MIN_RECORDS, **kwargs):
         super().__init__(**kwargs)
         self.alpha = alpha
         self.partition_seed = partition_seed
+        self.min_records = min_records
 
     def _layout_seed(self, seed):
         return seed if self.partition_seed is None else self.partition_seed
@@ -44,7 +45,7 @@ class DirichletAlzheimer(AlzheimerDataModule):
         layout = self._layout_seed(seed)
         split = self.dataset["train"]
         labels = labels_from_records(split)
-        parts = dirichlet_partitions(tuple(labels), num_partitions, self.alpha, layout, MIN_RECORDS)
+        parts = dirichlet_partitions(tuple(labels), num_partitions, self.alpha, layout, self.min_records)
         return make_client_loaders(
             AlzheimerMRIDataset(split), labels, parts[partition_id], batch_size=batch_size,
             seed=layout + partition_id, train_fraction=self.train_fraction, max_samples=max_samples,
@@ -56,13 +57,13 @@ class DirichletAlzheimer(AlzheimerDataModule):
         )
 
 
-def base_module(alpha, partition_seed=None):
-    return DirichletAlzheimer(alpha, partition_seed=partition_seed)
+def base_module(alpha, partition_seed=None, min_records=MIN_RECORDS):
+    return DirichletAlzheimer(alpha, partition_seed=partition_seed, min_records=min_records)
 
 
-def partition_summary(alpha, clients, seed):
+def partition_summary(alpha, clients, seed, min_records=MIN_RECORDS):
     labels = tuple(labels_from_records(DirichletAlzheimer(alpha).dataset["train"]))
-    parts = dirichlet_partitions(labels, clients, alpha, seed, MIN_RECORDS)
+    parts = dirichlet_partitions(labels, clients, alpha, seed, min_records)
     y = np.asarray(labels)
     classes = np.unique(y)
     return {"alpha": alpha, "seed": seed, "classes": classes.tolist(),

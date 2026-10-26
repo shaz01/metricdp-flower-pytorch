@@ -201,6 +201,26 @@ def private_median_strategy(config):
     )
 
 
+def require_all_clients(strategy, expected: int):
+    """Stop the run as soon as a round has a failed client or fewer than ``expected`` replies.
+
+    Flower's strategies aggregate whatever replies arrive, so a client whose training fails (for example out of GPU
+    memory on a shared server) silently drops out of that round. For a membership audit that changes who took part.
+    """
+    aggregate = strategy.aggregate_train
+
+    def checked(server_round, replies):
+        replies = list(replies)
+        failed = sum(reply.has_error() for reply in replies)
+        if failed or len(replies) != expected:
+            raise RuntimeError(f"round {server_round}: {len(replies) - failed} of {expected} clients trained "
+                               f"({failed} failed); stopping the run instead of aggregating without them")
+        return aggregate(server_round, replies)
+
+    strategy.aggregate_train = checked
+    return strategy
+
+
 def make_run_strategy(config: Mapping[str, Any]):
     """Build the configured strategy, with its server noise seeded and logged as configured."""
     influence = {}
@@ -234,6 +254,8 @@ def make_run_strategy(config: Mapping[str, Any]):
         strategy.log_noise_diagnostics = True
     if bool(config.get("log-loo-residuals", False)):
         strategy = LeaveOneOutResidualLogging(strategy)
+    if bool(config.get("require-all-clients", False)):
+        strategy = require_all_clients(strategy, int(config["num-clients"]))
     return strategy
 
 
