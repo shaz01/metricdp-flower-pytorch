@@ -1,10 +1,10 @@
 package: AZ, Alzheimer replication of M2 and A1 (owner decision 8)
-status: A1 on Alzheimer running (PROTOCOL.md part 2, owner decision 2026-10-23)
-gate: G-M2 on Alzheimer = useful empirical regime at r = 0.0025 (vanilla leakage already low: AUC 0.564)
+status: parts 1 (M2) and 2 (A1) analyzed (FINDINGS.md); the owner decides whether AZ is finished
+gate: G-M2 useful regime at r = 0.0025 (vanilla leakage near chance); G-A1: no robust difference (metric privacy nominally better at 0.784 by the gate interval only)
 protocol: results/cia_v2/alzheimer/PROTOCOL.md, part 1 (M2, 2026-10-22) and part 2 (A1, 2026-10-23), each fixed before its runs
 machine: compute server
-cost so far: about 44 GPU-h of the 40 GPU-h cap (under the 50 GPU-h stop threshold)
-next: A1 stage 1, replacement check, stage 2, analysis
+cost so far: about 84 GPU-h (part 1 about 44, part 2 about 40)
+next: none until the owner decides
 needs from others: none
 
 Owner decision 8 (`research/cia_roadmap_v2/ROADMAP.md` Section 10, 2026-10-20): M2 and A1 repeated on Alzheimer MRI,
@@ -114,3 +114,5 @@ generalised to read the candidate panel from the run manifests):
 | 2026-10-23 21:10 | Owner chose to run A1 on Alzheimer. Private-median collapse guard added (`PrivateMedianMetricPrivacyServerSideFixedClipping` keeps the previous model on zero-norm rounds; test). A1's formal mu uses the audit's rounds (EuroSAT's A1 analysis reproduces byte for byte). PROTOCOL.md part 2 fixed: targets 0.784 and 0.732, global-DP curve vanilla + 0.0025, 0.003, 0.0035; metric privacy 0.00125, 0.0025, 0.003; private median 0.000625, 0.00125, 0.0016. About 50 GPU-h. |
 | 2026-10-23 21:16 | A1 on Alzheimer launched: three workers on GPU 1 (idle and unclaimed), 4 parallel clients each (tmux az-a0..az-a2). Each chain runs stage 1, then applies the replacement check automatically (`~/cia-server/az-a1-check.py`, stage-1 accuracy only) and goes on to stage 2 only if both mechanisms bracket both targets; otherwise it stops and logs. |
 | 2026-10-24 19:55 | Stage 1 at 91 of 96. Metric privacy r = 0.003, replicate 0 failed three times: round 100 collapsed (zero-norm updates, model kept; `metric-dp-aggregation-collapsed = 1`) and logged no client list, which the run check read as missing clients. A collapsed round is not a missing client; the check now accepts it (f2c5eeda, test). A retry job (tmux az-retry) reruns that replicate once the three workers' stage-1 runs finish; the chains' automatic replacement check then runs as planned. |
+| 2026-10-25 12:50 | A1 on Alzheimer complete (192 runs; the replacement check passed automatically after stage 1; every run passed the run check). |
+| 2026-10-26 10:20 | Analysis: metric privacy -0.051 [-0.100, -0.002] at 0.784 ("better" by the gate interval; two-way bootstrap [-0.125, 0.016]) and -0.026 [-0.076, 0.025] at 0.732; private median -0.019 and -0.023 (no detectable difference). All AUCs 0.49-0.56. FINDINGS.md part 2 written with the caveats (bootstrap includes 0, AUC below 0.5, four gated outcomes). |
