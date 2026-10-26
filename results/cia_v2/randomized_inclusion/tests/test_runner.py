@@ -256,3 +256,11 @@ def test_inclusion_runs_require_every_client():
     args = plan()[0].runner_args(output_dir=Path("out"), max_parallel_clients=4, client_cpus=1.0,
                                  checkpoint_rounds=runner.CHECKPOINT_ROUNDS)
     assert "--require-all-clients" in args
+
+
+def test_a_collapsed_round_is_not_a_missing_client(tmp_path):
+    metrics = {str(t): {"client-ids": list(range(32))} for t in range(1, 4)}
+    metrics["3"] = {"metric-dp-aggregation-collapsed": 1.0}
+    path = tmp_path / "run.json"
+    path.write_text(json.dumps({"train_metrics": metrics}))
+    runner.check_every_client_trained(path, 32)

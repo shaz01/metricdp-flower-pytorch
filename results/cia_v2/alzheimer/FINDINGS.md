@@ -68,3 +68,71 @@ had all 32 clients (`check_every_client_trained`).
 | First launch, 2026-10-22 11:05-13:44 (three workers on each GPU, then on GPU 1; runs with failed clients quarantined) | about 2.7 |
 | Relaunch, 2026-10-22 13:47 to 2026-10-23 20:55 (two workers on GPU 1, shared by owner approval) | about 31.1 |
 | Total | about 44 of the 40 GPU-h cap (stop at 50) |
+
+# AZ findings, part 2: A1 on Alzheimer MRI
+
+Protocol: [PROTOCOL.md](PROTOCOL.md) part 2, fixed before its runs. Numbers come from
+[a1/analysis.json](a1/analysis.json) (command in PROTOCOL.md part 2, Section 3).
+
+## Verdict
+
+**G-A1 on Alzheimer: no robust difference between the mechanisms; one nominal "better" that does not survive the
+reference interval.**
+
+| Mechanism | `a* = 0.784` | `a* = 0.732` |
+|---|---|---|
+| Paper's metric privacy | **"better" by the gate interval:** -0.051 [-0.100, -0.002]; two-way bootstrap [-0.125, 0.016] | no detectable difference: -0.026 [-0.076, 0.025] |
+| Private-median metric privacy | no detectable difference: -0.019 [-0.064, 0.027] | no detectable difference: -0.023 [-0.078, 0.033] |
+
+All candidates; difference `AUC_mechanism(a*) - AUC_GDP(a*)`; pair jackknife at 97.5% (gate), two-way bootstrap (95%)
+alongside. Global-DP curve: vanilla and global DP at 0.0025, 0.003 and 0.0035 (part 1).
+
+**The one "better" outcome is fragile:**
+
+- Its gate interval excludes 0 by 0.002, and the two-way bootstrap, which also resamples the candidate panel,
+  includes 0. On EuroSAT every outcome agreed under both intervals.
+- The mechanism's AUC there is 0.489, below 0.5. With leave-pair-out references the calibrated attacker's null AUC sits
+  slightly below 0.5 (M0's simulations: 0.49-0.50; A2's: 0.45-0.47 at smaller sizes), so a difference between two
+  near-chance AUCs partly reflects that bias.
+- Four outcomes are gated (two mechanisms, two targets); at 97.5% two-sided, the chance of at least one false
+  "better" among four independent null comparisons is about 5%.
+
+So the protocol's expectation holds: with leakage near chance for every configuration, A1 on Alzheimer cannot show
+that a mechanism protects better.
+
+## Results
+
+| Config | `mu_total` | AUC, all candidates (97.5%) | Top-decile AUC | TPR at 5% FPR | Final-round AUC | Mean final accuracy (95%) | Lowest client accuracy |
+|---|---|---|---|---|---|---|---|
+| Vanilla (part 1) | none | 0.564 | 0.576 | 0.078 | 0.576 | 0.815 | 0.533 |
+| Global DP 0.0025 (part 1) | 125.0 | 0.540 | 0.586 | 0.041 | 0.489 | 0.784 | 0.433 |
+| Global DP 0.003 (part 1) | 104.2 | 0.523 | 0.502 | 0.061 | 0.547 | 0.732 | 0.341 |
+| Global DP 0.0035 (part 1) | 89.3 | 0.546 | 0.472 | 0.086 | 0.509 | 0.670 | 0.279 |
+| Metric privacy 0.00125 | none | 0.506 (0.472-0.540) | 0.594 | 0.047 | 0.547 | 0.829 (0.821-0.836) | 0.543 |
+| Metric privacy 0.0025 | none | 0.485 (0.436-0.533) | 0.532 | 0.057 | 0.556 | 0.773 (0.762-0.783) | 0.418 |
+| Metric privacy 0.003 | none | 0.526 (0.472-0.580) | 0.545 | 0.066 | 0.479 | 0.639 (0.597-0.680) | 0.258 |
+| Private median 0.000625 | 685.2 | 0.540 (0.494-0.585) | 0.590 | 0.045 | 0.534 | 0.825 (0.819-0.832) | 0.530 |
+| Private median 0.00125 | 342.6 | 0.499 (0.451-0.548) | 0.458 | 0.061 | 0.500 | 0.736 (0.721-0.752) | 0.364 |
+| Private median 0.0016 | 267.6 | 0.545 (0.508-0.581) | 0.624 | 0.070 | 0.530 | 0.518 (0.484-0.552) | 0.052 |
+
+Matched-accuracy differences, top decile (reported, not gated): metric privacy -0.042 [-0.163, 0.080] at 0.784 and
++0.034 [-0.126, 0.194] at 0.732; private median -0.057 [-0.155, 0.042] and -0.041 [-0.148, 0.067].
+
+**Replacement check** (automatic, stage-1 accuracy only): metric privacy 0.829 / 0.771 / 0.639 and private median
+0.829 / 0.741 / 0.525 bracket both targets, so no level was replaced. Every run passed the run check; 4 rounds in total
+collapsed (zero-norm updates, model kept).
+
+## Reading
+
+- **On Alzheimer the audit question has no measurable leakage to act on.** Every configuration, vanilla included, sits
+  at an AUC of 0.49-0.56, and differences between them are mostly within each interval.
+- **Formal guarantees:** private median's `mu_total` is 268-685 against global DP's 104-125 at similar accuracy; the
+  paper's mechanism has none. As on EuroSAT, the guarantees differ while the measured leakage does not.
+- **For the paper:** the EuroSAT audit (A1) stands, with matched-accuracy equivalence at 0.740. Alzheimer adds that in a
+  setting with near-chance leakage no mechanism is measurably better; its single nominal "better" should be reported
+  with the caveats above, not as a positive result.
+
+## Cost (part 2)
+
+192 runs, three workers on GPU 1 (idle and unclaimed at launch; other users' processes joined later), 2026-10-23 21:16
+to 2026-10-25 12:50, plus one rerun: about 40 GPU-h of occupancy. AZ in total about 84 GPU-h (part 1 about 44).

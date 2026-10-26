@@ -370,9 +370,11 @@ def check_every_client_trained(result_path, active):
     """Refuse a run in which a round aggregated fewer than ``active`` clients (a client's training failed, e.g. out of
     GPU memory): Flower aggregates the rest silently, which would change who took part. Found 2026-10-22 on Alzheimer."""
     metrics = json.loads(Path(result_path).read_text())["train_metrics"]
-    # B1 samples a subset per round and logs its size.
+    # B1 samples a subset per round and logs its size. A collapsed round (every update had zero norm; the strategy
+    # kept the previous model) logs no client list, although every client trained (2026-10-24, Alzheimer).
     short = {t: len(m.get("client-ids", [])) for t, m in metrics.items()
-             if len(m.get("client-ids", [])) != m.get("subsampled-dp-sampled-clients", active)}
+             if len(m.get("client-ids", [])) != m.get("subsampled-dp-sampled-clients", active)
+             and not any(key.endswith("aggregation-collapsed") and value == 1.0 for key, value in m.items())}
     if short:
         raise RuntimeError(f"{len(short)} rounds aggregated fewer than {active} clients, e.g. {sorted(short.items())[:3]}")
 
