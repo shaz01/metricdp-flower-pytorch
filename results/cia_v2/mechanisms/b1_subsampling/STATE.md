@@ -1,10 +1,10 @@
 package: B1, client subsampling with amplification (owner decision 10: B5 first, then B1)
-status: accuracy pilot running (GPU 1, idle and unclaimed at launch)
+status: main runs running (PROTOCOL.md fixed 2026-10-27; GPU 1, idle and unclaimed at launch)
 gate: G-B1 (amended by owner decision 9) = not evaluated yet
-protocol: results/cia_v2/mechanisms/b1_subsampling/PROTOCOL.md, fixed after the accuracy pilot and before any leakage run
+protocol: results/cia_v2/mechanisms/b1_subsampling/PROTOCOL.md (fixed 2026-10-27, before any leakage run)
 machine: compute server
 cost so far: 0 GPU-h of the 15 GPU-h cap (stop and escalate at 18.75)
-next: accuracy pilot (12 runs) when a GPU is available; then levels and PROTOCOL.md (formal-mu condition settled: reported, not gated (decision 13))
+next: stage 1, automatic replacement check, stage 2; analysis and G-B1
 needs from others: none (the accountant `metricdp_pytorch/accounting.py` is Agent C's, delivered with B4)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, B1, as amended by Section 10 (decisions 9 and 10,
@@ -84,3 +84,5 @@ run, so 6 configurations x 32 runs come to about 9 GPU-h, plus about 0.6 for the
 | 2026-10-23 | Owner decision 13: G-B1's formal condition is reported, not gated. `analyze.py` and its test updated. |
 | 2026-10-26 10:35 | Run-check fix for collapsed rounds merged from `feature/cia-v2-alzheimer` (combined with B1's sampled-client rule; 46 tests pass). GPU 1 idle and unclaimed: accuracy pilot started (12 runs: q = 0.5 and 0.25 at r = 0.000773, 0.001546, 0.003092; design seed 3, 2 runs each; tmux b1-p0, b1-p1). |
 | 2026-10-26 21:00 | Pilot complete (12 runs). Mean final accuracy: q = 0.5: 0.779 / 0.779 / 0.744 and q = 0.25: 0.727 / 0.702 / 0.660 at r = 0.000773 / 0.001546 / 0.003092. Neither q brackets both targets (0.740, 0.660): q = 0.5 needs a noisier level, and q = 0.25 stays below 0.740. Pilot extension (accuracy only, same design, 2 runs each): q = 0.5 at r = 0.006184; q = 0.25 at r = 0.000387 and 0.0001 (its accuracy ceiling). |
+| 2026-10-26 21:14 | Pilot extension complete: q = 0.5 at r = 0.006184: 0.693; q = 0.25 at r = 0.000387: 0.740, at r = 0.0001: 0.769. Both q can bracket both targets. |
+| 2026-10-27 10:55 | PROTOCOL.md fixed: q = 0.5 at r = 0.001546, 0.003092, 0.006184, 0.012368; q = 0.25 at r = 0.0001, 0.000773, 0.003092, 0.006184 (four per q; one new level each, not piloted). 256 runs, about 11.5 GPU-h. Main runs started: three workers on GPU 1 (idle and unclaimed), each chain running stage 1, the automatic accuracy-only replacement check (`~/cia-server/b1-check.py`), then stage 2. |
