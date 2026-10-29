@@ -197,7 +197,7 @@ found during the redo). After that, Phase 2 (mechanism redesign) is the next maj
 
 ### Currently running
 
-Owner decisions 7-14 (2026-10-20 to 2026-10-29, all by the agent that ran Agent A's packages): AZ, B4's confirmatory run, B5 and B1 are closed and merged (see "What's established"). **C1 opened 2026-10-29** (`feature/cia-v2-composite`): the composite of the passed mechanisms (logit adjustment, client subsampling) against metric privacy at matched accuracy; design next. B2 and B3 stay deprioritized or on hold. GPU 0 is left to other users. The roadmap's GPU budget (about 175 GPU-h) is used up (about 178 GPU-h spent); C1's cap is the owner's.
+Owner decisions 7-14 (2026-10-20 to 2026-10-29, all by the agent that ran Agent A's packages): AZ, B4's confirmatory run, B5 and B1 are closed and merged (see "What's established"). **C1 main runs running** on GPU 1 (`feature/cia-v2-composite`, shared with another user's job by owner approval): the composite (client subsampling at q = 0.25 with logit adjustment) against metric privacy at matched accuracy, EuroSAT, 128 runs, cap 15 GPU-h (decision 16). B2 and B3 stay deprioritized or on hold. GPU 0 is left to other users. The roadmap's GPU budget (about 175 GPU-h) is used up (about 178 GPU-h spent); C1's cap is the owner's.
 
 Update this table whenever a machine picks up new work: add a row, edit the Status column
 in place (e.g. `running` -> `done`), and leave a finished row for one update cycle before removing
@@ -206,6 +206,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| 2 x `c1-chain.sh` (compute server, GPU 1 shared by owner approval, 4 parallel clients; branch `feature/cia-v2-composite`) | C1 main runs: composite at 4 levels, 128 runs, surrogates and the defense-aware score | running (started 2026-10-29 18:40) |
 | 3 x `b1-chain.sh` (compute server, GPU 1; branch `feature/cia-v2-mechanisms`, merged) | B1 main runs, 256 runs | done 2026-10-27 20:42 (about 9.9 GPU-h); G-B1 passes for q = 0.25 |
 | 3 x `az-a1-chain.sh` (compute server, GPU 1; branch `feature/cia-v2-alzheimer`) | A1 on Alzheimer, 192 runs | done 2026-10-25 12:50 (about 40 GPU-h); no robust difference |
 | 2 x `b5-worker.sh` (compute server, GPU 1 shared by owner approval; branch `feature/cia-v2-mechanisms`) | B5 stage B: logit adjustment at 4x, 32 runs | done 2026-10-21 20:29 (about 3.7 GPU-h); fails G-B5 |

@@ -419,6 +419,7 @@ Taken after M0-M2, A1 and A2 were closed and merged (reports `reports/cia_v2_m0_
 | 13 | **2026-10-23: G-B1's formal condition is reported, not gated.** At B1's noise levels both mechanisms' `mu` are vacuous (about 40-140) and the accountant overflows for some settings; G-B1 is decided on the all-candidate AUC reduction (decision 9). |
 | 14 | **2026-10-29:** B1 closed (client subsampling at `q = 0.25` passes G-B1 at both targets, about -0.10 and -0.06 AUC; `q = 0.5` fails; report `reports/cia_v2_b1_subsampling.md`); `feature/cia-v2-mechanisms` (B5, B1, B3's on-hold STATE) merged into master. **C1 opened** (`feature/cia-v2-composite`). |
 | 15 | **2026-10-29, C1 design:** EuroSAT only (Alzheimer's leakage is near chance even without noise, so no mechanism can be measurably better there); G-C1's formal clause is reported, not gated (as decision 13); two adaptive attackers are added and reported (label-matched surrogates; logit-adjusted shadow losses). |
+| 16 | **2026-10-29: C1's cap is 15 GPU-h** (stop and escalate at 18.75), beyond the roadmap's original total (about 178 of 175 GPU-h spent before C1). |
 
 No other agent session is running; the owner assigned all of the above to the agent that ran Agent A's packages,
 which works in each package's own branch and worktree and keeps each package's STATE, PROTOCOL and FINDINGS files.
