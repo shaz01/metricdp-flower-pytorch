@@ -30,8 +30,12 @@ DISCRETIZATION = 0.1  # coarse PLD grid: still a pessimistic upper bound, and fe
 
 
 def amplified_mu(ratio, sampling_rate, active=m2.ACTIVE, rounds=m2.ROUNDS, discretization=DISCRETIZATION):
-    """Dominating ``mu`` (delta floor 1e-10) of the subsampled Gaussian, or ``inf`` where the accountant overflows."""
-    mechanism = accounting.SubsampledGaussian(ratio * active * sampling_rate, sampling_rate, rounds)
+    """Dominating ``mu`` (delta floor 1e-10) of the subsampled Gaussian, or ``inf`` where the accountant overflows or
+    ``z`` is below its supported minimum (``accounting.MIN_NOISE_MULTIPLIER``)."""
+    z = ratio * active * sampling_rate
+    if z < accounting.MIN_NOISE_MULTIPLIER:  # below the accountant's supported range its PLD does not finish
+        return math.inf
+    mechanism = accounting.SubsampledGaussian(z, sampling_rate, rounds)
     with np.errstate(all="ignore"):
         mu = accounting.dominating_mu(mechanism, discretization=discretization).mu
     return mu if math.isfinite(mu) else math.inf
@@ -58,7 +62,7 @@ def g_b1(matched_all, mu_b1, mu_gdp):
     difference = matched_all["difference"]
     auc_ok = (difference["estimate"] is not None and difference["high"] is not None
               and difference["estimate"] <= -REDUCTION and difference["high"] < 0)
-    if math.isnan(mu_b1) or math.isnan(mu_gdp):
+    if not math.isfinite(mu_b1) or math.isnan(mu_gdp):  # not computable or not bracketed: no comparison
         mu_ok = None
     else:
         mu_ok = mu_b1 <= mu_gdp

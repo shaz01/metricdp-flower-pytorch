@@ -1,10 +1,10 @@
 package: B1, client subsampling with amplification (owner decision 10: B5 first, then B1)
-status: main runs running (PROTOCOL.md fixed 2026-10-27; GPU 1, idle and unclaimed at launch)
-gate: G-B1 (amended by owner decision 9) = not evaluated yet
+status: analyzed; FINDINGS.md written; the owner decides whether B1 is finished
+gate: G-B1: q = 0.25 passes at 0.740 (-0.102 [-0.164, -0.040]) and 0.660 (-0.059 [-0.096, -0.022]); q = 0.5 fails (-0.036, -0.023)
 protocol: results/cia_v2/mechanisms/b1_subsampling/PROTOCOL.md (fixed 2026-10-27, before any leakage run)
 machine: compute server
-cost so far: 0 GPU-h of the 15 GPU-h cap (stop and escalate at 18.75)
-next: stage 1, automatic replacement check, stage 2; analysis and G-B1
+cost so far: about 10.9 GPU-h (pilot about 1, main runs about 9.9) of the 15 GPU-h cap
+next: none until the owner decides
 needs from others: none (the accountant `metricdp_pytorch/accounting.py` is Agent C's, delivered with B4)
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, B1, as amended by Section 10 (decisions 9 and 10,
@@ -86,3 +86,5 @@ run, so 6 configurations x 32 runs come to about 9 GPU-h, plus about 0.6 for the
 | 2026-10-26 21:00 | Pilot complete (12 runs). Mean final accuracy: q = 0.5: 0.779 / 0.779 / 0.744 and q = 0.25: 0.727 / 0.702 / 0.660 at r = 0.000773 / 0.001546 / 0.003092. Neither q brackets both targets (0.740, 0.660): q = 0.5 needs a noisier level, and q = 0.25 stays below 0.740. Pilot extension (accuracy only, same design, 2 runs each): q = 0.5 at r = 0.006184; q = 0.25 at r = 0.000387 and 0.0001 (its accuracy ceiling). |
 | 2026-10-26 21:14 | Pilot extension complete: q = 0.5 at r = 0.006184: 0.693; q = 0.25 at r = 0.000387: 0.740, at r = 0.0001: 0.769. Both q can bracket both targets. |
 | 2026-10-27 10:55 | PROTOCOL.md fixed: q = 0.5 at r = 0.001546, 0.003092, 0.006184, 0.012368; q = 0.25 at r = 0.0001, 0.000773, 0.003092, 0.006184 (four per q; one new level each, not piloted). 256 runs, about 11.5 GPU-h. Main runs started: three workers on GPU 1 (idle and unclaimed), each chain running stage 1, the automatic accuracy-only replacement check (`~/cia-server/b1-check.py`), then stage 2. |
+| 2026-10-27 20:42 | Main runs complete (256); the automatic replacement check passed after stage 1 (q = 0.5: 0.762 / 0.724 / 0.633 / 0.515; q = 0.25: 0.741 / 0.730 / 0.685 / 0.588). Every run passed the run check. |
+| 2026-10-29 14:50 | First analysis attempt timed out after 50 minutes: the accountant's PLD does not finish at noise multipliers far below its supported minimum (0.05). `amplified_mu` now reports such levels as not computable (test added); a reporting fix makes the formal condition read "not computable" instead of false. Analysis: **G-B1 passes for q = 0.25** at 0.740 (-0.102 [-0.164, -0.040], bootstrap [-0.166, -0.040]) and 0.660 (-0.059 [-0.096, -0.022], bootstrap [-0.105, -0.011]); **fails for q = 0.5** (-0.036 and -0.023). FINDINGS.md written. |

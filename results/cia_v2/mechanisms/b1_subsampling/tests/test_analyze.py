@@ -52,6 +52,7 @@ def test_gate_is_decided_on_the_auc_and_reports_mu():
     assert analyze.g_b1(small, 20.0, 50.0)["verdict"] == "fail"
     unknown = analyze.g_b1(good, math.inf, 50.0)
     assert unknown["verdict"] == "pass" and unknown["mu_b1_computable"] is False and unknown["mu_b1"] is None
+    assert unknown["mu_condition_reported"] is None
 
 
 def test_rate_report_on_synthetic_curves():
@@ -62,3 +63,7 @@ def test_rate_report_on_synthetic_curves():
     assert set(report["g_b1"]) == {"0.74", "0.66"}
     assert report["matched"]["all"]["0.74"]["difference"]["high"] < 0
     assert all(level["sampling_rate"] == 0.5 for level in report["levels"])
+
+
+def test_mu_is_not_computable_below_the_accountants_minimum():
+    assert math.isinf(analyze.amplified_mu(0.0001, 0.25))  # z = 0.0008
