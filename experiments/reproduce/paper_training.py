@@ -102,6 +102,8 @@ def train_with_adam(
     proximal_normalization: str = "mean",
     consensus_beta: float = 0.0,
     local_steps: int = 0,
+    log_prior: torch.Tensor | None = None,
+    logit_tau: float = 0.0,
 ) -> list[float]:
     """Train with Adam, sparse categorical CE, and optional FedProx penalty.
 
@@ -112,7 +114,9 @@ def train_with_adam(
     state at function entry (evaluated in eval mode, no gradient).
     ``local_steps > 0`` replaces the epoch count by a fixed number of optimizer
     steps, cycling through the loader as often as needed (the last pass may be
-    partial). Returns one example-weighted mean objective value per pass.
+    partial). ``logit_tau > 0`` with ``log_prior`` (the client's log label prior, one entry per class) trains on the
+    logit-adjusted loss of Menon et al. (2020), the cross-entropy of ``softmax(log p + tau log_prior)``; the model's
+    own output stays the prediction. Returns one example-weighted mean objective value per pass.
     """
     if epochs < 1:
         raise ValueError("epochs must be at least one.")
@@ -128,10 +132,13 @@ def train_with_adam(
         raise ValueError("consensus_beta must be non-negative.")
     if local_steps < 0:
         raise ValueError("local_steps must be non-negative.")
+    if logit_tau < 0 or (logit_tau > 0 and log_prior is None):
+        raise ValueError("logit_tau must be non-negative and needs log_prior.")
     if device is None:
         device = resolve_device()
 
     model.to(device)
+    adjustment = logit_tau * log_prior.to(device) if logit_tau > 0 else None
     initial_parameters = [parameter.detach().clone() for parameter in model.parameters()]
     # proximal_term is a mean; the "sum" convention multiplies it back by the count.
     proximal_scale = (
@@ -158,7 +165,11 @@ def train_with_adam(
             labels = to_device(labels, device)
             optimizer.zero_grad()
             probabilities = model(images)
-            loss = sparse_categorical_cross_entropy(probabilities, labels)
+            if adjustment is None:
+                loss = sparse_categorical_cross_entropy(probabilities, labels)
+            else:
+                log_probabilities = probabilities.clamp_min(torch.finfo(probabilities.dtype).tiny).log()
+                loss = nn.functional.cross_entropy(log_probabilities + adjustment, labels)
             if proximal_mu > 0:
                 loss = loss + 0.5 * proximal_mu * proximal_scale * proximal_term(
                     model.parameters(), initial_parameters

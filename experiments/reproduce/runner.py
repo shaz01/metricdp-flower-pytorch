@@ -45,6 +45,7 @@ _GPU_SHARE_SAFETY = 0.99
 RESIDUAL_PRIVACY = "residual-clipping"
 # WP3 private-median metric privacy (metricdp_pytorch.private_metric_strategy), built by experiments.reproduce.server.
 PRIVATE_MEDIAN_PRIVACY = "private-median"
+SUBSAMPLED_PRIVACY = "subsampled-global-dp"  # CIA v2 B1: global DP with Poisson client sampling
 
 def _auto_client_gpus(*, num_clients: int, max_parallel_clients: int) -> float:
     """Split one CUDA device across the concurrently-running client actors.
@@ -70,7 +71,8 @@ def _parser() -> argparse.ArgumentParser:
         help="partition mode interpreted by the selected data module",
     )
     parser.add_argument(
-        "--privacy", choices=PRIVACY_MODES + EXPERIMENTAL_PRIVACY_MODES + (RESIDUAL_PRIVACY, PRIVATE_MEDIAN_PRIVACY),
+        "--privacy",
+        choices=PRIVACY_MODES + EXPERIMENTAL_PRIVACY_MODES + (RESIDUAL_PRIVACY, PRIVATE_MEDIAN_PRIVACY, SUBSAMPLED_PRIVACY),
         default="vanilla",
     )
     parser.add_argument(
@@ -109,11 +111,17 @@ def _parser() -> argparse.ArgumentParser:
                              "FedProx paper's sum of squares")
     parser.add_argument("--consensus-kl-beta", type=float, default=0.0,
                         help="weight of KL(p_global || p_local) on local data (0 = off)")
+    parser.add_argument("--sampling-rate", type=float,
+                        help="subsampled-global-dp: probability q that a client joins a round (denominator q N)")
     parser.add_argument("--require-all-clients", action="store_true",
                         help="stop the run if a client fails or does not reply in any round (default: Flower "
                              "aggregates the remaining clients)")
     parser.add_argument("--local-steps", type=int, default=0,
                         help="fixed optimizer steps per round instead of --local-epochs (0 = off)")
+    parser.add_argument("--contribution-cap", type=int, default=0,
+                        help="CIA v2 B5: at most this many training records per client per round (0 = off)")
+    parser.add_argument("--logit-adjustment-tau", type=float, default=0.0,
+                        help="CIA v2 B5: logit-adjusted local loss with the client's label prior (0 = off)")
     parser.add_argument(
         "--lr-schedule",
         choices=("none", "cosine"),
@@ -250,6 +258,19 @@ def _validate_private_median(args: argparse.Namespace) -> None:
         raise ValueError("private-median needs a positive noise multiplier.")
 
 
+def _validate_subsampled(args: argparse.Namespace) -> None:
+    if args.privacy != SUBSAMPLED_PRIVACY:
+        if args.sampling_rate is not None:
+            raise ValueError("--sampling-rate applies only to --privacy subsampled-global-dp.")
+        return
+    if args.aggregation_weighting != "equal":
+        raise ValueError("subsampled-global-dp requires --aggregation-weighting equal.")
+    if args.sampling_rate is None or not 0 < args.sampling_rate <= 1:
+        raise ValueError("subsampled-global-dp needs --sampling-rate in (0, 1].")
+    if args.noise_multiplier <= 0:
+        raise ValueError("subsampled-global-dp needs a positive noise multiplier.")
+
+
 def _validate_residual(args: argparse.Namespace) -> None:
     slots = None if args.privacy == PRIVATE_MEDIAN_PRIVACY else args.num_slots
     options = (slots, args.residual_rho, args.residual_quantile, args.residual_rho_min,
@@ -275,6 +296,7 @@ def _validate_residual(args: argparse.Namespace) -> None:
 def _validate(args: argparse.Namespace) -> None:
     _validate_residual(args)
     _validate_private_median(args)
+    _validate_subsampled(args)
     if args.num_clients < 2:
         raise ValueError("num-clients must be at least two.")
     if not 0.0 < args.fraction_evaluate <= 1.0:
@@ -421,6 +443,8 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
             value = getattr(args, "residual_" + key.replace("-", "_"))
             if value is not None:
                 config["residual-" + key] = value
+    if args.privacy == SUBSAMPLED_PRIVACY:
+        config["sampling-rate"] = args.sampling_rate
     if args.privacy == PRIVATE_MEDIAN_PRIVACY:
         config["num-slots"] = args.num_slots or args.num_clients
         for key in ("quantile", "quantile-min", "quantile-max", "bit-noise-std"):
@@ -435,6 +459,10 @@ def build_run_config(args: argparse.Namespace) -> dict[str, Any]:
         config["consensus-kl-beta"] = args.consensus_kl_beta
     if args.local_steps:
         config["local-steps"] = args.local_steps
+    if args.contribution_cap:
+        config["contribution-cap"] = args.contribution_cap
+    if args.logit_adjustment_tau:
+        config["logit-adjustment-tau"] = args.logit_adjustment_tau
     if args.require_all_clients:
         config["require-all-clients"] = True
     return config

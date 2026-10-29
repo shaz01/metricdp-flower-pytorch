@@ -201,6 +201,19 @@ def private_median_strategy(config):
     )
 
 
+def subsampled_strategy(config):
+    """CIA v2 B1: global DP with Poisson client sampling (``--privacy subsampled-global-dp``)."""
+    from metricdp_pytorch.strategy_factory import make_base_strategy
+    from metricdp_pytorch.subsampled_dp_strategy import PoissonSampledGlobalDP
+
+    base = make_base_strategy(str(config["aggregation"]), num_clients=int(config["num-clients"]),
+                              fraction_evaluate=float(config.get("fraction-evaluate", 1.0)),
+                              weighting=str(config.get("aggregation-weighting", "num-examples")))
+    return PoissonSampledGlobalDP(base, noise_multiplier=float(config["noise-multiplier"]),
+                                  clipping_norm=float(config["clipping-norm"]), num_clients=int(config["num-clients"]),
+                                  sampling_rate=float(config["sampling-rate"]), seed=int(config.get("seed", 42)))
+
+
 def require_all_clients(strategy, expected: int):
     """Stop the run as soon as a round has a failed client or fewer than ``expected`` replies.
 
@@ -212,8 +225,11 @@ def require_all_clients(strategy, expected: int):
     def checked(server_round, replies):
         replies = list(replies)
         failed = sum(reply.has_error() for reply in replies)
-        if failed or len(replies) != expected:
-            raise RuntimeError(f"round {server_round}: {len(replies) - failed} of {expected} clients trained "
+        # A sampling strategy (B1) sends to a subset each round and records its size.
+        wanted = getattr(strategy, "sampled_this_round", None)
+        wanted = expected if wanted is None else wanted
+        if failed or len(replies) != wanted:
+            raise RuntimeError(f"round {server_round}: {len(replies) - failed} of {wanted} clients trained "
                                f"({failed} failed); stopping the run instead of aggregating without them")
         return aggregate(server_round, replies)
 
@@ -236,6 +252,8 @@ def make_run_strategy(config: Mapping[str, Any]):
         strategy = residual_clipping_strategy(config)
     elif str(config["privacy"]) == "private-median":
         strategy = private_median_strategy(config)
+    elif str(config["privacy"]) == "subsampled-global-dp":
+        strategy = subsampled_strategy(config)
     else:
         strategy = create_paper_strategy(
             **influence,
@@ -250,6 +268,8 @@ def make_run_strategy(config: Mapping[str, Any]):
     seeds = run_seeds(config)
     if seeds.noise_explicit:
         set_noise_seed(strategy, seeds.noise)
+        if hasattr(strategy, "reseed_sampling"):  # B1: the client sample is private randomness too
+            strategy.reseed_sampling(seeds.noise)
     if bool(config.get("log-noise-diagnostics", False)):
         strategy.log_noise_diagnostics = True
     if bool(config.get("log-loo-residuals", False)):
