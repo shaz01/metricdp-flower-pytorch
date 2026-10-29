@@ -83,3 +83,4 @@ about 6 GPU-h. The roadmap's total (about 175 GPU-h) is used up (about 178 spent
 | When | What |
 |---|---|
 | 2026-10-29 | B1 closed and `feature/cia-v2-mechanisms` merged (decision 14); C1 opened; branch and sparse worktree created. Owner decisions for C1 (decision 15): EuroSAT only, formal clause reported, two adaptive scorings. STATE written before any code. |
+| 2026-10-29 | Code: the defense-aware score (`shadow_adjusted_loss`, logit-adjusted runs only) and its loading, 3 tests; `composite/analyze.py` (A1's matched-accuracy statistic against metric privacy (gate), private median, global DP and subsampling alone; both adaptive attackers; G-C1) with 4 synthetic tests; 104 cia_v2 tests pass. |
