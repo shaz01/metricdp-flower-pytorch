@@ -417,6 +417,7 @@ Taken after M0-M2, A1 and A2 were closed and merged (reports `reports/cia_v2_m0_
 | 11 | **B4 confirmatory run.** The scarce-public positive (20-100 public images, `mu <= 2`) is re-run on a fresh layout under a new protocol fixed before the run (CPU only, about 1 CPU-hour), branch `feature/cia-v2-formal-confirm`. |
 | 12 | **2026-10-23:** B5 closed (G-B5 passes for logit adjustment at 2x, fails at 4x; caps fail; report `reports/cia_v2_b5_large_clients.md` on `feature/cia-v2-mechanisms`, merged with B1). The B4 confirmatory run closed and merged (confirmed at 20 and 50 public images; `reports/cia_v2_formal_confirm.md`). **C1 stays waiting** although B5 passed a B gate (Section 4). |
 | 13 | **2026-10-23: G-B1's formal condition is reported, not gated.** At B1's noise levels both mechanisms' `mu` are vacuous (about 40-140) and the accountant overflows for some settings; G-B1 is decided on the all-candidate AUC reduction (decision 9). |
+| 14 | **2026-10-29:** B1 closed (client subsampling at `q = 0.25` passes G-B1 at both targets, about -0.10 and -0.06 AUC; `q = 0.5` fails; report `reports/cia_v2_b1_subsampling.md`); `feature/cia-v2-mechanisms` (B5, B1, B3's on-hold STATE) merged into master. **C1 opened** (`feature/cia-v2-composite`). |
 
 No other agent session is running; the owner assigned all of the above to the agent that ran Agent A's packages,
 which works in each package's own branch and worktree and keeps each package's STATE, PROTOCOL and FINDINGS files.
