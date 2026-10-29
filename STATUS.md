@@ -206,7 +206,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| 2 x `c1-chain.sh` (compute server, GPU 1 shared by owner approval, 4 parallel clients; branch `feature/cia-v2-composite`) | C1 main runs: composite at 4 levels, 128 runs, surrogates and the defense-aware score | running (started 2026-10-29 18:40) |
+| 2 x `c1-chain.sh` (compute server, GPU 1 shared by owner approval, 4 parallel clients; branch `feature/cia-v2-composite`) | C1 main runs: composite at 4 levels, 128 runs, surrogates and the defense-aware score | running (started 2026-10-29 20:15) |
 | 3 x `b1-chain.sh` (compute server, GPU 1; branch `feature/cia-v2-mechanisms`, merged) | B1 main runs, 256 runs | done 2026-10-27 20:42 (about 9.9 GPU-h); G-B1 passes for q = 0.25 |
 | 3 x `az-a1-chain.sh` (compute server, GPU 1; branch `feature/cia-v2-alzheimer`) | A1 on Alzheimer, 192 runs | done 2026-10-25 12:50 (about 40 GPU-h); no robust difference |
 | 2 x `b5-worker.sh` (compute server, GPU 1 shared by owner approval; branch `feature/cia-v2-mechanisms`) | B5 stage B: logit adjustment at 4x, 32 runs | done 2026-10-21 20:29 (about 3.7 GPU-h); fails G-B5 |
