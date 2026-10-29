@@ -1,5 +1,5 @@
 package: C1, composite candidate against metric privacy (opened by the owner 2026-10-29, decision 14)
-status: code done; accuracy pilot waits for GPU 1 to be idle and unclaimed
+status: accuracy pilot running (GPU 1, shared by owner approval)
 gate: G-C1 (as decided 2026-10-29, decision 15) = not evaluated yet
 protocol: results/cia_v2/composite/PROTOCOL.md, fixed after the accuracy pilot and before any leakage run
 machine: compute server
@@ -85,3 +85,4 @@ about 6 GPU-h. The roadmap's total (about 175 GPU-h) is used up (about 178 spent
 | 2026-10-29 | B1 closed and `feature/cia-v2-mechanisms` merged (decision 14); C1 opened; branch and sparse worktree created. Owner decisions for C1 (decision 15): EuroSAT only, formal clause reported, two adaptive scorings. STATE written before any code. |
 | 2026-10-29 | Code: the defense-aware score (`shadow_adjusted_loss`, logit-adjusted runs only) and its loading, 3 tests; `composite/analyze.py` (A1's matched-accuracy statistic against metric privacy (gate), private median, global DP and subsampling alone; both adaptive attackers; G-C1) with 4 synthetic tests; 104 cia_v2 tests pass. |
 | 2026-10-29 16:57 | Pilot (8 runs: composite at r = 0.0001, 0.000773, 0.003092, 0.006184; design seed 3, 2 runs each, accuracy only) prepared. Both GPUs carry another user's jobs, so a launcher (tmux c1-wait) starts it on GPU 1 once that GPU has no process and no claim; GPU 0 is left to other users. |
+| 2026-10-29 16:58 | Owner approved GPU 1 for C1 (shared with another user's job). Pilot started (tmux c1-p0, c1-p1). |
