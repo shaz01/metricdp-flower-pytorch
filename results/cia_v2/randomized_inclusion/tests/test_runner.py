@@ -264,3 +264,19 @@ def test_a_collapsed_round_is_not_a_missing_client(tmp_path):
     path = tmp_path / "run.json"
     path.write_text(json.dumps({"train_metrics": metrics}))
     runner.check_every_client_trained(path, 32)
+
+
+def test_adjusted_shadow_loss_matches_its_definition():
+    import torch
+    from torch import nn
+    from torch.utils.data import DataLoader, TensorDataset
+
+    torch.manual_seed(0)
+    model = nn.Sequential(nn.Linear(5, 3), nn.Softmax(dim=1))
+    x, y = torch.randn(12, 5), torch.tensor([0] * 8 + [1] * 3 + [2])
+    loader = DataLoader(TensorDataset(x, y), batch_size=5)
+    prior = runner._shadow_log_prior(loader, runner._num_classes(model))
+    assert prior.exp().tolist() == pytest.approx([9 / 15, 4 / 15, 2 / 15])
+    with torch.no_grad():
+        expected = nn.functional.cross_entropy(model(x).log() + prior, y).item()
+    assert runner._adjusted_loss(model, loader, torch.device("cpu"), prior, 1.0) == pytest.approx(expected, rel=1e-5)
