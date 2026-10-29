@@ -1,10 +1,10 @@
 package: C1, composite candidate against metric privacy (opened by the owner 2026-10-29, decision 14)
-status: accuracy pilot running (GPU 1, shared by owner approval)
+status: main runs running (PROTOCOL.md fixed 2026-10-29; GPU 1 shared by owner approval)
 gate: G-C1 (as decided 2026-10-29, decision 15) = not evaluated yet
-protocol: results/cia_v2/composite/PROTOCOL.md, fixed after the accuracy pilot and before any leakage run
+protocol: results/cia_v2/composite/PROTOCOL.md (fixed 2026-10-29, before any leakage run)
 machine: compute server
-cost so far: 0 GPU-h; estimate about 6 GPU-h (cap set by the owner when the protocol is fixed)
-next: adaptive scoring (logit-adjusted shadow losses) and the C1 analysis with tests; accuracy pilot
+cost so far: pilot about 1 GPU-h; cap 15 GPU-h (owner, 2026-10-29), stop at 18.75
+next: stage 1, automatic replacement check, stage 2; analysis and G-C1
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, C1, as amended by Section 10 (decisions 9, 13, 14, 15). Branch
@@ -88,3 +88,5 @@ about 6 GPU-h. The roadmap's total (about 175 GPU-h) is used up (about 178 spent
 | 2026-10-29 16:58 | Owner approved GPU 1 for C1 (shared with another user's job). Pilot started (tmux c1-p0, c1-p1). |
 | 2026-10-29 17:11 | **Out-of-memory on the shared GPU 1** (another user's job holds 14.3 GB; two workers with 8 parallel clients each): 166 client failures in 10 minutes. `--require-all-clients` stopped every affected run at once, so nothing corrupted was saved; 2 of 8 pilot runs completed and pass the run check. Workers stopped and relaunched as one worker with 4 parallel clients (tmux c1-p2). |
 | 2026-10-29 18:01 | Pilot complete (8 runs, all pass the run check, no out-of-memory since the relaunch). Mean final accuracy: 0.776 / 0.780 / 0.713 / 0.701 at r = 0.0001 / 0.000773 / 0.003092 / 0.006184 (B1's q = 0.25 alone: 0.769 / 0.727 / 0.660 / 0.602): logit adjustment adds 3-10 pp at the same noise. Brackets 0.740, not 0.660. Pilot extension: r = 0.012368 and 0.024736, 2 runs each (one worker, 4 parallel clients, GPU 1 shared by owner approval). |
+| 2026-10-29 18:36 | Pilot extension complete (4 runs, clean): 0.594 at r = 0.012368, 0.228 at 0.024736. |
+| 2026-10-29 18:50 | Owner set C1's cap at 15 GPU-h. PROTOCOL.md fixed: levels r = 0.000773, 0.003092, 0.006184, 0.012368 (pilot 0.780 / 0.713 / 0.701 / 0.594), 128 runs with surrogates and the adjusted score. Main runs started: two workers on GPU 1 with 4 parallel clients each, chains with the automatic replacement check between stages. |
