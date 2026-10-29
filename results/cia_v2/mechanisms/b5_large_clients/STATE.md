@@ -1,5 +1,5 @@
 package: B5, exposure of large clients (owner decision 10: B5 first, then B1)
-status: closed by the owner (2026-10-23); report reports/cia_v2_b5_large_clients.md; merges with the branch after B1
+status: closed by the owner (2026-10-23); report reports/cia_v2_b5_large_clients.md; merged with the branch 2026-10-29
 gate: G-B5: logit adjustment passes at 2x (AUC -0.100 [-0.152, -0.049], accuracy +1.1 pp), fails at 4x (-0.036 [-0.074, 0.002]); caps fail
 protocol: results/cia_v2/mechanisms/b5_large_clients/PROTOCOL.md (fixed 2026-10-20, before any B5 run)
 machine: compute server

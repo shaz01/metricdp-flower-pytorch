@@ -1,5 +1,5 @@
 package: B1, client subsampling with amplification (owner decision 10: B5 first, then B1)
-status: analyzed; FINDINGS.md written; the owner decides whether B1 is finished
+status: closed by the owner (2026-10-29); report reports/cia_v2_b1_subsampling.md
 gate: G-B1: q = 0.25 passes at 0.740 (-0.102 [-0.164, -0.040]) and 0.660 (-0.059 [-0.096, -0.022]); q = 0.5 fails (-0.036, -0.023)
 protocol: results/cia_v2/mechanisms/b1_subsampling/PROTOCOL.md (fixed 2026-10-27, before any leakage run)
 machine: compute server
