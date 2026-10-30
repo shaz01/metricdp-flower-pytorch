@@ -1,5 +1,9 @@
 # Handoff: next research phase against client inference attacks
 
+> **Update 2026-10-30: roadmap v2 is complete** (last package C1 closed, decision 17). Its results, written for a literature
+> and novelty check and for choosing between an audit paper and a new-defense paper, are in
+> **`research/cia_roadmap_v2/RESULTS_HANDOFF.md`**. Start there.
+>
 > **Update 2026-10-16: the 2026-10 programme described below is closed** (`research/cia_review_2026-10/SYNTHESIS.md`).
 > Its successor is **`research/cia_roadmap_v2/`**, approved by the owner on 2026-10-17: autonomous agents follow its
 > `ROADMAP.md` (Section 1 decisions binding, agent prompts in Section 7). Start with `research/cia_roadmap_v2/REVIEW.md`. The review found that the IN and OUT worlds of a seed
