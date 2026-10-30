@@ -1,10 +1,10 @@
 Package: P0, infrastructure and cost runs (CIA roadmap v3, Agent P)
-status: STATE written, no code changed yet
-gate: G-P0 (not yet evaluated)
+status: code and tests done (4cc8af25); cost runs waiting for an idle GPU
+gate: G-P0 = items 1-4 pass; item 5 (cost runs) pending
 protocol: this file (P0 has no leakage statistic; its cost runs are never analyzed for leakage)
 machine: compute server
 cost: 0 GPU-h so far; cap 3 GPU-h (ROADMAP v3 Section 3), escalate at 3.75
-next: code items 1-4 with synthetic tests, then the four cost runs
+next: the four cost runs (`~/cia-server/p0-cost-wait.sh` starts them on the first GPU with no process and no claim)
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Sections 2, 3 (P0) and 6, decision 1 in Section 10. Branch
@@ -105,3 +105,36 @@ rather than substituting a different run.
 | `results/cia_v3/infra/cost/` | the four cost runs' manifests, measurements and completion records |
 | `results/cia_v3/infra/STATE.md` | this file |
 | `STATUS.md` | Agent P rows only |
+
+## Progress
+
+**2026-10-30.** Code items 1-4 done (commit 4cc8af25).
+
+G-P0 so far:
+
+| Item | Result |
+|---|---|
+| `uv run pytest` green | **Pass.** 944 passed, 3 skipped, 5 deselected (the reproducibility marker). Two skips need an Apple MPS device. The third (`test_power.py`, WP2 trajectories not in the sparse worktree) passes, 3 of 3, once those trajectories are checked out. |
+| `reanalyze.py` reproduces C1's gate numbers | **Pass.** `"reproduced": true`: -0.095 [-0.137, -0.053] at 0.740 and -0.108 [-0.163, -0.053] at 0.660. The regenerated `analysis.json` equals the committed one in every key and string; its 586 floats differ by at most 2.2e-16 (summation order), so the committed file was left unchanged. |
+| CIFAR-10 partition deterministic in its seed | **Pass.** `partition_summary(0.3, 48, 42)` is identical on two calls and differs at seed 43; the committed summary equals a fresh one (test). Seed-42 layout: 263 to 2,454 records per client, 50,000 in all. Candidates by the runner's rule: top decile 26, 27, 36, 12, 45 (2,454 to 1,704 records), then 27 by size quantile (269 to 1,699). |
+| IN-count design passes the design checks | **Pass.** For k = 8 and 24 at `R = 32`: every replicate includes exactly k candidates, every candidate is IN in `R k / 32` replicates, no replicate repeats; k = 24 is the complement of k = 8. Active count 24 or 40, noise std `r C` on the average. `load_audit` checks a k = 8 configuration against its own design. |
+| Four cost runs recorded | Pending (no idle GPU). |
+
+**Backward compatibility.** Every committed randomized-inclusion manifest under `results/cia_v2/` was rebuilt from its
+own settings with the new runner. 1,337 of 1,351 match exactly, the same count as with master's code. The other 14
+are the same under both: Alzheimer calibration runs from before the Alzheimer profile was fixed (old panel and alpha).
+The new options appear in a manifest only when they are used (`in_count` when not 16; `checkpoint_rounds` lists every
+round with `--checkpoint-every 1`), so run names and default manifests are unchanged.
+
+**Paper protocol.** The paper's Section 7.4.2 settings are built in: Table 9 split (`experiments/cia/datasets/paper.py`,
+target client 3), FedAvg weighted by examples (Flower's default, as in the paper), 20 rounds, 5 local epochs, batch 32,
+clipping 5, noise multiplier `z` with std `z C / n_t` (divided by the round's maximum client distance for metric
+privacy), shadow sample 10% of the target's training records with Gaussian noise of 20% of the maximum pixel value.
+Scored at rounds 0-20 (the paper's statistic uses 1-20); the clean shadow sample is scored too. P1's protocol fixes `z`
+and the pair count. A CPU smoke run (1 pair, 2 rounds) trained both worlds with their own seeds and stored every
+round.
+
+**GPUs at 2026-10-30 23:04.** Both GPUs ran other users' active training jobs (99-100% utilization, 25-26 GB of 32 GB
+used), so under the server rules neither may be used. The cost runs start on the first GPU with no process and no
+claim (`~/cia-server/p0-cost-wait.sh`, polling every 5 minutes; runs in tmux `p0-cost`, logs
+`~/cia-server/logs/p0-cost-*.log`, GPU samples every 60 s in `p0-cost-gpu.log`).
