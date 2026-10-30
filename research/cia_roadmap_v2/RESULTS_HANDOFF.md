@@ -3,6 +3,12 @@
 Written 2026-10-30, when the last package (C1) closed. Roadmap v2 has no remaining package: B2 is deprioritized and B3
 is on hold.
 
+**Corrected 2026-10-30** after an audit against the committed reports and run manifests
+(`research/cia_roadmap_v3/HANDOFF_AUDIT.md`, corrections C1-C8). The changes: the randomized-inclusion design (32
+candidates, 1,024 trials), the power figures, the attribution of the shared-noise finding (it concerns this project's
+earlier measurement, not the paper), logit adjustment's accuracy gain, and the fairness framing. Every other number
+was confirmed against its source.
+
 **Purpose.** This file is a self-contained input for:
 - an external literature and novelty check, which the owner runs separately;
 - the owner's choice between two papers:
@@ -17,18 +23,23 @@ here is new.
 A published federated-learning defense (Sáinz-Pardo Díaz et al., *Knowledge-Based Systems* 343:115993, 2026) scales
 server-side Gaussian noise by the maximum pairwise distance between client models ("metric privacy"). It reports better
 accuracy than global DP and comparable protection against client inference attacks (CIA).
-- **The protection result was an evaluation artifact.** It came from an evaluation in which the compared worlds shared
-  their noise draws.
-- **At matched accuracy, metric privacy leaks exactly like global DP**, under a measurement that is rebuilt and
-  statistically powered.
+- **The protection result rests on a weak estimand.** The paper's Table 13 pools 20 IN and 20 OUT checkpoint scores
+  from single trajectories of a 3-client federation and reads intervals that overlap 0.5 as protection. Under a powered,
+  calibrated measurement at 48 clients, global DP at any useful accuracy still leaks (AUC about 0.70, A-2). The
+  paper's own setting has not yet been re-measured under standard v2.
+- **At matched accuracy, metric privacy leaks like global DP** (equivalent within ±0.03 at 0.740 accuracy; no
+  detectable difference at 0.660), under a measurement that is rebuilt and statistically powered.
+- **A methodological finding on the way:** this project's earlier measurement shared private randomness between the
+  IN and OUT worlds, which made leakage under DP look insensitive to noise (A-1).
 - **Metric privacy adds a noise-level side channel** in small federations.
 - **Its formal repair is never better than global DP** at a matched guarantee.
 
 On the defense side:
 - On non-IID EuroSAT, leakage is mostly **label-distribution inference**.
-- **Client subsampling at `q = 0.25`** lowers the attacker's AUC by about 0.10 at matched accuracy against global DP.
-- Combined with **logit adjustment**, it beats metric privacy by about 0.10 AUC at matched accuracy. That holds against
-  two attackers who know the defenses.
+- **Client subsampling at `q = 0.25`** lowers the attacker's AUC at matched accuracy against global DP, by 0.10 at
+  0.740 accuracy and 0.06 at 0.660.
+- Combined with **logit adjustment**, it beats metric privacy by about 0.10 AUC at matched accuracy. That holds for a
+  defense-aware attacker against metric privacy, and for a label-only attacker against global DP.
 - **Caveats:**
   - The gain comes from subsampling.
   - The formal guarantee at these noise levels is vacuous or not computable.
@@ -62,9 +73,10 @@ released global models and decides whether the target's whole dataset took part 
 1. **Independent private randomness between the IN and OUT worlds:** server noise, client training seeds, and the
    inclusion of other clients. Public randomness (initial model, partition, evaluation sets) may be shared.
 2. **Randomized-inclusion design**, after Steinke et al. 2023 and Andrew et al. 2023 (one-run auditing):
-   - 48 client slots; 16 fixed candidate clients, each IN in exactly half the replicates; the other 32 always take part.
-   - `R = 32` replicates per configuration, giving 512 membership trials.
-   - Candidates: the five largest-exposure ("top-decile") clients plus eleven chosen by size quantile.
+   - 48 client slots; 32 fixed candidate clients, of which each replicate includes 16, each candidate IN in exactly
+     half the replicates; the other 16 clients always take part, so every run has 32 active clients.
+   - `R = 32` replicates per configuration, giving 1,024 membership trials (32 candidates x 32 replicates).
+   - Candidates: the five largest-exposure ("top-decile") clients (23, 7, 40, 18, 33) plus 27 chosen by size quantile.
 3. **Primary attacker:** a per-candidate Gaussian likelihood ratio on the candidate's shadow-loss trajectory at 11
    checkpoints (rounds 0, 5, ..., 50). This is LiRA-style (Carlini et al. 2022) with difficulty calibration (Watson et
    al. 2021), fitted leave-one-replicate-out. Secondary attackers: an uncalibrated final-round loss threshold and a
@@ -77,8 +89,9 @@ released global models and decides whether the target's whole dataset took part 
    - The gate interval is a pair jackknife at 97.5%; a 95% interval was shown by simulation to be liberal at this `R`.
      Resamples draw the same pairs in every configuration.
    - A two-way bootstrap over replicates and candidates is reported alongside.
-   - **"Beats"** means the AUC is at least 0.05 lower and the gate interval excludes 0. The minimum detectable
-     all-candidate difference at `R = 32` is about 0.05; for the top decile it is about 0.09.
+   - **"Beats"** means the AUC is at least 0.05 lower and the gate interval excludes 0. At `R = 32` the paired
+     matched-accuracy difference is detectable at 80% power from about 0.03-0.04 (all candidates) and 0.09-0.10 (top
+     decile), per A1's power analysis; unpaired comparisons need about 0.09.
 6. **Pipeline checks before any run:** the analysis recovers a known Gaussian-DP trade-off on synthetic data, and a
    noise-independence regression test passes.
 
@@ -200,7 +213,8 @@ within 0.009-0.025 AUC of the attacker with the true shadow sample.
   `r`.
 - **It caps accuracy:** at most 0.746, against about 0.80 at full participation.
 - **The formal guarantee is not better:**
-  - The amplified `mu` is mostly not computable: the noise multiplier is below the accountant's minimum of 0.05.
+  - The amplified `mu` is mostly not computable: the noise multiplier is below the accountant's minimum of 0.05. At such
+    multipliers any accountant gives a vacuous bound, so "not computable" means vacuous, not unknown.
   - Where it computes, it is larger than global DP's at the same `r` (29.7 against 17.9).
 
 ### D-4. The composite: subsampling with logit adjustment (C1)
@@ -230,9 +244,12 @@ within 0.009-0.025 AUC of the attacker with the true shadow sample.
   [-0.122, -0.010].
 
 **Readings:**
-- **Logit adjustment** adds 3-10 pp accuracy at the same noise and lifts the best reachable accuracy to 0.772. At
+- **Logit adjustment** adds 2.5-6.0 pp accuracy at the same noise in the main runs (3-10 pp in the 2-run pilot) and
+  lifts the best reachable accuracy to 0.772. At
   matched accuracy it adds no measurable privacy over subsampling alone.
-- **Cost in fairness:** the lowest client accuracy is 0.33 near the 0.660 target.
+- **Cost in fairness:** the lowest client accuracy is 0.33 near the 0.660 target. At matched accuracy that is 4-5 pp
+  below metric privacy and global DP (0.36-0.37 at 0.660; point estimates,
+  `research/cia_roadmap_v3/tables/fairness_matched_accuracy.csv`).
 - **Formal guarantee:** not computable at 3 of 4 levels; 37.1 at the noisiest.
 
 ### D-5. Negative results that bound the defense space
@@ -263,9 +280,12 @@ within 0.009-0.025 AUC of the attacker with the true shadow sample.
 
 ### 5.1 Audit paper
 
-**Thesis.** Metric privacy's reported advantage against client inference is a measurement artifact:
+**Thesis.** Metric privacy's reported advantage against client inference does not hold under a powered measurement:
 - At matched accuracy it leaks like global DP (A-3).
-- Its published protection came from IN/OUT worlds sharing noise (A-1).
+- Its published protection rests on an estimand that pools checkpoints of single trajectories in a 3-client
+  federation (Section 0); the paper's own setting still needs re-measuring under standard v2.
+- Measuring paired worlds with shared private randomness makes DP leakage look insensitive to noise (A-1, a pitfall
+  found in this project's earlier measurement).
 - It adds a noise-level side channel in small federations (A-4).
 - Its formal repair is never better than global DP (A-5).
 
@@ -299,7 +319,8 @@ metric privacy, private median and global DP, and holds against defense-aware an
 2. **The privacy gain does not come from the new ingredient:** logit adjustment adds accuracy, not privacy (D-4).
 3. **The formal guarantee is vacuous or not computable.** Amplification assumes the sample stays secret.
 4. **One dataset, one layout,** and an accuracy cap (0.772 at best against 0.803 vanilla).
-5. **Fairness:** the lowest client accuracy drops to 0.33.
+5. **Fairness:** the lowest client accuracy drops to 0.33, which is 4-9 pp below the full-participation mechanisms
+   at matched accuracy.
 
 A genuinely new defense would need a mechanism that targets the label channel directly and with a guarantee, for
 example a privatized label-prior release. No such mechanism was built.
@@ -336,7 +357,8 @@ or not found.
   for the CIA results; B4's confirmation used layout 44.
 - **Formal privacy.** Every empirically useful setting has a vacuous client-level guarantee (`mu` 36-143, or not
   computable). Claims are empirical protection against the stated attacker, not DP guarantees.
-- **Power.** Differences below about 0.05 (all candidates) or 0.09 (top decile) cannot be detected at `R = 32`.
+- **Power.** Paired matched-accuracy differences below about 0.03-0.04 (all candidates) or 0.09-0.10 (top decile)
+  cannot be detected at `R = 32`; unpaired comparisons need about 0.09.
 - **Earlier numbers.** Numbers from the earlier programme (2026-10) that involve DP leakage are labelled "paired, shared
   noise". The audit should cite only v2 measurements for leakage under DP.
 
