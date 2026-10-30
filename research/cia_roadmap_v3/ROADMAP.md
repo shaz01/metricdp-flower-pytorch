@@ -1,7 +1,7 @@
 # Research roadmap v3: finishing the hybrid paper, and a gated start on a label-channel defense
 
-Version 1, 2026-10-30. Status: **draft, awaiting owner approval. No agent may start and no run may launch until the
-owner approves Section 1.**
+Version 1, 2026-10-30. Status: **approved by the owner on 2026-10-30 (Section 1 defaults accepted as written); agents
+may start.**
 
 Built on:
 - `HANDOFF_AUDIT.md`: the v2 handoff, checked and corrected;
@@ -30,7 +30,7 @@ Two gaps keep the paper from being defensible:
 v3 closes these two gaps, adds three cheap robustness checks, and opens the label-channel defense (the natural second
 paper) only as a gated screen, because published mechanisms already compete with it (LDPM, RR-Label).
 
-## 1. Owner decisions (proposed defaults; binding once approved)
+## 1. Owner decisions (approved 2026-10-30, binding: the proposed defaults, accepted unchanged)
 
 | # | Decision | Proposed default | Alternatives |
 |---|---|---|---|
@@ -310,4 +310,8 @@ The full list is in `references_v3.bib` and `tables/novelty_evidence.csv`. Those
 
 ## 10. Owner decisions after approval
 
-(Empty. Decisions taken during v3 are recorded here, dated and numbered from 1.)
+Decisions taken during v3 are recorded here, dated and numbered from 1.
+
+| # | Decision |
+|---|---|
+| 1 | **2026-10-30: Section 1 approved as written.** The defaults of decisions 1-8 are binding: hybrid paper, CIFAR-10 second dataset, about 120 GPU-h expected with a 148 GPU-h cap for P0-P3 and P5, Agent P on the compute server, Agent F on the owner PC, P4 conditional, P6 design memo only. Agents may start. |

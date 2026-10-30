@@ -1,7 +1,7 @@
 # CIA roadmap v3 (draft, 2026-10-30)
 
-Follow-up to roadmap v2 (`research/cia_roadmap_v2/`, complete 2026-10-30). Status: **draft on branch
-`docs/cia-roadmap-v3`, awaiting owner approval; nothing may run until ROADMAP.md Section 1 is approved.**
+Follow-up to roadmap v2 (`research/cia_roadmap_v2/`, complete 2026-10-30). Status: **approved by the owner on
+2026-10-30** (ROADMAP.md Section 1 defaults; decision 1 in Section 10). Agents follow `ROADMAP.md`.
 
 Read in this order:
 
