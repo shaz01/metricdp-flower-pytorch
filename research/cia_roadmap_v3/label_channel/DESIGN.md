@@ -142,11 +142,11 @@ difference explicitly.
 
 | | LDPM (Jiang et al. 2024) | RR-Label (Zheng and Li 2023) | PN (this memo) |
 |---|---|---|---|
-| Setting | cross-silo FL, one-vs-all classifiers (abstract) | a **malicious server** isolates one client, sends it poisoned models in about 16 of 100 rounds and reads its local models; record-level membership of 200 attack samples (CMI, Sections 4-5, 7.1.4) | cross-device-scale (48 slots, 32 active), multi-class softmax, a curious participant sees global models only; whole-client membership |
-| What is perturbed | label-distribution release (details need the full text) | Algorithm 1: a label of the client's majority class group `Y_K1` is replaced by a uniformly random minority-class label at a Bernoulli rate set by `q` (0.15-0.3 evaluated, Section 7.1.5); minority labels are kept | which records enter local training (class-balanced, histogram-gated); labels are never corrupted |
-| Guarantee | `(m, gamma, xi)`-label distributional privacy, also DP | **none claimed** (the paper's `epsilon`-DP baseline is RRTop-k; RR-Label is empirical, Section 6.2) | Pufferfish `G_mu` over label histograms, `mu = ||n - n'||_2 / sigma_h`, released once; on top of DP-FedAvg's client-level `mu_total` |
-| Measured cost | unknown | Table 4 (non-IID, `K1 = K/2`, 100 clients): membership accuracy down 35-45 points at 15-30 pp test accuracy; CIFAR-10 averages 81.0% to 63.9% test, 88.3% to 51.8% membership | fewer private records per class |
-| Composition over rounds | unknown | not stated | none (histogram released once; fixed subset) |
+| Setting | cross-silo FL, 4 parties, Dirichlet 0.5; the adversary sees every party's local models and runs a label-distribution inference attack scored by TV distance (Sections 5.1, B.1) | a **malicious server** isolates one client, sends it poisoned models in about 16 of 100 rounds and reads its local models; record-level membership of 200 attack samples (CMI, Sections 4-5, 7.1.4) | cross-device-scale (48 slots, 32 active), multi-class softmax, a curious participant sees global models only; whole-client membership |
+| What is perturbed | local DP-SGD in which each record's gradient keeps one uniformly random class row, then clipping to `C`, Gaussian noise `N(0, (2 C sigma)^2 I)` and rescaling by `c / (q N)` (Algorithm 1). Defined only for one-vs-all models (multinomial LR, SVM); deep models are future work (Section 6.2) | Algorithm 1: a label of the client's majority class group `Y_K1` is replaced by a uniformly random minority-class label at a Bernoulli rate set by `q` (0.15-0.3 evaluated, Section 7.1.5); minority labels are kept | which records enter local training (class-balanced, histogram-gated); labels are never corrupted |
+| Guarantee | `(m, gamma, xi)`-label distributional privacy: neighbours have the **same features and exactly `m` labels changed** (Definitions 4-5; Pufferfish-type, convex and post-processing invariant), from an RDP bound (Theorem 1); also record-level unbounded DP (Lemma 2). Not client-level | **none claimed** (the paper's `epsilon`-DP baseline is RRTop-k; RR-Label is empirical, Section 6.2) | Pufferfish `G_mu` over label histograms, `mu = ||n - n'||_2 / sigma_h`, released once; on top of DP-FedAvg's client-level `mu_total` |
+| Measured cost | at `gamma = 16`, `xi = 1/N`: better accuracy than DP-SGD at equal attack TV distance on all six datasets (Figure 5); e.g. MNIST with a ScatterNet + LR, 87-93% | Table 4 (non-IID, `K1 = K/2`, 100 clients): membership accuracy down 35-45 points at 15-30 pp test accuracy; CIFAR-10 averages 81.0% to 63.9% test, 88.3% to 51.8% membership | fewer private records per class |
+| Composition over rounds | RDP composition over `T` iterations (Theorem 1) | not stated | none (histogram released once; fixed subset) |
 
 **RR-Label read from its author copy** (https://iqua.ece.toronto.edu/papers/tzheng-tdsc23.pdf, 2026-10-30):
 - **Ambiguity to fix before implementing:** Algorithm 1 prints "sample `b ~ Bernoulli(q)`; if `b < 0.5` and
@@ -157,8 +157,24 @@ difference explicitly.
   poisoned local models. The screen measures it against a curious participant who sees only global models. That
   gives the baseline its weakest attacker, and the paper should say so.
 
-**Novelty risk.** If LDPM's mechanism is itself a gated or balanced resampling with a released histogram, PN is not
-new. That cannot be decided from the abstract. It is the first thing to check in the full text.
+**Novelty, after reading LDPM in full (2026-10-30; the owner's copy, kept local in `docs/`).** PN is not LDPM:
+- **Different secret.**
+  - LDPM hides `m` label changes on fixed features (group label DP).
+  - PN hides the label histogram itself, which changes which records exist. That is the label-mix secret D-1
+    identified.
+- **Different mechanism.**
+  - LDPM perturbs every gradient step (row subsampling plus noise) and composes over iterations.
+  - PN releases one noised histogram and then only post-processes it.
+- **Different scope.**
+  - LDPM is defined only for one-vs-all models.
+  - PN is model-agnostic, so it applies to the EuroSAT CNN.
+- **Neither addresses client inference.** Neither guarantee is client-level, and LDPM's attacker reads local models.
+
+**What LDPM gives us:**
+- **It is directly implementable on B4's frozen-feature head,** which is a multinomial LR on fixed features. LDPM's
+  own image experiments use exactly that shape: a ScatterNet extractor plus LR.
+- **So a CPU-only label-channel screen is possible in P5's formal regime,** with LDPM, PN and RR-Label against the
+  committed P5 curves. It is not possible on the CNN, where LDPM is undefined. See Section 7, choice 4.
 
 ## 5. The screen (only after a new owner decision; cap 15 GPU-h)
 
@@ -198,9 +214,8 @@ As ROADMAP.md P6 item 2, made concrete for a protocol:
 
 ## 7. Needs from the owner
 
-1. **LDPM's full text** (Jiang et al., S&P 2024, [10.1109/sp54263.2024.00113](https://doi.org/10.1109/sp54263.2024.00113)),
-   through institutional access. Needed for Section 4's comparison and the novelty check. RR-Label's paper was read
-   from its author copy (Section 4); only Algorithm 1's ambiguity remains.
+1. **Done:** LDPM read from the owner's copy, which stays in the gitignored `docs/` and is not redistributed.
+   RR-Label read from its author copy. Section 4 is updated; only RR-Label's Algorithm 1 ambiguity remains.
 2. **A decision on the screen** (ROADMAP.md decision 6: only after the paper packages close, by a new decision).
 3. **The public fill-in pool.** v2 uses the whole EuroSAT test split (2,700 images) as the server test set and draws
    the label-matched surrogates from it too (`results/cia_v2/randomized_inclusion/runner.py` `evaluation_sets`), so
@@ -209,6 +224,13 @@ As ROADMAP.md P6 item 2, made concrete for a protocol:
    - (b) carve a fixed pool (for example 50 per class) out of the test split. Accuracy is then measured on the other
      2,200, which is not identical to the committed curves' evaluation set. The surrogates have to exclude the pool;
    - (c) an external satellite dataset as the pool, which brings a distribution shift.
+
+4. **Where the screen runs**:
+   - (a) the EuroSAT CNN, as ROADMAP.md P6 and G-P6 are written: RR-Label and PN, about 14 GPU-h, no LDPM;
+   - (b) the frozen-feature head (P5's regime, CPU only, minutes): LDPM, PN and RR-Label against P5's committed
+     global-DP, metric-privacy and subsampling curves. G-P6's 0.740 target and composite reference do not exist there,
+     so this needs a new gate by owner decision;
+   - (c) both.
 
 ## 8. References
 
