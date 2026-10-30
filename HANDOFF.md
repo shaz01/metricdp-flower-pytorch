@@ -1,5 +1,10 @@
 # Handoff: next research phase against client inference attacks
 
+> **Update 2026-10-30 (later): roadmap v3 approved** (Section 1 defaults accepted) and merged:
+> **`research/cia_roadmap_v3/README.md`**, then `ROADMAP.md`. It contains the audit and corrections of the v2
+> results handoff, the literature and novelty check, zero-GPU re-analyses, the paper options (hybrid paper) and the v3
+> roadmap. Agents follow `research/cia_roadmap_v3/ROADMAP.md`; prompts in its Section 7.
+>
 > **Update 2026-10-30: roadmap v2 is complete** (last package C1 closed, decision 17). Its results, written for a literature
 > and novelty check and for choosing between an audit paper and a new-defense paper, are in
 > **`research/cia_roadmap_v2/RESULTS_HANDOFF.md`**. Start there.
