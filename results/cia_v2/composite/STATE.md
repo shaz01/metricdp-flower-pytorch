@@ -1,10 +1,10 @@
 package: C1, composite candidate against metric privacy (opened by the owner 2026-10-29, decision 14)
-status: runs and analysis complete; awaiting the owner's decision on closing C1
+status: closed by the owner 2026-10-30 (decision 17); merged into master
 gate: G-C1 (as decided 2026-10-29, decision 15) = pass at both targets (FINDINGS.md)
 protocol: results/cia_v2/composite/PROTOCOL.md (fixed 2026-10-29, before any leakage run)
 machine: compute server
 cost: about 11.5 GPU-h of GPU 1 time (16.9 run-hours summed); cap 15 GPU-h (owner, 2026-10-29), stop at 18.75
-next: owner decides whether C1 is finished (report, merge)
+next: none (report `reports/cia_v2_composite.md`)
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, C1, as amended by Section 10 (decisions 9, 13, 14, 15). Branch
@@ -94,3 +94,4 @@ about 6 GPU-h. The roadmap's total (about 175 GPU-h) is used up (about 178 spent
 | 2026-10-30 01:17 | Stage 1 complete (64 runs); replacement check passed (accuracies bracket both targets), stage 2 started. |
 | 2026-10-30 06:24 | Main runs complete: 128 runs, all pass the run check, no out-of-memory, none stopped. Scaler never added workers (another user's job on GPU 1 throughout). Mean accuracy 0.772 / 0.723 / 0.661 / 0.559. |
 | 2026-10-30 | Analysis (PROTOCOL Section 3): **G-C1 passes at both targets** (-0.095 [-0.137, -0.053] at 0.740, -0.108 [-0.163, -0.053] at 0.660; two-way bootstrap also below 0). Same result against private median and global DP, and under both adaptive attackers; no detectable difference from subsampling alone at `q = 0.25`. FINDINGS.md written. |
+| 2026-10-30 | Owner closed C1 (decision 17). Report `reports/cia_v2_composite.md`; branch merged into master. |
