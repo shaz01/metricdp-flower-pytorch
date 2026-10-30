@@ -38,8 +38,14 @@ at 0.740; -0.108 [-0.163, -0.053] at 0.660) to 3 decimals before any new number 
 **Features.**
 - `n_w` is the number of sampled rounds in window `w` (rounds `5w-4` to `5w`, `w = 1..10`).
 - `d_w = x_{w-1} - x_w` is the drop in shadow loss over the window.
-- `z = sum_w (n_w - 5q) d_w`. Under OUT, `z` has mean 0 whatever the candidate's difficulty. Under IN it is positive
-  if training on the candidate lowers its loss.
+- `z = sum_w (n_w - 5q) (d_w - dbar_{c,w})`, where `dbar_{c,w}` is candidate `c`'s mean drop in window `w` over all
+  its replicates, IN and OUT. That mean uses no membership labels, so the attacker can compute it from the reference
+  trajectories it already holds. Under OUT, `z` has mean 0 whatever the candidate's difficulty. Under IN it is
+  positive if training on the candidate lowers its loss.
+- **Amendment, 2026-10-30, before any real-data statistic was computed.** The first definition used uncentred drops,
+  `z = sum_w (n_w - 5q) d_w`. Its synthetic unit test (`tests/test_reanalyze.py`) showed that the common loss decay,
+  multiplied by the schedule deviations, swamps the per-round effect: per-trial signal-to-noise was about 0.1.
+  Centring removes the common decay and leaves the definition otherwise unchanged.
 
 **Attackers.**
 - **Primary (SA):** `calibrated_scores` on the 12 features, the 11 standard shadow losses plus `z`.
