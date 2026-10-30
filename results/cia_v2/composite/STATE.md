@@ -1,10 +1,10 @@
 package: C1, composite candidate against metric privacy (opened by the owner 2026-10-29, decision 14)
-status: main runs running (PROTOCOL.md fixed 2026-10-29; GPU 1 shared by owner approval)
-gate: G-C1 (as decided 2026-10-29, decision 15) = not evaluated yet
+status: runs and analysis complete; awaiting the owner's decision on closing C1
+gate: G-C1 (as decided 2026-10-29, decision 15) = pass at both targets (FINDINGS.md)
 protocol: results/cia_v2/composite/PROTOCOL.md (fixed 2026-10-29, before any leakage run)
 machine: compute server
-cost so far: pilot about 1 GPU-h; cap 15 GPU-h (owner, 2026-10-29), stop at 18.75
-next: stage 1, automatic replacement check, stage 2; analysis and G-C1
+cost: about 11.5 GPU-h of GPU 1 time (16.9 run-hours summed); cap 15 GPU-h (owner, 2026-10-29), stop at 18.75
+next: owner decides whether C1 is finished (report, merge)
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v2/ROADMAP.md` Section 3, C1, as amended by Section 10 (decisions 9, 13, 14, 15). Branch
@@ -91,3 +91,6 @@ about 6 GPU-h. The roadmap's total (about 175 GPU-h) is used up (about 178 spent
 | 2026-10-29 18:36 | Pilot extension complete (4 runs, clean): 0.594 at r = 0.012368, 0.228 at 0.024736. |
 | 2026-10-29 20:15 | Owner set C1's cap at 15 GPU-h. PROTOCOL.md fixed: levels r = 0.000773, 0.003092, 0.006184, 0.012368 (pilot 0.780 / 0.713 / 0.701 / 0.594), 128 runs with surrogates and the adjusted score. Main runs started: two workers on GPU 1 with 4 parallel clients each, chains with the automatic replacement check between stages. |
 | 2026-10-29 20:20 | Owner asked to use more of GPU 1 when it is free: `~/cia-server/c1-scale.sh` (tmux c1-scale) checks every 5 minutes; after two consecutive checks with no other user's process on GPU 1 it starts two extra chains (c1-m2, c1-m3; runs are locked), and it stops them as soon as another user's process appears. |
+| 2026-10-30 01:17 | Stage 1 complete (64 runs); replacement check passed (accuracies bracket both targets), stage 2 started. |
+| 2026-10-30 06:24 | Main runs complete: 128 runs, all pass the run check, no out-of-memory, none stopped. Scaler never added workers (another user's job on GPU 1 throughout). Mean accuracy 0.772 / 0.723 / 0.661 / 0.559. |
+| 2026-10-30 | Analysis (PROTOCOL Section 3): **G-C1 passes at both targets** (-0.095 [-0.137, -0.053] at 0.740, -0.108 [-0.163, -0.053] at 0.660; two-way bootstrap also below 0). Same result against private median and global DP, and under both adaptive attackers; no detectable difference from subsampling alone at `q = 0.25`. FINDINGS.md written. |
