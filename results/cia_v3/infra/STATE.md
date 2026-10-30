@@ -1,10 +1,10 @@
 Package: P0, infrastructure and cost runs (CIA roadmap v3, Agent P)
-status: code and tests done (4cc8af25); cost runs waiting for an idle GPU
+status: code and tests done (4cc8af25); cost runs running on GPU 1, shared with another user's job (decision 4)
 gate: G-P0 = items 1-4 pass; item 5 (cost runs) pending
 protocol: this file (P0 has no leakage statistic; its cost runs are never analyzed for leakage)
 machine: compute server
 cost: 0 GPU-h so far; cap 3 GPU-h (ROADMAP v3 Section 3), escalate at 3.75
-next: the four cost runs (`~/cia-server/p0-cost-wait.sh` starts them on the first GPU with no process and no claim)
+next: record the four cost runs and project each package's cost against its cap
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Sections 2, 3 (P0) and 6, decision 1 in Section 10. Branch
@@ -138,3 +138,9 @@ round.
 used), so under the server rules neither may be used. The cost runs start on the first GPU with no process and no
 claim (`~/cia-server/p0-cost-wait.sh`, polling every 5 minutes; runs in tmux `p0-cost`, logs
 `~/cia-server/logs/p0-cost-*.log`, GPU samples every 60 s in `p0-cost-gpu.log`).
+
+**2026-10-30 23:23. Cost runs started under ROADMAP decision 4** (owner: share a GPU with another user's job when the
+work needs about 3-4 GB of VRAM). The launcher took GPU 1 (6.8 GB free; the other user's job at 97-100% utilization).
+Our processes use about 2.4-2.5 GB. **Timings from these runs overstate an unshared GPU's cost**: the GPU is
+compute-saturated by the other job, so the cost projection is an upper bound. `p0-cost-gpu.log` records the GPU's
+utilization and our VRAM every 60 s, so this can be stated per run.
