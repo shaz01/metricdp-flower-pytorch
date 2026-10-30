@@ -1,12 +1,12 @@
 package: P5, client inference in the formal regime (roadmap v3, F7)
-status: design written; no code changed, no run launched
+status: ESCALATED 2026-10-30 (feature-cache fingerprint differs from B4's; ESCALATION.md); no P5 run launched
 gate: G-P5 (report, no kill), not yet evaluated
-protocol: results/cia_v3/formal_cia/PROTOCOL.md (to be written and committed before any run)
+protocol: results/cia_v3/formal_cia/PROTOCOL.md @ 45f3af54 (fixed before any run)
 machine: owner PC, CPU only (no GPU claimed; the v3 GPU cap is untouched)
 cost: estimate 2-3 CPU-hours of run time (832 runs of about 2-15 s, from B4 Part D's recorded seconds), plus a
   one-off ResNet-18 feature extraction on this machine (the cache is absent here)
-next: PROTOCOL.md; mechanism options and tests; reproduction checks; runs; FINDINGS.md
-needs from others: none
+next: owner decision on ESCALATION.md; then reproduction check (a) under the chosen rule, runs, FINDINGS.md
+needs from others: owner decision (ESCALATION.md options 1-3)
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Section 3, P5, under Section 1 (decisions 1-8) and measurement standard
 v3 (Section 2). Agent F. Branch `feature/cia-v3-formal-cia` from master `103d26b8`. Agent F owns
@@ -151,3 +151,11 @@ subsampling: dominating `mu` 0.25 or 8), decided on accuracy alone before any le
 ## Log
 
 - 2026-10-30: branch and sparse worktree opened from master `103d26b8`. STATE.md written before any code change.
+- 2026-10-30: PROTOCOL.md committed @ `45f3af54` before any run.
+- 2026-10-30: `fedavg.run` options (`calibration="metric"`, `sampling_rate`, `sampling_seed`), `formal_cia.py`, 12 new
+  synthetic tests; `pytest experiments/frozen_head/tests` 36 passed. Default path checked bit-identical to the
+  pre-P5 loop.
+- 2026-10-30: feature cache extracted on the owner PC (CPU): fingerprints `8b56243fcb32340f` / `4ae40e575a25aef2`,
+  not B4's `30ee5d8828e2339c` / `cdd8f364245a012b`. Reproduction (b) passes (0.638 [0.587, 0.689]); reproduction (a)
+  gives identical accuracy and shadow losses within 1.8e-5 on five B4 runs, failing the 1e-12 criterion. Stopped per
+  PROTOCOL.md Section 8; ESCALATION.md.
