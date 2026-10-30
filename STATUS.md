@@ -28,9 +28,12 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 - **Proposed v3:** packages P0-P6 and R1, about 120 GPU-h expected for the paper packages (148 cap).
 - **Running:** nothing yet (agents not started).
 - **Agent F (owner PC), 2026-10-30:**
-  - P5 (`feature/cia-v3-formal-cia`): STATE, PROTOCOL, code and tests done; **escalated**. The locally extracted
-    feature cache differs from B4's in float32 rounding (identical accuracy; shadow losses within 1.8e-5). It waits
-    for the owner's choice in `results/cia_v3/formal_cia/ESCALATION.md`. No run launched.
+  - P5 (`feature/cia-v3-formal-cia`): **complete, awaiting the owner** (`results/cia_v3/formal_cia/FINDINGS.md`).
+    The escalation was resolved by the owner (accept a tolerance; PROTOCOL Amendment 1). 832 head runs, 0.32 CPU-h.
+    - G-P5: global DP at `mu = 2` is not protective at 48 clients (AUC 0.639 [0.598, 0.680]); it is at 480
+      pseudo-clients (0.480 [0.438, 0.523]).
+    - Metric privacy is equivalent to global DP at matched accuracy at 48 clients. Subsampling shows no detectable
+      difference, and leaks more under the sampling-aware attacker (+0.090).
   - P6 (`feature/cia-v3-label-channel`): design memo `research/cia_roadmap_v3/label_channel/DESIGN.md` drafted.
     The screen is not open. LDPM's full text is needed from the owner.
 
@@ -222,7 +225,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `formal_cia run` (owner PC, CPU; branch `feature/cia-v3-formal-cia`) | P5: 832 head runs | not started: escalated 2026-10-30 (ESCALATION.md) |
+| `formal_cia run` (owner PC, CPU; branch `feature/cia-v3-formal-cia`) | P5: 832 head runs | done 2026-10-30 (0.32 CPU-h); FINDINGS written |
 | 2 x `c1-chain.sh` (compute server, GPU 1 shared by owner approval, 4 parallel clients; branch `feature/cia-v2-composite`) | C1 main runs: composite at 4 levels, 128 runs, surrogates and the defense-aware score | done 2026-10-30 06:24 (about 11.5 GPU-h incl. pilot); G-C1 passes; merged |
 | 3 x `b1-chain.sh` (compute server, GPU 1; branch `feature/cia-v2-mechanisms`, merged) | B1 main runs, 256 runs | done 2026-10-27 20:42 (about 9.9 GPU-h); G-B1 passes for q = 0.25 |
 | 3 x `az-a1-chain.sh` (compute server, GPU 1; branch `feature/cia-v2-alzheimer`) | A1 on Alzheimer, 192 runs | done 2026-10-25 12:50 (about 40 GPU-h); no robust difference |
