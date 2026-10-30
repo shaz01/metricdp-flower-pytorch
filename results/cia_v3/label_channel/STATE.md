@@ -1,11 +1,11 @@
 package: P6, label-channel defense (roadmap v3, F1): design memo only
-status: design memo drafted (research/cia_roadmap_v3/label_channel/DESIGN.md); screen NOT open
+status: design memo complete; owner decision 2 recorded (design choices); screens NOT open
 gate: G-P6, applies to the screen only; the screen needs a new owner decision in ROADMAP.md Section 10 (decision 6)
 protocol: none yet (the screen's protocol is written only after the owner opens it)
 machine: owner PC (memo: no compute)
 cost: memo 0; screen cap 15 GPU-h, if opened
-next: owner review of DESIGN.md (calendar week 3); the owner fetches LDPM's full text (DESIGN.md Section 7)
-needs from others: owner (LDPM full text; decision on the screen)
+next: wait for the paper packages to close and the owner to open the screens; then the stage-1 (head, CPU) protocol
+needs from others: owner (opening the screens when the paper packages close)
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Section 3, P6, item 1. Agent F. Branch `feature/cia-v3-label-channel`
 from master `103d26b8`. No code; nothing Agent P owns is touched.
@@ -28,3 +28,9 @@ testable" and counts as a fail of G-P6 for that mechanism.
 
 - 2026-10-30: worktree opened. P5 is escalated (`feature/cia-v3-formal-cia`, ESCALATION.md), so the memo was started
   while waiting. The memo needs no compute and does not depend on P5.
+- 2026-10-30: RR-Label read from its author copy and LDPM from the owner's copy (kept in the gitignored `docs/`).
+  DESIGN.md Section 4 corrected: RR-Label has no formal guarantee and targets a malicious server; LDPM hides `m`
+  label flips on fixed features, for one-vs-all models only.
+- 2026-10-30: owner decision 2 (ROADMAP.md Section 10): no fill-in, one fixed per-class subset, RR-Label kept,
+  screens on the head first (CPU) and the CNN only if PN passes there, timing as decision 6. DESIGN.md Section 5
+  carries the proposed stage-1 gate.

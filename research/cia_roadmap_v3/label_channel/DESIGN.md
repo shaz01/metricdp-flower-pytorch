@@ -176,7 +176,25 @@ difference explicitly.
 - **So a CPU-only label-channel screen is possible in P5's formal regime,** with LDPM, PN and RR-Label against the
   committed P5 curves. It is not possible on the CNN, where LDPM is undefined. See Section 7, choice 4.
 
-## 5. The screen (only after a new owner decision; cap 15 GPU-h)
+## 5. The screens (owner decision 2: head first, then the CNN; both only once the paper packages close)
+
+### 5.0 Stage 1: the frozen-feature head (CPU)
+
+- **Regime:** P5's. B4's head, 20 public images, `T = 10`, `n = 48`, randomized inclusion with 32 candidates and
+  `R = 32`, P5's design seed, so the runs pair with P5's committed curves.
+- **Mechanisms:**
+  - PN (fixed subset, no fill-in) under server-side global DP;
+  - LDPM's local Algorithm 1 under the same server-side global DP, so that both have a client-level `mu_total`;
+  - RR-Label under the same server-side global DP.
+- **Levels:** at least 3 server-noise levels each, so that P5's targets 0.843 and 0.714 are bracketed.
+- **Proposed gate**, fixed in its protocol before any run:
+  - PN at least 0.05 below global DP at one of P5's targets, with the 97.5% pair-jackknife interval below 0 (decision
+    9's rule);
+  - and no worse than LDPM by more than 0.03 (point estimate).
+  - A target that is not bracketed is "not testable" and does not pass.
+- **Pass:** the CNN stage below may start. **Fail:** P6 stops and the second paper does not start.
+
+### 5.1 Stage 2: the EuroSAT CNN (cap 15 GPU-h; only if stage 1 passes)
 
 As ROADMAP.md P6 item 2, made concrete for a protocol:
 - **Regime:** M2's. EuroSAT alpha 0.3, randomized inclusion (32 candidates, 16 IN, 32 of 48 active), 50 rounds, equal
@@ -216,7 +234,8 @@ As ROADMAP.md P6 item 2, made concrete for a protocol:
 
 1. **Done:** LDPM read from the owner's copy, which stays in the gitignored `docs/` and is not redistributed.
    RR-Label read from its author copy. Section 4 is updated; only RR-Label's Algorithm 1 ambiguity remains.
-2. **A decision on the screen** (ROADMAP.md decision 6: only after the paper packages close, by a new decision).
+2. **Decided (ROADMAP.md decision 2, 2026-10-30):** choices (a) in items 1-3 and 5, and (c) in item 4. The screens
+   wait for the paper packages to close.
 3. **The public fill-in pool.** v2 uses the whole EuroSAT test split (2,700 images) as the server test set and draws
    the label-matched surrogates from it too (`results/cia_v2/randomized_inclusion/runner.py` `evaluation_sets`), so
    there is no unused public image. The choices are:
