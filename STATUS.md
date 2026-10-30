@@ -34,8 +34,10 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
       pseudo-clients (0.480 [0.438, 0.523]).
     - Metric privacy is equivalent to global DP at matched accuracy at 48 clients. Subsampling shows no detectable
       difference, and leaks more under the sampling-aware attacker (+0.090).
-  - P6 (`feature/cia-v3-label-channel`): design memo `research/cia_roadmap_v3/label_channel/DESIGN.md` drafted.
-    The screen is not open. LDPM's full text is needed from the owner.
+  - P6 (`feature/cia-v3-label-channel`): design memo complete (`research/cia_roadmap_v3/label_channel/DESIGN.md`);
+    LDPM and RR-Label read in full. Owner decision 2 (ROADMAP.md Section 10, on that branch) fixes the design:
+    no fill-in, a fixed per-class subset, RR-Label kept, a head screen (CPU) first and the CNN only if it passes.
+    Screens wait for the paper packages to close.
 
 **CIA roadmap v2: approved by the owner 2026-10-17 (ROADMAP.md Section 1 defaults accepted). Agents A and C have
 finished; Agent B (B1-B3, B5, C1) has not started. M2's escalation resolved by the owner 2026-10-20 (ROADMAP.md Section 10): audit form is the paper's main line; Alzheimer replication of M2 and A1; B5 then B1 at 2x and 4x with an all-candidate gate at R = 32; B2 deprioritized; B4 confirmatory run.** `research/cia_roadmap_v2/`
