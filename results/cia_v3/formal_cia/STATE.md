@@ -1,11 +1,10 @@
 package: P5, client inference in the formal regime (roadmap v3, F7)
-status: escalation resolved 2026-10-30 (owner: accept a tolerance; PROTOCOL.md Amendment 1); runs next
-gate: G-P5 (report, no kill), not yet evaluated
+status: complete 2026-10-30, awaiting the owner (FINDINGS.md); not merged
+gate: G-P5 (report) = not confirmed at 48 clients (0.639 [0.598, 0.680]); confirmed at 480 pseudo-clients (0.480 [0.438, 0.523])
 protocol: results/cia_v3/formal_cia/PROTOCOL.md @ 45f3af54 (fixed before any run)
 machine: owner PC, CPU only (no GPU claimed; the v3 GPU cap is untouched)
-cost: estimate 2-3 CPU-hours of run time (832 runs of about 2-15 s, from B4 Part D's recorded seconds), plus a
-  one-off ResNet-18 feature extraction on this machine (the cache is absent here)
-next: reproduction checks under Amendment 1; runs; accuracy and extension rule; analysis; FINDINGS.md
+cost: 0.32 CPU-hours recorded run time (832 runs), plus a one-off feature extraction; no GPU
+next: owner review of FINDINGS.md (deviations 1-2 stated there)
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Section 3, P5, under Section 1 (decisions 1-8) and measurement standard
@@ -162,3 +161,9 @@ subsampling: dominating `mu` 0.25 or 8), decided on accuracy alone before any le
 - 2026-10-30: owner decision on ESCALATION.md: option 1, accept a tolerance. PROTOCOL.md Amendment 1 (local cache
   fingerprints, check (a) = identical accuracy and shadow losses within 1e-4 on five B4 runs), committed before any
   run; `execute` refuses any other cache.
+- 2026-10-30: reproduction checks pass (a: identical accuracy, losses within 1.8e-5; b: 0.638 [0.587, 0.689]).
+  832 runs, 6 workers, 0.32 CPU-hours. Every target bracketed by every curve: no extension.
+- 2026-10-30: analysis and FINDINGS.md. Two deviations stated there: vanilla is not subsampling's noise-free end
+  (upper targets not testable for subsampling, post hoc), and metric privacy's curve is vertical at 480 clients.
+  Full suite (worktree, excluding six Flower-launching integration files that do not import `frozen_head` and one
+  of which hung idle): 852 passed, 2 skipped; reanalysis tests 3 passed in the main checkout.
