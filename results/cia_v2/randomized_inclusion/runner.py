@@ -217,6 +217,12 @@ def without_augmentation(dataset):
     return dataset
 
 
+def _num_classes(model):
+    from torch import nn
+
+    return [module for module in model.modules() if isinstance(module, nn.Linear)][-1].out_features
+
+
 def atomic_json(path, value):
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(value, indent=2, allow_nan=False) + "\n")
@@ -258,6 +264,37 @@ def _manifest(run, surrogates):
             "checkpoint_rounds": checkpoint_rounds(run.hyperparams.rounds, run.profile.checkpoint_every),
             "shadow_fraction": run.profile.shadow_fraction, "shadow_augmentation": False, "surrogates": surrogates,
             "hyperparams": asdict(run.hyperparams), "score_direction": "lower loss indicates IN"}
+
+
+def _adjusted_loss(model, loader, device, log_prior, tau):
+    """C1's defense-aware attacker: the logit-adjusted loss ``CE(softmax(log p + tau log pi_c))`` that clients trained on
+    under logit adjustment (B5), with the candidate's label prior ``pi_c`` estimated from its own shadow sample."""
+    import torch
+    from torch import nn
+
+    from metricdp_pytorch.utils.device import to_device
+
+    model.to(device)
+    model.eval()
+    adjustment = tau * log_prior.to(device)
+    total, count = 0.0, 0
+    with torch.no_grad():
+        for images, labels in loader:
+            images, labels = to_device(images, device), to_device(labels, device)
+            log_probabilities = model(images).clamp_min(torch.finfo(torch.float32).tiny).log()
+            total += nn.functional.cross_entropy(log_probabilities + adjustment, labels, reduction="sum").item()
+            count += len(labels)
+    return total / count
+
+
+def _shadow_log_prior(loader, num_classes):
+    """Add-one-smoothed label prior of a candidate's shadow sample (what the attacker holds)."""
+    import torch
+
+    from experiments.cia.datasets.shadow import _labels_from_dataset
+
+    counts = torch.bincount(torch.tensor(_labels_from_dataset(loader.dataset)), minlength=num_classes).float()
+    return ((counts + 1) / (counts.sum() + num_classes)).log()
 
 
 def _loss_and_accuracy(model, loader, device):
@@ -359,6 +396,9 @@ def execute_run(run, output, max_parallel_clients, surrogates=False):
                        "test_loss": test_loss, "test_accuracy": test_accuracy}
                 for view, loader in loaders.items():
                     row[f"{view}_loss"], row[f"{view}_accuracy"] = _loss_and_accuracy(model, loader, device)
+                if run.logit_tau:  # C1: only runs trained with logit adjustment carry the defense-aware score
+                    prior = _shadow_log_prior(loaders["shadow"], _num_classes(model))
+                    row["shadow_adjusted_loss"] = _adjusted_loss(model, loaders["shadow"], device, prior, run.logit_tau)
                 rows.append(row)
             atomic_json(folder / "measurements.json", rows)
             checkpoint.unlink()  # only after every candidate at this round is persisted

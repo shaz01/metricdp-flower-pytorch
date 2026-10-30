@@ -23,6 +23,7 @@ class Audit:
     run_names: tuple[str, ...]
     min_client_accuracy: np.ndarray | None = None  # (replicates,) lowest per-client accuracy at the final round
     candidates: tuple[int, ...] = CANDIDATES  # the run manifests' panel (EuroSAT's by default)
+    adjusted_losses: np.ndarray | None = None  # like ``losses``, C1's logit-adjusted shadow loss (logit-adjusted runs)
     top_decile: tuple[int, ...] = TOP_DECILE
 
 
@@ -48,7 +49,7 @@ def load_audit(root: Path, *, config: str) -> Audit:
     expected = design_matrix(replicates, design_seed=design_seed)
 
     losses = np.empty((len(candidates), replicates, len(rounds)))
-    surrogates = None
+    surrogates = adjusted = None
     membership = np.zeros((len(candidates), replicates), dtype=bool)
     accuracy, norms, names = np.empty(replicates), [], []
     client_minimum = np.full(replicates, np.nan)
@@ -62,6 +63,10 @@ def load_audit(root: Path, *, config: str) -> Audit:
             for k, round_number in enumerate(rounds):
                 row = index[(round_number, candidate)]
                 losses[c, j, k] = row["shadow_loss"]
+                if "shadow_adjusted_loss" in row:
+                    if adjusted is None:
+                        adjusted = np.full_like(losses, np.nan)
+                    adjusted[c, j, k] = row["shadow_adjusted_loss"]
                 if "surrogate_loss" in row:
                     if surrogates is None:
                         surrogates = np.full_like(losses, np.nan)
@@ -81,4 +86,4 @@ def load_audit(root: Path, *, config: str) -> Audit:
                  final_accuracy=accuracy, released_norms=None if np.isnan(released).all() else released,
                  surrogate_losses=surrogates, run_names=tuple(names),
                  min_client_accuracy=None if np.isnan(client_minimum).all() else client_minimum,
-                 candidates=candidates, top_decile=top_decile)
+                 candidates=candidates, top_decile=top_decile, adjusted_losses=adjusted)

@@ -72,3 +72,22 @@ def test_load_audit_reads_the_panel_from_the_manifests(tmp_path):
     assert data.losses[c, j, 1] == pytest.approx(100 * j + 5 + runner.ALZHEIMER_CANDIDATES[c] / 100)
     expected = np.array([[candidate in run.included for run in runs] for candidate in runner.ALZHEIMER_CANDIDATES])
     np.testing.assert_array_equal(data.membership, expected)
+
+
+def test_load_audit_reads_adjusted_losses_when_present(tmp_path):
+    runs = runner.build_runs(config="c1", privacy="global-dp", noise_ratio=0.001, replicates=4, design_seed=0)
+    for run in runs:
+        write_run(tmp_path, run)
+        path = tmp_path / run.run_name() / "measurements.json"
+        rows = json.loads(path.read_text())
+        for row in rows:
+            row["shadow_adjusted_loss"] = row["shadow_loss"] + 1.0
+        path.write_text(json.dumps(rows))
+    data = analysis.load_audit(tmp_path, config="c1")
+    np.testing.assert_allclose(data.adjusted_losses, data.losses + 1.0)
+    assert analysis.load_audit(tmp_path, config="c1").surrogate_losses is None
+
+
+def test_adjusted_losses_are_absent_by_default(audit):
+    root, _ = audit
+    assert analysis.load_audit(root, config="gdp").adjusted_losses is None
