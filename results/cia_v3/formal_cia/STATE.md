@@ -1,12 +1,12 @@
 package: P5, client inference in the formal regime (roadmap v3, F7)
-status: ESCALATED 2026-10-30 (feature-cache fingerprint differs from B4's; ESCALATION.md); no P5 run launched
+status: escalation resolved 2026-10-30 (owner: accept a tolerance; PROTOCOL.md Amendment 1); runs next
 gate: G-P5 (report, no kill), not yet evaluated
 protocol: results/cia_v3/formal_cia/PROTOCOL.md @ 45f3af54 (fixed before any run)
 machine: owner PC, CPU only (no GPU claimed; the v3 GPU cap is untouched)
 cost: estimate 2-3 CPU-hours of run time (832 runs of about 2-15 s, from B4 Part D's recorded seconds), plus a
   one-off ResNet-18 feature extraction on this machine (the cache is absent here)
-next: owner decision on ESCALATION.md; then reproduction check (a) under the chosen rule, runs, FINDINGS.md
-needs from others: owner decision (ESCALATION.md options 1-3)
+next: reproduction checks under Amendment 1; runs; accuracy and extension rule; analysis; FINDINGS.md
+needs from others: none
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Section 3, P5, under Section 1 (decisions 1-8) and measurement standard
 v3 (Section 2). Agent F. Branch `feature/cia-v3-formal-cia` from master `103d26b8`. Agent F owns
@@ -159,3 +159,6 @@ subsampling: dominating `mu` 0.25 or 8), decided on accuracy alone before any le
   not B4's `30ee5d8828e2339c` / `cdd8f364245a012b`. Reproduction (b) passes (0.638 [0.587, 0.689]); reproduction (a)
   gives identical accuracy and shadow losses within 1.8e-5 on five B4 runs, failing the 1e-12 criterion. Stopped per
   PROTOCOL.md Section 8; ESCALATION.md.
+- 2026-10-30: owner decision on ESCALATION.md: option 1, accept a tolerance. PROTOCOL.md Amendment 1 (local cache
+  fingerprints, check (a) = identical accuracy and shadow losses within 1e-4 on five B4 runs), committed before any
+  run; `execute` refuses any other cache.

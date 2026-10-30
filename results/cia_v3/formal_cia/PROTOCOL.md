@@ -124,3 +124,18 @@ ids) and their count; feature fingerprints; seconds.
 
 - `ESCALATION.md` and stop if: the reproduction checks fail; a validity check fails; a fingerprint differs.
 - Cost: about 832 runs of 2-15 s (B4 Part D's records), 2-3 CPU-hours; owner PC; no GPU.
+
+## Amendment 1 (2026-10-30, owner decision on ESCALATION.md, before any P5 run)
+
+The owner chose ESCALATION.md option 1, "accept a tolerance". Changes:
+
+1. **Features.** P5 runs on the owner PC's cache: fingerprints train `8b56243fcb32340f`, test `4ae40e575a25aef2`.
+   `formal_cia.execute` refuses to run on any other cache. B4's fingerprints no longer stop the work; the difference
+   is recorded as float32 rounding across CPUs (ESCALATION.md).
+2. **Reproduction check (a)** becomes: the five B4 Part D runs listed in ESCALATION.md, re-run here, reproduce their
+   committed final server-test accuracy exactly and their shadow losses within 1e-4 (absolute, every candidate and
+   round). Check (b) is unchanged.
+3. **Targets** stay B4 Part D's committed accuracies (0.843, 0.714, 0.921, 0.910). Check (a) shows the cache does not
+   change accuracies at this precision.
+
+Nothing else changes.

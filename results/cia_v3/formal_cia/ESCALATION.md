@@ -53,3 +53,8 @@ and the targets are quoted to 3 decimals.
 - Code (`fedavg.py` options, `formal_cia.py`) and tests are committed. `pytest experiments/frozen_head/tests` passes
   (36 tests).
 - P5 waits for the owner's choice.
+
+## Resolution (2026-10-30, owner)
+
+The owner chose **option 1, "accept a tolerance"**. It is recorded as PROTOCOL.md Amendment 1, committed before any P5
+run. P5 resumes.

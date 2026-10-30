@@ -48,6 +48,11 @@ SCHEDULE_SEED = 20261030  # reanalyze.py's seed for the OUT trials' simulated sc
 DELTA = 1e-5
 BEATS = 0.05
 B4_PUBLISHED = {"auc": 0.638, "low": 0.587, "high": 0.689}  # B4 FINDINGS, n = 48, T = 10, mu = 2, 20 public images
+# PROTOCOL.md Amendment 1: the owner PC's feature cache (float32 rounding differs from B4's; ESCALATION.md).
+LOCAL_FINGERPRINTS = {"train": "8b56243fcb32340f", "test": "4ae40e575a25aef2"}
+# Reproduction check (a) under Amendment 1: B4 Part D runs (clients, rounds, mu_total, replicate), tolerance on losses.
+REPRODUCTION_RUNS = ((48, 10, 2.0, 0), (48, 10, 1.0, 7), (48, 10, 0.0, 12), (480, 10, 2.0, 3), (480, 10, 1.0, 20))
+LOSS_TOLERANCE = 1e-4
 
 
 @dataclass(frozen=True)
@@ -135,6 +140,8 @@ def execute(job: Job) -> str:
     started = time.time()
     chosen = selection(job.clients, job.mechanism, job.level)
     fed = runner.federation(job.clients, runner.EVALUATION_LAYOUT, PUBLIC_SIZE, audit.PUBLIC_SUBSET)
+    if fed["fingerprints"] != LOCAL_FINGERPRINTS:
+        raise RuntimeError(f"Feature cache {fed['fingerprints']} is not PROTOCOL.md Amendment 1's {LOCAL_FINGERPRINTS}.")
     info = audit.panel(job.clients)
     member = design()[:, job.replicate]
     included = {c for c, m in zip(info["candidates"], member) if m}
@@ -432,27 +439,27 @@ def reproduce_b4() -> dict:
 
 
 def reproduce_run() -> dict:
-    """Reproduction check (a): re-run B4 Part D's ``n48_T10_mu2_pub20_r00`` with the current ``fedavg``."""
-    import shutil
+    """Reproduction check (a), PROTOCOL.md Amendment 1: re-run B4 Part D runs with the current ``fedavg``."""
     import tempfile
 
-    job = audit.AuditJob(48, 10, 2.0, 0, PUBLIC_SIZE)
-    committed = json.loads(job.path.read_text())
-    original = audit.AUDIT_DIR
+    original = audit.audit_dir
+    rows = []
     with tempfile.TemporaryDirectory() as tmp:
-        audit.AUDIT_DIR = Path(tmp) / "audit"
-        target = audit.audit_dir  # audit_dir(public_size) uses runner.RESULTS, so redirect it too
         audit.audit_dir = lambda public_size=0: Path(tmp) / f"audit_public{public_size}"
         try:
-            audit.execute(job)
-            fresh = json.loads((Path(tmp) / f"audit_public{PUBLIC_SIZE}" / f"{job.name}.json").read_text())
+            for args in REPRODUCTION_RUNS:
+                job = audit.AuditJob(*args, PUBLIC_SIZE)
+                committed = json.loads((original(PUBLIC_SIZE) / f"{job.name}.json").read_text())
+                audit.execute(job)
+                fresh = json.loads(job.path.read_text())
+                difference = float(np.max(np.abs(np.array(fresh["shadow_losses"]) - np.array(committed["shadow_losses"]))))
+                rows.append({"run": job.name, "final_server_test": [fresh["final_server_test"], committed["final_server_test"]],
+                             "max_shadow_loss_difference": difference,
+                             "match": fresh["final_server_test"] == committed["final_server_test"]
+                             and difference <= LOSS_TOLERANCE})
         finally:
-            audit.AUDIT_DIR, audit.audit_dir = original, target
-        shutil.rmtree(tmp, ignore_errors=True)
-    difference = float(np.max(np.abs(np.array(fresh["shadow_losses"]) - np.array(committed["shadow_losses"]))))
-    return {"run": job.name, "final_server_test": [fresh["final_server_test"], committed["final_server_test"]],
-            "max_shadow_loss_difference": difference,
-            "match": fresh["final_server_test"] == committed["final_server_test"] and difference <= 1e-12}
+            audit.audit_dir = original
+    return {"tolerance": LOSS_TOLERANCE, "runs": rows, "match": all(r["match"] for r in rows)}
 
 
 def accuracy_table(records: list[dict]) -> list[dict]:
