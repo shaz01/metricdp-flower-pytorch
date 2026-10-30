@@ -15,18 +15,19 @@ committed report.
 - **Proposal: the prior-neutral update (PN).**
   - Each client trains every round on a class-balanced batch with a fixed number `s` of records per class.
   - Its own records are used for class `c` only if a once-released, Gaussian-noised label histogram says the client
-    has enough of them. Otherwise public images of class `c` fill in.
+    has enough of them. Otherwise the class is left out (recommended), or public images of class `c` fill in.
   - Full participation, server-side client-level DP-FedAvg unchanged.
 - **Guarantee.** Under a Pufferfish data model (records iid within class), the client's whole transcript depends on its
   label histogram only through the noised histogram. That gives a `||n - n'||_2 / sigma_h`-GDP statement for
   label-mix secrets, plus a failure term `delta_F`, with no composition over rounds (Section 3).
   - It sits on top of DP-FedAvg's client-level guarantee and does not replace it.
-- **Baselines for the screen:** RR-Label (Zheng and Li 2023) as the implementable published competitor, and the
+- **Baselines for the screen:** RR-Label (Zheng and Li 2023; empirical, no guarantee, built against a malicious
+  server) as the implementable published competitor, and the
   committed metric-privacy (A1) and composite (C1) curves.
 - **Biggest open items:**
   - LDPM's full text (Section 7). The owner's institutional access is needed.
-  - The public fill-in pool, which has to be disjoint from evaluation and from the attacker's surrogates.
-  - A data-sharing confound: public fill-in alone is known to help non-IID accuracy.
+  - Whether to use public fill-in at all. It is not needed for the guarantee, and v2 has no unused public images
+    (Section 7).
 
 ## 1. The guarantee targeted
 
@@ -64,6 +65,12 @@ The roadmap names two options. This memo chooses the second, in a sharper form.
 2. `A_k = {c : h~_c >= s + tau}`, the classes served from private records.
 
 `h~` is never sent. Only its effect on the updates is released, which is why it has to be private.
+
+**Fill-in is optional for the guarantee.** If classes outside `A_k` are simply left out (no public images), the update
+still depends on `n` only through `h~`: which classes are present is a function of `h~` (Section 3's argument is
+unchanged). Fill-in only hides which classes are present beyond the noised histogram and may add accuracy. Leaving
+it out removes the need for a public pool and the data-sharing confound (Section 6). **Recommended for the screen:
+no fill-in.**
 
 **Every round `t`, for each local epoch:**
 - For `c` in `A_k`: draw `s` class-`c` records of `D_k` without replacement. If the true `n_c < s` (the failure
@@ -135,11 +142,20 @@ difference explicitly.
 
 | | LDPM (Jiang et al. 2024) | RR-Label (Zheng and Li 2023) | PN (this memo) |
 |---|---|---|---|
-| Setting | cross-silo FL, one-vs-all classifiers (abstract) | client-targeted MI in FL under label skew | cross-device-scale (48 slots, 32 active), multi-class softmax, attacker sees global models only |
-| What is perturbed | label-distribution release (details need the full text) | each training label, by randomized response | which records enter local training (class-balanced, histogram-gated, public fill-in); labels are never corrupted |
-| Guarantee | `(m, gamma, xi)`-label distributional privacy, also DP | label-level local DP per record (by the usual reading; to be confirmed in the paper) | Pufferfish `G_mu` over label histograms, `mu = ||n - n'||_2 / sigma_h`, released once; on top of DP-FedAvg's client-level `mu_total` |
-| Expected cost | unknown | label noise lowers accuracy as `epsilon_label` falls | fewer private records per class; public fill-in |
-| Composition over rounds | unknown | none (labels perturbed once) or per round, depending on the implementation | none (histogram released once; fixed subset) |
+| Setting | cross-silo FL, one-vs-all classifiers (abstract) | a **malicious server** isolates one client, sends it poisoned models in about 16 of 100 rounds and reads its local models; record-level membership of 200 attack samples (CMI, Sections 4-5, 7.1.4) | cross-device-scale (48 slots, 32 active), multi-class softmax, a curious participant sees global models only; whole-client membership |
+| What is perturbed | label-distribution release (details need the full text) | Algorithm 1: a label of the client's majority class group `Y_K1` is replaced by a uniformly random minority-class label at a Bernoulli rate set by `q` (0.15-0.3 evaluated, Section 7.1.5); minority labels are kept | which records enter local training (class-balanced, histogram-gated); labels are never corrupted |
+| Guarantee | `(m, gamma, xi)`-label distributional privacy, also DP | **none claimed** (the paper's `epsilon`-DP baseline is RRTop-k; RR-Label is empirical, Section 6.2) | Pufferfish `G_mu` over label histograms, `mu = ||n - n'||_2 / sigma_h`, released once; on top of DP-FedAvg's client-level `mu_total` |
+| Measured cost | unknown | Table 4 (non-IID, `K1 = K/2`, 100 clients): membership accuracy down 35-45 points at 15-30 pp test accuracy; CIFAR-10 averages 81.0% to 63.9% test, 88.3% to 51.8% membership | fewer private records per class |
+| Composition over rounds | unknown | not stated | none (histogram released once; fixed subset) |
+
+**RR-Label read from its author copy** (https://iqua.ece.toronto.edu/papers/tzheng-tdsc23.pdf, 2026-10-30):
+- **Ambiguity to fix before implementing:** Algorithm 1 prints "sample `b ~ Bernoulli(q)`; if `b < 0.5` and
+  `y in Y_K1`, output a random minority label". Read literally, that flips a majority label with probability
+  `1 - q` (70-85% at the evaluated `q`). The text does not say which reading is meant. The protocol must state its
+  reading and test both in the accuracy pilot.
+- **Threat-model mismatch:** RR-Label was designed and measured against a malicious server that reads one client's
+  poisoned local models. The screen measures it against a curious participant who sees only global models. That
+  gives the baseline its weakest attacker, and the paper should say so.
 
 **Novelty risk.** If LDPM's mechanism is itself a gated or balanced resampling with a released histogram, PN is not
 new. That cannot be decided from the abstract. It is the first thing to check in the full text.
@@ -150,8 +166,8 @@ As ROADMAP.md P6 item 2, made concrete for a protocol:
 - **Regime:** M2's. EuroSAT alpha 0.3, randomized inclusion (32 candidates, 16 IN, 32 of 48 active), 50 rounds, equal
   weights, `R = 32`, `design_seed = 2`, so it pairs with the committed M2, A1 and C1 runs.
 - **Configurations:**
-  - RR-Label at one `epsilon_label` (fixed from the paper's recommended setting once its text is read), at 2
-    server-noise levels;
+  - RR-Label at one `q` from the paper's evaluated range 0.15-0.3, with Algorithm 1's reading fixed in the
+    protocol, at 2 server-noise levels;
   - PN at one `(s, sigma_h)` (`m = 10`), at the same 2 levels;
   - levels 1x and 2x (`r` 0.001546 and 0.003092), from an accuracy pilot (2 runs per level, `design_seed = 3`, never
     analyzed) with A1's replacement rule;
@@ -183,12 +199,16 @@ As ROADMAP.md P6 item 2, made concrete for a protocol:
 ## 7. Needs from the owner
 
 1. **LDPM's full text** (Jiang et al., S&P 2024, [10.1109/sp54263.2024.00113](https://doi.org/10.1109/sp54263.2024.00113)),
-   through institutional access. Needed for Section 4's comparison and the novelty check. RR-Label's paper
-   ([10.1109/tdsc.2023.3346692](https://doi.org/10.1109/tdsc.2023.3346692)) is needed too, to fix its `epsilon_label`
-   and its exact perturbation.
+   through institutional access. Needed for Section 4's comparison and the novelty check. RR-Label's paper was read
+   from its author copy (Section 4); only Algorithm 1's ambiguity remains.
 2. **A decision on the screen** (ROADMAP.md decision 6: only after the paper packages close, by a new decision).
-3. **The public fill-in pool:** which images may be treated as server-public for the mechanism, given that the
-   EuroSAT test split already serves as server test set and as the attacker's surrogate source.
+3. **The public fill-in pool.** v2 uses the whole EuroSAT test split (2,700 images) as the server test set and draws
+   the label-matched surrogates from it too (`results/cia_v2/randomized_inclusion/runner.py` `evaluation_sets`), so
+   there is no unused public image. The choices are:
+   - (a) no fill-in (recommended, Section 2);
+   - (b) carve a fixed pool (for example 50 per class) out of the test split. Accuracy is then measured on the other
+     2,200, which is not identical to the committed curves' evaluation set. The surrogates have to exclude the pool;
+   - (c) an external satellite dataset as the pool, which brings a distribution shift.
 
 ## 8. References
 
