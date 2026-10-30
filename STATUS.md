@@ -27,6 +27,12 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
   - Paper options: the hybrid paper is recommended.
 - **Proposed v3:** packages P0-P6 and R1, about 120 GPU-h expected for the paper packages (148 cap).
 - **Running:** nothing yet (agents not started).
+- **Agent F (owner PC), 2026-10-30:**
+  - P5 (`feature/cia-v3-formal-cia`): STATE, PROTOCOL, code and tests done; **escalated**. The locally extracted
+    feature cache differs from B4's in float32 rounding (identical accuracy; shadow losses within 1.8e-5). It waits
+    for the owner's choice in `results/cia_v3/formal_cia/ESCALATION.md`. No run launched.
+  - P6 (`feature/cia-v3-label-channel`): design memo `research/cia_roadmap_v3/label_channel/DESIGN.md` drafted.
+    The screen is not open. LDPM's full text is needed from the owner.
 
 **CIA roadmap v2: approved by the owner 2026-10-17 (ROADMAP.md Section 1 defaults accepted). Agents A and C have
 finished; Agent B (B1-B3, B5, C1) has not started. M2's escalation resolved by the owner 2026-10-20 (ROADMAP.md Section 10): audit form is the paper's main line; Alzheimer replication of M2 and A1; B5 then B1 at 2x and 4x with an all-candidate gate at R = 32; B2 deprioritized; B4 confirmatory run.** `research/cia_roadmap_v2/`
@@ -216,6 +222,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
+| `formal_cia run` (owner PC, CPU; branch `feature/cia-v3-formal-cia`) | P5: 832 head runs | not started: escalated 2026-10-30 (ESCALATION.md) |
 | 2 x `c1-chain.sh` (compute server, GPU 1 shared by owner approval, 4 parallel clients; branch `feature/cia-v2-composite`) | C1 main runs: composite at 4 levels, 128 runs, surrogates and the defense-aware score | done 2026-10-30 06:24 (about 11.5 GPU-h incl. pilot); G-C1 passes; merged |
 | 3 x `b1-chain.sh` (compute server, GPU 1; branch `feature/cia-v2-mechanisms`, merged) | B1 main runs, 256 runs | done 2026-10-27 20:42 (about 9.9 GPU-h); G-B1 passes for q = 0.25 |
 | 3 x `az-a1-chain.sh` (compute server, GPU 1; branch `feature/cia-v2-alzheimer`) | A1 on Alzheimer, 192 runs | done 2026-10-25 12:50 (about 40 GPU-h); no robust difference |
