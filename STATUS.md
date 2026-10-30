@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-30, v3 P5 (client inference in the formal regime) closed by the owner and merged into `master` (`reports/cia_v3_p5_formal_cia.md`). 2026-10-30, roadmap v3 approved by the owner (Section 1 defaults) and merged into `master` (`research/cia_roadmap_v3/`); v2 results handoff corrected (`research/cia_roadmap_v3/HANDOFF_AUDIT.md`). 2026-10-30, C1 closed and merged (decision 17; `reports/cia_v2_composite.md`); roadmap v2 complete, results handoff `research/cia_roadmap_v2/RESULTS_HANDOFF.md`. 2026-10-29, B5 and B1 merged (`feature/cia-v2-mechanisms`); C1 opened (decision 14). 2026-10-26, AZ (Alzheimer replication) merged. 2026-10-23, B4 confirmatory run merged; B5 closed (report on `feature/cia-v2-mechanisms`); C1 waits (decision 12). 2026-10-20, owner decisions 7-11 (ROADMAP.md Section 10). CIA v2 Agent A packages M0, M1, M2, A1 and A2 merged into `master` (closed by the owner; reports `reports/cia_v2_m0_measurement.md`, `cia_v2_m1_shared_noise.md`, `cia_v2_m2_frontier.md`, `cia_v2_a1_matched_accuracy.md`, `cia_v2_a2_side_channel.md`). 2026-10-17, CIA v2 B4 (formal regime) and the client-level accountant merged into `master` (Agent C, closed by the owner; report `reports/cia_v2_formal_regime.md`); Agent A's M0 (G-M0 passed) came along as a dependency of B4's audit. CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
+**Last updated:** 2026-10-30, v3 P6 memo stage (design memo, ROADMAP decisions 2-3) closed by the owner and merged into `master`; screens not open. 2026-10-30, v3 P5 (client inference in the formal regime) closed by the owner and merged into `master` (`reports/cia_v3_p5_formal_cia.md`). 2026-10-30, roadmap v3 approved by the owner (Section 1 defaults) and merged into `master` (`research/cia_roadmap_v3/`); v2 results handoff corrected (`research/cia_roadmap_v3/HANDOFF_AUDIT.md`). 2026-10-30, C1 closed and merged (decision 17; `reports/cia_v2_composite.md`); roadmap v2 complete, results handoff `research/cia_roadmap_v2/RESULTS_HANDOFF.md`. 2026-10-29, B5 and B1 merged (`feature/cia-v2-mechanisms`); C1 opened (decision 14). 2026-10-26, AZ (Alzheimer replication) merged. 2026-10-23, B4 confirmatory run merged; B5 closed (report on `feature/cia-v2-mechanisms`); C1 waits (decision 12). 2026-10-20, owner decisions 7-11 (ROADMAP.md Section 10). CIA v2 Agent A packages M0, M1, M2, A1 and A2 merged into `master` (closed by the owner; reports `reports/cia_v2_m0_measurement.md`, `cia_v2_m1_shared_noise.md`, `cia_v2_m2_frontier.md`, `cia_v2_a1_matched_accuracy.md`, `cia_v2_a2_side_channel.md`). 2026-10-17, CIA v2 B4 (formal regime) and the client-level accountant merged into `master` (Agent C, closed by the owner; report `reports/cia_v2_formal_regime.md`); Agent A's M0 (G-M0 passed) came along as a dependency of B4's audit. CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
 (`research/cia_review_2026-10/SYNTHESIS.md`) merged into `master`; the owner is choosing new directions from the
 synthesis. 2026-10-15: WP0-WP2 merged, D1 stopped. 2026-10-10: CIA literature review and agent roadmap added
 (`HANDOFF.md`, `research/cia_review_2026-10/`)
@@ -34,10 +34,14 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
       pseudo-clients (0.480 [0.438, 0.523]).
     - At matched accuracy, metric privacy is equivalent to global DP at 48 clients. Subsampling shows no detectable
       difference, and leaks more under the sampling-aware attacker (+0.090).
-  - P6 (`feature/cia-v3-label-channel`): design memo complete (`research/cia_roadmap_v3/label_channel/DESIGN.md`);
-    LDPM and RR-Label read in full. Owner decision 2 (ROADMAP.md Section 10, on that branch) fixes the design:
-    no fill-in, a fixed per-class subset, RR-Label kept, a head screen (CPU) first and the CNN only if it passes.
-    Screens wait for the paper packages to close.
+  - **P6 memo stage: closed by the owner and merged into `master` 2026-10-30** (branch deleted). The memo is
+    `research/cia_roadmap_v3/label_channel/DESIGN.md`; LDPM and RR-Label were read in full. ROADMAP.md decisions 2-3
+    set the design:
+    - no fill-in, a fixed per-class subset;
+    - a head screen (CPU) first, the CNN only if it passes;
+    - RR-Label plus logit adjustment (reported) as baselines.
+
+    The screens wait for the paper packages to close and get a new branch.
 
 **CIA roadmap v2: approved by the owner 2026-10-17 (ROADMAP.md Section 1 defaults accepted). Agents A and C have
 finished; Agent B (B1-B3, B5, C1) has not started. M2's escalation resolved by the owner 2026-10-20 (ROADMAP.md Section 10): audit form is the paper's main line; Alzheimer replication of M2 and A1; B5 then B1 at 2x and 4x with an all-candidate gate at R = 32; B2 deprioritized; B4 confirmatory run.** `research/cia_roadmap_v2/`
