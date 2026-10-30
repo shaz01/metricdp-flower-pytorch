@@ -1,10 +1,10 @@
 package: P6, label-channel defense (roadmap v3, F1): design memo only
-status: design memo complete; owner decision 2 recorded (design choices); screens NOT open
+status: memo stage closed by the owner 2026-10-30 and merged into master; screens NOT open
 gate: G-P6, applies to the screen only; the screen needs a new owner decision in ROADMAP.md Section 10 (decision 6)
 protocol: none yet (the screen's protocol is written only after the owner opens it)
 machine: owner PC (memo: no compute)
 cost: memo 0; screen cap 15 GPU-h, if opened
-next: wait for the paper packages to close and the owner to open the screens; then the stage-1 (head, CPU) protocol
+next: when the owner opens the screens (after the paper packages close): a new branch from master, then the stage-1 (head, CPU) protocol before any run
 needs from others: owner (opening the screens when the paper packages close)
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Section 3, P6, item 1. Agent F. Branch `feature/cia-v3-label-channel`
@@ -36,3 +36,6 @@ testable" and counts as a fail of G-P6 for that mechanism.
   carries the proposed stage-1 gate.
 - 2026-10-30: owner decision 3 (ROADMAP.md Section 10): logit adjustment as a second baseline in both screens,
   reported and not gated. On the CNN it comes from B5's committed runs.
+- 2026-10-30: the owner closed the memo stage and asked for the merge into master, so that decisions 2-3 reach the
+  agents. The screens get a new branch from master when opened. No separate report for the memo stage; one P6 report
+  after the screens.
