@@ -34,3 +34,5 @@ testable" and counts as a fail of G-P6 for that mechanism.
 - 2026-10-30: owner decision 2 (ROADMAP.md Section 10): no fill-in, one fixed per-class subset, RR-Label kept,
   screens on the head first (CPU) and the CNN only if PN passes there, timing as decision 6. DESIGN.md Section 5
   carries the proposed stage-1 gate.
+- 2026-10-30: owner decision 3 (ROADMAP.md Section 10): logit adjustment as a second baseline in both screens,
+  reported and not gated. On the CNN it comes from B5's committed runs.

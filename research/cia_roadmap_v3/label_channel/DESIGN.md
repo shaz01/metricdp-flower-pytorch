@@ -185,7 +185,9 @@ difference explicitly.
 - **Mechanisms:**
   - PN (fixed subset, no fill-in) under server-side global DP;
   - LDPM's local Algorithm 1 under the same server-side global DP, so that both have a client-level `mu_total`;
-  - RR-Label under the same server-side global DP.
+  - RR-Label under the same server-side global DP;
+  - logit adjustment (`tau = 1`) under the same server-side global DP: a reported baseline that is not gated
+    (ROADMAP.md decision 3), also scored by C1's defense-aware attacker.
 - **Levels:** at least 3 server-noise levels each, so that P5's targets 0.843 and 0.714 are bracketed.
 - **Proposed gate**, fixed in its protocol before any run:
   - PN at least 0.05 below global DP at one of P5's targets, with the 97.5% pair-jackknife interval below 0 (decision
@@ -195,6 +197,9 @@ difference explicitly.
 - **Pass:** the CNN stage below may start. **Fail:** P6 stops and the second paper does not start.
 
 ### 5.1 Stage 2: the EuroSAT CNN (cap 15 GPU-h; only if stage 1 passes)
+
+**Logit adjustment (decision 3):** reported at 0.740 from B5's committed `b5-la-r2x` and `b5-la-r4x` runs (paired,
+`design_seed = 2`, accuracy 0.751 and 0.673), with no new runs. It is not part of G-P6.
 
 As ROADMAP.md P6 item 2, made concrete for a protocol:
 - **Regime:** M2's. EuroSAT alpha 0.3, randomized inclusion (32 candidates, 16 IN, 32 of 48 active), 50 rounds, equal
