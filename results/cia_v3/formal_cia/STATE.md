@@ -1,10 +1,10 @@
 package: P5, client inference in the formal regime (roadmap v3, F7)
-status: complete 2026-10-30, awaiting the owner (FINDINGS.md); not merged
+status: closed by the owner 2026-10-30; merged into master (owner request)
 gate: G-P5 (report) = not confirmed at 48 clients (0.639 [0.598, 0.680]); confirmed at 480 pseudo-clients (0.480 [0.438, 0.523])
 protocol: results/cia_v3/formal_cia/PROTOCOL.md @ 45f3af54 (fixed before any run)
 machine: owner PC, CPU only (no GPU claimed; the v3 GPU cap is untouched)
 cost: 0.32 CPU-hours recorded run time (832 runs), plus a one-off feature extraction; no GPU
-next: owner review of FINDINGS.md (deviations 1-2 stated there)
+next: none (report `reports/cia_v3_p5_formal_cia.md`)
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Section 3, P5, under Section 1 (decisions 1-8) and measurement standard
@@ -167,3 +167,4 @@ subsampling: dominating `mu` 0.25 or 8), decided on accuracy alone before any le
   (upper targets not testable for subsampling, post hoc), and metric privacy's curve is vertical at 480 clients.
   Full suite (worktree, excluding six Flower-launching integration files that do not import `frozen_head` and one
   of which hung idle): 852 passed, 2 skipped; reanalysis tests 3 passed in the main checkout.
+- 2026-10-30: owner closed P5 ("p5 is ok") and asked for the merge into master. Report `reports/cia_v3_p5_formal_cia.md`.
