@@ -37,16 +37,16 @@ def load_audit(root: Path, *, config: str) -> Audit:
     if not found:
         raise ValueError(f"no runs of {config!r} under {root}")
     designs = {(m["design_seed"], m["replicates"], tuple(m["checkpoint_rounds"]), tuple(m["candidates"]),
-                tuple(m["top_decile"])) for _, m in found}
+                tuple(m["top_decile"]), m.get("in_count")) for _, m in found}
     if len(designs) != 1:
         raise ValueError(f"{config!r} mixes design settings: {sorted(designs)}")
-    ((design_seed, replicates, rounds, candidates, top_decile),) = designs
+    ((design_seed, replicates, rounds, candidates, top_decile, in_count),) = designs
     by_replicate = {m["replicate"]: (folder, m) for folder, m in found}
     missing = [j for j in range(replicates)
                if j not in by_replicate or not (by_replicate[j][0] / "complete.json").exists()]
     if missing or len(by_replicate) != len(found):
         raise ValueError(f"{config!r} is incomplete or duplicated: replicates {missing} missing")
-    expected = design_matrix(replicates, design_seed=design_seed)
+    expected = design_matrix(replicates, design_seed=design_seed, in_count=in_count)
 
     losses = np.empty((len(candidates), replicates, len(rounds)))
     surrogates = adjusted = None
