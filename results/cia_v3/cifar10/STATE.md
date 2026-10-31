@@ -1,5 +1,5 @@
 Package: P2, CIFAR-10 replication of A-3 and D-4 (CIA roadmap v3, Agent P; direction F2)
-status: stage a waiting for host RAM (0 of 8 complete); queue resumes automatically
+status: stage a running on GPU 1 (two workers, shared; ROADMAP decision 4)
 gate: G-P2a, then G-P2b; not yet evaluated
 protocol: results/cia_v3/cifar10/PROTOCOL.md (fixed before any run)
 machine: compute server
@@ -104,3 +104,5 @@ The runner and data module are P0's, unchanged.
 | 2026-10-31 12:44 | **Out of memory in round 1:** the other user's job on GPU 1 grew from 6.5 to 8.1 GB. One client failed, and `--require-all-clients` stopped the run before anything was saved. Nothing partial is kept (no `complete.json`), and the replicate retrains from scratch with the same seeds. Stopped (own session only). |
 | 2026-10-31 12:46 | Restarted through a retrying queue (`~/cia-server/v3-queue.sh`): 2 parallel clients (about 1.5 GB; parallelism changes scheduling, not the trajectories), and a shared GPU qualifies only with at least 3.5 GB free (our 1.5 GB plus the other job's observed 1.6 GB swing). Measured 1.4-1.5 GB. |
 | 2026-10-31 13:15 | **Stopped by host RAM pressure, not by the GPU.** Other users' jobs filled the machine's RAM to 96.5% (243 of 251 GB; 13 GB available), and Ray kills workers above 95% node memory, so every pass failed within about 26 s (`low on memory` in the logs). No partial run was kept. Ray's limit is not raised, because the kernel would then kill processes, possibly other users'. Restarted 13:23 under `~/cia-server/v3-queue.sh`, which now also waits for at least 25 GB of available RAM, retries up to 20 times, and skips completed runs. |
+| 2026-10-31 13:29 | Stage a restarted on GPU 1 under the queue (RAM back to 33 GB available). A first attempt at 13:28 had picked GPU 0, together with P1, because both queues polled in the same second. It was stopped within a minute, and the queue now takes a lock while choosing and claiming a GPU. |
+| 2026-10-31 14:00 | One of the other user's processes on GPU 1 ended (9.4 GB free), so a second stage-a worker was added on GPU 1 (tmux `p2-w2`, 2 parallel clients; runs are locked per replicate). Our VRAM on GPU 1 is 2.9 GB for both workers. Pace about 1.1 min per round, about 58 min per run. |
