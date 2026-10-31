@@ -1,5 +1,5 @@
 Package: P1, the paper's 3-client setting under measurement standard v3 (CIA roadmap v3, Agent P; direction F3)
-status: accuracy pilot and main runs running (GPU 0, shared; ROADMAP decision 4)
+status: waiting for host RAM (7 of 12 pilot runs complete); queue resumes automatically
 gate: G-P1 (report; no kill), not yet evaluated
 protocol: results/cia_v3/paper_setting/PROTOCOL.md (fixed before any run)
 machine: compute server
@@ -82,3 +82,4 @@ The runner is P0's `results/cia_v3/infra/paper_runner.py`, unchanged.
 |---|---|
 | 2026-10-31 12:41 | Pilot (12 runs) and main runs (120) started on GPU 0, shared with another user's job (5.9 GB free; ROADMAP decision 4), one worker, 3 parallel clients (`~/cia-server/p1-run.sh`, tmux `p1`); peak VRAM about 3.6 GB. |
 | 2026-10-31 12:44 | `analyze.py` and tests committed (92a7fe8b): the reproduction check gives M2's vanilla all-candidate AUC 0.723 from the committed runs with P1's attacker code. |
+| 2026-10-31 13:15 | **Stopped by host RAM pressure, not by the GPU.** Other users' jobs filled the machine's RAM to 96.5% (243 of 251 GB; 13 GB available), and Ray kills workers above 95% node memory, so every pass failed within about 26 s (`low on memory` in the logs). Pilot runs complete before the stop: z 0.03 4/4, z 0.06 3/4. No partial run was kept. Ray's limit is not raised, because the kernel would then kill processes, possibly other users'. Restarted 13:23 under `~/cia-server/v3-queue.sh`, which now also waits for at least 25 GB of available RAM, retries up to 20 times, and skips completed runs. |
