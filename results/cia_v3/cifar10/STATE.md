@@ -1,5 +1,5 @@
 Package: P2, CIFAR-10 replication of A-3 and D-4 (CIA roadmap v3, Agent P; direction F2)
-status: stage a running (GPU 1, shared; ROADMAP decision 4)
+status: stage a waiting for host RAM (0 of 8 complete); queue resumes automatically
 gate: G-P2a, then G-P2b; not yet evaluated
 protocol: results/cia_v3/cifar10/PROTOCOL.md (fixed before any run)
 machine: compute server
@@ -103,3 +103,4 @@ The runner and data module are P0's, unchanged.
 | 2026-10-31 12:43 | Stage a started on GPU 1, shared with another user's job (4.3 GB free), 4 parallel clients. |
 | 2026-10-31 12:44 | **Out of memory in round 1:** the other user's job on GPU 1 grew from 6.5 to 8.1 GB. One client failed, and `--require-all-clients` stopped the run before anything was saved. Nothing partial is kept (no `complete.json`), and the replicate retrains from scratch with the same seeds. Stopped (own session only). |
 | 2026-10-31 12:46 | Restarted through a retrying queue (`~/cia-server/v3-queue.sh`): 2 parallel clients (about 1.5 GB; parallelism changes scheduling, not the trajectories), and a shared GPU qualifies only with at least 3.5 GB free (our 1.5 GB plus the other job's observed 1.6 GB swing). Measured 1.4-1.5 GB. |
+| 2026-10-31 13:15 | **Stopped by host RAM pressure, not by the GPU.** Other users' jobs filled the machine's RAM to 96.5% (243 of 251 GB; 13 GB available), and Ray kills workers above 95% node memory, so every pass failed within about 26 s (`low on memory` in the logs). No partial run was kept. Ray's limit is not raised, because the kernel would then kill processes, possibly other users'. Restarted 13:23 under `~/cia-server/v3-queue.sh`, which now also waits for at least 25 GB of available RAM, retries up to 20 times, and skips completed runs. |
