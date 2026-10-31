@@ -1,5 +1,5 @@
 Package: P2, CIFAR-10 replication of A-3 and D-4 (CIA roadmap v3, Agent P; direction F2)
-status: stage a running on GPU 1 (two workers, shared; ROADMAP decision 4)
+status: stage a paused at 2/8 replicates, waiting for GPU memory (queue resumes automatically)
 gate: G-P2a, then G-P2b; not yet evaluated
 protocol: results/cia_v3/cifar10/PROTOCOL.md (fixed before any run)
 machine: compute server
@@ -106,3 +106,4 @@ The runner and data module are P0's, unchanged.
 | 2026-10-31 13:15 | **Stopped by host RAM pressure, not by the GPU.** Other users' jobs filled the machine's RAM to 96.5% (243 of 251 GB; 13 GB available), and Ray kills workers above 95% node memory, so every pass failed within about 26 s (`low on memory` in the logs). No partial run was kept. Ray's limit is not raised, because the kernel would then kill processes, possibly other users'. Restarted 13:23 under `~/cia-server/v3-queue.sh`, which now also waits for at least 25 GB of available RAM, retries up to 20 times, and skips completed runs. |
 | 2026-10-31 13:29 | Stage a restarted on GPU 1 under the queue (RAM back to 33 GB available). A first attempt at 13:28 had picked GPU 0, together with P1, because both queues polled in the same second. It was stopped within a minute, and the queue now takes a lock while choosing and claiming a GPU. |
 | 2026-10-31 14:00 | One of the other user's processes on GPU 1 ended (9.4 GB free), so a second stage-a worker was added on GPU 1 (tmux `p2-w2`, 2 parallel clients; runs are locked per replicate). Our VRAM on GPU 1 is 2.9 GB for both workers. Pace about 1.1 min per round, about 58 min per run. |
+| 2026-10-31 14:58 | **Out of memory on GPU 1, replicates 2 and 3 lost at round 26-27 and round 1.** Another user started a second job of about 8 GB on GPU 1, which left 2 MiB free; 6 of 32 clients failed, and `--require-all-clients` stopped both workers before anything was saved. Replicates 0 and 1 are complete. Worker 2 (`p2-w2`) is not restarted. Since 15:00 the queue has waited: GPU 0 is P1's, and GPU 1 has about 3.2 GB free, below the 3.5 GB threshold. |
