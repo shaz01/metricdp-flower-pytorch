@@ -1,11 +1,11 @@
 Package: P0, infrastructure and cost runs (CIA roadmap v3, Agent P)
-status: G-P0 passes (2026-10-31); P2 and P3 escalated on cost (ESCALATION.md)
+status: G-P0 passes (2026-10-31); cost escalation resolved by ROADMAP decision 5 (P2 120, P3 35 GPU-h)
 gate: G-P0 = pass (all five items)
 protocol: this file (P0 has no leakage statistic; its cost runs are never analyzed for leakage)
 machine: compute server
 cost: 1.3 GPU-h (five runs, one worker, GPU 1 shared with another user's job); cap 3 GPU-h
-next: P1 (within its cap) may start; P2 and P3 wait for the owner's decision on ESCALATION.md
-needs from others: owner decision on P2's and P3's caps
+next: none in P0; P1 and P2 started (ROADMAP decision 5)
+needs from others: none (caps raised by the owner, ROADMAP decision 5)
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Sections 2, 3 (P0) and 6, decision 1 in Section 10. Branch
 `feature/cia-v3-infra` from master 3654f6fa; sparse worktree `../metricdp-pytorch-feature-cia-v3-infra`.
