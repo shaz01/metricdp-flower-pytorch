@@ -1,10 +1,10 @@
 Package: P1, the paper's 3-client setting under measurement standard v3 (CIA roadmap v3, Agent P; direction F3)
-status: STATE and PROTOCOL written; no run yet
+status: accuracy pilot and main runs running (GPU 0, shared; ROADMAP decision 4)
 gate: G-P1 (report; no kill), not yet evaluated
 protocol: results/cia_v3/paper_setting/PROTOCOL.md (fixed before any run)
 machine: compute server
 cost: 0 GPU-h; cap 40 GPU-h (escalate at 50); projected about 9 GPU-h with the declared extension
-next: analysis code with tests and the v2 reproduction check, then the main runs and the extension's accuracy pilot
+next: z_acc from the pilot (recorded here before any extension run); main runs; then the extension
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Section 3 (P1), Sections 2 and 4. Branch `feature/cia-v3-paper-setting`
@@ -75,3 +75,10 @@ than 15 pairs complete, its clause of G-P1 is "not testable".
 | `STATUS.md` | Agent P rows only |
 
 The runner is P0's `results/cia_v3/infra/paper_runner.py`, unchanged.
+
+## Log
+
+| When | What |
+|---|---|
+| 2026-10-31 12:41 | Pilot (12 runs) and main runs (120) started on GPU 0, shared with another user's job (5.9 GB free; ROADMAP decision 4), one worker, 3 parallel clients (`~/cia-server/p1-run.sh`, tmux `p1`); peak VRAM about 3.6 GB. |
+| 2026-10-31 12:44 | `analyze.py` and tests committed (92a7fe8b): the reproduction check gives M2's vanilla all-candidate AUC 0.723 from the committed runs with P1's attacker code. |
