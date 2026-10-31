@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-30 23:25, v3 Agent P: P0 code and tests done on `feature/cia-v3-infra` (G-P0 items 1-4 pass); cost runs running on a shared GPU (decision 4). 2026-10-30, v3 P6 memo stage (design memo, ROADMAP decisions 2-3) closed by the owner and merged into `master`; screens not open. 2026-10-30, v3 P5 (client inference in the formal regime) closed by the owner and merged into `master` (`reports/cia_v3_p5_formal_cia.md`). 2026-10-30, roadmap v3 approved by the owner (Section 1 defaults) and merged into `master` (`research/cia_roadmap_v3/`); v2 results handoff corrected (`research/cia_roadmap_v3/HANDOFF_AUDIT.md`). 2026-10-30, C1 closed and merged (decision 17; `reports/cia_v2_composite.md`); roadmap v2 complete, results handoff `research/cia_roadmap_v2/RESULTS_HANDOFF.md`. 2026-10-29, B5 and B1 merged (`feature/cia-v2-mechanisms`); C1 opened (decision 14). 2026-10-26, AZ (Alzheimer replication) merged. 2026-10-23, B4 confirmatory run merged; B5 closed (report on `feature/cia-v2-mechanisms`); C1 waits (decision 12). 2026-10-20, owner decisions 7-11 (ROADMAP.md Section 10). CIA v2 Agent A packages M0, M1, M2, A1 and A2 merged into `master` (closed by the owner; reports `reports/cia_v2_m0_measurement.md`, `cia_v2_m1_shared_noise.md`, `cia_v2_m2_frontier.md`, `cia_v2_a1_matched_accuracy.md`, `cia_v2_a2_side_channel.md`). 2026-10-17, CIA v2 B4 (formal regime) and the client-level accountant merged into `master` (Agent C, closed by the owner; report `reports/cia_v2_formal_regime.md`); Agent A's M0 (G-M0 passed) came along as a dependency of B4's audit. CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
+**Last updated:** 2026-10-31 12:45, v3 Agent P: G-P0 passes on `feature/cia-v3-infra`; P2 and P3 escalated on cost (`results/cia_v3/infra/ESCALATION.md`), P1 within its cap. 2026-10-30, v3 P6 memo stage (design memo, ROADMAP decisions 2-3) closed by the owner and merged into `master`; screens not open. 2026-10-30, v3 P5 (client inference in the formal regime) closed by the owner and merged into `master` (`reports/cia_v3_p5_formal_cia.md`). 2026-10-30, roadmap v3 approved by the owner (Section 1 defaults) and merged into `master` (`research/cia_roadmap_v3/`); v2 results handoff corrected (`research/cia_roadmap_v3/HANDOFF_AUDIT.md`). 2026-10-30, C1 closed and merged (decision 17; `reports/cia_v2_composite.md`); roadmap v2 complete, results handoff `research/cia_roadmap_v2/RESULTS_HANDOFF.md`. 2026-10-29, B5 and B1 merged (`feature/cia-v2-mechanisms`); C1 opened (decision 14). 2026-10-26, AZ (Alzheimer replication) merged. 2026-10-23, B4 confirmatory run merged; B5 closed (report on `feature/cia-v2-mechanisms`); C1 waits (decision 12). 2026-10-20, owner decisions 7-11 (ROADMAP.md Section 10). CIA v2 Agent A packages M0, M1, M2, A1 and A2 merged into `master` (closed by the owner; reports `reports/cia_v2_m0_measurement.md`, `cia_v2_m1_shared_noise.md`, `cia_v2_m2_frontier.md`, `cia_v2_a1_matched_accuracy.md`, `cia_v2_a2_side_channel.md`). 2026-10-17, CIA v2 B4 (formal regime) and the client-level accountant merged into `master` (Agent C, closed by the owner; report `reports/cia_v2_formal_regime.md`); Agent A's M0 (G-M0 passed) came along as a dependency of B4's audit. CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
 (`research/cia_review_2026-10/SYNTHESIS.md`) merged into `master`; the owner is choosing new directions from the
 synthesis. 2026-10-15: WP0-WP2 merged, D1 stopped. 2026-10-10: CIA literature review and agent roadmap added
 (`HANDOFF.md`, `research/cia_review_2026-10/`)
@@ -43,14 +43,17 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
 
     The screens wait for the paper packages to close and get a new branch.
 - **Agent P (compute server), 2026-10-30:**
-  - **P0 (`feature/cia-v3-infra`; `results/cia_v3/infra/STATE.md`): code and tests done; the four cost runs wait for
-    an idle GPU.** New runner options (defaults change no committed manifest): `--checkpoint-every`, `--in-count 8|24`,
+  - **P0 (`feature/cia-v3-infra`; `results/cia_v3/infra/STATE.md`): G-P0 passes (2026-10-31).** New runner options (defaults change no committed manifest): `--checkpoint-every`, `--in-count 8|24`,
     `--dataset cifar10` (label-Dirichlet 0.3, 48 slots, candidates fixed from the committed seed-42 partition
     summary), and the 3-client Alzheimer paper-protocol runner (`results/cia_v3/infra/paper_runner.py`, separate seeds
     per world).
     - G-P0 so far: suite green (944 passed; skips need MPS), `reanalyze.py` reproduces C1's gate numbers, the CIFAR-10
-      partition is deterministic, the IN-count design passes its checks. Cost runs running on GPU 1, shared with another user's job (ROADMAP v3 decision 4, owner 2026-10-30).
-  - P1-P4 launch nothing until G-P0 passes.
+      partition is deterministic, the IN-count design passes its checks; the four cost runs are recorded (1.3 GPU-h, on GPU 1 shared with another
+      user's job under ROADMAP v3 decision 4; peak VRAM 3.6 GB).
+    - **Escalation (`results/cia_v3/infra/ESCALATION.md`):** CIFAR-10 runs take 0.36-0.54 run-hours, so P2 projects to
+      about 116 GPU-h (cap 85) and P3, with every-round scoring, to about 32 GPU-h (cap 20). Both are above 1.25x;
+      options are listed. P1 projects to about 5 GPU-h (cap 40).
+  - Next: P1 (STATE and protocol first); P2 and P3 wait for the owner's decision.
 
 **CIA roadmap v2: approved by the owner 2026-10-17 (ROADMAP.md Section 1 defaults accepted). Agents A and C have
 finished; Agent B (B1-B3, B5, C1) has not started. M2's escalation resolved by the owner 2026-10-20 (ROADMAP.md Section 10): audit form is the paper's main line; Alzheimer replication of M2 and A1; B5 then B1 at 2x and 4x with an all-candidate gate at R = 32; B2 deprioritized; B4 confirmatory run.** `research/cia_roadmap_v2/`
@@ -240,7 +243,7 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `p0-cost-wait.sh` -> `p0-cost-run.sh` (compute server, tmux `p0-wait` / `p0-cost`; branch `feature/cia-v3-infra`) | P0 cost runs: CIFAR-10 vanilla and composite, one paper-protocol pair, one 51-checkpoint EuroSAT composite (one worker, 4 parallel clients) | running since 2026-10-30 23:23 on GPU 1, shared with another user's job (ROADMAP v3 decision 4; about 2.5 GB VRAM) |
+| `p0-cost-wait.sh` -> `p0-cost-run.sh` (compute server, tmux `p0-wait` / `p0-cost`; branch `feature/cia-v3-infra`) | P0 cost runs: CIFAR-10 vanilla and composite, one paper-protocol pair, one 51-checkpoint EuroSAT composite (one worker, 4 parallel clients) | done 2026-10-31 00:41 (1.3 GPU-h on GPU 1, shared with another user's job, ROADMAP v3 decision 4; peak VRAM 3.6 GB); G-P0 passes |
 | `formal_cia run` (owner PC, CPU; branch `feature/cia-v3-formal-cia`, merged) | P5: 832 head runs | done 2026-10-30 (0.32 CPU-h); closed and merged |
 | 2 x `c1-chain.sh` (compute server, GPU 1 shared by owner approval, 4 parallel clients; branch `feature/cia-v2-composite`) | C1 main runs: composite at 4 levels, 128 runs, surrogates and the defense-aware score | done 2026-10-30 06:24 (about 11.5 GPU-h incl. pilot); G-C1 passes; merged |
 | 3 x `b1-chain.sh` (compute server, GPU 1; branch `feature/cia-v2-mechanisms`, merged) | B1 main runs, 256 runs | done 2026-10-27 20:42 (about 9.9 GPU-h); G-B1 passes for q = 0.25 |

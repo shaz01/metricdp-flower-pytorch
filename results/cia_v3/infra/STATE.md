@@ -1,11 +1,11 @@
 Package: P0, infrastructure and cost runs (CIA roadmap v3, Agent P)
-status: code and tests done (4cc8af25); cost runs running on GPU 1, shared with another user's job (decision 4)
-gate: G-P0 = items 1-4 pass; item 5 (cost runs) pending
+status: G-P0 passes (2026-10-31); P2 and P3 escalated on cost (ESCALATION.md)
+gate: G-P0 = pass (all five items)
 protocol: this file (P0 has no leakage statistic; its cost runs are never analyzed for leakage)
 machine: compute server
-cost: 0 GPU-h so far; cap 3 GPU-h (ROADMAP v3 Section 3), escalate at 3.75
-next: record the four cost runs and project each package's cost against its cap
-needs from others: none
+cost: 1.3 GPU-h (five runs, one worker, GPU 1 shared with another user's job); cap 3 GPU-h
+next: P1 (within its cap) may start; P2 and P3 wait for the owner's decision on ESCALATION.md
+needs from others: owner decision on P2's and P3's caps
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Sections 2, 3 (P0) and 6, decision 1 in Section 10. Branch
 `feature/cia-v3-infra` from master 3654f6fa; sparse worktree `../metricdp-pytorch-feature-cia-v3-infra`.
@@ -21,7 +21,7 @@ P0 is infrastructure, so its "hypothesis" is a pair of checkable claims:
 2. The per-run costs fit the downstream caps. Break-even costs per run from the roadmap's caps and run counts:
    - P1: 120 runs (20 pairs x 2 worlds x 3 mechanisms) in 40 GPU-h, so at most about 0.33 GPU-h per run;
    - P2: about 350 runs (stage a 8, pilot about 18, stage b 10 configurations x 32) in 85 GPU-h, so at most about
-     0.24 GPU-h per CIFAR-10 run (EuroSAT's is about 0.1, and CIFAR-10 has about 1.9x the training records);
+     0.24 GPU-h per CIFAR-10 run (EuroSAT's is about 0.1, and CIFAR-10 has about 2.3x the training records: 50,000 against 21,600);
    - P3: 192 runs in 20 GPU-h, so at most about 0.10 GPU-h per run on average.
    If a cost run projects a package above 1.25x its cap, I record it here and write `ESCALATION.md` before that
    package's protocol, rather than trimming the design myself.
@@ -118,7 +118,7 @@ G-P0 so far:
 | `reanalyze.py` reproduces C1's gate numbers | **Pass.** `"reproduced": true`: -0.095 [-0.137, -0.053] at 0.740 and -0.108 [-0.163, -0.053] at 0.660. The regenerated `analysis.json` equals the committed one in every key and string; its 586 floats differ by at most 2.2e-16 (summation order), so the committed file was left unchanged. |
 | CIFAR-10 partition deterministic in its seed | **Pass.** `partition_summary(0.3, 48, 42)` is identical on two calls and differs at seed 43; the committed summary equals a fresh one (test). Seed-42 layout: 263 to 2,454 records per client, 50,000 in all. Candidates by the runner's rule: top decile 26, 27, 36, 12, 45 (2,454 to 1,704 records), then 27 by size quantile (269 to 1,699). |
 | IN-count design passes the design checks | **Pass.** For k = 8 and 24 at `R = 32`: every replicate includes exactly k candidates, every candidate is IN in `R k / 32` replicates, no replicate repeats; k = 24 is the complement of k = 8. Active count 24 or 40, noise std `r C` on the average. `load_audit` checks a k = 8 configuration against its own design. |
-| Four cost runs recorded | Pending (no idle GPU). |
+| Four cost runs recorded | **Pass** (2026-10-31 00:41; table in ESCALATION.md). |
 
 **Backward compatibility.** Every committed randomized-inclusion manifest under `results/cia_v2/` was rebuilt from its
 own settings with the new runner. 1,337 of 1,351 match exactly, the same count as with master's code. The other 14
@@ -144,3 +144,19 @@ work needs about 3-4 GB of VRAM). The launcher took GPU 1 (6.8 GB free; the othe
 Our processes use about 2.4-2.5 GB. **Timings from these runs overstate an unshared GPU's cost**: the GPU is
 compute-saturated by the other job, so the cost projection is an upper bound. `p0-cost-gpu.log` records the GPU's
 utilization and our VRAM every 60 s, so this can be stated per run.
+
+**2026-10-31 00:41. Cost runs complete, G-P0 passes.** All four finished at the first attempt (23:23-00:41; no
+out-of-memory, no retry), every run passed the runner's every-client check, and the claim line was removed. Our peak
+VRAM was 3.6 GB; the other user's job kept GPU 1 at 97-100% utilization throughout.
+
+| Run | Run-hours | Final accuracy |
+|---|---|---|
+| CIFAR-10 RI vanilla | 0.542 | 0.630 |
+| CIFAR-10 RI composite (`r` 0.003092) | 0.360 | 0.546 |
+| Paper pair (global DP, `z` 0.01), IN + OUT | 0.067 + 0.060 | 0.920 / 0.831 |
+| EuroSAT RI composite, 51 checkpoints | 0.247 | 0.671 |
+
+The EuroSAT run trained in 460 s against a median of 440 s for C1's 128 committed runs of the same configuration, so
+the shared-GPU timings match v2's conditions. Projected against the caps (ESCALATION.md): P1 about 5 GPU-h (cap 40);
+**P2 about 116 GPU-h (cap 85, 1.25x = 106) and P3 about 32 GPU-h (cap 20, 1.25x = 25), both above 1.25x**, so both are
+escalated before their protocols, with options. `*.evaluation.json` files are kept locally and not committed, as in v2.
