@@ -1,5 +1,5 @@
 Package: P1, the paper's 3-client setting under measurement standard v3 (CIA roadmap v3, Agent P; direction F3)
-status: waiting for host RAM (7 of 12 pilot runs complete); queue resumes automatically
+status: main runs on GPU 0 (vanilla 40/40, global DP z 0.01 in progress); extension pilot queued
 gate: G-P1 (report; no kill), not yet evaluated
 protocol: results/cia_v3/paper_setting/PROTOCOL.md (fixed before any run)
 machine: compute server
@@ -84,3 +84,4 @@ The runner is P0's `results/cia_v3/infra/paper_runner.py`, unchanged.
 | 2026-10-31 12:44 | `analyze.py` and tests committed (92a7fe8b): the reproduction check gives M2's vanilla all-candidate AUC 0.723 from the committed runs with P1's attacker code. |
 | 2026-10-31 13:15 | **Stopped by host RAM pressure, not by the GPU.** Other users' jobs filled the machine's RAM to 96.5% (243 of 251 GB; 13 GB available), and Ray kills workers above 95% node memory, so every pass failed within about 26 s (`low on memory` in the logs). Pilot runs complete before the stop: z 0.03 4/4, z 0.06 3/4. No partial run was kept. Ray's limit is not raised, because the kernel would then kill processes, possibly other users'. Restarted 13:23 under `~/cia-server/v3-queue.sh`, which now also waits for at least 25 GB of available RAM, retries up to 20 times, and skips completed runs. |
 | 2026-10-31 13:49 | **Accuracy pilot (12 runs) complete; 0.637 not bracketed.** Mean IN-world client-test accuracy over rounds 16-20 (two IN runs each): z 0.03 0.501 (0.500, 0.501), z 0.06 0.447 (0.446, 0.447), z 0.12 0.501 (0.501, 0.501). All three are below 0.637; P0's cost pair gave 0.95 at z 0.01. Accuracy falls off a cliff between 0.01 and 0.03; about 0.50 looks like a collapsed model predicting the majority class. By PROTOCOL.md Section 2 the grid is extended by halving below 0.03, at most two points: z 0.015 and, only if 0.637 is still not bracketed, z 0.0075. Both are queued together to save a round trip; 0.0075 enters the interpolation only if 0.015 does not bracket. They run after the main runs (`~/cia-server/p1-pilot2.sh`). |
+| 2026-10-31 16:31 | Extension pilot (z 0.015, 0.0075) started on GPU 1 with 10.9 GB free, and failed within 3 minutes: another user's 8 GB job started on GPU 1 at the same moment (CUDA out of memory). No run was kept; the queue retries. Main runs: vanilla 40/40 complete at 16:14. |
