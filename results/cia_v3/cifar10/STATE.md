@@ -1,10 +1,10 @@
 Package: P2, CIFAR-10 replication of A-3 and D-4 (CIA roadmap v3, Agent P; direction F2)
-status: stage a complete (8/8); stage-a analysis and G-P2a next
-gate: G-P2a, then G-P2b; not yet evaluated
+status: G-P2a passed; accuracy pilot (26 runs) queued, waiting for GPU memory
+gate: G-P2a passed 2026-11-01 (vanilla all-candidate AUC 0.998 at R = 8); G-P2b after stage b
 protocol: results/cia_v3/cifar10/PROTOCOL.md (fixed before any run)
 machine: compute server
 cost: 0 GPU-h; cap 120 GPU-h (ROADMAP decision 5), escalate at 150
-next: stage a (vanilla, replicates 0-7), then G-P2a
+next: accuracy pilot, then the level choice (PROTOCOL.md Section 3), recorded here before stage b; cost options to the owner before stage b
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Section 3 (P2), Sections 1 (decisions 2, 8), 2 and 4; decision 5 in
@@ -108,3 +108,6 @@ The runner and data module are P0's, unchanged.
 | 2026-10-31 14:00 | One of the other user's processes on GPU 1 ended (9.4 GB free), so a second stage-a worker was added on GPU 1 (tmux `p2-w2`, 2 parallel clients; runs are locked per replicate). Our VRAM on GPU 1 is 2.9 GB for both workers. Pace about 1.1 min per round, about 58 min per run. |
 | 2026-10-31 14:58 | **Out of memory on GPU 1, replicates 2 and 3 lost at round 26-27 and round 1.** Another user started a second job of about 8 GB on GPU 1, which left 2 MiB free; 6 of 32 clients failed, and `--require-all-clients` stopped both workers before anything was saved. Replicates 0 and 1 are complete. Worker 2 (`p2-w2`) is not restarted. Since 15:00 the queue has waited: GPU 0 is P1's, and GPU 1 has about 3.2 GB free, below the 3.5 GB threshold. |
 | 2026-11-01 03:01 | Stage a complete, 8/8 (resumed 2026-10-31 20:55 on GPU 1 when 10.9 GB was free; one worker). |
+| 2026-11-01 16:30 | `analyze.py --stage a` (71e35c74, 4 tests). **Reproduction check:** A1's metric privacy minus global DP at 0.740 from the committed runs, -0.000 [-0.019, 0.018], equal to the published value to 3 decimals. Stage a needs its own loader (`load_first_replicates`), since v2's `load_audit` requires all 32 replicates of the design; it checks inclusion against the design's first 8 columns. |
+| 2026-11-01 16:35 | **G-P2a passed.** Vanilla, replicates 0-7 (256 trials), calibrated attacker on 11 checkpoints: all candidates 0.998 [0.995, 1.001] (pair jackknife, 4 pairs, 97.5%; liberal at R = 8), two-way bootstrap [0.991, 1.000]; top decile 1.000; TPR 1.000 at 5% FPR and 0.922 at 1%; final round only 0.998; uncalibrated threshold 0.927. Mean final accuracy 0.633 [0.631, 0.634] (P0 cost run 0.630), lowest client 0.457. Leakage is far above EuroSAT's (M2 vanilla 0.723), so CIFAR-10 has the headroom A-6 lacked on Alzheimer. `analysis_stage_a.json`. |
+| 2026-11-01 16:40 | Accuracy pilot queued (`~/cia-server/p2-pilot.sh`, tmux `p2-pilot`, 2 parallel clients; runs taken under per-run locks so a second worker can join). Both GPUs have under 2 GB free (other users' jobs and P1's extension on GPU 0). |
