@@ -72,3 +72,25 @@ def test_g_p2a_passes_with_signal_and_fails_without(tmp_path):
 def test_g_p2a_threshold_is_inclusive():
     assert analyze.g_p2a({"all": {"auc": {"estimate": 0.65}}})["verdict"] == "pass"
     assert analyze.g_p2a({"all": {"auc": {"estimate": 0.6499}}})["verdict"].startswith("fail")
+
+
+def test_safeguard():
+    assert analyze.safeguard(0.55, 0.33)
+    assert not analyze.safeguard(0.55, 0.29)
+    assert not analyze.safeguard(0.34, 0.33)
+
+
+def test_window_takes_the_smallest_qualifying_ratio():
+    grid = {1: 0.62, 2: 0.60, 4: 0.50, 8: 0.30, 16: 0.10}
+    assert analyze.choose_window(grid, t2=0.55, t4=0.33) == {"levels": [2, 4, 8], "qualifies": True, "shortfall": 0}
+    grid[4] = 0.56  # now (4, 8, 16) also qualifies; the smaller ratio still wins
+    assert analyze.choose_window(grid, t2=0.55, t4=0.33)["levels"] == [2, 4, 8]
+
+
+def test_window_falls_back_to_the_smallest_shortfall_then_the_smaller_ratio():
+    grid = {1: 0.61, 2: 0.60, 4: 0.54, 8: 0.3267, 16: 0.10}
+    chosen = analyze.choose_window(grid, t2=0.5536, t4=0.3263)
+    assert chosen["levels"] == [2, 4, 8] and not chosen["qualifies"]
+    assert chosen["shortfall"] == pytest.approx(0.0004)
+    tied = {1: 0.50, 2: 0.50, 4: 0.50, 8: 0.50}
+    assert analyze.choose_window(tied, t2=0.55, t4=0.33)["levels"] == [1, 2, 4]

@@ -7,7 +7,12 @@ Stage a (G-P2a): M2's ``config_summary`` (calibrated attacker, 11 checkpoints, p
 two-way bootstrap, top decile, accuracy) on vanilla's replicates 0-7, membership checked against the first 8 columns
 of the ``design_seed = 2`` design. Pass if the all-candidate point estimate is at least 0.65.
 
+Pilot (PROTOCOL.md Section 3, accuracy only): mean final server-test accuracy of the two pilot runs per level; targets
+``t2``, ``t4`` from global DP at 2x and 4x, the safeguard, and the three-level window for metric privacy and the
+composite.
+
     uv run --no-sync python -m results.cia_v3.cifar10.analyze --stage a --out results/cia_v3/cifar10/analysis_stage_a.json
+    uv run --no-sync python -m results.cia_v3.cifar10.analyze --stage pilot --out results/cia_v3/cifar10/pilot_levels.json
 """
 from __future__ import annotations
 
@@ -29,6 +34,11 @@ G_P2A_THRESHOLD = 0.65
 A1_PUBLISHED = (-0.000, -0.019, 0.018)  # metric privacy minus global DP at 0.740, all candidates (A1 FINDINGS.md)
 A1_GDP = ("gdp-r1x", "gdp-r2x", "gdp-r4x", "gdp-r8x", "gdp-r16x")
 A1_MP = ("a1-mp-r1x", "a1-mp-r2x", "a1-mp-r4x")
+FRONTIER_RATIO = 0.001546
+PILOT_GDP = {k: f"pilot-gdp-r{k}x" for k in (1, 2, 4, 8)}
+PILOT_MP = {round(k * FRONTIER_RATIO, 6): f"pilot-mp-r{k}x" for k in (1, 2, 4, 8)}
+PILOT_COMPOSITE = {r: f"pilot-comp-r{r}" for r in (0.0001, 0.000773, 0.003092, 0.006184, 0.012368)}
+SAFEGUARD_T4, SAFEGUARD_GAP = 0.30, 0.02
 
 
 def reproduce_a1(gdp_root=REPO / "results/cia_v2/frontier/results", mp_root=REPO / "results/cia_v2/frontier/a1/results"):
@@ -90,9 +100,46 @@ def g_p2a(summary):
             "verdict": "pass" if estimate >= G_P2A_THRESHOLD else "fail: stop, ESCALATION.md, propose FEMNIST"}
 
 
+def safeguard(t2, t4):
+    """True when the pilot targets are informative (PROTOCOL.md Section 3); otherwise P2 stops before stage b."""
+    return t4 >= SAFEGUARD_T4 and t2 - t4 >= SAFEGUARD_GAP
+
+
+def choose_window(grid, t2, t4):
+    """Three consecutive levels of ``grid`` ({ratio: accuracy}) for stage b (PROTOCOL.md Section 3).
+
+    Among windows whose first level's accuracy is at least ``t2`` and last level's at most ``t4``, the smallest ratio;
+    if none qualifies, the smallest shortfall ``max(0, t2 - first) + max(0, last - t4)``, ties to the smaller ratio."""
+    levels = sorted(grid)
+    windows = [levels[i:i + 3] for i in range(len(levels) - 2)]
+    def shortfall(window):
+        return max(0.0, t2 - grid[window[0]]) + max(0.0, grid[window[-1]] - t4)
+    qualifying = [w for w in windows if shortfall(w) == 0]
+    chosen = qualifying[0] if qualifying else min(windows, key=lambda w: (shortfall(w), w[0]))
+    return {"levels": chosen, "qualifies": bool(qualifying), "shortfall": shortfall(chosen)}
+
+
+def pilot_levels(root):
+    """Pilot accuracies, targets, safeguard and the chosen windows."""
+    def accuracy(config):
+        return float(load_first_replicates(root, config=config, replicates=2).final_accuracy.mean())
+    gdp = {k: accuracy(name) for k, name in PILOT_GDP.items()}
+    mp = {r: accuracy(name) for r, name in PILOT_MP.items()}
+    composite = {r: accuracy(name) for r, name in PILOT_COMPOSITE.items()}
+    t2, t4 = gdp[2], gdp[4]
+    out = {"accuracy": {"global-dp": {f"{k}x": a for k, a in gdp.items()},
+                        "metric-privacy": {str(r): a for r, a in mp.items()},
+                        "composite": {str(r): a for r, a in composite.items()}},
+           "t2": t2, "t4": t4, "safeguard_passes": safeguard(t2, t4)}
+    if out["safeguard_passes"]:
+        out["metric-privacy"] = choose_window(mp, t2, t4)
+        out["composite"] = choose_window(composite, t2, t4)
+    return out
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--stage", choices=("a",), required=True)
+    parser.add_argument("--stage", choices=("a", "pilot"), required=True)
     parser.add_argument("--root", type=Path, default=HERE / "results")
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
@@ -100,6 +147,12 @@ def main():
     print(json.dumps({"reproduction_a1_mp_minus_gdp_at_0.740": reproduced}))
     if tuple(round(x, 3) for x in reproduced) != A1_PUBLISHED:
         raise SystemExit(f"reproduction failed: {reproduced} != {A1_PUBLISHED}")
+    if args.stage == "pilot":
+        text = json.dumps(pilot_levels(HERE / "pilot"), indent=1, allow_nan=False)
+        if args.out:
+            args.out.write_text(text + "\n")
+        print(text)
+        return
     audit = load_first_replicates(args.root, config="vanilla", replicates=STAGE_A_REPLICATES)
     summary = m2.config_summary(audit, noise_ratio=0.0)
     out = {"reproduction_a1_mp_minus_gdp_at_0.740": list(reproduced), "stage": "a",
