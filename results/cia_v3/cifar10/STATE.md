@@ -1,10 +1,10 @@
 Package: P2, CIFAR-10 replication of A-3 and D-4 (CIA roadmap v3, Agent P; direction F2)
-status: pilot complete (26/26); stage-b levels chosen; stage b waits for the owner's cost decision
+status: stage b first half queued (152 runs), waiting for host RAM
 gate: G-P2a passed 2026-11-01 (vanilla all-candidate AUC 0.998 at R = 8); G-P2b after stage b
 protocol: results/cia_v3/cifar10/PROTOCOL.md (fixed before any run)
 machine: compute server
-cost: 0 GPU-h; cap 120 GPU-h (ROADMAP decision 5), escalate at 150
-next: owner decision on stage b's cost (projected above the 150 GPU-h escalation point), then stage b first half
+cost: about 28 GPU-h so far (stage a and pilot); cap about 290 GPU-h (ROADMAP decision 6), escalate at about 363
+next: stage b first half; the replacement check (PROTOCOL.md Section 4); report to the owner; second half
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Section 3 (P2), Sections 1 (decisions 2, 8), 2 and 4; decision 5 in
@@ -113,3 +113,4 @@ The runner and data module are P0's, unchanged.
 | 2026-11-01 16:06 | Accuracy pilot queued (`~/cia-server/p2-pilot.sh`, tmux `p2-pilot`, 2 parallel clients; runs taken under per-run locks so a second worker can join). Both GPUs have under 2 GB free (other users' jobs and P1's extension on GPU 0). |
 | 2026-11-02 08:51 | Pilot complete, 26/26 (one worker on GPU 1; a second worker joined 03:32-08:51 under per-run locks). |
 | 2026-11-02 10:40 | **Stage-b levels (PROTOCOL.md Section 3; `analyze.py --stage pilot`, `pilot_levels.json`), recorded before any stage-b run.** Pilot mean final accuracy (2 runs each): global DP 1x 0.616, 2x 0.554, 4x 0.326, 8x 0.100; metric privacy 1x 0.626, 2x 0.609, 4x 0.512, 8x 0.310; composite r 0.0001 0.614, 0.000773 0.606, 0.003092 0.537, 0.006184 0.327, 0.012368 0.100. Targets `t2` 0.5536, `t4` 0.3263; safeguard passes (`t4` >= 0.30, gap 0.227). **Metric privacy: 2x, 4x, 8x** (r 0.003092, 0.006184, 0.012368; qualifying window). **Composite: r 0.000773, 0.003092, 0.006184** (no window qualifies; smallest shortfall 0.0004, its top level 0.3267 against `t4` 0.3263; the replacement rule after the first half applies if `a4` is not bracketed). Global DP 1x, 2x, 4x as fixed. Note: CIFAR-10 accuracy collapses to chance (0.10) at 8x global DP and r 0.012368, so the 4x target sits on a steep part of every curve. |
+| 2026-11-02 10:37 | **Owner approved stage b in full** (ROADMAP decision 6, on `feature/cia-v3-infra` 52311328): projected about 254 run-hours for stage b at the measured shared-GPU pace (about 55 min per run, about 35 min per composite run with every-round scoring), about 280 GPU-h for P2; cap about 290. Stage b first half queued (`~/cia-server/p2-stage-b.sh`, two workers under `v3-direct.sh`, tmux `p2-b1` with 4 parallel clients and `p2-b2` with 2, both on GPU 1, per-run locks). Both wait for 25 GB of available host RAM (18 GB at launch, other users' jobs). GPU 0 is not used: another user's job there has run P1 out of memory three times. |
