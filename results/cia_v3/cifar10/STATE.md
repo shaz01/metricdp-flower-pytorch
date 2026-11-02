@@ -1,10 +1,10 @@
 Package: P2, CIFAR-10 replication of A-3 and D-4 (CIA roadmap v3, Agent P; direction F2)
-status: G-P2a passed; accuracy pilot (26 runs) queued, waiting for GPU memory
+status: pilot complete (26/26); stage-b levels chosen; stage b waits for the owner's cost decision
 gate: G-P2a passed 2026-11-01 (vanilla all-candidate AUC 0.998 at R = 8); G-P2b after stage b
 protocol: results/cia_v3/cifar10/PROTOCOL.md (fixed before any run)
 machine: compute server
 cost: 0 GPU-h; cap 120 GPU-h (ROADMAP decision 5), escalate at 150
-next: accuracy pilot, then the level choice (PROTOCOL.md Section 3), recorded here before stage b; cost options to the owner before stage b
+next: owner decision on stage b's cost (projected above the 150 GPU-h escalation point), then stage b first half
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Section 3 (P2), Sections 1 (decisions 2, 8), 2 and 4; decision 5 in
@@ -111,3 +111,5 @@ The runner and data module are P0's, unchanged.
 | 2026-11-01 16:04 | `analyze.py --stage a` (71e35c74, 4 tests). **Reproduction check:** A1's metric privacy minus global DP at 0.740 from the committed runs, -0.000 [-0.019, 0.018], equal to the published value to 3 decimals. Stage a needs its own loader (`load_first_replicates`), since v2's `load_audit` requires all 32 replicates of the design; it checks inclusion against the design's first 8 columns. |
 | 2026-11-01 16:05 | **G-P2a passed.** Vanilla, replicates 0-7 (256 trials), calibrated attacker on 11 checkpoints: all candidates 0.998 [0.995, 1.001] (pair jackknife, 4 pairs, 97.5%; liberal at R = 8), two-way bootstrap [0.991, 1.000]; top decile 1.000; TPR 1.000 at 5% FPR and 0.922 at 1%; final round only 0.998; uncalibrated threshold 0.927. Mean final accuracy 0.633 [0.631, 0.634] (P0 cost run 0.630), lowest client 0.457. Leakage is far above EuroSAT's (M2 vanilla 0.723), so CIFAR-10 has the headroom A-6 lacked on Alzheimer. `analysis_stage_a.json`. |
 | 2026-11-01 16:06 | Accuracy pilot queued (`~/cia-server/p2-pilot.sh`, tmux `p2-pilot`, 2 parallel clients; runs taken under per-run locks so a second worker can join). Both GPUs have under 2 GB free (other users' jobs and P1's extension on GPU 0). |
+| 2026-11-02 08:51 | Pilot complete, 26/26 (one worker on GPU 1; a second worker joined 03:32-08:51 under per-run locks). |
+| 2026-11-02 10:40 | **Stage-b levels (PROTOCOL.md Section 3; `analyze.py --stage pilot`, `pilot_levels.json`), recorded before any stage-b run.** Pilot mean final accuracy (2 runs each): global DP 1x 0.616, 2x 0.554, 4x 0.326, 8x 0.100; metric privacy 1x 0.626, 2x 0.609, 4x 0.512, 8x 0.310; composite r 0.0001 0.614, 0.000773 0.606, 0.003092 0.537, 0.006184 0.327, 0.012368 0.100. Targets `t2` 0.5536, `t4` 0.3263; safeguard passes (`t4` >= 0.30, gap 0.227). **Metric privacy: 2x, 4x, 8x** (r 0.003092, 0.006184, 0.012368; qualifying window). **Composite: r 0.000773, 0.003092, 0.006184** (no window qualifies; smallest shortfall 0.0004, its top level 0.3267 against `t4` 0.3263; the replacement rule after the first half applies if `a4` is not bracketed). Global DP 1x, 2x, 4x as fixed. Note: CIFAR-10 accuracy collapses to chance (0.10) at 8x global DP and r 0.012368, so the 4x target sits on a steep part of every curve. |
