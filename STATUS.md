@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-10-31 12:55, v3 Agent P: G-P0 passed; owner raised P2's and P3's caps (ROADMAP decision 5); P1 (`feature/cia-v3-paper-setting`) and P2 stage a (`feature/cia-v3-cifar10`) running on shared GPUs. 2026-10-30, v3 P6 memo stage (design memo, ROADMAP decisions 2-3) closed by the owner and merged into `master`; screens not open. 2026-10-30, v3 P5 (client inference in the formal regime) closed by the owner and merged into `master` (`reports/cia_v3_p5_formal_cia.md`). 2026-10-30, roadmap v3 approved by the owner (Section 1 defaults) and merged into `master` (`research/cia_roadmap_v3/`); v2 results handoff corrected (`research/cia_roadmap_v3/HANDOFF_AUDIT.md`). 2026-10-30, C1 closed and merged (decision 17; `reports/cia_v2_composite.md`); roadmap v2 complete, results handoff `research/cia_roadmap_v2/RESULTS_HANDOFF.md`. 2026-10-29, B5 and B1 merged (`feature/cia-v2-mechanisms`); C1 opened (decision 14). 2026-10-26, AZ (Alzheimer replication) merged. 2026-10-23, B4 confirmatory run merged; B5 closed (report on `feature/cia-v2-mechanisms`); C1 waits (decision 12). 2026-10-20, owner decisions 7-11 (ROADMAP.md Section 10). CIA v2 Agent A packages M0, M1, M2, A1 and A2 merged into `master` (closed by the owner; reports `reports/cia_v2_m0_measurement.md`, `cia_v2_m1_shared_noise.md`, `cia_v2_m2_frontier.md`, `cia_v2_a1_matched_accuracy.md`, `cia_v2_a2_side_channel.md`). 2026-10-17, CIA v2 B4 (formal regime) and the client-level accountant merged into `master` (Agent C, closed by the owner; report `reports/cia_v2_formal_regime.md`); Agent A's M0 (G-M0 passed) came along as a dependency of B4's audit. CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
+**Last updated:** 2026-11-02 10:45, v3 Agent P: P1 complete, FINDINGS written (G-P1: the published protection claim fails in its own setting; Table 13 a single draw), awaiting the owner; P2 passed G-P2a (vanilla CIFAR-10 AUC 0.998), pilot done, levels chosen, stage b approved in full (ROADMAP decision 6) and queued. 2026-10-31 12:55, v3 Agent P: G-P0 passed; owner raised P2's and P3's caps (ROADMAP decision 5); P1 (`feature/cia-v3-paper-setting`) and P2 stage a (`feature/cia-v3-cifar10`) running on shared GPUs. 2026-10-30, v3 P6 memo stage (design memo, ROADMAP decisions 2-3) closed by the owner and merged into `master`; screens not open. 2026-10-30, v3 P5 (client inference in the formal regime) closed by the owner and merged into `master` (`reports/cia_v3_p5_formal_cia.md`). 2026-10-30, roadmap v3 approved by the owner (Section 1 defaults) and merged into `master` (`research/cia_roadmap_v3/`); v2 results handoff corrected (`research/cia_roadmap_v3/HANDOFF_AUDIT.md`). 2026-10-30, C1 closed and merged (decision 17; `reports/cia_v2_composite.md`); roadmap v2 complete, results handoff `research/cia_roadmap_v2/RESULTS_HANDOFF.md`. 2026-10-29, B5 and B1 merged (`feature/cia-v2-mechanisms`); C1 opened (decision 14). 2026-10-26, AZ (Alzheimer replication) merged. 2026-10-23, B4 confirmatory run merged; B5 closed (report on `feature/cia-v2-mechanisms`); C1 waits (decision 12). 2026-10-20, owner decisions 7-11 (ROADMAP.md Section 10). CIA v2 Agent A packages M0, M1, M2, A1 and A2 merged into `master` (closed by the owner; reports `reports/cia_v2_m0_measurement.md`, `cia_v2_m1_shared_noise.md`, `cia_v2_m2_frontier.md`, `cia_v2_a1_matched_accuracy.md`, `cia_v2_a2_side_channel.md`). 2026-10-17, CIA v2 B4 (formal regime) and the client-level accountant merged into `master` (Agent C, closed by the owner; report `reports/cia_v2_formal_regime.md`); Agent A's M0 (G-M0 passed) came along as a dependency of B4's audit. CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
 (`research/cia_review_2026-10/SYNTHESIS.md`) merged into `master`; the owner is choosing new directions from the
 synthesis. 2026-10-15: WP0-WP2 merged, D1 stopped. 2026-10-10: CIA literature review and agent roadmap added
 (`HANDOFF.md`, `research/cia_review_2026-10/`)
@@ -54,190 +54,16 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
       about 116 GPU-h (cap 85) and P3, with every-round scoring, to about 32 GPU-h (cap 20). Both are above 1.25x;
       options are listed. P1 projects to about 5 GPU-h (cap 40).
     - Owner decision 5 (2026-10-31): caps raised to P2 120 and P3 35 GPU-h.
-  - **P1 (`feature/cia-v3-paper-setting`; `results/cia_v3/paper_setting/`):** protocol fixed; the paper's 3-client
-    Alzheimer setting, vanilla, global DP and metric privacy at `z = 0.01`, 20 IN/OUT pairs each with separate seeds per
-    world, plus a declared extension at the `z` that reproduces the paper's global-DP accuracy (0.637). Accuracy pilot
-    and main runs running on GPU 0 (shared).
-  - **P2 (`feature/cia-v3-cifar10`; `results/cia_v3/cifar10/`):** protocol fixed; stage a (CIFAR-10 vanilla, 8
-    replicates) running on GPU 1 (shared, 2 parallel clients after an out-of-memory stop caused by the other user's
-    job growing). G-P2a next.
-
-**CIA roadmap v2: approved by the owner 2026-10-17 (ROADMAP.md Section 1 defaults accepted). Agents A and C have
-finished; Agent B (B1-B3, B5, C1) has not started. M2's escalation resolved by the owner 2026-10-20 (ROADMAP.md Section 10): audit form is the paper's main line; Alzheimer replication of M2 and A1; B5 then B1 at 2x and 4x with an all-candidate gate at R = 32; B2 deprioritized; B4 confirmatory run.** `research/cia_roadmap_v2/`
-(`REVIEW.md`, `ROADMAP.md`, audit script, tables, figure; built from committed results only). Main finding of the
-review: the IN and OUT trajectories of a seed draw identical DP noise (realized-noise-energy correlation 0.93-1.00 at
-48 clients, about 0 across seeds). The programme's paired leakage scores under DP therefore largely cancel the noise,
-which probably explains "leakage barely responds to noise". The roadmap rebuilds the measurement first (M0-M2, with
-independent randomness between worlds and randomized inclusion), then the audit of metric privacy (A1-A2), then
-mechanisms (B1-B5, C1).
-- **Agent A, M0, M1, M2, A1 and A2: closed by the owner and merged into `master` 2026-10-20** (branches deleted; see
-  "What's established" below). M2's escalation was resolved by the owner on 2026-10-20 (`research/cia_roadmap_v2/ROADMAP.md` Section 10).
-
-- **Agent C, B4 formal regime + accountant: closed and merged into `master` 2026-10-17** (branch deleted; see
-  "What's established" below). Agent B's wait on Agent C (owner decision) is over; its wait on Agent A is not.
-
-- **WP0 shared infrastructure (Agent A, `feature/cia-infra`, 2026-10-11): G0 passed; merged into `master` 2026-10-15
-  (with WP1).** Default-off fixed noise
-  std for the plan suite (`--fixed-noise-stdv`), server-side leave-one-out residual norms (`--log-loo-residuals`), and
-  per-round shadow increments and gradient norms (frontier runner `--diagnostics`); 577 tests pass. State and usage:
-  `results/cia_frontier/cia_infra/STATE.md`. Found and fixed (owner approved): asynchronous host-to-MPS batch copies
-  corrupted training (NaN weights) and evaluation on the owner PC; with blocking copies MPS training is bit-reproducible
-  in a single process, which corrects the 2026-08-04 note in `resolve_device` (`results/cia_frontier/cia_infra/ESCALATION.md`).
-  Committed results that record a device all ran on CUDA. Also fixed: the EuroSAT frontier runner was unusable on
-  `master` since 2026-10-02 (its data module rejected the forwarded `dirichlet_alpha`); `run_one_combo` now accepts
-  checkpoint round 0.
-- **WP1 D2 Stage A side-channel audit (Agent A, `feature/cia-audit`, 2026-10-11 to 2026-10-13): G1(a) passed, G1(b)
-  failed; merged into `master` 2026-10-15.** Protocol `results/cia_frontier/side_channel_audit/PROTOCOL.md`
-  (EuroSAT and Alzheimer, Dirichlet alpha 0.3, 3/5/8 clients, every client a target, global DP and metric privacy with
-  fixed noise std, equal weights, 50 rounds; 228 trajectories at seeds 42-44 plus the declared seed-45 extension for
-  G1(b), 76 trajectories), run on the compute server, 98.2 h measured (owner budget 101 h). G1(a): metric privacy's
-  noise level reveals the largest client's participation, AUC 0.838 [0.779, 0.902], attributed to the noise level by
-  the pre-run rule (oracle 0.839; the global-DP update-norm control is 0.763 [0.706, 0.824], strong at 3 clients and
-  fading at 8). G1(b): the increment attacker does not beat the loss statistic at 5% FPR, -0.106 [-0.149, -0.005] at
-  seeds 42-45 (+0.074 [-0.060, +0.116], inconclusive, at seeds 42-44), so WP4 uses the loss statistic as primary.
-  Write-up `results/cia_frontier/side_channel_audit/FINDINGS.md`; state `STATE.md`.
-- **WP2 D1 Stage A signature-suppression screen (Agent B role, `feature/signature-suppression`, 2026-10-14 to
-  2026-10-15): G2 inconclusive; owner decision: Stage A does not support D1, D1 stops; merged into `master`
-  2026-10-15.** EuroSAT alpha 0.3, 48 clients, 50 rounds, no DP, equal weights, ten configurations, five
-  targets; 132 trajectories, 34.5 h (cap 30 t-h, extra seeds by owner decision). No variant cuts the clean-view score by
-  0.05 within 1 pp accuracy: consensus KL beta 0.3 cuts it by 0.148 [0.048, 0.224] at -1.95 pp (seed 42 only); fixed
-  local steps keeps accuracy but its reduction is -0.001 [-0.079, +0.076] over seeds 42-45. WP4 does not start; WP6
-  (this role) waits for WP3. Write-up `results/cia_frontier/signature_suppression/FINDINGS.md`.
-- **WP3 D3 theory and D4 item 1 (Agent C role, `feature/private-dispersion`, 2026-10-15): G3 passed; merged into
-  `master` 2026-10-16.** D3 (`research/cia_review_2026-10/theory/f_cmip.md`): for the loss
-  attacker, not knowing the other clients makes the bound 0.546x (EuroSAT 8 clients) and 0.619x (48 clients) the GDP
-  bound at the frontier noise, but both bounds are vacuous there and the gain disappears at useful noise levels. D4.1:
-  `metricdp_pytorch/private_metric_strategy.py`, metric privacy with a privately tracked median client distance,
-  `sqrt(T (q_max^2/z^2 + 1/sigma_b^2))`-GDP, median release 10% of the budget, no noise-level side channel; at a matched
-  formal guarantee it cannot use less noise than global DP. Write-up `research/cia_review_2026-10/theory/FINDINGS.md`.
-  WP6 can start.
-- **WP6 D4 item 2 residual clipping (`feature/residual-clipping`, 2026-10-15 to 2026-10-16): G6 passed as written,
-  not through the proposed mechanism; merged into `master` 2026-10-16.** At the same formal
-  guarantee the private-`rho` variants cut the top-decile clean-view score by 0.044 [0.012, 0.080] (median) and 0.092
-  [0.032, 0.152] (90% quantile) at no accuracy cost, but `rho` settled above C (6.69 / 8.09 vs 5) because the centre
-  carries the previous round's noise, so the server added 1.41x / 1.70x more noise; centring alone changed little
-  (0.020 [-0.016, 0.056]). 24 trajectories, 7.08 h. Write-up `results/cia_frontier/residual_clipping/FINDINGS.md`.
-- **Consensus-KL follow-up (owner request 2026-10-16, `feature/consensus-kl`; not a roadmap package): steps 1 and 3
-  done; closed by owner decision 2026-10-16 (step 2, smaller beta, not run); merged into `master`
-  2026-10-16.** Step 1 (consensus KL 0.3 at seeds 43-45, 18 trajectories, 5.6 h): the seed-42
-  reduction does not replicate; over seeds 42-45 the clean-view score changes by -0.033 [-0.112, +0.048] vs vanilla
-  (more leakage) at -2.6 pp accuracy. Step 3 (global DP with and without consensus KL at 1/2/4x frontier noise, seed 42,
-  36 trajectories, 10.9 h): the pre-declared matched-leakage rule returns "supports", but gdp's score does not fall with
-  noise over this range, so the match is not meaningful; at matched noise consensus KL costs accuracy at every level and
-  never lowers leakage significantly. Write-up `results/cia_frontier/consensus_kl/FINDINGS.md`.
-
-**Client-specific noise research direction: CLOSED (2026-10-09, owner decision).** Question: can noise that each client
-builds for itself improve CIA protection over the paper's server-side metric calibration at useful accuracy? Merged into
-`master`; branches `feature/client-specific-noise` and `feature/stacked-head` deleted. Record and map: `research/README.md`;
-Flower implementation, protocols and findings of every later phase: `experiments/stacked_head/` (`README.md`, `protocols/`);
-data: `results/client_specific_noise/`, `results/stacked_head/`. Outcome:
-- Per-client noise shapes and non-Gaussian densities gave no benefit (analysis; radial Laplace vs Gaussian at matched attack strength).
-- One construction (clipped, public-subspace-projected, class-balanced client head gradient + calibrated Gaussian share, public-validation
-  step gate) beats public-only models when public training data are scarce: reliable at 32 public images (four dataset-by-class-split
-  tasks, 30 public sets per KMNIST task, confirmed on fresh sets and fresh test images), small at 128, gone at 512; attack AUC calibrated and
-  verified on the real Flower path; a model-only practical attacker stays far below the calibrated bound.
-- It is NOT better than the paper's server-side mechanisms (the repository's global-DP and metric-privacy strategies, tuned on a separate
-  dataset, noise matched to equal calibrated risk) in the same pipeline: pre-stated verdict mixed, baselines clearly better at risk 0.80;
-  metric calibration behaves like global DP once leakage is matched.
-- Transferable piece: the public-validation step-size gate (post-processing) nearly doubles the paper mechanism's utility at risk 0.80.
-Caveats: 4-class tasks, small CNN head step, one-shot (the paper's mechanism is a multi-round full-model protocol), Gaussian noise, offline
-tuning unaccounted. "Next/proposed" wording inside the research documents is historical; no work on this direction is planned. The detailed
-report required by `AGENTS.md` for a finished experiment has NOT been written (the owner decides when).
-
-**`feature/auc-targeted-noise-sweep` is complete (2026-09-01) and merged into `master`.** See
-`results/contest_at_scale/auc_frontier/reports/auc_targeted_noise_sweep.md` for the full writeup and "What's established" below for the
-summary — not repeated here to avoid drifting out of sync.
-
----
-
-Nothing else currently running. `results/contest_at_scale/reports/accuracy_vs_roc_auc.html` (refreshed 2026-08-15) was sent to
-the project supervisor for review; his feedback asked for a step back from the numbers-heavy
-format toward two plain-language, plot-supported claims: (1) more clients → lower CIA attack AUC,
-especially vanilla, and (2) DP noise lowers attack AUC at a heavy accuracy cost. **New follow-up
-report, 2026-08-16: `results/contest_at_scale/reports/cia_takeaways.html`** (generator: `results/contest_at_scale/reports/build_cia_takeaways.py`,
-independent of `build_accuracy_vs_roc_auc.py` — recomputes everything from source rather than
-reusing the old script's embedded numbers) builds one plot per claim, one plot per dataset where
-data exists, and checked both claims against the actual numbers rather than assuming them true:
-- **Claim 1 (client count) holds only partially, and only on CIFAR-10** — the only dataset ever
-  run at more than one client count. Round-matched attack AUC does drop net (95%→55% from 8→100
-  clients) but isn't monotonic (bumps back to 100% at 48), and Global-DP/Metric-privacy show the
-  *same* shape as vanilla, not a weaker one — so the "especially vanilla" framing isn't supported.
-  Flagged as an open question in the report, not silently smoothed over.
-- **Claim 2 (noise vs. accuracy) holds directionally on every dataset checked** (CIFAR-10 full
-  sweep, EuroSAT, CIFAR-100, Alzheimer, Fashion-MNIST — 6 checks, 6/6 show DP attack AUC ≤
-  vanilla's) but "heavy cost" is dataset-dependent, not universal: real on CIFAR-100 (~8pp) and
-  CIFAR-10 under high noise (~20pp for global-dp), negligible on EuroSAT/Fashion-MNIST (<2pp).
-- Old `results/contest_at_scale/reports/accuracy_vs_roc_auc.html` was left as-is (not overwritten) per explicit instruction
-  to generate a new file instead — both now exist; `cia_takeaways.html` is the one to send back to
-  the supervisor.
-- Housekeeping: 4 remote branches confirmed fully merged into `origin/master` (0 unique commits
-  each) and deleted, both locally-absent and on `origin` — `feature/cia-client-scaling`,
-  `feature/cifar10-scaling` (already reflected below), `improve-logging`, `new_experiments`. `git
-  branch -a` now shows only `master`.
-
-Separately, both `feature/eurosat-scaling` (the EuroSAT accuracy sweep and its CIA attack) and
-`feature/cifar100-scaling` (the CIFAR-100 accuracy sweep and its CIA attack) are complete, merged
-into `master`, and deleted (locally and on `origin`) — see "What's established" below and
-`results/contest_at_scale/eurosat/reports/eurosat_accuracy_sweep.md`/`results/contest_at_scale/eurosat/reports/eurosat_cia.md`/
-`results/contest_at_scale/reports/cifar-100_and_eurosat_results.tex` for the full writeups.
-
-**CIFAR-100 CIA multi-seed retry was dropped.** The seed-42 single-seed CIA run (6/6 combos, 0
-failures) was complete and reportable. A follow-on rerun to add seeds 43/44 — for a properly
-3-seed-pooled analysis matching the Alzheimer/CIFAR-10/Fashion-MNIST/EuroSAT CIA protocols —
-launched 2026-08-10 20:08 but never finished: the large 100-client/4.6M-parameter model combos hit
-persistent, severe GPU VRAM contention on this shared machine. Four separate retry attempts (each
-recovering 1-3 of the failing combos, with diminishing returns, despite reducing
-`--max-parallel-clients` 16→6→10 and fixing a real `dp_diagnostics.py` crash-on-client-error bug
-along the way) never reached a complete 3-seed run. Decision: drop seeds 43/44 entirely and keep
-only the complete seed-42 data. `results/contest_at_scale/cifar100/results/attack/cia_in.json`/`cia_out.json`/
-`cia_analysis.json` and the 12 per-trajectory result JSONs now hold seed-42-only data for all 6
-combos; the 22 seed-43/44 per-trajectory JSONs were deleted.
-`results/contest_at_scale/reports/cifar-100_and_eurosat_results.tex`'s CIFAR-100 CIA table reflects this (a single
-seed-42-only table, all 6 combos scored, replacing the earlier 3-seed-pooled table that had two
-"in progress" `global-dp` rows).
-
-**Model history** (this repo went through several CIFAR-100 architectures before settling):
-v1-v3 was a plain 3-block CNN (v2 briefly added a 4th conv block, reverted after its natural
-per-round update magnitude exceeded `clipping_norm=5.0` and froze every clipping privacy mode).
-v4 replaced it with a DenseNet+SELU architecture (553,220 params, concatenative skip connections,
-GroupNorm(8), SELU with LeCun-normal init and AlphaDropout), built and verified for robustness to
-that clipping-related freeze — and a second, independent freeze mode was found and fixed in that
-generation too (`vanilla`, no DP at all, froze at n=128/homogeneous from many highly-correlated
-client updates reinforcing rather than averaging out). **Per project-owner direction, v4 was itself
-replaced** with the current model (v5): an adaptation of the project supervisor's own `CNNCIFAR100`
-reference architecture (3 blocks of 2x[Conv3x3-GroupNorm-ReLU], channels 128/256/512,
-global-average-pooled classifier, 4,631,268 params, 0 buffers — see
-`results/contest_at_scale/cifar100/sweep_cifar100_scaling.py`'s docstring for the full model-history
-record and `experiments/reproduce/cifar100_cnn.py`'s docstring for the adaptation details). This
-consolidation also removed the separate `feature/cifar100-scaling-supervisor` branch/worktree that
-had briefly held this model in isolation (merged into this branch, then deleted) and cleared every
-prior CIFAR-100 result (v1-v4 sweep data, the supervisor model's own earlier narrower grid) —
-none were kept, since all described a model, grid, or directory layout no longer in use.
-
-GroupNorm has no running-stats buffers — unlike BatchNorm — so this still needs no
-`metricdp_pytorch/metricdp_strategy.py` changes, same as v1's "no normalization at all" workaround.
-Training supports weight decay (`WEIGHT_DECAY = 5e-4`) and an opt-in cosine LR schedule; the
-schedule was tried and dropped — a decaying LR eventually drops client updates below
-`clipping_norm`, so clipping stops binding late in each run and the DP noise-to-signal ratio drifts
-back up against `noise_multiplier`, fighting the whole point of tuning it — so the sweep uses a
-fixed LR instead. `noise_multiplier=0.0182`, calibrated specifically for this model at n=100 (the
-only client count this sweep runs — see the `NOISE_MULTIPLIER` comment in
-`results/contest_at_scale/cifar100/sweep_cifar100_scaling.py` for the full derivation), confirmed via a
-verification run: noise-to-signal ratio 1.001 at n=100.
-
-Full sweep and CIA results (tables, protocol, discussion) are in "What's established" below and
-`results/contest_at_scale/reports/cifar-100_and_eurosat_results.tex` — not repeated here to avoid drifting out of sync with
-those. Raw data: sweep JSONs at `results/contest_at_scale/cifar100/results/accuracy/*.json`; CIA raw/analysis JSONs at
-`results/contest_at_scale/cifar100/results/attack/`. Both experiments' `.evaluation.json`/`.predictions.npz`
-artifacts stay local-only, gitignored (see `.gitignore` comment) — they blow past GitHub's 100MB
-push limit.
-
-Separately, on `master`: nothing currently running. `feature/scale-controlled-redo` (Phase 1 items
-1 and 2 of `docs/RESEARCH_ROADMAP.md`) merged into `master` 2026-08-06 and was deleted — see
-"What's established" below for what it left behind. The natural next steps there, not yet started:
-`fedyogi` at `n=48` (the redo's matrix only covers `n=4/8` for `fedyogi`), and Phase 1's remaining
-item (NaN/failure-mode logging in `runner.py`, motivated directly by the zero-norm-update crashes
-found during the redo). After that, Phase 2 (mechanism redesign) is the next major phase.
+  - **P1 (`feature/cia-v3-paper-setting`; `results/cia_v3/paper_setting/FINDINGS.md`): complete, awaiting the owner.**
+    The paper's 3-client Alzheimer setting, 20 IN/OUT pairs per configuration with separate seeds per world (220 runs,
+    about 15 GPU-h). **G-P1: "the published protection claim fails in its own setting"**: the calibrated attacker scores
+    1.000 for global DP and metric privacy at the paper's `z = 0.01`, and 0.973 / 0.985 at `z = 0.024`, where global DP
+    matches the paper's accuracy (0.672 against 0.637). At `z = 0.024` the paper's own per-pair statistic for global DP
+    ranges 0.366-0.646 (median 0.497), so **"Table 13 is a single draw from a wide distribution"** also holds.
+  - **P2 (`feature/cia-v3-cifar10`; `results/cia_v3/cifar10/STATE.md`):** G-P2a passed (vanilla all-candidate AUC 0.998
+    at `R = 8`; A1's -0.000 [-0.019, 0.018] reproduced first). Pilot done: targets `t2` 0.554, `t4` 0.326; stage-b levels
+    metric privacy 2x/4x/8x, composite r 0.000773/0.003092/0.006184. Stage b (312 runs, about 254 run-hours) approved
+    in full by the owner (ROADMAP decision 6, cap about 290 GPU-h); first half queued, report to the owner after it.
 
 ### Currently running
 
@@ -250,8 +76,10 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `p1-run.sh` (compute server, tmux `p1`; branch `feature/cia-v3-paper-setting`) | P1: extension accuracy pilot (12 runs), then main runs (120) | running since 2026-10-31 12:41 on GPU 0, shared with another user's job (decision 4; about 3.6 GB) |
-| `v3-queue.sh` -> `p2-stage-a.sh` (compute server, tmux `p2`; branch `feature/cia-v3-cifar10`) | P2 stage a: CIFAR-10 vanilla, replicates 0-7 | running since 2026-10-31 12:46 on GPU 1, shared (decision 4; 2 parallel clients, about 1.5 GB) |
+| 2 x `v3-direct.sh` -> `p2-stage-b.sh` (compute server, tmux `p2-b1`, `p2-b2`; branch `feature/cia-v3-cifar10`) | P2 stage b, first half: 152 runs (replicates 0-15; vanilla 8-15), per-run locks | queued 2026-11-02 10:37 for GPU 1 (shared, decision 4); waiting for 25 GB of free host RAM |
+| `p2-pilot.sh` (compute server, tmux `p2-pilot`, `p2-pilot-w2`; branch `feature/cia-v3-cifar10`) | P2 accuracy pilot, 26 runs | done 2026-11-02 08:51 (GPU 1, shared) |
+| `p2-stage-a.sh` (compute server, tmux `p2`; branch `feature/cia-v3-cifar10`) | P2 stage a: CIFAR-10 vanilla, replicates 0-7 | done 2026-11-01 03:01 (GPU 1, shared); G-P2a passed |
+| `p1-run.sh`, `p1-extension.sh` (compute server, tmux `p1`, `p1-ext`; branch `feature/cia-v3-paper-setting`) | P1: pilots (20 runs), main runs (120), extension at `z = 0.024` (80) | done 2026-11-02 03:32 (GPUs 0 and 1, shared; about 15 GPU-h) |
 | `p0-cost-wait.sh` -> `p0-cost-run.sh` (compute server, tmux `p0-wait` / `p0-cost`; branch `feature/cia-v3-infra`) | P0 cost runs: CIFAR-10 vanilla and composite, one paper-protocol pair, one 51-checkpoint EuroSAT composite (one worker, 4 parallel clients) | done 2026-10-31 00:41 (1.3 GPU-h on GPU 1, shared with another user's job, ROADMAP v3 decision 4; peak VRAM 3.6 GB); G-P0 passes |
 | `formal_cia run` (owner PC, CPU; branch `feature/cia-v3-formal-cia`, merged) | P5: 832 head runs | done 2026-10-30 (0.32 CPU-h); closed and merged |
 | 2 x `c1-chain.sh` (compute server, GPU 1 shared by owner approval, 4 parallel clients; branch `feature/cia-v2-composite`) | C1 main runs: composite at 4 levels, 128 runs, surrogates and the defense-aware score | done 2026-10-30 06:24 (about 11.5 GPU-h incl. pilot); G-C1 passes; merged |
