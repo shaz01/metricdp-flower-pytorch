@@ -1,10 +1,10 @@
 Package: P1, the paper's 3-client setting under measurement standard v3 (CIA roadmap v3, Agent P; direction F3)
-status: main runs complete (120/120); extension (z 0.024, 80 runs) running on GPU 0 since 2026-11-01 15:59
-gate: G-P1 on the main runs: "the published protection claim fails in its own setting" (extension pending)
+status: all runs complete (main 120, extension 80, pilot 20); analysis.json written; FINDINGS awaits the owner
+gate: G-P1: main "the published protection claim fails in its own setting"; extension the same, plus "Table 13 is a single draw from a wide distribution"
 protocol: results/cia_v3/paper_setting/PROTOCOL.md (fixed before any run)
 machine: compute server
 cost: 0 GPU-h; cap 40 GPU-h (escalate at 50); projected about 9 GPU-h with the declared extension
-next: extension runs; then analysis.json with the extension, FINDINGS (after the owner's go-ahead)
+next: FINDINGS.md and figure, after the owner's go-ahead
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Section 3 (P1), Sections 2 and 4. Branch `feature/cia-v3-paper-setting`
@@ -90,3 +90,5 @@ The runner is P0's `results/cia_v3/infra/paper_runner.py`, unchanged.
 | 2026-11-01 15:59 | **Extension started 18 h late.** It was set to wait for the main queue (tmux `p1`) to end, but `tmux has-session -t p1` matches by prefix and also matched its own session `p1-ext`, so it never started. Restarted directly on GPU 0 (12.5 GB free, shared). |
 | 2026-11-01 16:01 | **G-P1 on the main runs** (`analyze.py --main vanilla gdp-z0.01 mp-z0.01`; reproduction check M2 vanilla 0.7235 = 0.723): calibrated attacker, noisy shadow, global DP 1.000 [1.000, 1.000], metric privacy 1.000 [1.000, 1.000]; both lower bounds above 0.5, so "the published protection claim fails in its own setting". The paper's per-pair statistic: global DP median 0.853 (p05 0.732, p95 0.988), metric privacy 0.887 (0.822, 0.955), no pair below 0.5, so the "single draw" clause does not hold. Vanilla: calibrated 0.638 [0.474, 0.801] on the noisy shadow, 1.000 on the clean shadow. Accuracy (IN, rounds 16-20): vanilla 0.970, global DP 0.947, metric privacy 0.957. Diagnostic (not gated): on the clean shadow the IN model's final loss is 0.008-0.043 against 1.08-1.65 OUT under all three mechanisms, i.e. the target's records are memorized and z 0.01 does not prevent it; vanilla scores lower on the noisy shadow only because its noisy-shadow losses vary widely (final IN 9.4 +/- 15.5). Output kept outside the repo until the extension is in. |
 | 2026-11-02 00:07 | Extension: global DP z 0.024 36/40, metric privacy 0/40. Attempts at 18:26, 21:00 and 22:44 failed in round 1 with CUDA out of memory on GPU 0 (another user's 9 GB job restarted there each time); no partial run kept. Moved to GPU 1, which had 16.9 GB free, next to P2's pilot (own claim line, `~/cia-server/p1-ext-gpu1.sh`, tmux `p1-ext`). |
+| 2026-11-02 03:32 | Extension complete, 80/80 (global DP 00:25, metric privacy 03:32, GPU 1). |
+| 2026-11-02 10:30 | **Final analysis** (`analysis.json`; reproduction check M2 0.723). Extension at z 0.024: global DP IN accuracy 0.672 (0.618-0.718; paper 0.637), paper's statistic median 0.497, p05 0.366, p95 0.646, 10 of 20 pairs below 0.5, calibrated attacker 0.973 [0.927, 1.018] (clean shadow 0.985); metric privacy IN accuracy 0.915, paper's statistic median 0.812 (0.673-0.928), calibrated 0.985 [0.956, 1.014] (clean 1.000). G-P1 on the extension: both clauses hold, "fails in its own setting" and "Table 13 is a single draw from a wide distribution" (global DP's per-pair statistic spans 0.5). At the paper's accuracy, the paper's own statistic reads about 0.5 for global DP, as in Table 13, while the calibrated attacker identifies the target client in nearly every pair. Metric privacy at the same z keeps more accuracy (0.915), because its noise is divided by the round's maximum client distance. |
