@@ -1,10 +1,10 @@
 Package: P1, the paper's 3-client setting under measurement standard v3 (CIA roadmap v3, Agent P; direction F3)
-status: all runs complete (main 120, extension 80, pilot 20); analysis.json written; FINDINGS awaits the owner
+status: complete; FINDINGS.md written (owner asked 2026-11-02); closing and merging are the owner's call
 gate: G-P1: main "the published protection claim fails in its own setting"; extension the same, plus "Table 13 is a single draw from a wide distribution"
 protocol: results/cia_v3/paper_setting/PROTOCOL.md (fixed before any run)
 machine: compute server
-cost: 0 GPU-h; cap 40 GPU-h (escalate at 50); projected about 9 GPU-h with the declared extension
-next: FINDINGS.md and figure, after the owner's go-ahead
+cost: about 15 GPU-h (14.0 run-hours training plus evaluation); cap 40 GPU-h
+next: owner review of FINDINGS.md; merge only on the owner's decision
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Section 3 (P1), Sections 2 and 4. Branch `feature/cia-v3-paper-setting`
@@ -92,3 +92,4 @@ The runner is P0's `results/cia_v3/infra/paper_runner.py`, unchanged.
 | 2026-11-02 00:07 | Extension: global DP z 0.024 36/40, metric privacy 0/40. Attempts at 18:26, 21:00 and 22:44 failed in round 1 with CUDA out of memory on GPU 0 (another user's 9 GB job restarted there each time); no partial run kept. Moved to GPU 1, which had 16.9 GB free, next to P2's pilot (own claim line, `~/cia-server/p1-ext-gpu1.sh`, tmux `p1-ext`). |
 | 2026-11-02 03:32 | Extension complete, 80/80 (global DP 00:25, metric privacy 03:32, GPU 1). |
 | 2026-11-02 10:30 | **Final analysis** (`analysis.json`; reproduction check M2 0.723). Extension at z 0.024: global DP IN accuracy 0.672 (0.618-0.718; paper 0.637), paper's statistic median 0.497, p05 0.366, p95 0.646, 10 of 20 pairs below 0.5, calibrated attacker 0.973 [0.927, 1.018] (clean shadow 0.985); metric privacy IN accuracy 0.915, paper's statistic median 0.812 (0.673-0.928), calibrated 0.985 [0.956, 1.014] (clean 1.000). G-P1 on the extension: both clauses hold, "fails in its own setting" and "Table 13 is a single draw from a wide distribution" (global DP's per-pair statistic spans 0.5). At the paper's accuracy, the paper's own statistic reads about 0.5 for global DP, as in Table 13, while the calibrated attacker identifies the target client in nearly every pair. Metric privacy at the same z keeps more accuracy (0.915), because its noise is divided by the round's maximum client distance. |
+| 2026-11-02 11:00 | FINDINGS.md with two claims and two figures (`make_figures.py`, `figures/`), written at the owner's request. Checked while writing: on global DP at z 0.024 the noisy-shadow final loss is higher in the IN world in 19 of 20 pairs (12.6 against 4.3) while the clean-shadow loss is lower (2.25 against 3.59), which is why uncalibrated statistics fall below 0.5 there. |
