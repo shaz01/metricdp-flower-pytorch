@@ -1,5 +1,5 @@
 Package: P2, CIFAR-10 replication of A-3 and D-4 (CIA roadmap v3, Agent P; direction F2)
-status: stage b first half complete (152/152); replacement check passed (no replacement); second half waits for the owner (the owner's F0.7 job has priority on both GPUs)
+status: stage b second half running (160 runs, replicates 16-31), started 2026-11-04 19:31
 gate: G-P2a passed 2026-11-01 (vanilla all-candidate AUC 0.998 at R = 8); G-P2b after stage b
 protocol: results/cia_v3/cifar10/PROTOCOL.md (fixed before any run)
 machine: compute server
@@ -119,3 +119,4 @@ The runner and data module are P0's, unchanged.
 | 2026-11-03 10:56 | 58/152 of the first half complete; 45 runs since 00:47 with no failure and no wait (about 4.4 runs per hour). Both GPUs nearly idle apart from our workers (28 GB free each), 53 GB RAM available, load 21 on 48 cores: a fourth worker added on GPU 1 (tmux `p2-b4`, 4 parallel clients; requires 40 GB of available RAM before each run, so it pauses first). |
 | 2026-11-04 01:56 | Stage b first half complete, 152/152 (one run failed once and was retried). All four workers exited cleanly and removed their claims. |
 | 2026-11-04 19:30 | **Replacement check (PROTOCOL.md Section 4; accuracy only, no leakage statistic computed):** first-half mean final accuracy over replicates 0-15: vanilla 0.631, global DP 1x 0.609, 2x 0.546, 4x 0.319; metric privacy 2x 0.598, 4x 0.514, 8x 0.298; composite r 0.000773 0.607, 0.003092 0.534, 0.006184 0.317. Half-stage targets `a2` 0.5457, `a4` 0.3192. Metric privacy brackets both (0.598 >= a2, 0.298 <= a4); the composite brackets both (0.607 >= a2, 0.317 <= a4, a margin of 0.0025 at the low end). **No replacement.** Second half not started: the owner's adaptive-matching F0.7 chain (owner's order: F0.7 first) is about to start a shard worker on each GPU; the second half waits for the owner's call. |
+| 2026-11-04 19:31 | **Second half started** at the owner's word (160 runs, replicates 16-31): four workers, `p2-b1`/`p2-b2` on GPU 1 (2 parallel clients; 22 and 28 GB RAM required before each run) and `p2-b3`/`p2-b4` on GPU 0 (4 parallel clients; 34 and 40 GB). Both GPUs idle at start; the owner's F0.7 chain will add a shard worker on each GPU when its data copy finishes. |
