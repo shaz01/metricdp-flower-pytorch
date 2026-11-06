@@ -94,3 +94,50 @@ def test_window_falls_back_to_the_smallest_shortfall_then_the_smaller_ratio():
     assert chosen["shortfall"] == pytest.approx(0.0004)
     tied = {1: 0.50, 2: 0.50, 4: 0.50, 8: 0.50}
     assert analyze.choose_window(tied, t2=0.55, t4=0.33)["levels"] == [1, 2, 4]
+
+
+def test_standard_checkpoints_keeps_every_fifth_round():
+    audit = analyze.Audit(config="c", rounds=tuple(range(51)), losses=np.arange(51.0).reshape(1, 1, 51),
+                          membership=np.array([[True]]), final_accuracy=np.array([0.5]), released_norms=None,
+                          surrogate_losses=None, run_names=("r",), adjusted_losses=np.arange(51.0).reshape(1, 1, 51))
+    thin = analyze.standard_checkpoints(audit)
+    assert thin.rounds == tuple(range(0, 51, 5))
+    assert thin.losses.ravel().tolist() == list(map(float, range(0, 51, 5)))
+    assert thin.adjusted_losses.shape == (1, 1, 11)
+
+
+def test_c1_outcome():
+    gate = lambda e, lo, hi: {"estimate": e, "low": lo, "high": hi}  # noqa: E731
+    assert analyze.c1_outcome(gate(-0.08, -0.12, -0.04)) == "pass"
+    assert analyze.c1_outcome(gate(-0.05, -0.09, -0.01)) == "pass"
+    assert analyze.c1_outcome(gate(-0.04, -0.08, -0.01)) == "fail"   # too small a reduction
+    assert analyze.c1_outcome(gate(-0.08, -0.17, 0.01)) == "fail"    # interval reaches 0
+    assert analyze.c1_outcome(gate(-0.08, None, None)) == "not testable"
+    assert analyze.c1_outcome(gate(float("nan"), float("nan"), float("nan"))) == "not testable"
+
+
+def test_d4_verdict_follows_the_untestable_rules():
+    assert analyze.d4_verdict(["pass", "pass"]) == "replicates"
+    assert analyze.d4_verdict(["pass", "not testable"]) == "partial"
+    assert analyze.d4_verdict(["pass", "fail"]) == "does not replicate"
+    assert analyze.d4_verdict(["fail", "not testable"]) == "does not replicate"
+    assert analyze.d4_verdict(["not testable", "not testable"]) == "not testable"
+
+
+def test_a3_verdict_uses_only_testable_targets():
+    fine = "no detectable difference at this power"
+    assert analyze.a3_verdict(["equivalent", fine]) == "replicates"
+    assert analyze.a3_verdict(["equivalent", "not testable"]) == "replicates"
+    assert analyze.a3_verdict(["worse or inconclusive", "equivalent"]) == "does not replicate"
+    assert analyze.a3_verdict(["not testable", "not testable"]) == "not testable"
+    assert analyze.a1_outcome({"outcome": "not bracketed"}) == "not testable"
+
+
+def test_lowest_client_is_interpolated_and_never_extrapolated():
+    audit = lambda acc, low: analyze.Audit(  # noqa: E731
+        config="c", rounds=(0,), losses=np.zeros((1, 1, 1)), membership=np.array([[True]]),
+        final_accuracy=np.array([acc]), released_norms=None, surrogate_losses=None, run_names=("r",),
+        min_client_accuracy=np.array([low]))
+    curve = [audit(0.6, 0.4), audit(0.4, 0.2)]
+    assert analyze.lowest_client_at(curve, 0.5) == pytest.approx(0.3)
+    assert analyze.lowest_client_at(curve, 0.7) is None

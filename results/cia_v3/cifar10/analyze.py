@@ -13,15 +13,26 @@ composite.
 
     uv run --no-sync python -m results.cia_v3.cifar10.analyze --stage a --out results/cia_v3/cifar10/analysis_stage_a.json
     uv run --no-sync python -m results.cia_v3.cifar10.analyze --stage pilot --out results/cia_v3/cifar10/pilot_levels.json
+
+Stage b (PROTOCOL.md Section 5, G-P2b): per-configuration summaries; targets ``a2``, ``a4`` from global DP's 32 replicates;
+A1's matched-accuracy difference for G-A1 (metric privacy against global DP) and G-C1 (composite against metric privacy,
+standard and sampling-aware attackers). The composite is scored at every round; the gated attackers use its 11 standard
+checkpoints, and the 51-checkpoint attacker is reported only.
+
+    uv run --no-sync python -m results.cia_v3.cifar10.analyze --stage b --out results/cia_v3/cifar10/analysis.json
 """
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 import json
+import math
 from pathlib import Path
 
 import numpy as np
 
+from experiments.cia.audit_attacks import calibrated_scores, pair_jackknife, roc_auc
+from research.cia_roadmap_v3.reanalysis import reanalyze as rz
 from results.cia_v2.frontier import analyze as m2
 from results.cia_v2.frontier.a1 import analyze as a1
 from results.cia_v2.randomized_inclusion.analysis import Audit, load_audit
@@ -39,6 +50,12 @@ PILOT_GDP = {k: f"pilot-gdp-r{k}x" for k in (1, 2, 4, 8)}
 PILOT_MP = {round(k * FRONTIER_RATIO, 6): f"pilot-mp-r{k}x" for k in (1, 2, 4, 8)}
 PILOT_COMPOSITE = {r: f"pilot-comp-r{r}" for r in (0.0001, 0.000773, 0.003092, 0.006184, 0.012368)}
 SAFEGUARD_T4, SAFEGUARD_GAP = 0.30, 0.02
+GDP_LEVELS = {"gdp-r1x": 0.001546, "gdp-r2x": 0.003092, "gdp-r4x": 0.006184}
+MP_LEVELS = {"mp-r2x": 0.003092, "mp-r4x": 0.006184, "mp-r8x": 0.012368}
+COMPOSITE_LEVELS = {"comp-r0.000773": 0.000773, "comp-r0.003092": 0.003092, "comp-r0.006184": 0.006184}
+CHECKPOINT_EVERY = 5  # the standard attacker's 11 checkpoints
+REDUCTION = 0.05  # G-C1
+NOT_TESTABLE = "not testable"
 
 
 def reproduce_a1(gdp_root=REPO / "results/cia_v2/frontier/results", mp_root=REPO / "results/cia_v2/frontier/a1/results"):
@@ -137,9 +154,108 @@ def pilot_levels(root):
     return out
 
 
+def standard_checkpoints(audit):
+    """The audit at rounds 0, 5, ..., 50: the gated attackers' view of a run scored at every round."""
+    keep = [i for i, t in enumerate(audit.rounds) if t % CHECKPOINT_EVERY == 0]
+    return replace(audit, rounds=tuple(audit.rounds[i] for i in keep), losses=audit.losses[..., keep],
+                   adjusted_losses=None if audit.adjusted_losses is None else audit.adjusted_losses[..., keep])
+
+
+def _missing(value):
+    return value is None or math.isnan(value)
+
+
+def a1_outcome(entry):
+    """G-A1's outcome at a target, with A1's "not bracketed" named as PROTOCOL.md Section 5 names it."""
+    return NOT_TESTABLE if entry["outcome"] == "not bracketed" else entry["outcome"]
+
+
+def c1_outcome(gate):
+    """G-C1 at a target: at least 0.05 below metric privacy with the gate interval below 0, or not testable."""
+    if any(_missing(gate[key]) for key in ("estimate", "low", "high")):
+        return NOT_TESTABLE
+    return "pass" if gate["estimate"] <= -REDUCTION and gate["high"] < 0 else "fail"
+
+
+def a3_verdict(outcomes):
+    """A-3 (STATE.md, Gate): equivalent or no detectable difference at every testable target."""
+    testable = [o for o in outcomes if o != NOT_TESTABLE]
+    if not testable:
+        return NOT_TESTABLE
+    fine = ("equivalent", "no detectable difference at this power")
+    return "replicates" if all(o in fine for o in testable) else "does not replicate"
+
+
+def d4_verdict(outcomes):
+    """D-4 for one attacker (STATE.md, Gate): replicates, partial, does not replicate or not testable."""
+    if "fail" in outcomes:
+        return "does not replicate"
+    if all(o == NOT_TESTABLE for o in outcomes):
+        return NOT_TESTABLE
+    return "replicates" if all(o == "pass" for o in outcomes) else "partial"
+
+
+def lowest_client_at(audits, target):
+    """Lowest-client accuracy at a target, linear in mean final accuracy; ``None`` outside the curve's range."""
+    points = sorted((float(a.final_accuracy.mean()), float(np.mean(a.min_client_accuracy))) for a in audits)
+    accuracy, lowest = np.array(points).T
+    return float(np.interp(target, accuracy, lowest)) if accuracy[0] <= target <= accuracy[-1] else None
+
+
+def scored(audit, losses=None):
+    """Calibrated scores of one configuration, as the reanalysis' matched-accuracy statistic takes them."""
+    losses = audit.losses if losses is None else losses
+    return rz.Scored(calibrated_scores(losses, audit.membership), audit.membership, audit.final_accuracy)
+
+
+def stage_b(root, resamples=m2.RESAMPLES):
+    vanilla = load_audit(root, config="vanilla")
+    gdp = [load_audit(root, config=name) for name in GDP_LEVELS]
+    mp = [load_audit(root, config=name) for name in MP_LEVELS]
+    every_round = [rz.load_config(root, name) for name in COMPOSITE_LEVELS]
+    composite = [replace(c, audit=standard_checkpoints(c.audit)) for c in every_round]
+    audits = [c.audit for c in composite]
+    targets = tuple(float(gdp[i].final_accuracy.mean()) for i in (1, 2))  # a2, a4
+
+    summaries = {"vanilla": m2.config_summary(vanilla, noise_ratio=0.0, resamples=resamples)}
+    for levels, group in ((GDP_LEVELS, gdp), (MP_LEVELS, mp), (COMPOSITE_LEVELS, audits)):
+        for (name, ratio), audit in zip(levels.items(), group):
+            summaries[name] = m2.config_summary(audit, noise_ratio=ratio, resamples=resamples)
+    sampling_aware = [rz.sampling_aware(c) for c in composite]
+    for name, config, attacked, full in zip(COMPOSITE_LEVELS, composite, sampling_aware, every_round):
+        everything = scored(full.audit)
+        summaries[name]["realized_sampling_rate"] = rz.realized_rate(config)
+        summaries[name]["sampling_aware_auc"] = m2._interval(
+            pair_jackknife(attacked.scores, attacked.membership, roc_auc))
+        summaries[name]["all_checkpoints_auc"] = m2._interval(
+            pair_jackknife(everything.scores, everything.membership, roc_auc))
+
+    g_a1 = a1.mechanism_report(mp, gdp, targets=targets, resamples=resamples)
+    g_c1_standard = a1.mechanism_report(audits, mp, targets=targets, resamples=resamples)
+    mp_scored = [scored(a) for a in mp]
+    g_c1_aware = [rz.matched(sampling_aware, mp_scored, t, resamples=resamples) for t in targets]
+    g_c1_everything = [rz.matched([scored(c.audit) for c in every_round], mp_scored, t, resamples=resamples)
+                       for t in targets]
+
+    a1_outcomes = [a1_outcome(g_a1["all"][str(t)]) for t in targets]
+    standard_outcomes = [c1_outcome(g_c1_standard["all"][str(t)]["difference"]) for t in targets]
+    aware_outcomes = [c1_outcome(r["gate"]) for r in g_c1_aware]
+    fairness = {name: {str(t): lowest_client_at(group, t) for t in targets}
+                for name, group in (("global-dp", gdp), ("metric-privacy", mp), ("composite", audits))}
+    return {"targets": list(targets), "levels": a1._json(summaries),
+            "g_a1": g_a1, "g_c1_standard": g_c1_standard, "g_c1_sampling_aware": a1._json({str(t): r for t, r in zip(targets, g_c1_aware)}),
+            "reported_composite_all_checkpoints": a1._json({str(t): r for t, r in zip(targets, g_c1_everything)}),
+            "lowest_client_accuracy_at_targets": fairness,
+            "decisions": {"g_a1": dict(zip(map(str, targets), a1_outcomes)), "a3": a3_verdict(a1_outcomes),
+                          "g_c1_standard": dict(zip(map(str, targets), standard_outcomes)),
+                          "d4_standard": d4_verdict(standard_outcomes),
+                          "g_c1_sampling_aware": dict(zip(map(str, targets), aware_outcomes)),
+                          "d4_sampling_aware": d4_verdict(aware_outcomes)}}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--stage", choices=("a", "pilot"), required=True)
+    parser.add_argument("--stage", choices=("a", "pilot", "b"), required=True)
     parser.add_argument("--root", type=Path, default=HERE / "results")
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
@@ -149,6 +265,13 @@ def main():
         raise SystemExit(f"reproduction failed: {reproduced} != {A1_PUBLISHED}")
     if args.stage == "pilot":
         text = json.dumps(pilot_levels(HERE / "pilot"), indent=1, allow_nan=False)
+        if args.out:
+            args.out.write_text(text + "\n")
+        print(text)
+        return
+    if args.stage == "b":
+        out = {"reproduction_a1_mp_minus_gdp_at_0.740": list(reproduced), "stage": "b"} | stage_b(args.root)
+        text = json.dumps(out, indent=1, allow_nan=False, default=float)
         if args.out:
             args.out.write_text(text + "\n")
         print(text)
