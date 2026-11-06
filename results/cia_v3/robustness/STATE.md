@@ -1,10 +1,10 @@
 Package: P3, every-round attacker and interference check (CIA roadmap v3, Agent P; direction F4)
-status: protocol fixed; analysis code next, then 192 runs
+status: 192 runs running from 2026-11-06 21:43; IN-count runs first
 gate: G-P3, not yet evaluated
 protocol: results/cia_v3/robustness/PROTOCOL.md (fixed before any run)
 machine: compute server
 cost: 0 GPU-h; cap 35 GPU-h (ROADMAP decision 5), escalate at 43.75
-next: analyze.py and tests, runs, G-P3; G-P2b stays provisional until G-P3(b)
+next: runs; G-P3(b) as soon as the 64 IN-count runs are in; then the rest and G-P3(a); G-P2b stays provisional until G-P3(b)
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Section 3 (P3), Sections 1 and 2; decision 5 in Section 10. Branch
@@ -63,3 +63,5 @@ The runner is P0's, unchanged.
 | When | What |
 |---|---|
 | 2026-11-06 | Protocol fixed before any run. Order note: P2b's analysis ran before P3 (`results/cia_v3/cifar10/STATE.md`, 2026-11-06 09:30), so G-P2b is provisional until G-P3(b). This protocol's gate is the ROADMAP's, fixed before those numbers existed; its operational readings (block jackknife, whole interval inside +-0.03) were written after them, but they depend on no P2 number. |
+| 2026-11-06 21:40 | `analyze.py` and 7 tests committed (6f7bda98) before any run. Reproduction check: C1's composite minus metric privacy at 0.740, -0.095 [-0.137, -0.053], equal to the published value to 3 decimals. |
+| 2026-11-06 21:43 | Runs started: `~/cia-server/p3-worker.sh` under `v3-direct.sh`, three workers with 4 parallel clients (`p3-w1`, `p3-w3` on GPU 0, `p3-w2` on GPU 1), per-run locks, RAM and GPU checks before each run (22, 28 and 34 GB of RAM; 4 GB of GPU memory). GPUs are shared with the owner's F0.7 shard workers and another user's job (decision 4). |
