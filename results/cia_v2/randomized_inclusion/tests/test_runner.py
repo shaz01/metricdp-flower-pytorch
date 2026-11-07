@@ -380,3 +380,23 @@ def test_cifar10_data_module_is_selected_by_the_profile():
 
     module = data.base_module(0.3, partition_seed=42, dataset="cifar10")
     assert isinstance(module, DirichletCIFAR10) and module.min_records == 10 and module.partition_seed == 42
+
+
+def test_always_in_count_defaults_to_every_non_candidate_slot():
+    default = plan(replicates=32, in_count=24)[0]
+    assert len(default.active) == 40
+    assert "always_in_count" not in runner.manifest(default, surrogates=False)
+    assert "always_in_count" not in runner.manifest(plan()[0], surrogates=False)
+
+
+def test_no_always_in_slot_leaves_only_the_included_candidates():
+    runs = plan(replicates=32, in_count=24, always_in_count=0)
+    reference = plan(replicates=32, in_count=24)
+    for run, same in zip(runs, reference):
+        assert run.active == run.included == same.included and run.num_clients == 24
+        assert run.noise_multiplier * run.hyperparams.clipping_norm / run.num_clients == pytest.approx(
+            runner.FRONTIER_RATIO * run.hyperparams.clipping_norm)
+        assert (run.client_seed, run.noise_seed) == (same.client_seed, same.noise_seed)
+    assert runner.manifest(runs[0], surrogates=False)["always_in_count"] == 0
+    with pytest.raises(ValueError):
+        plan(replicates=32, in_count=24, always_in_count=17)

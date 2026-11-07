@@ -71,3 +71,10 @@ def test_g_p3b_needs_the_whole_interval_inside():
     assert analyze.g_p3b({"low": -0.03, "high": 0.03}) == "pass"
     assert analyze.g_p3b({"low": -0.01, "high": 0.04}).startswith("escalate")
     assert analyze.g_p3b({"low": -0.04, "high": 0.01}).startswith("escalate")
+
+
+def test_follow_up_decision():
+    assert analyze.follow_up_decision({"low": -0.02, "high": 0.025}).startswith("no IN-count interference")
+    assert analyze.follow_up_decision({"low": 0.031, "high": 0.08}).startswith("interference")
+    assert analyze.follow_up_decision({"low": -0.09, "high": -0.035}).startswith("interference")
+    assert analyze.follow_up_decision({"low": 0.01, "high": 0.07}) == "inconclusive at this power"

@@ -20,7 +20,9 @@ candidates, model and shadow fraction (``PROFILES``); EuroSAT is the default and
 
 CIA roadmap v3, P0 (default-off, so committed plans and manifests are unchanged): ``--dataset cifar10`` (decision 2),
 ``--checkpoint-every 1`` (shadow scores at every round, standard v3 item 4) and ``--in-count 8`` or ``24`` (a balanced
-design with that many candidates IN per replicate, for P3's interference check).
+design with that many candidates IN per replicate, for P3's interference check). ``--always-in-count k`` (v3 P3
+follow-up, ROADMAP decision 7) keeps only the first ``k`` of the 16 non-candidate slots, so the active count can be held
+fixed across IN counts.
 """
 from __future__ import annotations
 
@@ -199,6 +201,7 @@ class InclusionRun(Combo):
     alpha: float = ALPHA  # the profile's (EuroSAT 0.3, Alzheimer 1.0); other values for the AZ diagnosis only
     in_count: int = len(CANDIDATES) // 2  # v3 P0: candidates IN per replicate
     checkpoint_every: int = 0  # v3 P0: shadow scoring interval (0 = the profile's)
+    always_in_count: int | None = None  # v3 P3 follow-up: non-candidate slots that take part (None = all)
 
     @property
     def checkpoints(self):
@@ -234,7 +237,7 @@ class InclusionRun(Combo):
 
 def build_runs(*, config, privacy, noise_ratio, replicates, design_seed, replicate_subset=None, rounds=None,
                dataset="eurosat", alpha=None, contribution_cap=0, logit_tau=0.0, sampling_rate=1.0, in_count=None,
-               checkpoint_every=0):
+               checkpoint_every=0, always_in_count=None):
     if privacy not in PRIVACY_MODES:
         raise ValueError(f"privacy must be one of {PRIVACY_MODES}")
     if privacy == "vanilla" and noise_ratio:
@@ -252,6 +255,10 @@ def build_runs(*, config, privacy, noise_ratio, replicates, design_seed, replica
     design = design_matrix(replicates, design_seed=design_seed, in_count=in_count)
     selected = range(replicates) if replicate_subset is None else sorted(set(replicate_subset))
     always_in = sorted(set(range(SLOTS)) - set(profile.candidates))
+    if always_in_count is not None:
+        if not 0 <= always_in_count <= len(always_in):
+            raise ValueError(f"always_in_count must be between 0 and {len(always_in)}")
+        always_in = always_in[:always_in_count]
     runs = []
     for j in selected:
         if not 0 <= j < replicates:
@@ -269,7 +276,7 @@ def build_runs(*, config, privacy, noise_ratio, replicates, design_seed, replica
             config=config, replicate=j, replicates=replicates, design_seed=design_seed, included=included, active=active,
             client_seed=client_seed, noise_seed=noise_seed, noise_ratio=noise_ratio, dataset=dataset, alpha=alpha,
             contribution_cap=contribution_cap, logit_tau=logit_tau, sampling_rate=sampling_rate, in_count=in_count,
-            checkpoint_every=checkpoint_every,
+            checkpoint_every=checkpoint_every, always_in_count=always_in_count,
         ))
     return runs
 
@@ -323,6 +330,8 @@ def manifest(run, surrogates):
         pinned["sampling_rate"] = run.sampling_rate
     if run.in_count != len(run.profile.candidates) // 2:  # v3 P3 only
         pinned["in_count"] = run.in_count
+    if run.always_in_count is not None:  # v3 P3 follow-up only
+        pinned["always_in_count"] = run.always_in_count
     return pinned
 
 
@@ -504,6 +513,8 @@ def main():
     parser.add_argument("--privacy", choices=PRIVACY_MODES, required=True)
     parser.add_argument("--dataset", choices=tuple(PROFILES), default="eurosat")
     parser.add_argument("--in-count", type=int, help="v3 P3: candidates IN per replicate (default: half, 16)")
+    parser.add_argument("--always-in-count", type=int,
+                        help="v3 P3 follow-up: non-candidate slots that take part (default: all 16)")
     parser.add_argument("--checkpoint-every", type=int, default=0,
                         help="v3: score shadow samples every N rounds (default: the profile's, 5 on EuroSAT)")
     parser.add_argument("--alpha", type=float, help="label-Dirichlet alpha (default: the dataset profile's)")
@@ -534,7 +545,7 @@ def main():
                       replicate_subset=args.replicate_subset, rounds=rounds, dataset=args.dataset, alpha=args.alpha,
                       contribution_cap=args.contribution_cap, logit_tau=args.logit_adjustment_tau,
                       sampling_rate=args.sampling_rate, in_count=args.in_count,
-                      checkpoint_every=args.checkpoint_every)
+                      checkpoint_every=args.checkpoint_every, always_in_count=args.always_in_count)
     print(json.dumps({"runs": len(runs), "execute": args.execute, "rounds": runs[0].hyperparams.rounds if runs else rounds,
                       "complete": sum((args.output / r.run_name() / "complete.json").exists() for r in runs),
                       "plan": [{"run_name": r.run_name(), "included": r.included, "client_seed": r.client_seed,

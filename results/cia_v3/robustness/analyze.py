@@ -4,6 +4,11 @@ The reproduction check runs first: C1's composite minus metric privacy at 0.740 
 -0.095 [-0.137, -0.053] to 3 decimals, or nothing new is reported.
 
     uv run --no-sync python -m results.cia_v3.robustness.analyze --out results/cia_v3/robustness/analysis.json
+
+Follow-up to G-P3(b) (PROTOCOL.md Section 5, ROADMAP decision 7): the IN-count effect at a fixed active count of 24.
+
+    uv run --no-sync python -m results.cia_v3.robustness.analyze --follow-up \
+        --out results/cia_v3/robustness/analysis_follow_up.json
 """
 from __future__ import annotations
 
@@ -29,6 +34,8 @@ TARGETS = (0.740, 0.660)
 COMPOSITE = {"p3-comp-r0.000773": 0.000773, "p3-comp-r0.003092": 0.003092}
 METRIC_PRIVACY = {"p3-mp-r1x": 0.001546, "p3-mp-r2x": 0.003092}
 IN_COUNT = {8: "p3-gdp-r2x-in8", 24: "p3-gdp-r2x-in24"}
+FIXED_ACTIVE = "p3-gdp-r2x-in24-a0"  # 24 IN, no always-in slot: 24 active, as 8 IN
+ALWAYS_IN = 16
 BLOCK = 4  # replicates per block of the 8-IN design and of its complement
 CHECKPOINT_EVERY = 5  # the standard attacker's 11 checkpoints
 REDUCTION = 0.05  # G-C1
@@ -102,12 +109,12 @@ def _interval(result):
     return {"estimate": result.estimate, "low": result.low, "high": result.high}
 
 
-def in_count_summary(audit):
+def in_count_summary(audit, always_in=ALWAYS_IN):
     """What ``m2.config_summary`` reports, with the block jackknife: complementary pairs do not exist at 8 or 24 IN."""
     s = scored(audit)
     top = np.isin(audit.candidates, audit.top_decile)
     replicates = audit.membership.shape[1]
-    return {"config": audit.config, "active": 16 + int(audit.membership[:, 0].sum()),
+    return {"config": audit.config, "active": always_in + int(audit.membership[:, 0].sum()),
             "all": {"auc": _interval(block_jackknife(lambda k: _auc(s.scores, s.membership, k), replicates)),
                     "tpr_at_5pct_fpr": tpr_at_fpr(s.scores, s.membership, 0.05),
                     "tpr_at_1pct_fpr": tpr_at_fpr(s.scores, s.membership, 0.01)},
@@ -139,6 +146,27 @@ def g_p3b(interval):
     """(b): the whole interval inside +-0.03 (STATE.md, Gate), otherwise escalate."""
     inside = -INTERFERENCE_LIMIT <= interval["low"] and interval["high"] <= INTERFERENCE_LIMIT
     return "pass" if inside else "escalate: IN-count correction, G-P2b provisional"
+
+
+def follow_up_decision(interval):
+    """PROTOCOL.md Section 5: interference, none at a fixed active count, or inconclusive."""
+    if -INTERFERENCE_LIMIT <= interval["low"] and interval["high"] <= INTERFERENCE_LIMIT:
+        return "no IN-count interference at a fixed active count: design dependence (ESCALATION.md option 1)"
+    if interval["low"] > INTERFERENCE_LIMIT or interval["high"] < -INTERFERENCE_LIMIT:
+        return "interference: IN-count correction needed (ESCALATION.md option 3)"
+    return "inconclusive at this power"
+
+
+def follow_up(root):
+    eight = load_audit(root, config=IN_COUNT[8])  # 24 active
+    fixed = load_audit(root, config=FIXED_ACTIVE)  # 24 active
+    wide = load_audit(root, config=IN_COUNT[24])  # 40 active
+    interference = _interval(in_count_difference(scored(eight), scored(fixed)))
+    active = _interval(in_count_difference(scored(fixed), scored(wide)))
+    return a1._json({"configs": {"8 IN, 24 active": in_count_summary(eight),
+                                 "24 IN, 24 active": in_count_summary(fixed, always_in=0),
+                                 "24 IN, 40 active": in_count_summary(wide)},
+                     "d_int": interference, "d_act": active, "decision": follow_up_decision(interference)})
 
 
 def lowest_client_at(audits, target):
@@ -189,6 +217,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=HERE / "results")
     parser.add_argument("--reproduce", action="store_true", help="run only the reproduction check")
+    parser.add_argument("--follow-up", action="store_true", help="only the G-P3(b) follow-up (PROTOCOL.md Section 5)")
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
     reproduced = reproduce_c1()
@@ -197,7 +226,8 @@ def main():
         raise SystemExit(f"reproduction failed: {reproduced} != {rz.PUBLISHED_C1_VS_MP[0.740]}")
     if args.reproduce:
         return
-    out = {"reproduction_c1_vs_mp_at_0.740": list(reproduced)} | analyze(args.root)
+    out = {"reproduction_c1_vs_mp_at_0.740": list(reproduced)} | (follow_up(args.root) if args.follow_up
+                                                                   else analyze(args.root))
     text = json.dumps(out, indent=1, allow_nan=False, default=float)
     if args.out:
         args.out.write_text(text + "\n")
