@@ -4,7 +4,7 @@ gate: G-P3(b) fail: AUC(8 IN) - AUC(24 IN) = +0.040 [0.009, 0.072]; G-P3(a) pend
 protocol: results/cia_v3/robustness/PROTOCOL.md (fixed before any run)
 machine: compute server
 cost: 0 GPU-h; cap 35 GPU-h (ROADMAP decision 5), escalate at 43.75
-next: owner's decision on ESCALATION.md; G-P3(a) when the runs finish (about 16:00)
+next: runner option --always-in-count (default-off) and tests; 32 runs of p3-gdp-r2x-in24-a0; D_int (PROTOCOL.md Section 5); G-P3(a) when the composite runs finish
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Section 3 (P3), Sections 1 and 2; decision 5 in Section 10. Branch
@@ -66,3 +66,4 @@ The runner is P0's, unchanged.
 | 2026-11-06 21:40 | `analyze.py` and 7 tests committed (6f7bda98) before any run. Reproduction check: C1's composite minus metric privacy at 0.740, -0.095 [-0.137, -0.053], equal to the published value to 3 decimals. |
 | 2026-11-06 21:43 | Runs started: `~/cia-server/p3-worker.sh` under `v3-direct.sh`, three workers with 4 parallel clients (`p3-w1`, `p3-w3` on GPU 0, `p3-w2` on GPU 1), per-run locks, RAM and GPU checks before each run (22, 28 and 34 GB of RAM; 4 GB of GPU memory). GPUs are shared with the owner's F0.7 shard workers and another user's job (decision 4). |
 | 2026-11-07 14:25 | All 64 IN-count runs complete (no failures). **G-P3(b) fails:** standard attacker, all candidates, AUC 8 IN 0.694 [0.647, 0.742] (24 active, accuracy 0.731), 24 IN 0.654 [0.624, 0.684] (40 active, accuracy 0.749); difference +0.040 [0.009, 0.072], block jackknife at 97.5%. Reproduction check first (C1 -0.095 [-0.137, -0.053]). Escalated in `ESCALATION.md`; the design cannot separate interference from the active count. 173/192 runs complete; the other runs continue (they serve G-P3(a), which the escalation does not affect). |
+| 2026-11-07 14:45 | **Owner chose ESCALATION.md option 2** (ROADMAP decision 7). As proposed (8 IN with 24 always-in) it does not fit EuroSAT's 16 non-candidate slots, so the active count is held at 24 instead (PROTOCOL.md Section 5, fixed before the runs): the existing 8-IN runs against 32 new runs with 24 IN and no always-in client. Agent P told the owner of the change. |

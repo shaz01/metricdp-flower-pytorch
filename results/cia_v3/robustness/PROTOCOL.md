@@ -60,3 +60,30 @@ metric-privacy runs share the same seeds and inclusion as C1 and A1, and the dif
 measured occupancy (ROADMAP decision 5), escalation at 43.75. Several workers share a GPU, so occupancy is below summed
 run time; both are reported. GPUs are shared with other jobs under ROADMAP decision 4, each run waiting for available
 host RAM and GPU memory first.
+
+## 5. Follow-up to G-P3(b): interference against dilution (ROADMAP decision 7; fixed 2026-11-07, before its runs)
+
+G-P3(b) failed (+0.040 [0.009, 0.072]). Its two designs differ in the IN count and in the active count (24 against
+40). EuroSAT has 16 non-candidate slots, so the active count is held at 24:
+
+| Config | Arguments | Runs | IN | Always in | Active |
+|---|---|---|---|---|---|
+| `p3-gdp-r2x-in8` (existing) | as Section 1 | 32 | 8 | 16 | 24 |
+| `p3-gdp-r2x-in24-a0` (new) | `--privacy global-dp --noise-ratio 0.003092 --in-count 24 --always-in-count 0` | 32 | 24 | 0 | 24 |
+| `p3-gdp-r2x-in24` (existing) | as Section 1 | 32 | 24 | 16 | 40 |
+
+`--always-in-count k` (new, default-off: the 16 non-candidate slots as before) keeps the first `k` of the sorted
+non-candidate slots; only `k = 0` is used. Noise std on the released average stays `r C`. The new runs share
+`design_seed = 2`, so replicate `j` has the same seeds as the existing runs and the inclusion of the 24-IN design.
+
+**Statistics** (standard attacker, all candidates; block jackknife of Section 2 item 5, 97.5%):
+- `D_int = AUC(8 IN, 24 active) - AUC(24 IN, 24 active)`: the IN-count effect at a fixed active count;
+- `D_act = AUC(24 IN, 24 active) - AUC(24 IN, 40 active)`: the active-count effect at a fixed IN count (reported).
+Accuracy, top decile and lowest-client accuracy are reported for all three.
+
+**Decision** (for the owner; no gate of its own):
+- `D_int` interval inside +-0.03: no IN-count interference at a fixed active count. The G-P3(b) gap is the active
+  count, and ESCALATION.md option 1 (design dependence, no correction) applies.
+- `D_int` interval entirely outside +-0.03 (low above 0.03 or high below -0.03): interference; an IN-count correction
+  is needed (option 3) and G-P2b is redone with it.
+- Otherwise: inconclusive at this power; reported to the owner with both intervals.
