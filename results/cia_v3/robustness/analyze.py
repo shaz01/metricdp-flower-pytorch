@@ -9,6 +9,11 @@ Follow-up to G-P3(b) (PROTOCOL.md Section 5, ROADMAP decision 7): the IN-count e
 
     uv run --no-sync python -m results.cia_v3.robustness.analyze --follow-up \
         --out results/cia_v3/robustness/analysis_follow_up.json
+
+The same at R = 64 (PROTOCOL.md Section 6, ROADMAP decision 8b):
+
+    uv run --no-sync python -m results.cia_v3.robustness.analyze --follow-up-64 \
+        --out results/cia_v3/robustness/analysis_follow_up_r64.json
 """
 from __future__ import annotations
 
@@ -26,7 +31,8 @@ from experiments.cia.audit_attacks import (
 from research.cia_roadmap_v3.reanalysis import reanalyze as rz
 from results.cia_v2.frontier import analyze as m2
 from results.cia_v2.frontier.a1 import analyze as a1
-from results.cia_v2.randomized_inclusion.analysis import load_audit
+from results.cia_v2.randomized_inclusion.analysis import Audit, load_audit
+from results.cia_v2.randomized_inclusion.runner import design_matrix
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
@@ -36,6 +42,8 @@ METRIC_PRIVACY = {"p3-mp-r1x": 0.001546, "p3-mp-r2x": 0.003092}
 IN_COUNT = {8: "p3-gdp-r2x-in8", 24: "p3-gdp-r2x-in24"}
 FIXED_ACTIVE = "p3-gdp-r2x-in24-a0"  # 24 IN, no always-in slot: 24 active, as 8 IN
 ALWAYS_IN = 16
+EXTENSION = {IN_COUNT[8]: "p3x-gdp-r2x-in8", FIXED_ACTIVE: "p3x-gdp-r2x-in24-a0"}  # replicates 32-63 of R = 64
+EXTENDED_REPLICATES = 64
 BLOCK = 4  # replicates per block of the 8-IN design and of its complement
 CHECKPOINT_EVERY = 5  # the standard attacker's 11 checkpoints
 REDUCTION = 0.05  # G-C1
@@ -169,6 +177,68 @@ def follow_up(root):
                      "d_int": interference, "d_act": active, "decision": follow_up_decision(interference)})
 
 
+def load_extended(root, base, extension, total=EXTENDED_REPLICATES):
+    """``base``'s 32 replicates plus ``extension``'s replicates 32 .. total - 1 of the ``total``-replicate design.
+
+    Refuses the join unless the ``total`` design has ``base``'s as its first columns, and checks every extension run's
+    inclusion and design settings against it."""
+    first = load_audit(root, config=base)
+    have = first.membership.shape[1]
+    found = {}
+    for path in sorted(Path(root).glob("*/manifest.json")):
+        manifest = json.loads(path.read_text())
+        if manifest["config"] == extension:
+            found[manifest["replicate"]] = (path.parent, manifest)
+    missing = [j for j in range(have, total) if j not in found or not (found[j][0] / "complete.json").exists()]
+    if missing or len(found) != total - have:
+        raise ValueError(f"{extension!r}: replicates {missing} missing or incomplete, or extra runs")
+    designs = {(m["design_seed"], m["replicates"], tuple(m["checkpoint_rounds"]), tuple(m["candidates"]),
+                m.get("in_count"), m.get("always_in_count")) for _, m in found.values()}
+    if len(designs) != 1:
+        raise ValueError(f"{extension!r} mixes design settings: {sorted(designs)}")
+    ((seed, replicates, rounds, candidates, in_count, _),) = designs
+    if replicates != total or rounds != first.rounds or candidates != tuple(first.candidates):
+        raise ValueError(f"{extension!r} does not extend {base!r}")
+    design = design_matrix(total, design_seed=seed, in_count=in_count)
+    if not np.array_equal(design[:, :have], first.membership):
+        raise ValueError(f"the {total}-replicate design does not start with {base!r}'s")
+    losses = np.empty((len(candidates), total - have, len(rounds)))
+    membership = np.zeros((len(candidates), total - have), dtype=bool)
+    accuracy, lowest, names = np.empty(total - have), np.empty(total - have), []
+    for i, j in enumerate(range(have, total)):
+        folder, manifest = found[j]
+        names.append(manifest["run_name"])
+        index = {(r["round"], r["candidate"]): r for r in json.loads((folder / "measurements.json").read_text())}
+        for c, candidate in enumerate(candidates):
+            membership[c, i] = candidate in manifest["included"]
+            losses[c, i] = [index[(t, candidate)]["shadow_loss"] for t in rounds]
+        accuracy[i] = index[(rounds[-1], candidates[0])]["test_accuracy"]
+        clients = json.loads((folder / f"{manifest['run_name']}.json").read_text())["client_evaluate_metrics"]
+        lowest[i] = min(map(float, clients[str(rounds[-1])]["per-client-eval_acc"]))
+    if not np.array_equal(membership, design[:, have:]):
+        raise ValueError(f"{extension!r}: recorded inclusion differs from the {total}-replicate design")
+    return Audit(config=f"{base}+{extension}", rounds=first.rounds,
+                 losses=np.concatenate([first.losses, losses], axis=1),
+                 membership=np.concatenate([first.membership, membership], axis=1),
+                 final_accuracy=np.concatenate([first.final_accuracy, accuracy]), released_norms=None,
+                 surrogate_losses=None, run_names=first.run_names + tuple(names),
+                 min_client_accuracy=np.concatenate([first.min_client_accuracy, lowest]),
+                 candidates=first.candidates, top_decile=first.top_decile)
+
+
+def follow_up_extended(root):
+    """PROTOCOL.md Section 6: ``D_int`` at R = 64; ``D_act`` stays at R = 32."""
+    eight = load_extended(root, IN_COUNT[8], EXTENSION[IN_COUNT[8]])
+    fixed = load_extended(root, FIXED_ACTIVE, EXTENSION[FIXED_ACTIVE])
+    interference = _interval(in_count_difference(scored(eight), scored(fixed)))
+    previous = follow_up(root)
+    return a1._json({"replicates": EXTENDED_REPLICATES,
+                     "configs": {"8 IN, 24 active": in_count_summary(eight),
+                                 "24 IN, 24 active": in_count_summary(fixed, always_in=0)},
+                     "d_int": interference, "decision": follow_up_decision(interference),
+                     "r32": {"d_int": previous["d_int"], "d_act": previous["d_act"]}})
+
+
 def lowest_client_at(audits, target):
     points = sorted((float(a.final_accuracy.mean()), float(np.mean(a.min_client_accuracy))) for a in audits)
     accuracy, lowest = np.array(points).T
@@ -218,6 +288,7 @@ def main():
     parser.add_argument("--root", type=Path, default=HERE / "results")
     parser.add_argument("--reproduce", action="store_true", help="run only the reproduction check")
     parser.add_argument("--follow-up", action="store_true", help="only the G-P3(b) follow-up (PROTOCOL.md Section 5)")
+    parser.add_argument("--follow-up-64", action="store_true", help="the follow-up at R = 64 (PROTOCOL.md Section 6)")
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
     reproduced = reproduce_c1()
@@ -226,8 +297,9 @@ def main():
         raise SystemExit(f"reproduction failed: {reproduced} != {rz.PUBLISHED_C1_VS_MP[0.740]}")
     if args.reproduce:
         return
-    out = {"reproduction_c1_vs_mp_at_0.740": list(reproduced)} | (follow_up(args.root) if args.follow_up
-                                                                   else analyze(args.root))
+    part = (follow_up_extended(args.root) if args.follow_up_64 else follow_up(args.root) if args.follow_up
+            else analyze(args.root))
+    out = {"reproduction_c1_vs_mp_at_0.740": list(reproduced)} | part
     text = json.dumps(out, indent=1, allow_nan=False, default=float)
     if args.out:
         args.out.write_text(text + "\n")

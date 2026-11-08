@@ -78,3 +78,51 @@ def test_follow_up_decision():
     assert analyze.follow_up_decision({"low": 0.031, "high": 0.08}).startswith("interference")
     assert analyze.follow_up_decision({"low": -0.09, "high": -0.035}).startswith("interference")
     assert analyze.follow_up_decision({"low": 0.01, "high": 0.07}) == "inconclusive at this power"
+
+
+def write_runs(root, config, replicates, total, *, gap=0.3, seed=0, flip=None):
+    """Fake runner output for the IN-count design (8 IN); ``flip`` = (candidate row, replicate)."""
+    import json
+    from results.cia_v2.randomized_inclusion.runner import CANDIDATES, TOP_DECILE
+    rng = np.random.default_rng(seed)
+    design = design_matrix(total, design_seed=2, in_count=8)
+    rounds = list(range(0, 51, 5))
+    for j in replicates:
+        included = [c for c, member in zip(CANDIDATES, design[:, j]) if member]
+        if flip is not None and flip[1] == j:
+            candidate = CANDIDATES[flip[0]]
+            included = [c for c in included if c != candidate] if candidate in included else included + [candidate]
+        name = f"ri-{config}-d2-rep{j:02d}"
+        folder = root / name
+        folder.mkdir(parents=True)
+        manifest = {"config": config, "replicate": j, "run_name": name, "design_seed": 2, "replicates": total,
+                    "checkpoint_rounds": rounds, "candidates": list(CANDIDATES), "top_decile": list(TOP_DECILE),
+                    "included": included, "in_count": 8}
+        (folder / "manifest.json").write_text(json.dumps(manifest))
+        rows = [{"round": t, "candidate": c, "test_accuracy": 0.7,
+                 "shadow_loss": 2.0 - t / 50 - gap * (c in included) + rng.normal(0, 0.1)}
+                for t in rounds for c in CANDIDATES]
+        (folder / "measurements.json").write_text(json.dumps(rows))
+        (folder / f"{name}.json").write_text(json.dumps({"train_metrics": {"1": {}},
+                                                        "client_evaluate_metrics": {"50": {"per-client-eval_acc": [0.5]}}}))
+        (folder / "complete.json").write_text("{}")
+
+
+def test_extended_audit_joins_the_two_halves_of_the_design(tmp_path):
+    write_runs(tmp_path, "base", range(32), 32)
+    write_runs(tmp_path, "more", range(32, 64), 64, seed=1)
+    audit = analyze.load_extended(tmp_path, "base", "more")
+    assert audit.losses.shape == (32, 64, 11)
+    assert np.array_equal(audit.membership, design_matrix(64, design_seed=2, in_count=8))
+    assert len(analyze.blocks_of(64)) == 16
+
+
+def test_extended_audit_refuses_missing_or_off_design_runs(tmp_path):
+    write_runs(tmp_path / "short", "base", range(32), 32)
+    write_runs(tmp_path / "short", "more", range(32, 63), 64)
+    with pytest.raises(ValueError, match="missing"):
+        analyze.load_extended(tmp_path / "short", "base", "more")
+    write_runs(tmp_path / "off", "base", range(32), 32)
+    write_runs(tmp_path / "off", "more", range(32, 64), 64, flip=(0, 40))
+    with pytest.raises(ValueError, match="differs"):
+        analyze.load_extended(tmp_path / "off", "base", "more")
