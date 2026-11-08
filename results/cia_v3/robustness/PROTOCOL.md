@@ -87,3 +87,24 @@ Accuracy, top decile and lowest-client accuracy are reported for all three.
 - `D_int` interval entirely outside +-0.03 (low above 0.03 or high below -0.03): interference; an IN-count correction
   is needed (option 3) and G-P2b is redone with it.
 - Otherwise: inconclusive at this power; reported to the owner with both intervals.
+
+## 6. Follow-up extended to R = 64 (ROADMAP decision 8b; fixed 2026-11-08, before its runs)
+
+Section 5's `D_int` was inconclusive (+0.012 [-0.025, 0.050]). Both 24-active configurations get replicates 32-63 of
+the 64-replicate design with `design_seed = 2`:
+
+| Config | Arguments | Replicates |
+|---|---|---|
+| `p3x-gdp-r2x-in8` | `--privacy global-dp --noise-ratio 0.003092 --in-count 8 --replicates 64 --design-seed 2` | 32-63 |
+| `p3x-gdp-r2x-in24-a0` | `--privacy global-dp --noise-ratio 0.003092 --in-count 24 --always-in-count 0 --replicates 64 --design-seed 2` | 32-63 |
+
+`design_matrix(64, design_seed=2, in_count=k)` has `design_matrix(32, ...)` as its first 32 columns (checked), so each
+configuration's 64 replicates are Section 5's 32 runs plus the 32 new ones, and the design stays balanced (every
+candidate IN 16 times at 8 IN, 48 at 24 IN). New replicates draw new seeds from `(2, j)`. The analysis checks the
+prefix property and every run's inclusion against the 64-replicate design before using them.
+
+**Statistic:** `D_int` at `R = 64`, the block jackknife of Section 2 item 5 over 16 blocks (t with 15 df, 97.5%).
+`D_act` stays at `R = 32` (the 40-active configuration is not extended) and is reported as in Section 5.
+
+**Decision:** Section 5's rule applied to the `R = 64` interval, then the owner decides on an IN-count correction.
+No further extension.
