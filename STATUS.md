@@ -1,7 +1,7 @@
 # Project Status
 
 **Branch:** `master`
-**Last updated:** 2026-11-09 13:20, v3 Agent P: P2 and P3 complete with FINDINGS, awaiting the owner. P2: A-3 replicates on CIFAR-10, D-4 does not. P3: the every-round sampling-aware attacker (in scope, decision 8) finds the composite leakier than metric privacy on EuroSAT (+0.097 at 0.740); IN-count follow-up inconclusive, no correction (decision 9). 2026-11-06 21:45, v3 Agent P: P2 G-P2b computed (A-3 replicates at the one testable target; D-4 does not replicate under either attacker; provisional until G-P3(b)); owner reconsiders decision 1; P3 running. 2026-11-04 19:35, v3 Agent P: P2 stage b first half done (no replacement), second half running. 2026-11-02 10:45, v3 Agent P: P1 complete, FINDINGS written (G-P1: the published protection claim fails in its own setting; Table 13 a single draw), awaiting the owner; P2 passed G-P2a (vanilla CIFAR-10 AUC 0.998), pilot done, levels chosen, stage b approved in full (ROADMAP decision 6) and queued. 2026-10-31 12:55, v3 Agent P: G-P0 passed; owner raised P2's and P3's caps (ROADMAP decision 5); P1 (`feature/cia-v3-paper-setting`) and P2 stage a (`feature/cia-v3-cifar10`) running on shared GPUs. 2026-10-30, v3 P6 memo stage (design memo, ROADMAP decisions 2-3) closed by the owner and merged into `master`; screens not open. 2026-10-30, v3 P5 (client inference in the formal regime) closed by the owner and merged into `master` (`reports/cia_v3_p5_formal_cia.md`). 2026-10-30, roadmap v3 approved by the owner (Section 1 defaults) and merged into `master` (`research/cia_roadmap_v3/`); v2 results handoff corrected (`research/cia_roadmap_v3/HANDOFF_AUDIT.md`). 2026-10-30, C1 closed and merged (decision 17; `reports/cia_v2_composite.md`); roadmap v2 complete, results handoff `research/cia_roadmap_v2/RESULTS_HANDOFF.md`. 2026-10-29, B5 and B1 merged (`feature/cia-v2-mechanisms`); C1 opened (decision 14). 2026-10-26, AZ (Alzheimer replication) merged. 2026-10-23, B4 confirmatory run merged; B5 closed (report on `feature/cia-v2-mechanisms`); C1 waits (decision 12). 2026-10-20, owner decisions 7-11 (ROADMAP.md Section 10). CIA v2 Agent A packages M0, M1, M2, A1 and A2 merged into `master` (closed by the owner; reports `reports/cia_v2_m0_measurement.md`, `cia_v2_m1_shared_noise.md`, `cia_v2_m2_frontier.md`, `cia_v2_a1_matched_accuracy.md`, `cia_v2_a2_side_channel.md`). 2026-10-17, CIA v2 B4 (formal regime) and the client-level accountant merged into `master` (Agent C, closed by the owner; report `reports/cia_v2_formal_regime.md`); Agent A's M0 (G-M0 passed) came along as a dependency of B4's audit. CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
+**Last updated:** 2026-11-09 13:30, v3 P0-P3 closed by the owner and merged into `master` (`reports/cia_v3_p1_paper_setting.md`, `cia_v3_p2_cifar10.md`, `cia_v3_p3_robustness.md`); ROADMAP decisions 4-9; P4 off (P2 did not pass); R1 waits for the owner's decision 1. 2026-11-09 13:20, v3 Agent P: P2 and P3 complete with FINDINGS. P2: A-3 replicates on CIFAR-10, D-4 does not. P3: the every-round sampling-aware attacker (in scope, decision 8) finds the composite leakier than metric privacy on EuroSAT (+0.097 at 0.740); IN-count follow-up inconclusive, no correction (decision 9). 2026-11-06 21:45, v3 Agent P: P2 G-P2b computed (A-3 replicates at the one testable target; D-4 does not replicate under either attacker; provisional until G-P3(b)); owner reconsiders decision 1; P3 running. 2026-11-04 19:35, v3 Agent P: P2 stage b first half done (no replacement), second half running. 2026-11-02 10:45, v3 Agent P: P1 complete, FINDINGS written (G-P1: the published protection claim fails in its own setting; Table 13 a single draw), awaiting the owner; P2 passed G-P2a (vanilla CIFAR-10 AUC 0.998), pilot done, levels chosen, stage b approved in full (ROADMAP decision 6) and queued. 2026-10-31 12:55, v3 Agent P: G-P0 passed; owner raised P2's and P3's caps (ROADMAP decision 5); P1 (`feature/cia-v3-paper-setting`) and P2 stage a (`feature/cia-v3-cifar10`) running on shared GPUs. 2026-10-30, v3 P6 memo stage (design memo, ROADMAP decisions 2-3) closed by the owner and merged into `master`; screens not open. 2026-10-30, v3 P5 (client inference in the formal regime) closed by the owner and merged into `master` (`reports/cia_v3_p5_formal_cia.md`). 2026-10-30, roadmap v3 approved by the owner (Section 1 defaults) and merged into `master` (`research/cia_roadmap_v3/`); v2 results handoff corrected (`research/cia_roadmap_v3/HANDOFF_AUDIT.md`). 2026-10-30, C1 closed and merged (decision 17; `reports/cia_v2_composite.md`); roadmap v2 complete, results handoff `research/cia_roadmap_v2/RESULTS_HANDOFF.md`. 2026-10-29, B5 and B1 merged (`feature/cia-v2-mechanisms`); C1 opened (decision 14). 2026-10-26, AZ (Alzheimer replication) merged. 2026-10-23, B4 confirmatory run merged; B5 closed (report on `feature/cia-v2-mechanisms`); C1 waits (decision 12). 2026-10-20, owner decisions 7-11 (ROADMAP.md Section 10). CIA v2 Agent A packages M0, M1, M2, A1 and A2 merged into `master` (closed by the owner; reports `reports/cia_v2_m0_measurement.md`, `cia_v2_m1_shared_noise.md`, `cia_v2_m2_frontier.md`, `cia_v2_a1_matched_accuracy.md`, `cia_v2_a2_side_channel.md`). 2026-10-17, CIA v2 B4 (formal regime) and the client-level accountant merged into `master` (Agent C, closed by the owner; report `reports/cia_v2_formal_regime.md`); Agent A's M0 (G-M0 passed) came along as a dependency of B4's audit. CIA roadmap v2 approved (`research/cia_roadmap_v2/`). 2026-10-16: CIA programme closed: WP3, WP6, the consensus-KL follow-up and the programme synthesis
 (`research/cia_review_2026-10/SYNTHESIS.md`) merged into `master`; the owner is choosing new directions from the
 synthesis. 2026-10-15: WP0-WP2 merged, D1 stopped. 2026-10-10: CIA literature review and agent roadmap added
 (`HANDOFF.md`, `research/cia_review_2026-10/`)
@@ -42,7 +42,7 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
     - RR-Label plus logit adjustment (reported) as baselines.
 
     The screens wait for the paper packages to close and get a new branch.
-- **Agent P (compute server), 2026-10-30:**
+- **Agent P (compute server), 2026-10-30; P0-P3 closed and merged 2026-11-09:**
   - **P0 (`feature/cia-v3-infra`; `results/cia_v3/infra/STATE.md`): G-P0 passes (2026-10-31).** New runner options (defaults change no committed manifest): `--checkpoint-every`, `--in-count 8|24`,
     `--dataset cifar10` (label-Dirichlet 0.3, 48 slots, candidates fixed from the committed seed-42 partition
     summary), and the 3-client Alzheimer paper-protocol runner (`results/cia_v3/infra/paper_runner.py`, separate seeds
@@ -54,21 +54,24 @@ granularity — see `AGENTS.md`'s "Working across machines" section.
       about 116 GPU-h (cap 85) and P3, with every-round scoring, to about 32 GPU-h (cap 20). Both are above 1.25x;
       options are listed. P1 projects to about 5 GPU-h (cap 40).
     - Owner decision 5 (2026-10-31): caps raised to P2 120 and P3 35 GPU-h.
-  - **P1 (`feature/cia-v3-paper-setting`; `results/cia_v3/paper_setting/FINDINGS.md`): complete, awaiting the owner.**
+  - **P1 (`feature/cia-v3-paper-setting`; `results/cia_v3/paper_setting/FINDINGS.md`): closed and merged.**
     The paper's 3-client Alzheimer setting, 20 IN/OUT pairs per configuration with separate seeds per world (220 runs,
     about 15 GPU-h). **G-P1: "the published protection claim fails in its own setting"**: the calibrated attacker scores
     1.000 for global DP and metric privacy at the paper's `z = 0.01`, and 0.973 / 0.985 at `z = 0.024`, where global DP
     matches the paper's accuracy (0.672 against 0.637). At `z = 0.024` the paper's own per-pair statistic for global DP
     ranges 0.366-0.646 (median 0.497), so **"Table 13 is a single draw from a wide distribution"** also holds.
-  - **P2 (`feature/cia-v3-cifar10`; `results/cia_v3/cifar10/FINDINGS.md`): complete, awaiting the owner.** G-P2a passed
+  - **P2 (`feature/cia-v3-cifar10`; `results/cia_v3/cifar10/FINDINGS.md`): closed and merged.** G-P2a passed
     (vanilla AUC 0.998). G-P2b: **A-3 replicates** (metric privacy minus global DP at 0.547: -0.002 [-0.008, 0.005];
     0.319 not testable); **D-4 does not** (composite minus metric privacy -0.017 and -0.055 under the standard attacker,
     -0.007 and -0.040 sampling-aware; G-C1 needs at least 0.05). 247.7 run-hours. ROADMAP Section 4: the owner
     reconsiders decision 1.
-  - **P3 (`feature/cia-v3-robustness`; `results/cia_v3/robustness/FINDINGS.md`): complete, awaiting the owner.**
+  - **P3 (`feature/cia-v3-robustness`; `results/cia_v3/robustness/FINDINGS.md`): closed and merged.**
     G-P3(a) fails: under the every-round sampling-aware attacker the composite leaks more than metric privacy on EuroSAT
     (+0.097 [0.042, 0.151] at 0.740). G-P3(b) failed (+0.040, 24 against 40 active); at a fixed active count the IN-count
     effect is +0.014 [-0.016, 0.044] at `R = 64`, so no correction (decisions 7-9). 75.6 run-hours.
+  - **Next:** P4 is off (it needs P2 to pass). R1 (the paper) waits for the owner's decision 1, which ROADMAP
+    Section 4 asks the owner to reconsider now that D-4 fails on CIFAR-10 and, under the every-round attacker, on
+    EuroSAT.
 
 **CIA roadmap v2: approved by the owner 2026-10-17 (ROADMAP.md Section 1 defaults accepted). Agents A and C have
 finished; Agent B (B1-B3, B5, C1) has not started. M2's escalation resolved by the owner 2026-10-20 (ROADMAP.md Section 10): audit form is the paper's main line; Alzheimer replication of M2 and A1; B5 then B1 at 2x and 4x with an all-candidate gate at R = 32; B2 deprioritized; B4 confirmatory run.** `research/cia_roadmap_v2/`
@@ -258,11 +261,11 @@ section.
 
 | Command | What | Status |
 | --- | --- | --- |
-| `p3-worker.sh`, `p3b-worker.sh`, `p3c-worker.sh` under `v3-direct.sh` (compute server; branch `feature/cia-v3-robustness`) | P3: 192 runs, the fixed-active follow-up (32) and its `R = 64` extension (64) | done 2026-11-08 21:16; FINDINGS written |
-| 4 x `v3-direct.sh` -> `p2-stage-b.sh` (compute server, tmux `p2-b1`..`p2-b4`, two per GPU; branch `feature/cia-v3-cifar10`) | P2 stage b: first half 152 runs (replicates 0-15; vanilla 8-15), second half 160 runs (16-31); per-run locks and per-run RAM/GPU checks | first half done 2026-11-04 01:56 (no replacement needed); second half done 2026-11-06 06:28; G-P2b computed, provisional until G-P3(b) |
+| `p3-worker.sh`, `p3b-worker.sh`, `p3c-worker.sh` under `v3-direct.sh` (compute server; branch `feature/cia-v3-robustness`) | P3: 192 runs, the fixed-active follow-up (32) and its `R = 64` extension (64) | done 2026-11-08 21:16; closed and merged 2026-11-09 |
+| 4 x `v3-direct.sh` -> `p2-stage-b.sh` (compute server, tmux `p2-b1`..`p2-b4`, two per GPU; branch `feature/cia-v3-cifar10`) | P2 stage b: first half 152 runs (replicates 0-15; vanilla 8-15), second half 160 runs (16-31); per-run locks and per-run RAM/GPU checks | first half done 2026-11-04 01:56 (no replacement needed); second half done 2026-11-06 06:28; G-P2b computed, provisional until G-P3(b); merged 2026-11-09 |
 | `p2-pilot.sh` (compute server, tmux `p2-pilot`, `p2-pilot-w2`; branch `feature/cia-v3-cifar10`) | P2 accuracy pilot, 26 runs | done 2026-11-02 08:51 (GPU 1, shared) |
 | `p2-stage-a.sh` (compute server, tmux `p2`; branch `feature/cia-v3-cifar10`) | P2 stage a: CIFAR-10 vanilla, replicates 0-7 | done 2026-11-01 03:01 (GPU 1, shared); G-P2a passed |
-| `p1-run.sh`, `p1-extension.sh` (compute server, tmux `p1`, `p1-ext`; branch `feature/cia-v3-paper-setting`) | P1: pilots (20 runs), main runs (120), extension at `z = 0.024` (80) | done 2026-11-02 03:32 (GPUs 0 and 1, shared; about 15 GPU-h) |
+| `p1-run.sh`, `p1-extension.sh` (compute server, tmux `p1`, `p1-ext`; branch `feature/cia-v3-paper-setting`) | P1: pilots (20 runs), main runs (120), extension at `z = 0.024` (80) | done 2026-11-02 03:32 (GPUs 0 and 1, shared; about 15 GPU-h); merged 2026-11-09 |
 | `p0-cost-wait.sh` -> `p0-cost-run.sh` (compute server, tmux `p0-wait` / `p0-cost`; branch `feature/cia-v3-infra`) | P0 cost runs: CIFAR-10 vanilla and composite, one paper-protocol pair, one 51-checkpoint EuroSAT composite (one worker, 4 parallel clients) | done 2026-10-31 00:41 (1.3 GPU-h on GPU 1, shared with another user's job, ROADMAP v3 decision 4; peak VRAM 3.6 GB); G-P0 passes |
 | `formal_cia run` (owner PC, CPU; branch `feature/cia-v3-formal-cia`, merged) | P5: 832 head runs | done 2026-10-30 (0.32 CPU-h); closed and merged |
 | 2 x `c1-chain.sh` (compute server, GPU 1 shared by owner approval, 4 parallel clients; branch `feature/cia-v2-composite`) | C1 main runs: composite at 4 levels, 128 runs, surrogates and the defense-aware score | done 2026-10-30 06:24 (about 11.5 GPU-h incl. pilot); G-C1 passes; merged |
@@ -286,6 +289,19 @@ section.
 | `a1-chain.sh` (compute server, GPUs 0 and 1, two workers each, idle and unclaimed at launch; branch `feature/cia-v2-frontier`) | CIA v2 A1 main runs, 7 configurations x 32 = 224 runs | done 2026-10-20 08:26 (about 21.7 GPU-h); G-A1 recorded |
 
 ## What's established on `master`
+
+- **CIA v3 P0-P3 (2026-11-09)** (`reports/cia_v3_p1_paper_setting.md`, `cia_v3_p2_cifar10.md`, `cia_v3_p3_robustness.md`;
+  data `results/cia_v3/{infra,paper_setting,cifar10,robustness}/`; ROADMAP v3 decisions 4-9).
+  - **P0:** runner options `--checkpoint-every`, `--in-count`, `--always-in-count` (default-off; committed manifests
+    rebuild unchanged), the CIFAR-10 profile and the 3-client paper-protocol runner.
+  - **P1:** in the paper's own 3-client setting the target client is identifiable under global DP and metric privacy
+    (calibrated AUC 1.000 at the paper's `z = 0.01`; 0.973 and 0.985 at its accuracy); the paper's AUCs below 0.5 are
+    single draws of a high-variance statistic.
+  - **P2:** on CIFAR-10, A-3 replicates (metric privacy equivalent to global DP at matched accuracy) and D-4 does not
+    (the composite's reduction reaches 0.05 once, and the sampling-aware attacker removes most of it).
+  - **P3:** an attacker who knows the target's sampling schedule and sees every round finds the composite leakier than
+    metric privacy on EuroSAT (+0.097 at 0.740); absolute AUC depends on the active count and on `R`, comparisons
+    within one design do not (no IN-count correction, decision 9).
 
 - **CIA v2 C1: the composite beats metric privacy at matched accuracy (2026-10-30)** (`reports/cia_v2_composite.md`; data `results/cia_v2/composite/`). Client subsampling at q = 0.25 with logit adjustment (tau 1) has an all-candidate AUC 0.095 [-0.137, -0.053] below the paper's metric privacy at 0.740 accuracy and 0.108 [-0.163, -0.053] below at 0.660 (two-way bootstrap also below 0); also about 0.08-0.10 below private median and global DP; a defense-aware and a label-only attacker recover no leakage. At matched accuracy it is indistinguishable from subsampling alone: logit adjustment adds 3-10 pp accuracy at the same noise, not privacy. Formal guarantee vacuous or not computable. Roadmap v2 complete; results handoff `research/cia_roadmap_v2/RESULTS_HANDOFF.md`.
 - **CIA v2 B5 and B1: two defenses against the label channel (2026-10-29)** (`reports/cia_v2_b5_large_clients.md`, `reports/cia_v2_b1_subsampling.md`; data `results/cia_v2/mechanisms/`). EuroSAT's client-inference leakage is mostly label-distribution inference (a label-matched public surrogate attacker is within 0.009-0.025 AUC of the true one). Logit adjustment in local training lowers the AUC by 0.100 [-0.152, -0.049] at 2x with +1.1 pp accuracy (fails at 4x); client subsampling at q = 0.25 lowers it by 0.10 at 0.740 and 0.06 at 0.660 accuracy against global DP at matched accuracy (q = 0.5 fails). Neither strengthens the formal guarantee. Code: `metricdp_pytorch/subsampled_dp_strategy.py`, `--contribution-cap`, `--logit-adjustment-tau`, `--privacy subsampled-global-dp`.
