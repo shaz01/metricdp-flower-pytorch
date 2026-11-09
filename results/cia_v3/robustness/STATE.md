@@ -1,10 +1,10 @@
 Package: P3, every-round attacker and interference check (CIA roadmap v3, Agent P; direction F4)
-status: all runs complete (192 plus 32 follow-up); G-P3(a) FAILS (the composite leaks more than metric privacy under the every-round attacker); G-P3(b) follow-up inconclusive
+status: all runs complete (192 + 32 + 64); G-P3(a) fails; G-P3(b) follow-up at R = 64 still inconclusive; owner decides on an IN-count correction
 gate: G-P3(a) fail at 0.740 (+0.097 [0.042, 0.151]), 0.660 not testable; G-P3(b) fail (+0.040 [0.009, 0.072]), follow-up D_int +0.012 [-0.025, 0.050] inconclusive
 protocol: results/cia_v3/robustness/PROTOCOL.md (fixed before any run)
 machine: compute server
 cost: 0 GPU-h; cap 35 GPU-h (ROADMAP decision 5), escalate at 43.75
-next: R = 64 extension of the 24-active follow-up (64 runs, one worker per GPU; PROTOCOL.md Section 6); then the owner decides on an IN-count correction
+next: owner's decision on the IN-count question (ROADMAP decision 8b); then G-P2b's status, P2 and P3 FINDINGS
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Section 3 (P3), Sections 1 and 2; decision 5 in Section 10. Branch
@@ -73,3 +73,5 @@ The runner is P0's, unchanged.
 | 2026-11-08 13:15 | **Follow-up (PROTOCOL.md Section 5; `analysis_follow_up.json`):** AUC 8 IN / 24 active 0.694 [0.647, 0.742]; 24 IN / 24 active 0.682 [0.637, 0.727] (accuracy 0.761); 24 IN / 40 active 0.654 [0.624, 0.684]. `D_int` = +0.012 [-0.025, 0.050]: **inconclusive at this power** (the interval crosses +0.03). `D_act` = +0.028 [-0.008, 0.064]. By point estimates, about 0.028 of G-P3(b)'s 0.040 gap is the active count and 0.012 the IN count, but neither interval excludes 0. |
 | 2026-11-08 13:22 | **Owner decisions (ROADMAP decision 8):** the every-round attacker is in scope, so D-4 does not hold on EuroSAT for it; the IN-count follow-up is extended to `R = 64` once, then the owner decides. PROTOCOL.md Section 6 fixed before the extension's runs. |
 | 2026-11-08 13:26 | R = 64 loader and analysis committed (047222e5; 10 tests pass). Extension runs started: `~/cia-server/p3c-worker.sh`, one worker per GPU (`p3c-w1` on GPU 0, `p3c-w2` on GPU 1; 4 parallel clients; at least 8 GB of GPU memory free before each run, so other jobs keep headroom). |
+| 2026-11-08 21:16 | R = 64 extension complete: 64/64, no failed tries, one worker per GPU. |
+| 2026-11-09 13:15 | **Follow-up at R = 64** (`analysis_follow_up_r64.json`; reproduction check first). AUC 8 IN / 24 active 0.729 [0.703, 0.754] (accuracy 0.732); 24 IN / 24 active 0.715 [0.692, 0.738] (accuracy 0.761). `D_int` = **+0.014 [-0.016, 0.045]** (16 blocks, t with 15 df): **still inconclusive** by PROTOCOL.md Section 6 (the interval crosses +0.03 but includes 0). At R = 32 it was +0.012 [-0.025, 0.050]. Note: both AUCs rose by about 0.035 from R = 32 to R = 64 on the same first 32 replicates plus 32 more, because the calibrated attacker gets twice the references per world; absolute AUC depends on R as well as on the design, and differences are compared within one R. No further extension (Section 6). |
