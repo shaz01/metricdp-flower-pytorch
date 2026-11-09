@@ -1,10 +1,10 @@
 Package: P2, CIFAR-10 replication of A-3 and D-4 (CIA roadmap v3, Agent P; direction F2)
-status: stage b complete (312 runs); G-P2b computed, provisional until G-P3(b); owner reconsiders decision 1
-gate: G-P2a passed; G-P2b: A-3 replicates (equivalent at a2, a4 not testable); D-4 does not replicate under either attacker
+status: complete; FINDINGS.md written (owner asked 2026-11-09); closing and merging are the owner's call
+gate: G-P2a passed; G-P2b: A-3 replicates (equivalent at a2, a4 not testable); D-4 does not replicate under either attacker (final, ROADMAP decision 9)
 protocol: results/cia_v3/cifar10/PROTOCOL.md (fixed before any run)
 machine: compute server
-cost: about 246 GPU-h by summed run time (stage a and pilot about 28, first half 99, second half 119; failed tries not counted); cap about 290 GPU-h
-next: owner's decision on the ROADMAP Section 4 row (D-4 does not replicate); P3, whose interference check G-P3(b) the P2b numbers depend on; FINDINGS on the owner's go-ahead
+cost: 247.7 run-hours summed (stage a 8.0, pilot 21.3, stage b 218.4); occupancy lower (shared GPUs, up to four workers); cap about 290 GPU-h
+next: owner review of FINDINGS.md; the owner reconsiders decision 1 (ROADMAP Section 4); merge only on the owner's decision
 needs from others: none
 
 Roadmap: `research/cia_roadmap_v3/ROADMAP.md` Section 3 (P2), Sections 1 (decisions 2, 8), 2 and 4; decision 5 in
@@ -125,3 +125,4 @@ The runner and data module are P0's, unchanged.
 | 2026-11-06 09:20 | **G-P2b** (`analyze.py --stage b`, `analysis.json`; code committed first, b8de666d; reproduction check A1 -0.000 [-0.019, 0.018]). Targets `a2` 0.547, `a4` 0.319. **G-A1, metric privacy minus global DP:** a2 -0.002 [-0.008, 0.005], equivalent; a4 -0.004, **not testable** (global DP's 4x level is the curve's lowest point and defines `a4`, so leave-one-pair-out curves do not reach it; two-way [-0.041, 0.026], 984 of 2,000 resamples bracketed). **A-3 replicates** by the rule (every testable target). **G-C1, composite minus metric privacy, standard attacker:** a2 -0.017 [-0.027, -0.007], fail (below 0, but less than 0.05); a4 -0.055 [-0.086, -0.025], pass. **Sampling-aware attacker:** a2 -0.007 [-0.013, -0.001], fail; a4 -0.040 [-0.076, -0.003], fail. **D-4 does not replicate under either attacker.** Reported: 51-checkpoint attacker a2 -0.011 [-0.019, -0.004], a4 -0.051 [-0.075, -0.026]. Lowest-client accuracy at a2 / a4: global DP 0.355 / 0.160, metric privacy 0.344 / 0.155, composite 0.353 / 0.163. AUCs at a2 are 0.967-0.985, near the ceiling, so a fixed 0.05 reduction is demanding there; the rule was fixed before any run and is applied as written. |
 | 2026-11-06 09:30 | **Order deviation, Agent P's:** ROADMAP's G-P3(b) says to escalate an IN-count interference problem "before P2b's analysis", and the calendar has P3 alongside stage b. P2b's analysis was run before P3 started. So G-P2b is provisional: if G-P3(b) fails, measurement standard v3 needs an IN-count correction and this analysis is redone. P3's design and gate were fixed in the ROADMAP before these numbers existed, so they cannot have been tuned to them. |
 | 2026-11-07 14:25 | **G-P3(b) failed** (`results/cia_v3/robustness/ESCALATION.md` on `feature/cia-v3-robustness`): AUC(8 IN) - AUC(24 IN) = +0.040 [0.009, 0.072]. G-P2b stays provisional until the owner decides between treating it as design dependence and a further check. |
+| 2026-11-09 13:40 | **G-P2b final** (ROADMAP decision 9: no IN-count correction, so the provisional status is lifted). FINDINGS.md with two claims and two figures (`make_figures.py`, `figures/`), written at the owner's request. |
