@@ -1,5 +1,5 @@
 """Training data for one randomized-inclusion run: the frontier label-Dirichlet EuroSAT (or Alzheimer MRI, owner
-decision 8), restricted to the active clients.
+decision 8; or CIFAR-10, roadmap v3 decision 2), restricted to the active clients.
 
 The partition profile names the canonical federation (``alpha``, ``clients``, ``partition_seed``,
 the layout seed) and the canonical IDs of the clients that take part (``active``). Every client
@@ -24,6 +24,10 @@ def base_module(alpha, partition_seed=None, dataset="eurosat", cache_dir=None):
     if dataset == "alzheimer":
         return DirichletAlzheimer(alpha, partition_seed=partition_seed, min_records=ALZHEIMER_MIN_RECORDS,
                                   cache_dir=cache_dir)
+    if dataset == "cifar10":  # roadmap v3 decision 2
+        from results.cia_v3.infra.cifar10_data import base_module as cifar10
+
+        return cifar10(alpha, partition_seed=partition_seed, cache_dir=cache_dir)
     if dataset != "eurosat":
         raise ValueError(f"unknown dataset {dataset!r}")
     return DirichletEuroSAT(alpha, partition_seed=partition_seed, cache_dir=cache_dir)

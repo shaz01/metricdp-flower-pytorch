@@ -280,3 +280,103 @@ def test_adjusted_shadow_loss_matches_its_definition():
     with torch.no_grad():
         expected = nn.functional.cross_entropy(model(x).log() + prior, y).item()
     assert runner._adjusted_loss(model, loader, torch.device("cpu"), prior, 1.0) == pytest.approx(expected, rel=1e-5)
+
+
+# --- CIA roadmap v3, P0: IN count, every-round scoring, CIFAR-10 ---------------------------------------
+
+
+def test_default_in_count_keeps_the_committed_design():
+    from experiments.cia.inclusion import balanced_design
+
+    for in_count in (None, 16):
+        np.testing.assert_array_equal(runner.design_matrix(32, design_seed=2, in_count=in_count),
+                                      balanced_design(32, 32, seed=2))
+    assert "in_count" not in runner.manifest(plan()[0], surrogates=False)
+
+
+@pytest.mark.parametrize("in_count", [8, 24])
+def test_in_count_design_is_balanced(in_count):
+    design = runner.design_matrix(32, design_seed=2, in_count=in_count)
+    assert (design.sum(axis=0) == in_count).all()
+    assert (design.sum(axis=1) == 32 * in_count // 32).all()
+    runner.check_design(design, in_count)
+
+
+def test_twenty_four_in_is_the_complement_of_eight_in():
+    np.testing.assert_array_equal(runner.design_matrix(32, design_seed=5, in_count=24),
+                                  ~runner.design_matrix(32, design_seed=5, in_count=8))
+
+
+def test_in_count_rejects_designs_it_cannot_balance():
+    for in_count, replicates in ((8, 6), (12, 32), (0, 32), (32, 32)):
+        with pytest.raises(ValueError):
+            runner.design_matrix(replicates, design_seed=0, in_count=in_count)
+    with pytest.raises(ValueError, match="exactly 8"):
+        runner.check_design(np.ones((32, 4), dtype=bool), 8)
+    repeated = runner.design_matrix(4, design_seed=0, in_count=8)
+    repeated[:, 1] = repeated[:, 0]
+    with pytest.raises(ValueError):
+        runner.check_design(repeated, 8)
+
+
+@pytest.mark.parametrize("in_count", [8, 24])
+def test_in_count_runs_have_a_fixed_public_active_count(in_count):
+    runs = plan(replicates=32, in_count=in_count)
+    design = runner.design_matrix(32, design_seed=0, in_count=in_count)
+    for j, run in enumerate(runs):
+        assert len(run.included) == in_count and len(run.active) == run.num_clients == 16 + in_count
+        assert run.included == tuple(sorted(c for c, row in zip(runner.CANDIDATES, design) if row[j]))
+        assert run.noise_multiplier * run.hyperparams.clipping_norm / run.num_clients == pytest.approx(
+            runner.FRONTIER_RATIO * run.hyperparams.clipping_norm)
+    assert runner.manifest(runs[0], surrogates=False)["in_count"] == in_count
+    # Same replicate seeds as the default design, so configurations stay paired.
+    assert [r.client_seed for r in runs] == [r.client_seed for r in plan(replicates=32)]
+
+
+def test_every_round_scoring_changes_only_the_checkpoints():
+    default, every = plan()[0], plan(checkpoint_every=1)[0]
+    assert runner.manifest(every, surrogates=False)["checkpoint_rounds"] == list(range(51))
+    assert runner.manifest(default, surrogates=False)["checkpoint_rounds"] == list(runner.CHECKPOINT_ROUNDS)
+    assert {k: v for k, v in runner.manifest(every, surrogates=False).items() if k != "checkpoint_rounds"} == {
+        k: v for k, v in runner.manifest(default, surrogates=False).items() if k != "checkpoint_rounds"}
+    assert every.run_name() == default.run_name()
+    with pytest.raises(ValueError):
+        plan(checkpoint_every=-1)
+
+
+def test_cifar10_runs_use_its_panel_model_and_dataset():
+    runs = plan(dataset="cifar10", replicates=32)
+    profile = runner.PROFILES["cifar10"]
+    assert profile.candidates[:5] == profile.top_decile == runner.CIFAR10_TOP_DECILE
+    assert len(set(profile.candidates)) == 32
+    assert all(len(run.active) == 32 and set(run.included) <= set(profile.candidates) for run in runs)
+    assert all(set(range(48)) - set(profile.candidates) <= set(run.active) for run in runs)
+    assert {run.model_module for run in runs} == {"experiments.reproduce.cifar10_cnn:create_model"}
+    from dataclasses import replace
+
+    assert runs[0].hyperparams == replace(runner.HYPERPARAMS, rounds=50)  # EuroSAT's, at the profile's 50 rounds
+    args = runs[0].runner_args(output_dir=Path("out"), max_parallel_clients=4, client_cpus=1.0,
+                               checkpoint_rounds=runner.CHECKPOINT_ROUNDS)
+    flags = dict(zip(args[::1], args[1::1]))
+    assert json.loads(flags["--partition-profile"]) == {"alpha": 0.3, "clients": 48, "partition_seed": 42,
+                                                        "active": list(runs[0].active), "dataset": "cifar10"}
+    pinned = runner.manifest(runs[0], surrogates=False)
+    assert pinned["dataset"] == "cifar10" and pinned["candidates"] == list(runner.CIFAR10_CANDIDATES)
+    assert pinned["checkpoint_rounds"] == list(runner.CHECKPOINT_ROUNDS) and pinned["shadow_fraction"] == 0.10
+
+
+def test_cifar10_candidates_follow_the_rule_on_the_committed_partition_summary():
+    path = runner.PROJECT_ROOT / "results/cia_v3/infra/tables/cifar10_partition_summary.json"
+    summary = json.loads(path.read_text())
+    assert (summary["alpha"], summary["seed"], len(summary["clients"])) == (0.3, 42, 48)
+    assert sum(c["records"] for c in summary["clients"]) == 50_000 and summary["min_records"] >= 10
+    top, others = runner.select_candidates({c["target"]: c["records"] for c in summary["clients"]})
+    assert top + others == runner.CIFAR10_CANDIDATES
+
+
+def test_cifar10_data_module_is_selected_by_the_profile():
+    from results.cia_v2.randomized_inclusion import data
+    from results.cia_v3.infra.cifar10_data import DirichletCIFAR10
+
+    module = data.base_module(0.3, partition_seed=42, dataset="cifar10")
+    assert isinstance(module, DirichletCIFAR10) and module.min_records == 10 and module.partition_seed == 42

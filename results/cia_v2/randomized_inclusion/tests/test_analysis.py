@@ -91,3 +91,26 @@ def test_load_audit_reads_adjusted_losses_when_present(tmp_path):
 def test_adjusted_losses_are_absent_by_default(audit):
     root, _ = audit
     assert analysis.load_audit(root, config="gdp").adjusted_losses is None
+
+
+def test_load_audit_checks_an_in_count_design(tmp_path):
+    """v3 P0: a configuration run with ``--in-count 8`` loads, and its membership is checked against that design."""
+    from results.cia_v2.randomized_inclusion import runner
+    from results.cia_v2.randomized_inclusion.analysis import load_audit
+
+    runs = runner.build_runs(config="k8", privacy="vanilla", noise_ratio=0.0, replicates=4, design_seed=1,
+                             rounds=2, in_count=8)
+    for run in runs:
+        folder = tmp_path / run.run_name()
+        folder.mkdir()
+        pinned = runner.manifest(run, surrogates=False)
+        (folder / "manifest.json").write_text(json.dumps(pinned))
+        (folder / "complete.json").write_text("{}")
+        (folder / "measurements.json").write_text(json.dumps([
+            {"round": r, "candidate": c, "included": c in run.included, "test_loss": 1.0, "test_accuracy": 0.5,
+             "shadow_loss": 1.0 - 0.1 * (c in run.included)} for r in pinned["checkpoint_rounds"]
+            for c in runner.CANDIDATES]))
+        (folder / f"{run.run_name()}.json").write_text(json.dumps({"train_metrics": {"1": {}, "2": {}}}))
+    audit = load_audit(tmp_path, config="k8")
+    assert audit.membership.sum(axis=0).tolist() == [8, 8, 8, 8]
+    assert audit.losses.shape == (32, 4, 2)
